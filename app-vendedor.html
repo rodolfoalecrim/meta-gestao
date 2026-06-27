@@ -342,8 +342,18 @@ html, body { height: 100%; overflow: hidden; background: var(--bg); color: var(-
         </div>
         <div class="form-row">
           <div class="form-group">
+            <label class="form-label">Vacas Secas</label>
+            <input class="form-input" id="c-secas" placeholder="0" type="number" min="0">
+          </div>
+          <div class="form-group">
             <label class="form-label">Novilhas</label>
             <input class="form-input" id="c-novilhas" placeholder="0" type="number" min="0">
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Bezerras</label>
+            <input class="form-input" id="c-bezerras" placeholder="0" type="number" min="0">
           </div>
           <div class="form-group">
             <label class="form-label">Média Produção (L/vaca)</label>
@@ -758,18 +768,30 @@ function abrirDetalhe(d) {
   const fmtPct = v => v>0?`${parseFloat(v).toFixed(2)}%`:'—';
 
   document.getElementById('detail-body').innerHTML = `
-    <div class="stat-grid">
+    <div class="stat-grid" style="grid-template-columns:repeat(3,1fr)">
       <div class="stat-box">
         <div class="val" style="color:var(--blue)">${d.vacas||'—'}</div>
         <div class="lbl">Total Vacas</div>
       </div>
       <div class="stat-box">
-        <div class="val" style="color:var(--green)">${d.media_prod>0?parseFloat(d.media_prod).toFixed(1)+' L':'—'}</div>
-        <div class="lbl">Média/vaca</div>
+        <div class="val" style="color:var(--green)">${d.lactacao>0?d.lactacao:'—'}</div>
+        <div class="lbl">Em Lactação</div>
       </div>
       <div class="stat-box">
-        <div class="val" style="color:#bc8cff">${d.prod_diaria>0?(d.prod_diaria/1000).toFixed(1)+'k':'—'}</div>
-        <div class="lbl">L/dia total</div>
+        <div class="val" style="color:#3498db">${d.secas>0?d.secas:'—'}</div>
+        <div class="lbl">Secas</div>
+      </div>
+      <div class="stat-box">
+        <div class="val" style="color:#e67e22">${d.novilhas>0?d.novilhas:'—'}</div>
+        <div class="lbl">Novilhas</div>
+      </div>
+      <div class="stat-box">
+        <div class="val" style="color:#9b59b6">${d.bezerras>0?d.bezerras:'—'}</div>
+        <div class="lbl">Bezerras</div>
+      </div>
+      <div class="stat-box">
+        <div class="val" style="color:var(--green)">${d.media_prod>0?parseFloat(d.media_prod).toFixed(1)+' L':'—'}</div>
+        <div class="lbl">Média/vaca</div>
       </div>
     </div>
 
@@ -815,7 +837,7 @@ function novoCliente() {
 }
 
 function limparForm() {
-  ['c-produtor','c-propriedade','c-cidade','c-vacas','c-lactacao','c-novilhas',
+  ['c-produtor','c-propriedade','c-cidade','c-vacas','c-lactacao','c-secas','c-novilhas','c-bezerras',
    'c-media-prod','c-prod-dia','c-del','c-gordura','c-proteina','c-ccs','c-cbt','c-est','c-obs'].forEach(id => {
     const el = document.getElementById(id);
     if (el) el.value = '';
@@ -845,7 +867,9 @@ function editarCliente(d) {
   set('c-regiao', d.regiao);
   set('c-vacas', d.vacas);
   set('c-lactacao', d.lactacao);
+  set('c-secas', d.secas);
   set('c-novilhas', d.novilhas);
+  set('c-bezerras', d.bezerras);
   set('c-media-prod', d.media_prod);
   set('c-prod-dia', d.prod_diaria);
   set('c-del', d.del);
@@ -890,7 +914,9 @@ async function salvarCliente() {
     regiao: str('c-regiao'),
     vacas: vacas,
     lactacao: num('c-lactacao'),
+    secas: num('c-secas'),
     novilhas: num('c-novilhas'),
+    bezerras: num('c-bezerras'),
     media_prod: media,
     prod_diaria: prodDia,
     sistema: str('c-sistema'),
@@ -917,9 +943,38 @@ async function salvarCliente() {
 
     if (editandoId) {
       await db.ref('propriedades/' + editandoId).update(dados);
+      // Save snapshot to history
+      const snapshot = {
+        data: new Date().toISOString(),
+        vacas: dados.vacas,
+        lactacao: dados.lactacao,
+        secas: dados.secas || 0,
+        novilhas: dados.novilhas,
+        bezerras: dados.bezerras || 0,
+        media_prod: dados.media_prod,
+        prod_diaria: dados.prod_diaria,
+        del: dados.del || 0,
+        gordura: dados.gordura || 0,
+        proteina: dados.proteina || 0,
+        ccs: dados.ccs || 0,
+        cbt: dados.cbt || 0,
+        obs: dados.obs || '',
+        vendedor: nomeVendedor,
+      };
+      await db.ref('historico/' + editandoId).push(snapshot);
     } else {
       dados.criado_em = new Date().toISOString();
-      await db.ref('propriedades').push(dados);
+      const ref = await db.ref('propriedades').push(dados);
+      // First history entry
+      const snapshot = {
+        data: new Date().toISOString(),
+        vacas: dados.vacas, lactacao: dados.lactacao, secas: dados.secas || 0,
+        novilhas: dados.novilhas, bezerras: dados.bezerras || 0,
+        media_prod: dados.media_prod, prod_diaria: dados.prod_diaria,
+        del: dados.del || 0, gordura: dados.gordura || 0, proteina: dados.proteina || 0,
+        ccs: dados.ccs || 0, cbt: dados.cbt || 0, obs: dados.obs || '', vendedor: nomeVendedor,
+      };
+      await db.ref('historico/' + ref.key).push(snapshot);
     }
 
     limparForm();

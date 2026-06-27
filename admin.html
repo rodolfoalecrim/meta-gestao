@@ -404,6 +404,147 @@ tbody td { padding:10px 12px; font-size:12px; }
 .tec-saved-badge { display: inline-flex; align-items: center; gap: 4px; font-size: 10px; font-weight: 600; color: var(--G); background: #dcfce7; padding: 2px 8px; border-radius: 8px; opacity: 0; transition: opacity .3s; }
 .tec-saved-badge.show { opacity: 1; }
 
+
+/* ── MODAL HISTÓRICO / EDIÇÃO ── */
+.modal-overlay {
+  position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 2000;
+  display: flex; align-items: center; justify-content: center; padding: 16px;
+  backdrop-filter: blur(4px);
+}
+.modal-box {
+  background: white; border-radius: 20px; box-shadow: 0 20px 60px rgba(0,0,0,0.25);
+  width: 100%; max-width: 900px; max-height: 90vh;
+  display: flex; flex-direction: column; overflow: hidden;
+}
+.modal-header {
+  padding: 18px 24px; border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; gap: 14px; flex-shrink: 0;
+  background: linear-gradient(135deg, #003c09, #1a6b35);
+  color: white;
+}
+.modal-av {
+  width: 48px; height: 48px; border-radius: 14px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 16px; font-weight: 800; background: rgba(255,255,255,0.2);
+  flex-shrink: 0;
+}
+.modal-title { font-size: 16px; font-weight: 800; }
+.modal-sub { font-size: 11px; opacity: 0.75; margin-top: 2px; }
+.modal-close {
+  margin-left: auto; background: rgba(255,255,255,0.15);
+  border: 1px solid rgba(255,255,255,0.3); color: white;
+  width: 32px; height: 32px; border-radius: 8px; font-size: 16px;
+  cursor: pointer; display: flex; align-items: center; justify-content: center;
+  transition: background .15s;
+}
+.modal-close:hover { background: rgba(255,255,255,0.25); }
+.modal-tabs {
+  display: flex; border-bottom: 2px solid var(--border);
+  padding: 0 24px; flex-shrink: 0; background: #f8fafc;
+}
+.modal-tab {
+  padding: 12px 16px; font-size: 12px; font-weight: 700; color: var(--muted);
+  cursor: pointer; border-bottom: 3px solid transparent; margin-bottom: -2px;
+  transition: all .15s;
+}
+.modal-tab:hover { color: var(--text); }
+.modal-tab.on { color: var(--GD); border-bottom-color: var(--G); }
+.modal-body { flex: 1; overflow-y: auto; padding: 20px 24px; }
+
+/* HIST TIMELINE */
+.hist-timeline { display: flex; flex-direction: column; gap: 0; }
+.hist-entry {
+  display: flex; gap: 16px; position: relative;
+  padding-bottom: 20px;
+}
+.hist-entry:last-child { padding-bottom: 0; }
+.hist-entry::before {
+  content: ''; position: absolute; left: 15px; top: 32px; bottom: 0;
+  width: 2px; background: var(--border);
+}
+.hist-entry:last-child::before { display: none; }
+.hist-dot {
+  width: 32px; height: 32px; border-radius: 50%; flex-shrink: 0;
+  background: white; border: 3px solid var(--G);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 12px; z-index: 1;
+}
+.hist-card {
+  flex: 1; background: white; border: 1px solid var(--border);
+  border-radius: 12px; overflow: hidden;
+}
+.hist-card-hdr {
+  background: #f8fafc; padding: 10px 14px;
+  display: flex; align-items: center; justify-content: space-between;
+  border-bottom: 1px solid var(--border);
+}
+.hist-date { font-size: 11px; font-weight: 700; color: var(--muted); }
+.hist-by { font-size: 10px; color: var(--dim); }
+.hist-grid {
+  display: grid; grid-template-columns: repeat(4, 1fr);
+  gap: 0;
+}
+.hist-cell {
+  padding: 10px 12px; border-right: 1px solid #f1f5f9;
+  border-bottom: 1px solid #f1f5f9;
+  text-align: center;
+}
+.hist-cell:last-child { border-right: none; }
+.hist-cell .hv { font-size: 18px; font-weight: 800; color: var(--text); line-height: 1; }
+.hist-cell .hl { font-size: 9px; color: var(--muted); font-weight: 600; text-transform: uppercase; margin-top: 3px; }
+.hist-obs { padding: 8px 12px; font-size: 11px; color: var(--muted); background: #fffbeb; border-top: 1px solid #fef9c3; }
+
+/* CHARTS HIST */
+.hist-charts { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 16px; }
+.hist-chart-card {
+  background: white; border: 1px solid var(--border); border-radius: 12px; padding: 14px;
+}
+.hist-chart-card h4 { font-size: 11px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: .5px; margin-bottom: 12px; }
+
+/* EDIT FORM */
+.edit-section { margin-bottom: 20px; }
+.edit-section-title {
+  font-size: 11px; font-weight: 700; color: var(--muted); text-transform: uppercase;
+  letter-spacing: .6px; margin-bottom: 12px; display: flex; align-items: center; gap: 6px;
+  padding-bottom: 8px; border-bottom: 1px solid var(--border);
+}
+.edit-grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.edit-grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; }
+.edit-group { display: flex; flex-direction: column; gap: 5px; }
+.edit-label { font-size: 11px; font-weight: 600; color: var(--muted); }
+.edit-input, .edit-select {
+  background: #f8fafc; border: 1.5px solid var(--border);
+  border-radius: 8px; color: var(--text); font-size: 13px;
+  font-family: 'Inter', sans-serif; padding: 9px 12px; outline: none;
+  transition: border-color .15s;
+}
+.edit-input:focus, .edit-select:focus { border-color: var(--G); background: white; }
+.edit-save-btn {
+  width: 100%; background: linear-gradient(135deg, var(--GM), var(--GD));
+  border: none; border-radius: 10px; color: white; font-size: 14px; font-weight: 700;
+  font-family: 'Inter', sans-serif; padding: 13px; cursor: pointer; margin-top: 8px;
+  box-shadow: 0 4px 15px rgba(0,60,9,0.25); transition: opacity .15s;
+}
+.edit-save-btn:hover { opacity: .9; }
+.edit-save-btn:disabled { opacity: .6; cursor: not-allowed; }
+
+/* PRODUCER ICON BUTTON */
+.prod-btn {
+  background: none; border: none; cursor: pointer; padding: 0;
+  font-family: 'Inter', sans-serif; text-align: left;
+  display: flex; align-items: center; gap: 8px;
+}
+.prod-btn:hover .prod-av { transform: scale(1.1); box-shadow: 0 4px 12px rgba(0,0,0,0.15); }
+.prod-av {
+  width: 34px; height: 34px; border-radius: 10px; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 12px; font-weight: 800; color: white;
+  transition: transform .2s, box-shadow .2s;
+}
+.prod-name { font-size: 12px; font-weight: 700; color: var(--text); }
+.prod-city { font-size: 10px; color: var(--muted); }
+.prod-hist-ico { font-size: 14px; opacity: .5; margin-left: 4px; }
+
 </style>
 </head>
 <body>
@@ -759,6 +900,143 @@ tbody td { padding:10px 12px; font-size:12px; }
 
     </div><!-- /content -->
   </div><!-- /layout -->
+
+<!-- ═══ MODAL HISTÓRICO / EDIÇÃO ═══ -->
+<div class="modal-overlay" id="farm-modal" style="display:none" onclick="if(event.target===this)closeModal()">
+  <div class="modal-box">
+    <div class="modal-header">
+      <div class="modal-av" id="modal-av">—</div>
+      <div>
+        <div class="modal-title" id="modal-title">—</div>
+        <div class="modal-sub" id="modal-sub">—</div>
+      </div>
+      <button class="modal-close" onclick="closeModal()">✕</button>
+    </div>
+    <div class="modal-tabs">
+      <div class="modal-tab on" id="mtab-hist" onclick="switchTab('hist')">📈 Histórico & Gráficos</div>
+      <div class="modal-tab" id="mtab-edit" onclick="switchTab('edit')">✏️ Editar Dados</div>
+    </div>
+    <div class="modal-body">
+
+      <!-- TAB HISTÓRICO -->
+      <div id="tab-hist">
+        <!-- KPIs atuais -->
+        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:16px" id="modal-kpis"></div>
+        <!-- Gráficos linha do tempo -->
+        <div class="hist-charts" id="hist-charts-wrap">
+          <div class="hist-chart-card"><h4>🥛 Produção Diária (L/dia)</h4><canvas id="hch-prod" height="160"></canvas></div>
+          <div class="hist-chart-card"><h4>🐄 Rebanho — Evolução</h4><canvas id="hch-rebanho" height="160"></canvas></div>
+          <div class="hist-chart-card"><h4>📊 Média L/vaca/dia</h4><canvas id="hch-media" height="160"></canvas></div>
+          <div class="hist-chart-card"><h4>🧈 Gordura & Proteína (%)</h4><canvas id="hch-qual" height="160"></canvas></div>
+        </div>
+        <!-- Timeline entries -->
+        <div style="font-size:12px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:12px">Linha do Tempo</div>
+        <div class="hist-timeline" id="hist-timeline"></div>
+      </div>
+
+      <!-- TAB EDIÇÃO -->
+      <div id="tab-edit" style="display:none">
+        <input type="hidden" id="edit-farm-id">
+        <div class="edit-section">
+          <div class="edit-section-title">🏡 Identificação</div>
+          <div class="edit-grid-2">
+            <div class="edit-group"><label class="edit-label">Nome do Produtor *</label><input class="edit-input" id="ef-produtor" type="text"></div>
+            <div class="edit-group"><label class="edit-label">Nome da Propriedade</label><input class="edit-input" id="ef-propriedade" type="text"></div>
+            <div class="edit-group"><label class="edit-label">Situação</label>
+              <select class="edit-select" id="ef-situacao">
+                <option value="PROSPEC">🎯 Prospecto</option>
+                <option value="ATIVO">✅ Ativo</option>
+                <option value="INATIVO">❌ Inativo</option>
+              </select>
+            </div>
+            <div class="edit-group"><label class="edit-label">Produto</label>
+              <select class="edit-select" id="ef-produto">
+                <option value="ULTRAMAX">ULTRAMAX</option>
+                <option value="POLINUTRI">POLINUTRI</option>
+                <option value="OUTRO">OUTRO</option>
+              </select>
+            </div>
+          </div>
+        </div>
+        <div class="edit-section">
+          <div class="edit-section-title">📍 Localização</div>
+          <div class="edit-grid-3">
+            <div class="edit-group"><label class="edit-label">Cidade</label><input class="edit-input" id="ef-cidade" type="text"></div>
+            <div class="edit-group"><label class="edit-label">Estado</label>
+              <select class="edit-select" id="ef-estado">
+                <option value="PR">Paraná</option><option value="SC">Santa Catarina</option>
+                <option value="RS">Rio Grande do Sul</option>
+              </select>
+            </div>
+            <div class="edit-group"><label class="edit-label">Região</label>
+              <select class="edit-select" id="ef-regiao">
+                <option value="SUDOESTE PARANÁ">Sudoeste Paraná</option>
+                <option value="OESTE PARANÁ">Oeste Paraná</option>
+                <option value="SANTA CATARINA">Santa Catarina</option>
+                <option value="PARANÁ">Paraná Geral</option>
+              </select>
+            </div>
+          </div>
+        </div>
+        <div class="edit-section">
+          <div class="edit-section-title">🐄 Rebanho Detalhado</div>
+          <div class="edit-grid-3">
+            <div class="edit-group"><label class="edit-label">Total de Vacas</label><input class="edit-input" id="ef-vacas" type="number" min="0"></div>
+            <div class="edit-group"><label class="edit-label">Vacas em Lactação</label><input class="edit-input" id="ef-lactacao" type="number" min="0"></div>
+            <div class="edit-group"><label class="edit-label">Vacas Secas</label><input class="edit-input" id="ef-secas" type="number" min="0"></div>
+            <div class="edit-group"><label class="edit-label">Novilhas</label><input class="edit-input" id="ef-novilhas" type="number" min="0"></div>
+            <div class="edit-group"><label class="edit-label">Bezerras</label><input class="edit-input" id="ef-bezerras" type="number" min="0"></div>
+            <div class="edit-group"><label class="edit-label">DEL (dias em lactação)</label><input class="edit-input" id="ef-del" type="number" min="0"></div>
+          </div>
+        </div>
+        <div class="edit-section">
+          <div class="edit-section-title">🥛 Produção</div>
+          <div class="edit-grid-2">
+            <div class="edit-group"><label class="edit-label">Média Produção (L/vaca/dia)</label><input class="edit-input" id="ef-media-prod" type="number" min="0" step="0.1"></div>
+            <div class="edit-group"><label class="edit-label">Produção Diária Total (L)</label><input class="edit-input" id="ef-prod-diaria" type="number" min="0"></div>
+          </div>
+        </div>
+        <div class="edit-section">
+          <div class="edit-section-title">🧪 Qualidade do Leite</div>
+          <div class="edit-grid-3">
+            <div class="edit-group"><label class="edit-label">Gordura (%)</label><input class="edit-input" id="ef-gordura" type="number" min="0" max="10" step="0.01"></div>
+            <div class="edit-group"><label class="edit-label">Proteína (%)</label><input class="edit-input" id="ef-proteina" type="number" min="0" max="10" step="0.01"></div>
+            <div class="edit-group"><label class="edit-label">CCS (x1000)</label><input class="edit-input" id="ef-ccs" type="number" min="0"></div>
+            <div class="edit-group"><label class="edit-label">CBT (x1000)</label><input class="edit-input" id="ef-cbt" type="number" min="0"></div>
+            <div class="edit-group"><label class="edit-label">EST (%)</label><input class="edit-input" id="ef-est" type="number" min="0" step="0.01"></div>
+          </div>
+        </div>
+        <div class="edit-section">
+          <div class="edit-section-title">🏗️ Sistema</div>
+          <div class="edit-grid-2">
+            <div class="edit-group"><label class="edit-label">Sistema de Ordenha</label>
+              <select class="edit-select" id="ef-sistema">
+                <option value="FREE STALL">Free Stall</option>
+                <option value="COMPOST BARN">Compost Barn</option>
+                <option value="COMPOST">Compost</option>
+                <option value="SEMI CONFINADO">Semi Confinado</option>
+                <option value="PASTO">Pasto</option>
+              </select>
+            </div>
+            <div class="edit-group"><label class="edit-label">Tipo de Ordenha</label>
+              <select class="edit-select" id="ef-ordenha">
+                <option value="CONVENCIONAL">Convencional</option>
+                <option value="ROBOTIZADA">Robotizada</option>
+              </select>
+            </div>
+          </div>
+        </div>
+        <div class="edit-section">
+          <div class="edit-section-title">📝 Observações</div>
+          <div class="edit-group"><label class="edit-label">Notas sobre a propriedade</label><input class="edit-input" id="ef-obs" type="text" placeholder="Observações gerais..."></div>
+        </div>
+        <button class="edit-save-btn" id="edit-save-btn" onclick="salvarEdicaoAdmin()">💾 Salvar Alterações e Registrar no Histórico</button>
+      </div>
+
+    </div>
+  </div>
+</div>
+
 </div><!-- /app -->
 
 <div class="toast" id="toast"></div>
@@ -1169,7 +1447,17 @@ function renderTbl(){
   document.getElementById('tbody').innerHTML=sl.map(d=>{
     const sc=d.situacao==='ATIVO'?'ba':d.situacao==='INATIVO'?'bi':'bp';
     const sl2=d.situacao==='ATIVO'?'✅ Ativo':d.situacao==='INATIVO'?'❌ Inativo':'🎯 Prospecto';
-    return`<tr><td style="font-weight:700">${d.produtor||'—'}</td><td style="color:#94a3b8">${d.propriedade||'—'}</td><td><span class="badge ${sc}">${sl2}</span></td><td>${d.nome_vendedor||d.vendedor||'—'}</td><td style="color:#94a3b8">${d.cidade||'—'}</td><td style="color:#94a3b8">${d.regiao||'—'}</td><td style="font-weight:800;color:${(d.vacas||0)>=200?'#15803d':''}">${d.vacas||'—'}</td><td>${d.media_prod>0?parseFloat(d.media_prod).toFixed(1)+' L':'—'}</td><td>${d.prod_diaria>0?d.prod_diaria.toLocaleString('pt-BR'):'—'}</td><td style="color:#b45309">${d.gordura>0?parseFloat(d.gordura).toFixed(2)+'%':'—'}</td><td style="color:#1d4ed8">${d.proteina>0?parseFloat(d.proteina).toFixed(2)+'%':'—'}</td><td>${d.del>0?d.del+' d':'—'}</td><td><select class="sts" onchange="mudarSit('${d.id}',this.value)"><option value="PROSPEC" ${d.situacao==='PROSPEC'?'selected':''}>🎯 Prospecto</option><option value="ATIVO" ${d.situacao==='ATIVO'?'selected':''}>✅ Ativo</option><option value="INATIVO" ${d.situacao==='INATIVO'?'selected':''}>❌ Inativo</option></select></td></tr>`;
+    return`<tr>
+      <td>
+        <button class="prod-btn" onclick="openFarmModal('${d.id}','${(d.produtor||'').replace(/'/g,"\\'")}')" title="Ver histórico e editar">
+          <div class="prod-av" style="background:${vc(d.produtor||'?')}">${(d.produtor||'?').split(' ').slice(0,2).map(w=>w[0]||'').join('').toUpperCase()}</div>
+          <div>
+            <div class="prod-name">${d.produtor||'—'}</div>
+            <div class="prod-city">${d.cidade||''}</div>
+          </div>
+          <span class="prod-hist-ico">📈</span>
+        </button>
+      </td><td style="color:#94a3b8">${d.propriedade||'—'}</td><td><span class="badge ${sc}">${sl2}</span></td><td>${d.nome_vendedor||d.vendedor||'—'}</td><td style="color:#94a3b8">${d.cidade||'—'}</td><td style="color:#94a3b8">${d.regiao||'—'}</td><td style="font-weight:800;color:${(d.vacas||0)>=200?'#15803d':''}">${d.vacas||'—'}</td><td>${d.media_prod>0?parseFloat(d.media_prod).toFixed(1)+' L':'—'}</td><td>${d.prod_diaria>0?d.prod_diaria.toLocaleString('pt-BR'):'—'}</td><td style="color:#b45309">${d.gordura>0?parseFloat(d.gordura).toFixed(2)+'%':'—'}</td><td style="color:#1d4ed8">${d.proteina>0?parseFloat(d.proteina).toFixed(2)+'%':'—'}</td><td>${d.del>0?d.del+' d':'—'}</td><td><select class="sts" onchange="mudarSit('${d.id}',this.value)"><option value="PROSPEC" ${d.situacao==='PROSPEC'?'selected':''}>🎯 Prospecto</option><option value="ATIVO" ${d.situacao==='ATIVO'?'selected':''}>✅ Ativo</option><option value="INATIVO" ${d.situacao==='INATIVO'?'selected':''}>❌ Inativo</option></select></td></tr>`;
   }).join('');
   let pag=`<span>${(PG-1)*PS+1}–${Math.min(PG*PS,total)} de ${total}</span>`;
   if(tp>1){pag+=`<button class="pb" onclick="goPg(${PG-1})" ${PG===1?'disabled':''}>‹</button>`;for(let i=1;i<=tp;i++){if(tp<=7||Math.abs(i-PG)<=2||i===1||i===tp)pag+=`<button class="pb${i===PG?' on':''}" onclick="goPg(${i})">${i}</button>`;else if(Math.abs(i-PG)===3)pag+='<span>…</span>';}pag+=`<button class="pb" onclick="goPg(${PG+1})" ${PG===tp?'disabled':''}>›</button>`;}
@@ -1684,6 +1972,279 @@ function loadTecFromFirebase() {
     saveTecData(tecData);
     if (document.getElementById('sc-tec').classList.contains('on')) renderTecnicos();
   });
+}
+
+
+// ═══════════════════════════════════════════
+// HISTÓRICO E EDIÇÃO DE FAZENDAS
+// ═══════════════════════════════════════════
+let currentFarmId = null;
+let currentFarmData = null;
+let histCharts = {};
+
+function vc(n) {
+  const a=['#1d4ed8','#15803d','#b45309','#6d28d9','#b91c1c','#0e7490','#c2410c','#0f766e','#0369a1','#7e22ce'];
+  let h=0; for(let c of(n||'X')) h=(h*31+c.charCodeAt(0))%a.length; return a[h];
+}
+function ini2(n) { return(n||'?').split(' ').slice(0,2).map(w=>w[0]||'').join('').toUpperCase(); }
+
+function openFarmModal(id, nome) {
+  currentFarmId = id;
+  currentFarmData = ALL.find(d => d.id === id) || {};
+  document.getElementById('farm-modal').style.display = 'flex';
+  document.body.style.overflow = 'hidden';
+
+  const cor = vc(nome);
+  const ini = ini2(nome);
+  document.getElementById('modal-av').textContent = ini;
+  document.getElementById('modal-av').style.background = cor;
+  document.getElementById('modal-title').textContent = nome;
+  document.getElementById('modal-sub').textContent =
+    (currentFarmData.propriedade || '') + (currentFarmData.cidade ? ' · ' + currentFarmData.cidade : '') +
+    (currentFarmData.regiao ? ' · ' + currentFarmData.regiao : '');
+
+  switchTab('hist');
+  loadHistory(id);
+  fillEditForm(currentFarmData);
+}
+
+function closeModal() {
+  document.getElementById('farm-modal').style.display = 'none';
+  document.body.style.overflow = '';
+  Object.values(histCharts).forEach(c => { if(c) c.destroy(); });
+  histCharts = {};
+}
+
+function switchTab(tab) {
+  document.getElementById('tab-hist').style.display = tab === 'hist' ? 'block' : 'none';
+  document.getElementById('tab-edit').style.display = tab === 'edit' ? 'block' : 'none';
+  document.querySelectorAll('.modal-tab').forEach(t => t.classList.remove('on'));
+  document.getElementById('mtab-' + tab).classList.add('on');
+}
+
+// ── LOAD HISTORY ──────────────────────────────────────────────────────────
+function loadHistory(id) {
+  const d = currentFarmData;
+
+  // Current KPIs
+  document.getElementById('modal-kpis').innerHTML = `
+    <div class="kpi-big" style="background:linear-gradient(135deg,#15803d,#166534);padding:14px">
+      <div style="font-size:13px;opacity:.8">🐄 Total Vacas</div>
+      <div style="font-size:28px;font-weight:900;margin-top:4px">${d.vacas||'—'}</div>
+      ${d.lactacao>0?`<div style="font-size:10px;opacity:.7;margin-top:2px">🍼 ${d.lactacao} em lactação</div>`:''}
+    </div>
+    <div class="kpi-big" style="background:linear-gradient(135deg,#0e7490,#0c6179);padding:14px">
+      <div style="font-size:13px;opacity:.8">🥛 Prod. Diária</div>
+      <div style="font-size:28px;font-weight:900;margin-top:4px">${d.prod_diaria>=1000?(d.prod_diaria/1000).toFixed(1)+'k':d.prod_diaria||'—'} L</div>
+      ${d.media_prod>0?`<div style="font-size:10px;opacity:.7;margin-top:2px">📊 ${parseFloat(d.media_prod).toFixed(1)} L/vaca</div>`:''}
+    </div>
+    <div class="kpi-big" style="background:linear-gradient(135deg,#b45309,#92400e);padding:14px">
+      <div style="font-size:13px;opacity:.8">🧈 Gordura</div>
+      <div style="font-size:28px;font-weight:900;margin-top:4px">${d.gordura>0?parseFloat(d.gordura).toFixed(2)+'%':'—'}</div>
+      ${d.proteina>0?`<div style="font-size:10px;opacity:.7;margin-top:2px">🧪 Prot: ${parseFloat(d.proteina).toFixed(2)}%</div>`:''}
+    </div>
+    <div class="kpi-big" style="background:linear-gradient(135deg,#6d28d9,#5b21b6);padding:14px">
+      <div style="font-size:13px;opacity:.8">🗓️ Atualizado</div>
+      <div style="font-size:16px;font-weight:700;margin-top:4px">${d.atualizado_em?new Date(d.atualizado_em).toLocaleDateString('pt-BR'):'—'}</div>
+      ${d.nome_vendedor?`<div style="font-size:10px;opacity:.7;margin-top:2px">👤 ${d.nome_vendedor}</div>`:''}
+    </div>`;
+
+  // Load Firebase history
+  db.ref('historico/' + id).orderByChild('data').limitToLast(20).once('value', snap => {
+    const entries = [];
+    snap.forEach(c => entries.push({key: c.key, ...c.val()}));
+    entries.reverse(); // newest first
+
+    renderHistoryCharts(entries);
+    renderHistoryTimeline(entries);
+  });
+}
+
+function renderHistoryCharts(entries) {
+  if (entries.length === 0) {
+    document.getElementById('hist-charts-wrap').innerHTML =
+      '<div style="text-align:center;padding:32px;color:#94a3b8;font-size:13px;grid-column:1/-1">📭 Ainda sem histórico. Após a primeira atualização dos dados, os gráficos aparecerão aqui.</div>';
+    return;
+  }
+
+  const labels = entries.map(e => new Date(e.data).toLocaleDateString('pt-BR', {day:'2-digit',month:'2-digit'}));
+  const C = { responsive:true, maintainAspectRatio:true,
+    plugins:{legend:{labels:{color:'#64748b',font:{size:10},boxWidth:10}}},
+    scales:{x:{grid:{display:false},ticks:{color:'#94a3b8',font:{size:9}}},y:{grid:{color:'#f1f5f9'},ticks:{color:'#94a3b8'}}}
+  };
+
+  function mkH(id, type, data, opts={}) {
+    if(histCharts[id]) histCharts[id].destroy();
+    const ctx = document.getElementById(id); if(!ctx) return;
+    histCharts[id] = new Chart(ctx, {type, data, options:{...C,...opts,plugins:{...C.plugins,...(opts.plugins||{})}}});
+  }
+
+  // Produção diária
+  mkH('hch-prod', 'line', {
+    labels,
+    datasets:[{label:'Prod/dia (L)', data: entries.map(e=>e.prod_diaria||0),
+      borderColor:'#0e7490', backgroundColor:'rgba(14,116,144,0.1)', borderWidth:2.5,
+      pointRadius:4, pointBackgroundColor:'#0e7490', tension:0.4, fill:true}]
+  }, {plugins:{legend:{display:false}}});
+
+  // Rebanho stacked
+  mkH('hch-rebanho', 'bar', {
+    labels,
+    datasets:[
+      {label:'Lactação', data:entries.map(e=>e.lactacao||0), backgroundColor:'#16a34a', borderRadius:3},
+      {label:'Secas',    data:entries.map(e=>e.secas||0),    backgroundColor:'#ca8a04', borderRadius:3},
+      {label:'Novilhas', data:entries.map(e=>e.novilhas||0), backgroundColor:'#0891b2', borderRadius:3},
+      {label:'Bezerras', data:entries.map(e=>e.bezerras||0), backgroundColor:'#7c3aed', borderRadius:3},
+    ]
+  }, {scales:{x:{stacked:true,grid:{display:false},ticks:{color:'#94a3b8',font:{size:9}}},y:{stacked:true,grid:{color:'#f1f5f9'},ticks:{color:'#94a3b8'}}}});
+
+  // Média produção
+  mkH('hch-media', 'line', {
+    labels,
+    datasets:[{label:'L/vaca/dia', data:entries.map(e=>e.media_prod||0),
+      borderColor:'#15803d', backgroundColor:'rgba(21,128,61,0.1)', borderWidth:2.5,
+      pointRadius:4, pointBackgroundColor:'#15803d', tension:0.4, fill:true}]
+  }, {plugins:{legend:{display:false}}});
+
+  // Gordura & Proteína
+  mkH('hch-qual', 'line', {
+    labels,
+    datasets:[
+      {label:'Gordura %', data:entries.map(e=>e.gordura||0),
+        borderColor:'#b45309', backgroundColor:'rgba(180,83,9,0.08)', borderWidth:2,
+        pointRadius:4, tension:0.4, fill:true},
+      {label:'Proteína %', data:entries.map(e=>e.proteina||0),
+        borderColor:'#1d4ed8', backgroundColor:'rgba(29,78,216,0.08)', borderWidth:2,
+        pointRadius:4, tension:0.4, fill:false},
+    ]
+  });
+}
+
+function renderHistoryTimeline(entries) {
+  const tl = document.getElementById('hist-timeline');
+  if (entries.length === 0) {
+    tl.innerHTML = '<div style="text-align:center;padding:24px;color:#94a3b8;font-size:13px">Nenhuma atualização registrada ainda.</div>';
+    return;
+  }
+
+  tl.innerHTML = entries.map((e, i) => {
+    const dt = new Date(e.data).toLocaleString('pt-BR', {day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'});
+    const icon = i === 0 ? '🟢' : '⚪';
+    return `<div class="hist-entry">
+      <div class="hist-dot">${icon}</div>
+      <div class="hist-card">
+        <div class="hist-card-hdr">
+          <span class="hist-date">📅 ${dt}</span>
+          <span class="hist-by">👤 ${e.vendedor||'—'}</span>
+        </div>
+        <div class="hist-grid">
+          <div class="hist-cell"><div class="hv" style="color:#15803d">${e.vacas||'—'}</div><div class="hl">🐄 Total Vacas</div></div>
+          <div class="hist-cell"><div class="hv" style="color:#0e7490">${e.lactacao||'—'}</div><div class="hl">🍼 Lactação</div></div>
+          <div class="hist-cell"><div class="hv" style="color:#ca8a04">${e.secas||'—'}</div><div class="hl">💤 Secas</div></div>
+          <div class="hist-cell"><div class="hv" style="color:#0891b2">${e.novilhas||'—'}</div><div class="hl">🐮 Novilhas</div></div>
+          <div class="hist-cell"><div class="hv" style="color:#7c3aed">${e.bezerras||'—'}</div><div class="hl">🐣 Bezerras</div></div>
+          <div class="hist-cell"><div class="hv" style="color:#0e7490">${e.prod_diaria>=1000?(e.prod_diaria/1000).toFixed(1)+'k':e.prod_diaria||'—'}</div><div class="hl">🥛 L/dia</div></div>
+          <div class="hist-cell"><div class="hv" style="color:#15803d">${e.media_prod>0?parseFloat(e.media_prod).toFixed(1):'—'}</div><div class="hl">📊 L/vaca</div></div>
+          <div class="hist-cell"><div class="hv" style="color:#b45309">${e.gordura>0?parseFloat(e.gordura).toFixed(2)+'%':'—'}</div><div class="hl">🧈 Gordura</div></div>
+        </div>
+        ${e.obs?`<div class="hist-obs">📝 ${e.obs}</div>`:''}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ── EDIT FORM ─────────────────────────────────────────────────────────────
+function fillEditForm(d) {
+  const set = (id, val) => { const el = document.getElementById(id); if(el) el.value = val||''; };
+  set('edit-farm-id', currentFarmId);
+  set('ef-produtor', d.produtor);
+  set('ef-propriedade', d.propriedade);
+  set('ef-situacao', d.situacao || 'PROSPEC');
+  set('ef-produto', d.produto || 'ULTRAMAX');
+  set('ef-cidade', d.cidade);
+  set('ef-estado', d.estado || 'PR');
+  set('ef-regiao', d.regiao || 'SUDOESTE PARANÁ');
+  set('ef-vacas', d.vacas);
+  set('ef-lactacao', d.lactacao);
+  set('ef-secas', d.secas || 0);
+  set('ef-novilhas', d.novilhas);
+  set('ef-bezerras', d.bezerras || 0);
+  set('ef-del', d.del);
+  set('ef-media-prod', d.media_prod);
+  set('ef-prod-diaria', d.prod_diaria);
+  set('ef-gordura', d.gordura);
+  set('ef-proteina', d.proteina);
+  set('ef-ccs', d.ccs);
+  set('ef-cbt', d.cbt);
+  set('ef-est', d.est);
+  set('ef-sistema', d.sistema || 'FREE STALL');
+  set('ef-ordenha', d.ordenha || 'CONVENCIONAL');
+  set('ef-obs', d.obs);
+}
+
+async function salvarEdicaoAdmin() {
+  const id = document.getElementById('edit-farm-id').value;
+  if (!id) { toast('Erro: ID da fazenda não encontrado', true); return; }
+
+  const num = (el) => parseFloat(document.getElementById(el)?.value) || 0;
+  const str = (el) => (document.getElementById(el)?.value || '').trim();
+
+  const vacas = num('ef-vacas');
+  const media = num('ef-media-prod');
+  const prodDia = num('ef-prod-diaria') || (vacas * media);
+
+  const dados = {
+    produtor: str('ef-produtor').toUpperCase(),
+    propriedade: str('ef-propriedade').toUpperCase(),
+    situacao: str('ef-situacao'),
+    produto: str('ef-produto'),
+    cidade: str('ef-cidade').toUpperCase(),
+    estado: str('ef-estado'),
+    regiao: str('ef-regiao'),
+    vacas, lactacao: num('ef-lactacao'),
+    secas: num('ef-secas'), novilhas: num('ef-novilhas'), bezerras: num('ef-bezerras'),
+    del: num('ef-del'), media_prod: media, prod_diaria: prodDia,
+    gordura: num('ef-gordura'), proteina: num('ef-proteina'),
+    ccs: num('ef-ccs'), cbt: num('ef-cbt'), est: num('ef-est'),
+    sistema: str('ef-sistema'), ordenha: str('ef-ordenha'), obs: str('ef-obs'),
+    atualizado_em: new Date().toISOString(),
+    atualizado_por: 'ADMIN',
+  };
+
+  const btn = document.getElementById('edit-save-btn');
+  btn.disabled = true; btn.textContent = 'Salvando...';
+
+  try {
+    // Save updated data
+    await db.ref('propriedades/' + id).update(dados);
+
+    // Save snapshot to history
+    const snapshot = {
+      data: new Date().toISOString(),
+      vacas: dados.vacas, lactacao: dados.lactacao, secas: dados.secas,
+      novilhas: dados.novilhas, bezerras: dados.bezerras,
+      media_prod: dados.media_prod, prod_diaria: dados.prod_diaria,
+      del: dados.del, gordura: dados.gordura, proteina: dados.proteina,
+      ccs: dados.ccs, cbt: dados.cbt, obs: dados.obs,
+      vendedor: 'ADMIN (Rodolfo)',
+    };
+    await db.ref('historico/' + id).push(snapshot);
+
+    toast('✅ Dados salvos e histórico registrado!');
+    btn.textContent = '✅ Salvo com sucesso!';
+
+    // Reload history
+    setTimeout(() => {
+      loadHistory(id);
+      btn.disabled = false;
+      btn.textContent = '💾 Salvar Alterações e Registrar no Histórico';
+    }, 1500);
+
+  } catch(e) {
+    toast('❌ Erro ao salvar: ' + e.message, true);
+    btn.disabled = false;
+    btn.textContent = '💾 Salvar Alterações e Registrar no Histórico';
+  }
 }
 
 </script>
