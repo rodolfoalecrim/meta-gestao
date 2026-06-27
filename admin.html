@@ -2,6 +2,9 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Meta Gestão · Painel Admin</title>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
@@ -1072,9 +1075,21 @@ function sum(arr,k){return arr.reduce((a,d)=>a+(parseFloat(d[k])||0),0);}
 function fmtK(v){return v>=1000?(v/1000).toFixed(1)+'k':v||'—';}
 
 function mergeWithSeed(fbData){
+  // Firebase data has ABSOLUTE priority - seed data only fills gaps
   if(fbData.length===0) return SEED_DATA;
-  const names=new Set(fbData.map(d=>(d.produtor||'').toUpperCase().trim()));
-  return [...fbData,...SEED_DATA.filter(d=>!names.has((d.produtor||'').toUpperCase().trim()))];
+  
+  // Build a map of Firebase records by producer name (uppercase)
+  const fbNames = new Set(fbData.map(d=>(d.produtor||'').toUpperCase().trim()));
+  const fbIds   = new Set(fbData.map(d=>d.id));
+  
+  // Add seed records that don't exist in Firebase (by name)
+  const seedOnly = SEED_DATA.filter(d => {
+    const name = (d.produtor||'').toUpperCase().trim();
+    return !fbNames.has(name);
+  });
+  
+  // Return Firebase data first (correct), then only truly missing seed entries
+  return [...fbData, ...seedOnly];
 }
 
 // AUTH
@@ -1109,10 +1124,15 @@ db.ref('.info/connected').on('value',s=>{
 
 function init(){
   db.ref('propriedades').on('value',snap=>{
-    const fb=[];snap.forEach(c=>fb.push({id:c.key,...c.val()}));
+    const fb=[];
+    snap.forEach(c=>{
+      const val = c.val();
+      if(val && val.produtor) fb.push({id:c.key,...val});
+    });
     ALL=mergeWithSeed(fb);
     popFilters();applyF();renderAll();
     document.getElementById('alert-badge').textContent=countAlerts();
+    console.log('Loaded:', fb.length, 'from Firebase +', (ALL.length-fb.length), 'from planilha');
   });
   ['fs','fv','fr','fp','fsi'].forEach(id=>document.getElementById(id).addEventListener('change',()=>{PG=1;applyF();renderAll();}));
   loadTecFromFirebase();
@@ -1466,10 +1486,25 @@ function renderTbl(){
 function goPg(p){PG=p;renderTbl();}
 async function mudarSit(id,st){
   try{
-    await db.ref('propriedades/'+id).update({situacao:st,atualizado_em:new Date().toISOString()});
-    toast('✅ Status atualizado');
+    if(id.startsWith('xl_')){
+      // Find client in ALL and get their data
+      const client = ALL.find(d=>d.id===id);
+      if(client){
+        const dados = {...client, situacao:st, atualizado_em:new Date().toISOString(), criado_em:new Date().toISOString()};
+        delete dados.id;
+        const ref = await db.ref('propriedades').push(dados);
+        // Update local
+        const idx = ALL.findIndex(d=>d.id===id);
+        if(idx!==-1){ ALL[idx].id=ref.key; ALL[idx].situacao=st; }
+        toast('✅ Status atualizado e cliente migrado para Firebase');
+      }
+    } else {
+      await db.ref('propriedades/'+id).update({situacao:st,atualizado_em:new Date().toISOString()});
+      toast('✅ Status atualizado');
+    }
   } catch(e){
-    toast('Erro ao atualizar',true);
+    console.error(e);
+    toast('Erro ao atualizar: '+e.message,true);
   }
 }
 
@@ -2183,7 +2218,7 @@ function fillEditForm(d) {
 }
 
 async function salvarEdicaoAdmin() {
-  const id = document.getElementById('edit-farm-id').value;
+  let id = document.getElementById('edit-farm-id').value;
   if (!id) { toast('Erro: ID da fazenda não encontrado', true); return; }
 
   const num = (el) => parseFloat(document.getElementById(el)?.value) || 0;
@@ -2209,20 +2244,35 @@ async function salvarEdicaoAdmin() {
     sistema: str('ef-sistema'), ordenha: str('ef-ordenha'), obs: str('ef-obs'),
     atualizado_em: new Date().toISOString(),
     atualizado_por: 'ADMIN',
+    nome_vendedor: currentFarmData?.nome_vendedor || currentFarmData?.vendedor || '',
+    vendedor: currentFarmData?.vendedor || '',
   };
 
   const btn = document.getElementById('edit-save-btn');
   btn.disabled = true; btn.textContent = 'Salvando...';
 
   try {
-    // Save updated data
-    await db.ref('propriedades/' + id).update(dados);
+    // If it's a seed client (xl_*), create it properly in Firebase first
+    if (id.startsWith('xl_')) {
+      dados.criado_em = new Date().toISOString();
+      dados.origem = 'planilha_2025';
+      const newRef = await db.ref('propriedades').push(dados);
+      id = newRef.key;
+      // Update local data
+      currentFarmId = id;
+      document.getElementById('edit-farm-id').value = id;
+      // Update ALL array
+      const idx = ALL.findIndex(d => d.id === currentFarmData.id);
+      if (idx !== -1) { ALL[idx].id = id; ALL[idx] = {...ALL[idx], ...dados, id}; }
+    } else {
+      await db.ref('propriedades/' + id).update(dados);
+    }
 
     // Save snapshot to history
     const snapshot = {
       data: new Date().toISOString(),
-      vacas: dados.vacas, lactacao: dados.lactacao, secas: dados.secas,
-      novilhas: dados.novilhas, bezerras: dados.bezerras,
+      vacas: dados.vacas, lactacao: dados.lactacao, secas: dados.secas || 0,
+      novilhas: dados.novilhas, bezerras: dados.bezerras || 0,
       media_prod: dados.media_prod, prod_diaria: dados.prod_diaria,
       del: dados.del, gordura: dados.gordura, proteina: dados.proteina,
       ccs: dados.ccs, cbt: dados.cbt, obs: dados.obs,
@@ -2233,7 +2283,6 @@ async function salvarEdicaoAdmin() {
     toast('✅ Dados salvos e histórico registrado!');
     btn.textContent = '✅ Salvo com sucesso!';
 
-    // Reload history
     setTimeout(() => {
       loadHistory(id);
       btn.disabled = false;
@@ -2241,6 +2290,7 @@ async function salvarEdicaoAdmin() {
     }, 1500);
 
   } catch(e) {
+    console.error('Erro ao salvar:', e);
     toast('❌ Erro ao salvar: ' + e.message, true);
     btn.disabled = false;
     btn.textContent = '💾 Salvar Alterações e Registrar no Histórico';
