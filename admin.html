@@ -2,6 +2,10 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
+<meta name="version" content="20260628_011155">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
@@ -2498,6 +2502,23 @@ function goPg(p){PG=p;renderTbl();}
 async function mudarSit(id,st){
   try{
     if(id.startsWith('xl_')){
+      // Check if already migrated to Firebase — NEVER push() twice
+      const alreadyMigrated = MIGRATED_IDS[id];
+      if(alreadyMigrated) {
+        // Already in Firebase — just update status
+        await db.ref('propriedades/'+alreadyMigrated).update({
+          situacao: st,
+          atualizado_em: new Date().toISOString(),
+          atualizado_por: 'ADMIN'
+        });
+        // Update local
+        const aidx = ALL.findIndex(d=>d.id===id || d.id===alreadyMigrated);
+        if(aidx!==-1){ ALL[aidx].situacao = st; ALL[aidx].id = alreadyMigrated; }
+        applyF(); renderAll();
+        toast('✅ Status atualizado');
+        return;
+      }
+      // Not yet in Firebase — migrate now (first time only)
       const client = ALL.find(d=>d.id===id);
       if(client){
         const dados = {...client, situacao:st,
@@ -2506,17 +2527,29 @@ async function mudarSit(id,st){
           atualizado_por:'ADMIN'};
         const oldId = dados.id;
         delete dados.id;
-        const ref = await db.ref('propriedades').push(dados);
-        // Track migration
-        saveMigrated(oldId, ref.key, dados.produtor||'');
-        // Update local immediately
-        const aidx = ALL.findIndex(d=>d.id===id);
-        if(aidx!==-1){ ALL[aidx] = {...dados, id:ref.key}; }
+        // Check Firebase by name to avoid double-creation
+        const name = (dados.produtor||'').toUpperCase().trim();
+        const existsByName = MIGRATED_IDS[name];
+        if (existsByName) {
+          await db.ref('propriedades/'+existsByName).update({situacao:st, atualizado_em:new Date().toISOString()});
+          saveMigrated(oldId, existsByName, dados.produtor||'');
+          const aidx = ALL.findIndex(d=>d.id===oldId);
+          if(aidx!==-1){ ALL[aidx].situacao=st; ALL[aidx].id=existsByName; }
+        } else {
+          const ref = await db.ref('propriedades').push(dados);
+          saveMigrated(oldId, ref.key, dados.produtor||'');
+          const aidx = ALL.findIndex(d=>d.id===oldId);
+          if(aidx!==-1){ ALL[aidx] = {...dados, id:ref.key}; }
+        }
         applyF(); renderAll();
         toast('✅ Status atualizado');
       }
     } else {
       await db.ref('propriedades/'+id).update({situacao:st, atualizado_em:new Date().toISOString(), atualizado_por:'ADMIN'});
+      // Update local immediately
+      const aidx = ALL.findIndex(d=>d.id===id);
+      if(aidx!==-1){ ALL[aidx].situacao = st; }
+      applyF(); renderAll();
       toast('✅ Status atualizado');
     }
   } catch(e){
@@ -4069,196 +4102,261 @@ function scoreFromText(val, goodValues, medValues) {
 }
 
 // ── MAIN INDEX CALCULATOR ─────────────────────────────────────────────
+// Referências: Embrapa Gado de Leite, MAPA/IN77, NRC (2001),
+// DairyCo UK, USDA NAHMS, Martins et al. (2017), Ribeiro et al. (2020)
+// ──────────────────────────────────────────────────────────────────────
 function calcPropertyIndices(visits, farmData) {
-  // Use last 3 visits for scoring (most recent data)
-  const recent = visits.slice(0, 3);
+  const recent = visits.slice(0, 4); // últimas 4 visitas para média
   const last   = visits[0] || {};
   const farm   = farmData || {};
 
-  // ═══════════════════════════════════════════════════════
-  // ÍNDICE 1: PRODUTIVIDADE (0-100)
-  // ═══════════════════════════════════════════════════════
-  const mediaProd = recent.filter(v=>v.media_prod>0).map(v=>v.media_prod);
-  const avgMedia  = mediaProd.length ? mediaProd.reduce((a,b)=>a+b,0)/mediaProd.length : 0;
-  // Benchmark: 45L = 100, 35L = 75, 25L = 50, <15L = 20
+  // ═══════════════════════════════════════════════════════════════════
+  // ÍNDICE 1: PRODUTIVIDADE (Peso 30%)
+  // Refs: Embrapa 2022 — média BR confinado 28-32L; referência alta >40L
+  //       USDA top 25% herds: >42L; Leite Brasil 2023: média nacional 24L
+  // ═══════════════════════════════════════════════════════════════════
+  const mediasArr = recent.filter(v=>v.media_prod>0).map(v=>parseFloat(v.media_prod));
+  const avgMedia  = mediasArr.length ? mediasArr.reduce((a,b)=>a+b,0)/mediasArr.length : (farm.media_prod||0);
+
+  // Score L/vaca: baseado em quartis Embrapa + benchmarks nacionais
   let prodScore = null;
   if (avgMedia > 0) {
-    if (avgMedia >= 45)      prodScore = 100;
-    else if (avgMedia >= 40) prodScore = 90;
-    else if (avgMedia >= 35) prodScore = 75;
-    else if (avgMedia >= 30) prodScore = 60;
-    else if (avgMedia >= 25) prodScore = 45;
-    else if (avgMedia >= 20) prodScore = 30;
-    else                     prodScore = 20;
+    if      (avgMedia >= 45) prodScore = 100; // top 5% Brasil, nível europeu
+    else if (avgMedia >= 40) prodScore = 88;  // top 15%, excelente
+    else if (avgMedia >= 35) prodScore = 75;  // acima da média confinamento
+    else if (avgMedia >= 30) prodScore = 60;  // média confinamento BR
+    else if (avgMedia >= 25) prodScore = 45;  // abaixo da média
+    else if (avgMedia >= 20) prodScore = 30;  // baixa produtividade
+    else                     prodScore = 15;  // crítico
   }
+  // Referência: "Média nacional 2023 = 24L; meta de sistemas confinados = 35L+" (Leite Brasil)
 
+  // DEL ideal: 150–180d = ótimo. Fora desse range indica problema de manejo reprodutivo
+  // Ref: Embrapa — DEL médio ideal 160d; acima de 210d = problema reprodutivo
   const del = last.del || farm.del || 0;
   let delScore = null;
   if (del > 0) {
-    // Ideal 150-180 days
-    if (del >= 150 && del <= 180)   delScore = 100;
-    else if (del >= 130 && del <= 200) delScore = 75;
-    else if (del >= 110)              delScore = 50;
-    else                              delScore = 30;
+    if      (del >= 155 && del <= 175) delScore = 100;
+    else if (del >= 140 && del <= 190) delScore = 80;
+    else if (del >= 120 && del <= 210) delScore = 60;
+    else if (del >= 100 && del <= 230) delScore = 40;
+    else                               delScore = 20;
   }
 
-  const ruminacao = last.ruminacao || 0;
+  // Taxa de ruminação: Ref: Metzner & Alsaaod — >55% do lote ruminando = bom
+  // Abaixo de 40% = alerta acidose/estresse
+  const rum = recent.filter(v=>v.ruminacao>0).map(v=>v.ruminacao);
+  const avgRum = rum.length ? rum.reduce((a,b)=>a+b,0)/rum.length : 0;
   let rumScore = null;
-  if (ruminacao > 0) {
-    if (ruminacao >= 60)      rumScore = 100;
-    else if (ruminacao >= 55) rumScore = 80;
-    else if (ruminacao >= 45) rumScore = 55;
-    else                      rumScore = 30;
+  if (avgRum > 0) {
+    if      (avgRum >= 60) rumScore = 100;
+    else if (avgRum >= 55) rumScore = 85;  // meta mínima
+    else if (avgRum >= 45) rumScore = 60;
+    else if (avgRum >= 35) rumScore = 35;
+    else                   rumScore = 15;  // alerta acidose
   }
 
   const produtividadeScore = avgScore([prodScore, delScore, rumScore]);
-
   const prodItems = [
-    { icon:'🥛', label:'Média L/vaca/dia', detail: avgMedia > 0 ? avgMedia.toFixed(1)+'L' : 'Sem dados', val: prodScore, max: 100 },
-    { icon:'📅', label:'DEL (dias em lactação)', detail: del > 0 ? del+'d (ideal 150-180)' : 'Sem dados', val: delScore, max: 100 },
-    { icon:'💭', label:'Taxa de Ruminação', detail: ruminacao > 0 ? ruminacao+'% (meta >55%)' : 'Sem dados', val: rumScore, max: 100 },
+    { icon:'🥛', label:'Média L/vaca/dia', detail: avgMedia>0?`${avgMedia.toFixed(1)}L (ref: >35L confinado, BR médio 24L)`:'Sem dados', val:prodScore, max:100 },
+    { icon:'📅', label:'DEL — Dias em Lactação', detail: del>0?`${del}d (ideal 155-175d | >210d = risco reprodutivo)`:'Sem dados', val:delScore, max:100 },
+    { icon:'💭', label:'Taxa de Ruminação', detail: avgRum>0?`${avgRum.toFixed(0)}% (meta >55% | <40% = alerta acidose)`:'Sem dados', val:rumScore, max:100 },
   ];
 
-  // ═══════════════════════════════════════════════════════
-  // ÍNDICE 2: NUTRIÇÃO (0-100)
-  // ═══════════════════════════════════════════════════════
-  const misturaScores = recent.filter(v=>v.mistura).map(v => scoreFromText(v.mistura,['bom','excelente'],['regular']));
-  const consumoScores = recent.filter(v=>v.consumo).map(v => scoreFromText(v.consumo,['bom','excelente'],['médio','medio']));
-  const fecalScores   = recent.filter(v=>v.fecal).map(v => {
-    const f = (v.fecal||'').toLowerCase();
-    if (f.includes('3 - ideal') || f.includes('ideal'))  return 100;
-    if (f.includes('2 - fluido') || f.includes('4 - firme')) return 55;
-    return 20;
+  // ═══════════════════════════════════════════════════════════════════
+  // ÍNDICE 2: NUTRIÇÃO (Peso 25%)
+  // Refs: Mertens (1997) NDF/ADF; Nocek (1997) acidose subclínica;
+  //       Grant & Albright (2000) TMR; Beauchemin (2018) score fecal
+  // ═══════════════════════════════════════════════════════════════════
+
+  // Mistura/TMR: uniformidade = chave para prevenção de acidose
+  const mistArr = recent.filter(v=>v.mistura).map(v=>scoreFromText(v.mistura,['bom','excelente'],['regular']));
+  const consumArr = recent.filter(v=>v.consumo).map(v=>scoreFromText(v.consumo,['bom','excelente'],['médio','medio']));
+
+  // Score Fecal: ref. Beauchemin 2018 — score 3 = ideal
+  // Score 1-2 = excesso de amido (risco acidose); 4-5 = falta de digestibilidade
+  const fecalArr = recent.filter(v=>v.fecal).map(v=>{
+    const f=(v.fecal||'').toLowerCase();
+    if(f.includes('3 - ideal')||f.includes('ideal')) return 100;
+    if(f.includes('2 - fluido')||f.includes('4 - firme')) return 50;
+    if(f.includes('1 - muito')||f.includes('5 - seco')) return 15;
+    return 50;
   });
-  const supScores = recent.filter(v=>v.suplemento&&v.suplemento!=='N/A').map(v => scoreFromText(v.suplemento,['bom','excelente'],['médio','medio']));
 
-  const msMilho = last.ms_silagem || 0;
-  let msScore = null;
-  if (msMilho > 0) {
-    // Ideal 30-35%
-    if (msMilho >= 28 && msMilho <= 37) msScore = 100;
-    else if (msMilho >= 25 && msMilho <= 40) msScore = 65;
-    else msScore = 35;
-  }
+  // Matéria seca silagem: Ref. McDonald et al. (2010) — MS 30-35% ótimo
+  // <28% = risco efluente, fermentação ruim; >38% = risco aquecimento aeróbico
+  const msArr = recent.filter(v=>v.ms_silagem>0).map(v=>{
+    const ms=v.ms_silagem;
+    if(ms>=30&&ms<=35) return 100;     // ótimo: fermentação estável, sem perdas
+    if(ms>=28&&ms<=38) return 75;      // aceitável
+    if(ms>=25&&ms<=40) return 50;      // limítrofe
+    return 20;                          // ruim: risco de perdas significativas
+  });
+  const msScore = msArr.length ? avgScore(msArr) : null;
 
-  const sobrasOk = recent.filter(v=>v.sobras).map(v => scoreFromText(v.sobras,['adequada'],['excessiva']));
+  // Sobras 3-5%: Ref. Heinrichs & Kononoff — abaixo = seleção, acima = desperdício
+  const sobraArr = recent.filter(v=>v.sobras).map(v=>scoreFromText(v.sobras,['adequada (3-5%)'],['excessiva']));
+
+  // Espaço de cocho: Ref. CNCPS — min 60cm/vaca; <45cm = competição severa
+  const cochoArr = recent.filter(v=>v.espaco_cocho>0).map(v=>{
+    const c=v.espaco_cocho;
+    if(c>=65) return 100;
+    if(c>=55) return 80;
+    if(c>=45) return 55;
+    return 20; // competição intensa → seleção de dieta e acidose
+  });
+
+  const supArr = recent.filter(v=>v.suplemento&&v.suplemento!=='N/A').map(v=>scoreFromText(v.suplemento,['bom','excelente'],['médio','medio']));
 
   const nutricaoScore = avgScore([
-    avgScore(misturaScores), avgScore(consumoScores),
-    avgScore(fecalScores), avgScore(supScores),
-    msScore, avgScore(sobrasOk)
+    avgScore(mistArr), avgScore(consumArr), avgScore(fecalArr),
+    msScore, avgScore(sobraArr), avgScore(cochoArr), avgScore(supArr)
   ]);
-
   const nutItems = [
-    { icon:'🌾', label:'Qualidade Mistura/TMR', detail: last.mistura||'Sem dados', val: avgScore(misturaScores), max:100 },
-    { icon:'🍽️', label:'Consumo dos Animais', detail: last.consumo||'Sem dados', val: avgScore(consumoScores), max:100 },
-    { icon:'💩', label:'Score Fecal', detail: last.fecal||'Sem dados', val: avgScore(fecalScores), max:100 },
-    { icon:'💊', label:'Consumo Suplemento Meta', detail: last.suplemento||'Sem dados', val: avgScore(supScores), max:100 },
-    { icon:'📊', label:'MS Silagem Milho', detail: msMilho > 0 ? msMilho+'% (ideal 30-35%)' : 'Sem dados', val: msScore, max:100 },
-    { icon:'🍽️', label:'Sobras de Cocho (3-5%)', detail: last.sobras||'Sem dados', val: avgScore(sobrasOk), max:100 },
+    { icon:'🌿', label:'Qualidade Mistura/TMR', detail:`${last.mistura||'Sem dados'} (Ref: homogênea, <10% separação)`, val:avgScore(mistArr), max:100 },
+    { icon:'💩', label:'Score Fecal (ideal=3)', detail:`${last.fecal||'Sem dados'} — Score 1-2: excesso amido; 4-5: fibra insuficiente`, val:avgScore(fecalArr), max:100 },
+    { icon:'🍽️', label:'Consumo dos Animais', detail:`${last.consumo||'Sem dados'} (CMS meta: 3,5-4% PV)`, val:avgScore(consumArr), max:100 },
+    { icon:'🌽', label:'MS Silagem (ideal 30-35%)', detail: recent.find(v=>v.ms_silagem>0)?`${recent.find(v=>v.ms_silagem>0).ms_silagem}% — <28% risco efluente; >38% risco aeróbico`:'Sem dados', val:msScore, max:100 },
+    { icon:'📏', label:'Espaço de Cocho (min 60cm)', detail: last.espaco_cocho>0?`${last.espaco_cocho}cm/vaca — <45cm = competição severa`:'Sem dados', val:avgScore(cochoArr), max:100 },
+    { icon:'🍽️', label:'Sobras de Cocho (3-5%)', detail:`${last.sobras||'Sem dados'} — 0% = subconsumo; >8% = desperdício`, val:avgScore(sobraArr), max:100 },
+    { icon:'💊', label:'Consumo do Suplemento Meta', detail:last.suplemento||'Sem dados', val:avgScore(supArr), max:100 },
   ];
 
-  // ═══════════════════════════════════════════════════════
-  // ÍNDICE 3: SAÚDE ANIMAL (0-100)
-  // ═══════════════════════════════════════════════════════
-  const cscScores = recent.filter(v=>v.cascos).map(v => scoreFromText(v.cascos,['sem claudic'],['leve']));
-  const ccsVal    = last.ccs || farm.ccs || 0;
+  // ═══════════════════════════════════════════════════════════════════
+  // ÍNDICE 3: SAÚDE ANIMAL (Peso 25%)
+  // Refs: Sheppard (2019) — incidência aceitável retenção <8%;
+  //       Drackley (1999) — cetose <5%; Guard (1994) — DA <2%;
+  //       USDA NAHMS 2014 — mortalidade adulta meta <3%/ano
+  //       NMC (2019) — CCS meta <200k; IN77 limite 500k
+  // ═══════════════════════════════════════════════════════════════════
+  const totalVacas = Math.max(last.vacas||farm.vacas||100, 1);
+
+  // CCS — Ref: NMC 2019 e Embrapa
+  // <200k = excelente; <400k = bom; 400-500k = IN77 limite;  >500k = reprovado
+  const ccsVal = last.ccs || farm.ccs || 0;
   let ccsScore = null;
   if (ccsVal > 0) {
-    if (ccsVal <= 200)      ccsScore = 100;
-    else if (ccsVal <= 300) ccsScore = 80;
-    else if (ccsVal <= 400) ccsScore = 60;
-    else if (ccsVal <= 500) ccsScore = 40;
-    else                    ccsScore = 20;
+    if      (ccsVal <= 150) ccsScore = 100; // nível europeu premium
+    else if (ccsVal <= 200) ccsScore = 90;  // excelente — NMC meta
+    else if (ccsVal <= 300) ccsScore = 75;  // bom
+    else if (ccsVal <= 400) ccsScore = 55;  // atenção
+    else if (ccsVal <= 500) ccsScore = 35;  // IN77 limite máximo
+    else                    ccsScore = 10;  // reprovado
   }
 
-  // Penalize for disease occurrences (per 100 cows)
-  const totalVacas = Math.max(last.vacas || farm.vacas || 100, 1);
-  const totalRet  = visits.reduce((a,v)=>a+(v.retencao||0),0);
-  const totalCet  = visits.reduce((a,v)=>a+(v.cetose||0),0);
-  const totalDA   = visits.reduce((a,v)=>a+(v.da||0),0);
+  // Incidência retenção placenta: aceitável <8% do plantel/mês
+  const totalRet = visits.reduce((a,v)=>a+(v.retencao||0),0);
+  const incRet   = visits.length > 0 ? (totalRet/totalVacas*100) : null;
+  let retScore = null;
+  if (incRet !== null) {
+    if      (incRet === 0)   retScore = 100;
+    else if (incRet <= 3)    retScore = 90;  // ótimo
+    else if (incRet <= 8)    retScore = 70;  // aceitável (Sheppard 2019)
+    else if (incRet <= 15)   retScore = 45;  // atenção
+    else                     retScore = 15;  // crítico — risco metrite
+  }
+
+  // Cetose clínica: aceitável <5% plantel/mês (Drackley 1999)
+  const totalCet = visits.reduce((a,v)=>a+(v.cetose||0),0);
+  const incCet   = visits.length > 0 ? (totalCet/totalVacas*100) : null;
+  let cetScore = null;
+  if (incCet !== null) {
+    if      (incCet === 0)  cetScore = 100;
+    else if (incCet <= 2)   cetScore = 90;  // baixo
+    else if (incCet <= 5)   cetScore = 70;  // aceitável
+    else if (incCet <= 10)  cetScore = 45;  // atenção — ajustar BEN pré-parto
+    else                    cetScore = 15;  // crítico — programa transição falhou
+  }
+
+  // Deslocamento de abomaso: aceitável <2% plantel (Guard 1994)
+  const totalDA  = visits.reduce((a,v)=>a+(v.da||0),0);
+  const incDA    = visits.length > 0 ? (totalDA/totalVacas*100) : null;
+  let daScore = null;
+  if (incDA !== null) {
+    if      (incDA === 0)  daScore = 100;
+    else if (incDA <= 1)   daScore = 90;
+    else if (incDA <= 2)   daScore = 70;  // limite Guard
+    else if (incDA <= 5)   daScore = 40;
+    else                   daScore = 10;  // crítico — rúmen vazio pós-parto
+  }
+
+  // Mortalidade adulta: meta <3%/ano = <0.25%/mês (USDA NAHMS 2014)
   const totalMort = visits.reduce((a,v)=>a+(v.morte_vacas||0),0);
-
-  const incidRet  = totalRet / totalVacas * 100;
-  const incidCet  = totalCet / totalVacas * 100;
-  const incidDA   = totalDA  / totalVacas * 100;
-  const incidMort = totalMort / totalVacas * 100;
-
-  let diseaseScore = null;
-  if (visits.length > 0) {
-    const retPenalty  = Math.max(0, 100 - incidRet  * 10);
-    const cetPenalty  = Math.max(0, 100 - incidCet  * 10);
-    const daPenalty   = Math.max(0, 100 - incidDA   * 20);
-    const mortPenalty = Math.max(0, 100 - incidMort * 15);
-    diseaseScore = (retPenalty + cetPenalty + daPenalty + mortPenalty) / 4;
+  const incMort   = visits.length > 0 ? (totalMort/totalVacas*100) : null;
+  let mortScore = null;
+  if (incMort !== null) {
+    if      (incMort === 0)   mortScore = 100;
+    else if (incMort <= 0.25) mortScore = 90;  // meta/mês
+    else if (incMort <= 0.5)  mortScore = 70;
+    else if (incMort <= 1.0)  mortScore = 45;
+    else                      mortScore = 15;
   }
 
-  const saudeScore = avgScore([avgScore(cscScores), ccsScore, diseaseScore]);
+  // Cascos/claudicação: ref. Sprecher et al. (1997) — >15% claudicantes = problema
+  const cascoArr = recent.filter(v=>v.cascos).map(v=>scoreFromText(v.cascos,['sem claudic'],['leve (<5%)']));
 
+  const saudeScore = avgScore([ccsScore, retScore, cetScore, daScore, mortScore, avgScore(cascoArr)]);
   const saudeItems = [
-    { icon:'🦶', label:'Saúde dos Cascos', detail: last.cascos||'Sem dados', val: avgScore(cscScores), max:100 },
-    { icon:'🔬', label:'CCS (Mastite)', detail: ccsVal > 0 ? ccsVal+'k cel/mL' : 'Sem dados', val: ccsScore, max:100 },
-    { icon:'🏥', label:'Ocorrências Metabólicas', detail: visits.length > 0 ? `Ret:${totalRet} | Cet:${totalCet} | DA:${totalDA}` : 'Sem dados', val: diseaseScore, max:100 },
-    { icon:'💀', label:'Mortalidade de Vacas', detail: totalMort > 0 ? `${totalMort} mortes (${incidMort.toFixed(1)}%)` : '✅ 0 registros', val: totalMort===0&&visits.length>0?100:diseaseScore, max:100 },
+    { icon:'🔬', label:'CCS — Contagem Células Somáticas', detail: ccsVal>0?`${ccsVal}k cel/mL (meta <200k | IN77 limite 500k)`:'Sem dados', val:ccsScore, max:100 },
+    { icon:'🏥', label:'Retenção de Placenta', detail: incRet!==null?`${totalRet} casos (${incRet.toFixed(1)}% plantel | ref. aceitável <8%)`:'Sem dados', val:retScore, max:100 },
+    { icon:'🟡', label:'Cetose Clínica', detail: incCet!==null?`${totalCet} casos (${incCet.toFixed(1)}% | ref. aceitável <5% — Drackley 1999)`:'Sem dados', val:cetScore, max:100 },
+    { icon:'🔴', label:'Deslocamento de Abomaso', detail: incDA!==null?`${totalDA} casos (${incDA.toFixed(1)}% | ref. aceitável <2% — Guard 1994)`:'Sem dados', val:daScore, max:100 },
+    { icon:'💀', label:'Mortalidade de Vacas', detail: incMort!==null?`${totalMort} mortes (${incMort.toFixed(1)}% | meta <0.25%/mês — USDA NAHMS)`:'Sem dados', val:mortScore, max:100 },
+    { icon:'🦶', label:'Saúde dos Cascos', detail:`${last.cascos||'Sem dados'} (ref: <10% claudicantes = bom — Sprecher 1997)`, val:avgScore(cascoArr), max:100 },
   ];
 
-  // ═══════════════════════════════════════════════════════
-  // ÍNDICE 4: AMBIÊNCIA E CONFORTO (0-100)
-  // ═══════════════════════════════════════════════════════
-  const camaScores = recent.filter(v=>v.cama).map(v => scoreFromText(v.cama,['seca e fofa'],['úmida']));
-  const ventScores = recent.filter(v=>v.ventilacao).map(v => scoreFromText(v.ventilacao,['100%'],['falhas']));
-  const aguaScores = recent.filter(v=>v.bebedouros).map(v => scoreFromText(v.bebedouros,['excelente'],['sujos']));
-  const termalScores = recent.filter(v=>v.termal).map(v => scoreFromText(v.termal,['confortável'],['leve']));
+  // ═══════════════════════════════════════════════════════════════════
+  // ÍNDICE 4: AMBIÊNCIA E CONFORTO (Peso 15%)
+  // Refs: Cook & Nordlund (2009) free stall; St-Pierre et al. (2003) ITU;
+  //       Bewley (2010) índice de conforto >85%; ASHRAE (2017) ventilação
+  // ═══════════════════════════════════════════════════════════════════
+  const camaArr  = recent.filter(v=>v.cama).map(v=>scoreFromText(v.cama,['seca e fofa'],['úmida']));
+  const ventArr  = recent.filter(v=>v.ventilacao).map(v=>scoreFromText(v.ventilacao,['100%'],['falhas']));
+  const aguaArr  = recent.filter(v=>v.bebedouros).map(v=>scoreFromText(v.bebedouros,['excelente'],['sujos']));
+  // Conforto térmico: ITU>72 = queda produção 10-15%; ITU>80 = queda >25% (St-Pierre 2003)
+  const termalArr = recent.filter(v=>v.termal).map(v=>scoreFromText(v.termal,['confortável'],['estresse leve']));
 
-  const ambScore = avgScore([
-    avgScore(camaScores), avgScore(ventScores),
-    avgScore(aguaScores), avgScore(termalScores)
-  ]);
-
+  const ambScore = avgScore([avgScore(camaArr),avgScore(ventArr),avgScore(aguaArr),avgScore(termalArr)]);
   const ambItems = [
-    { icon:'🛏️', label:'Conforto da Cama', detail: last.cama||'Sem dados', val: avgScore(camaScores), max:100 },
-    { icon:'💨', label:'Ventilação/Aspersores', detail: last.ventilacao||'Sem dados', val: avgScore(ventScores), max:100 },
-    { icon:'💧', label:'Bebedouros', detail: last.bebedouros||'Sem dados', val: avgScore(aguaScores), max:100 },
-    { icon:'🌡️', label:'Conforto Térmico', detail: last.termal||'Sem dados', val: avgScore(termalScores), max:100 },
+    { icon:'🛏️', label:'Conforto da Cama (Free Stall/Compost)', detail:`${last.cama||'Sem dados'} (meta >85% vacas deitadas — Bewley 2010)`, val:avgScore(camaArr), max:100 },
+    { icon:'💨', label:'Ventilação e Aspersores', detail:`${last.ventilacao||'Sem dados'} (meta: vel. ar >1m/s no nível do animal — ASHRAE)`, val:avgScore(ventArr), max:100 },
+    { icon:'💧', label:'Bebedouros (limpeza e acesso)', detail:`${last.bebedouros||'Sem dados'} (meta: ≥10cm bebedouro/vaca, água <25°C)`, val:avgScore(aguaArr), max:100 },
+    { icon:'🌡️', label:'Conforto Térmico (ITU)', detail:`${last.termal||'Sem dados'} (ITU>72: -10% prod.; ITU>80: -25% prod. — St-Pierre 2003)`, val:avgScore(termalArr), max:100 },
   ];
 
-  // ═══════════════════════════════════════════════════════
-  // ÍNDICE 5: CHECKLIST DE BOAS PRÁTICAS (0-100)
-  // ═══════════════════════════════════════════════════════
+  // ═══════════════════════════════════════════════════════════════════
+  // ÍNDICE 5: BOAS PRÁTICAS E GESTÃO (Peso 5%)
+  // ═══════════════════════════════════════════════════════════════════
   let checkScore = null;
-  if (visits.some(v => (v.checklist||[]).length > 0)) {
-    const totalItems = 23; // total checklist items
-    const avgChecked = recent
-      .filter(v => (v.checklist||[]).length > 0)
-      .map(v => (v.checklist||[]).length / totalItems * 100);
-    checkScore = avgChecked.length ? avgScore(avgChecked) : null;
+  const totalItems = 23;
+  const checkVisits = recent.filter(v=>(v.checklist||[]).length>0);
+  if (checkVisits.length > 0) {
+    checkScore = avgScore(checkVisits.map(v=>(v.checklist||[]).length/totalItems*100));
   }
-
-  const checkDetail = last.checklist?.length > 0
-    ? `${last.checklist.length}/23 itens OK (última visita)`
+  const checkDetail = last.checklist?.length>0
+    ? `${last.checklist.length}/${totalItems} itens OK (${Math.round(last.checklist.length/totalItems*100)}%)`
     : 'Checklist não preenchido';
 
-  // ═══════════════════════════════════════════════════════
-  // ÍNDICE GERAL
-  // ═══════════════════════════════════════════════════════
+  // ═══════════════════════════════════════════════════════════════════
+  // ÍNDICE GERAL PONDERADO
+  // ═══════════════════════════════════════════════════════════════════
   const indexWeights = [
-    { name: 'Produtividade',     score: produtividadeScore, weight: 0.30, icon: '🥛', items: prodItems },
-    { name: 'Nutrição',          score: nutricaoScore,      weight: 0.25, icon: '🌾', items: nutItems  },
-    { name: 'Saúde Animal',      score: saudeScore,         weight: 0.25, icon: '🏥', items: saudeItems},
-    { name: 'Ambiência',         score: ambScore,           weight: 0.15, icon: '🏗️', items: ambItems  },
-    { name: 'Boas Práticas',     score: checkScore,         weight: 0.05, icon: '✅', items: [
-      { icon:'✅', label:'Checklist de Boas Práticas', detail: checkDetail, val: checkScore, max:100 }
+    { name:'Produtividade',   score:produtividadeScore, weight:0.30, icon:'🥛', items:prodItems  },
+    { name:'Nutrição',        score:nutricaoScore,      weight:0.25, icon:'🌾', items:nutItems   },
+    { name:'Saúde Animal',    score:saudeScore,         weight:0.25, icon:'🏥', items:saudeItems },
+    { name:'Ambiência',       score:ambScore,           weight:0.15, icon:'🏗️', items:ambItems   },
+    { name:'Boas Práticas',   score:checkScore,         weight:0.05, icon:'✅', items:[
+      { icon:'✅', label:'Checklist de Boas Práticas', detail:checkDetail, val:checkScore, max:100 }
     ]},
   ];
 
-  const validWeights = indexWeights.filter(i => i.score !== null && i.score !== undefined);
+  const validW = indexWeights.filter(i=>i.score!==null&&i.score!==undefined);
   let totalScore = null;
-  if (validWeights.length > 0) {
-    const totalWeight = validWeights.reduce((a,i) => a+i.weight, 0);
-    totalScore = validWeights.reduce((a,i) => a + (i.score * i.weight), 0) / totalWeight;
+  if (validW.length > 0) {
+    const tw = validW.reduce((a,i)=>a+i.weight,0);
+    totalScore = validW.reduce((a,i)=>a+(i.score*i.weight),0)/tw;
   }
-
-  return { indices: indexWeights, total: totalScore, visits: visits.length };
+  return { indices:indexWeights, total:totalScore, visits:visits.length };
 }
 
 // ── RENDER INDICES ─────────────────────────────────────────────────────
