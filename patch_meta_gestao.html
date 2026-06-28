@@ -1,0 +1,177 @@
+<!--
+=======================================================
+PATCH META GESTÃO — 2 ALTERAÇÕES
+=======================================================
+INSTRUÇÕES:
+Abra o painel.html no VS Code ou Notepad++.
+Use Ctrl+H (Localizar e Substituir).
+Faça cada substituição abaixo na ordem indicada.
+=======================================================
+-->
+
+
+<!-- ===================================================
+ALTERAÇÃO 1 — CAMPO NUL NO RELATÓRIO DE VISITA
+=================================================== -->
+
+<!--
+PASSO 1A: No formulário do relatório (seção Qualidade do Leite)
+
+LOCALIZE exatamente este trecho (campo CBT):
+-->
+
+<!-- LOCALIZAR:
+id="rel_cbt"
+-->
+
+<!-- O campo completo provavelmente se parece com isto:
+<div ...>
+  <label>CBT (UFC/mL)</label>
+  <input type="number" id="rel_cbt" ...>
+</div>
+
+APÓS esse div do CBT, ADICIONE o seguinte bloco: -->
+
+<div class="form-group" style="margin-bottom:12px;">
+  <label style="font-weight:600;color:#444;">NUL - Nitrogênio Ureico do Leite (mg/dL)</label>
+  <input type="number" id="rel_nul" step="0.1" min="0" max="50"
+    placeholder="Ref: 10-16 mg/dL"
+    style="width:100%;padding:8px 10px;border:1px solid #ddd;border-radius:6px;font-size:14px;">
+  <small style="color:#888;font-size:11px;">⚠️ Referência: 10–16 mg/dL. Abaixo = deficiência proteica. Acima = excesso de PDR.</small>
+</div>
+
+
+<!-- ===================================================
+PASSO 1B: Na função que SALVA o relatório no Firebase
+
+LOCALIZE esta linha (onde salva o CBT):
+    rel_cbt: document.getElementById('rel_cbt')?.value || '',
+
+ADICIONE logo abaixo:
+    rel_nul: document.getElementById('rel_nul')?.value || '',
+=================================================== -->
+
+<script>
+// -------------------------------------------------------
+// PATCH 1B — Adicionar NUL ao salvar relatório
+// -------------------------------------------------------
+// INSTRUÇÃO: Na função salvarRelatorioVisita (ou similar),
+// localize onde está:
+//   rel_cbt: document.getElementById('rel_cbt')?.value || '',
+// e adicione LOGO ABAIXO:
+//   rel_nul: document.getElementById('rel_nul')?.value || '',
+// -------------------------------------------------------
+
+
+// -------------------------------------------------------
+// PATCH 1C — Carregar NUL ao abrir relatório existente
+// -------------------------------------------------------
+// INSTRUÇÃO: Onde os campos são preenchidos ao carregar (algo como):
+//   if(rel.rel_cbt) document.getElementById('rel_cbt').value = rel.rel_cbt;
+// Adicione LOGO ABAIXO:
+//   if(rel.rel_nul) document.getElementById('rel_nul').value = rel.rel_nul;
+// -------------------------------------------------------
+
+
+// ===================================================
+// ALTERAÇÃO 2 — TROCA DE VENDEDOR NO PAINEL DE EDIÇÃO
+// ===================================================
+
+// -------------------------------------------------------
+// PASSO 2A: Encontre a função que ABRE o modal de edição
+// Busque por: function abrirEdicao ou abrirModalPropriedade
+// ou busque por: edit_vacas ou edit_litros
+//
+// Onde os campos são preenchidos, adicione:
+// -------------------------------------------------------
+
+// Exemplo de como preencher o select ao abrir:
+function preencherVendedorEdicao(dadosPropriedade) {
+  const sel = document.getElementById('edit_vendedor');
+  if (sel && dadosPropriedade) {
+    sel.value = dadosPropriedade.vendedor || '';
+  }
+}
+
+// -------------------------------------------------------
+// PASSO 2B: Encontre a função salvarEdicaoAdmin
+// Onde os dados são coletados antes de salvar, adicione:
+// -------------------------------------------------------
+
+function coletarVendedorEdicao() {
+  const sel = document.getElementById('edit_vendedor');
+  return sel ? sel.value : '';
+}
+
+// No objeto que vai para o Firebase, inclua:
+// vendedor: coletarVendedorEdicao(),
+</script>
+
+
+<!-- ===================================================
+PASSO 2C: No HTML do modal de edição (aba "Editar Dados")
+
+LOCALIZE o campo de nome do produtor ou rebanho, algo como:
+  <input type="number" id="edit_rebanho" ...>
+
+ADICIONE após esse grupo o bloco abaixo:
+=================================================== -->
+
+<div class="form-group" style="margin-top:14px;margin-bottom:12px;">
+  <label style="font-weight:600;color:#444;display:block;margin-bottom:4px;">
+    👤 Vendedor Responsável
+  </label>
+  <select id="edit_vendedor"
+    style="width:100%;padding:9px 12px;border:1px solid #ddd;border-radius:6px;
+           font-size:14px;background:#fff;cursor:pointer;color:#333;">
+    <option value="">— Selecionar Vendedor —</option>
+    <option value="Alexandre">Alexandre</option>
+    <option value="Arthur">Arthur</option>
+    <option value="Joziel">Joziel</option>
+    <option value="Julio">Julio</option>
+    <option value="Lucas">Lucas</option>
+    <option value="Maicon">Maicon</option>
+    <option value="Paulo">Paulo</option>
+    <option value="Vagner">Vagner</option>
+  </select>
+  <small style="color:#888;font-size:11px;">Trocar o vendedor aqui atualiza no Firebase imediatamente ao salvar.</small>
+</div>
+
+
+<!--
+=======================================================
+RESUMO COMPLETO — O QUE FAZER NO painel.html
+=======================================================
+
+ALTERAÇÃO 1 (NUL):
+  1. Ctrl+H → buscar: id="rel_cbt"
+     → após o </div> que fecha esse campo, colar o bloco
+       do PASSO 1A acima
+
+  2. Ctrl+H → buscar: rel_cbt: document.getElementById('rel_cbt')
+     → na linha seguinte, adicionar:
+       rel_nul: document.getElementById('rel_nul')?.value || '',
+
+  3. Ctrl+H → buscar onde carrega o valor do cbt existente,
+     tipo: .value = rel.rel_cbt ou rel_cbt.value = 
+     → logo abaixo, adicionar:
+       document.getElementById('rel_nul').value = rel.rel_nul || '';
+
+ALTERAÇÃO 2 (Vendedor):
+  1. Ctrl+H → buscar: id="edit_rebanho"  (ou edit_vacas, edit_litros)
+     → após o </div> desse campo, colar o bloco SELECT do PASSO 2C
+
+  2. Na função que ABRE o modal de edição, adicionar:
+     document.getElementById('edit_vendedor').value = prop.vendedor || '';
+
+  3. Na função salvarEdicaoAdmin, no objeto de dados, adicionar:
+     vendedor: document.getElementById('edit_vendedor')?.value || dadosAtuais.vendedor || '',
+
+=======================================================
+DICA IMPORTANTE para o vendedor:
+  A função salvarEdicaoAdmin já foi corrigida antes para
+  preservar tecnico_titular e tecnico_substituto.
+  Apenas garanta que "vendedor" também esteja no objeto
+  que você manda para o Firebase, do mesmo jeito.
+=======================================================
+-->
