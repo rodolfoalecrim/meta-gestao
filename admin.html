@@ -548,6 +548,234 @@ tbody td { padding:10px 12px; font-size:12px; }
 .prod-city { font-size: 10px; color: var(--muted); }
 .prod-hist-ico { font-size: 14px; opacity: .5; margin-left: 4px; }
 
+
+/* ── RELATÓRIO DE VISITA ── */
+.rel-section { margin-bottom: 20px; }
+.rel-section-title {
+  font-size: 11px; font-weight: 700; color: var(--muted); text-transform: uppercase;
+  letter-spacing: .6px; margin-bottom: 12px; display: flex; align-items: center; gap: 8px;
+  padding-bottom: 8px; border-bottom: 2px solid var(--border);
+}
+.rel-section-title span { font-size: 16px; }
+.rel-grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px; }
+.rel-grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; margin-bottom: 12px; }
+.rel-grid-4 { display: grid; grid-template-columns: repeat(4,1fr); gap: 10px; margin-bottom: 12px; }
+.rel-group { display: flex; flex-direction: column; gap: 5px; }
+.rel-label { font-size: 11px; font-weight: 600; color: var(--muted); }
+.rel-input, .rel-select, .rel-textarea {
+  background: #f8fafc; border: 1.5px solid var(--border);
+  border-radius: 8px; color: var(--text); font-size: 13px;
+  font-family: 'Inter', sans-serif; padding: 9px 12px; outline: none;
+  transition: border-color .15s;
+}
+.rel-input:focus, .rel-select:focus, .rel-textarea:focus {
+  border-color: var(--G); background: white;
+}
+.rel-textarea { resize: vertical; min-height: 80px; }
+
+/* SCORE BUTTONS */
+.score-group { display: flex; gap: 6px; }
+.score-btn {
+  flex: 1; padding: 8px 4px; border-radius: 8px; border: 2px solid var(--border);
+  background: white; font-size: 12px; font-weight: 700; cursor: pointer;
+  font-family: 'Inter', sans-serif; transition: all .15s; text-align: center;
+}
+.score-btn:hover { transform: translateY(-1px); }
+.score-btn.bom   { border-color: #16a34a; }
+.score-btn.bom.on   { background: #16a34a; color: white; }
+.score-btn.medio { border-color: #d97706; }
+.score-btn.medio.on { background: #d97706; color: white; }
+.score-btn.ruim  { border-color: #dc2626; }
+.score-btn.ruim.on  { background: #dc2626; color: white; }
+.score-btn.na    { border-color: #94a3b8; }
+.score-btn.na.on    { background: #94a3b8; color: white; }
+
+/* CHECKLIST */
+.checklist { display: flex; flex-direction: column; gap: 8px; margin-bottom: 12px; }
+.check-item {
+  display: flex; align-items: flex-start; gap: 12px;
+  background: #f8fafc; border: 1.5px solid var(--border); border-radius: 10px;
+  padding: 12px 14px; cursor: pointer; transition: all .15s;
+  position: relative;
+}
+.check-item:hover { background: #f0fdf4; border-color: #86efac; box-shadow: 0 2px 8px rgba(22,163,74,0.1); }
+.check-item.checked { background: #f0fdf4; border-color: #16a34a; }
+.check-box {
+  width: 22px; height: 22px; border-radius: 6px; border: 2px solid #cbd5e1;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 13px; flex-shrink: 0; transition: all .2s; background: white;
+  margin-top: 1px;
+}
+.check-item.checked .check-box { background: #16a34a; border-color: #16a34a; color: white; }
+.check-label { font-size: 12px; font-weight: 700; color: #1a202c; line-height: 1.3; }
+.check-sub { font-size: 10px; color: var(--muted); margin-top: 2px; line-height: 1.4; }
+
+/* VISIT SAVE BTN */
+.visit-save-btn {
+  width: 100%; background: linear-gradient(135deg, #0891b2, #0e7490);
+  border: none; border-radius: 10px; color: white; font-size: 14px; font-weight: 700;
+  font-family: 'Inter', sans-serif; padding: 14px; cursor: pointer; margin-top: 8px;
+  box-shadow: 0 4px 15px rgba(8,145,178,0.3); transition: opacity .15s;
+  display: flex; align-items: center; justify-content: center; gap: 8px;
+}
+.visit-save-btn:hover { opacity: .9; }
+.visit-save-btn:disabled { opacity: .6; cursor: not-allowed; }
+
+/* VISIT HISTORY CARD */
+.visit-card {
+  background: white; border: 1px solid var(--border); border-radius: 12px;
+  overflow: hidden; margin-bottom: 12px;
+}
+.visit-card-hdr {
+  background: linear-gradient(90deg, #0891b2, #0e7490);
+  color: white; padding: 10px 14px;
+  display: flex; align-items: center; justify-content: space-between;
+}
+.visit-card-date { font-size: 12px; font-weight: 700; }
+.visit-card-by { font-size: 10px; opacity: .8; }
+.visit-card-body { padding: 12px 14px; }
+.visit-scores { display: grid; grid-template-columns: repeat(4,1fr); gap: 8px; margin-bottom: 10px; }
+.vscore { text-align: center; background: #f8fafc; border-radius: 8px; padding: 8px; }
+.vscore .vv { font-size: 18px; font-weight: 800; }
+.vscore .vl { font-size: 9px; color: var(--muted); font-weight: 600; text-transform: uppercase; }
+.visit-metrics { display: grid; grid-template-columns: repeat(5,1fr); gap: 6px; margin-bottom: 10px; }
+.vmetric { background: #f8fafc; border-radius: 8px; padding: 8px; text-align: center; }
+.vmetric .vmv { font-size: 15px; font-weight: 800; }
+.vmetric .vml { font-size: 9px; color: var(--muted); font-weight: 600; text-transform: uppercase; }
+.visit-checks { display: flex; flex-wrap: wrap; gap: 5px; margin-bottom: 8px; }
+.vcheck-tag {
+  background: #dcfce7; color: #15803d; font-size: 10px; font-weight: 700;
+  padding: 3px 8px; border-radius: 6px;
+}
+.visit-obs { font-size: 11px; color: var(--muted); font-style: italic; padding: 8px 0;
+  border-top: 1px solid var(--border); margin-top: 8px; }
+
+
+/* ── PAINEL LATERAL DE VISITAS ── */
+.visit-panel-overlay {
+  position: fixed; inset: 0; background: rgba(0,0,0,0.4);
+  z-index: 3000; display: flex; justify-content: flex-end;
+  backdrop-filter: blur(2px);
+}
+.visit-panel {
+  background: white; width: 100%; max-width: 520px;
+  height: 100vh; display: flex; flex-direction: column;
+  box-shadow: -8px 0 40px rgba(0,0,0,0.2);
+  animation: slideIn .25s ease-out;
+}
+@keyframes slideIn { from { transform: translateX(100%); } to { transform: translateX(0); } }
+
+.vp-header {
+  background: linear-gradient(135deg, #003c09, #1a6b35);
+  color: white; padding: 16px 20px; flex-shrink: 0;
+  display: flex; align-items: center; gap: 12px;
+}
+.vp-av {
+  width: 44px; height: 44px; border-radius: 12px;
+  background: rgba(255,255,255,0.2); display: flex;
+  align-items: center; justify-content: center;
+  font-size: 14px; font-weight: 800; flex-shrink: 0;
+}
+.vp-title { font-size: 14px; font-weight: 800; }
+.vp-sub { font-size: 10px; opacity: .75; margin-top: 2px; }
+.vp-close {
+  margin-left: auto; background: rgba(255,255,255,0.15);
+  border: 1px solid rgba(255,255,255,0.3); color: white;
+  width: 30px; height: 30px; border-radius: 8px; font-size: 16px;
+  cursor: pointer; display: flex; align-items: center; justify-content: center;
+}
+.vp-tabs {
+  display: flex; border-bottom: 2px solid var(--border);
+  background: #f8fafc; flex-shrink: 0;
+}
+.vp-tab {
+  flex: 1; padding: 11px 8px; font-size: 11px; font-weight: 700;
+  color: var(--muted); cursor: pointer; border-bottom: 3px solid transparent;
+  margin-bottom: -2px; text-align: center; transition: all .15s;
+}
+.vp-tab:hover { color: var(--text); }
+.vp-tab.on { color: var(--GD); border-bottom-color: var(--G); }
+.vp-body { flex: 1; overflow-y: auto; padding: 16px; scrollbar-width: thin; }
+.vp-body::-webkit-scrollbar { width: 3px; }
+.vp-body::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+/* Monthly report cards */
+.month-card {
+  background: white; border: 1px solid var(--border);
+  border-radius: 12px; overflow: hidden; margin-bottom: 12px;
+  box-shadow: var(--shadow);
+}
+.month-card-hdr {
+  background: linear-gradient(90deg, #003c09, #1a6b35);
+  color: white; padding: 10px 14px;
+  display: flex; align-items: center; justify-content: space-between;
+  cursor: pointer;
+}
+.month-card-title { font-size: 13px; font-weight: 800; }
+.month-card-meta { font-size: 10px; opacity: .75; }
+.month-card-body { padding: 12px 14px; }
+.month-kpis { display: grid; grid-template-columns: repeat(3,1fr); gap: 8px; margin-bottom: 10px; }
+.mkpi { background: #f8fafc; border-radius: 8px; padding: 8px; text-align: center; }
+.mkpi .mv { font-size: 18px; font-weight: 900; line-height: 1; }
+.mkpi .ml { font-size: 9px; color: var(--muted); font-weight: 600; text-transform: uppercase; margin-top: 2px; }
+.month-scores { display: flex; flex-wrap: wrap; gap: 5px; margin-bottom: 8px; }
+.mscore {
+  display: inline-flex; align-items: center; gap: 4px;
+  font-size: 10px; font-weight: 700; padding: 3px 8px; border-radius: 6px;
+}
+.mscore.bom    { background: #dcfce7; color: #15803d; }
+.mscore.medio  { background: #fef9c3; color: #a16207; }
+.mscore.ruim   { background: #fee2e2; color: #b91c1c; }
+.mscore.neutro { background: #f1f5f9; color: #64748b; }
+.month-checks { margin-bottom: 8px; }
+.month-checks-title { font-size: 10px; font-weight: 700; color: var(--muted); text-transform: uppercase; margin-bottom: 5px; }
+.month-check-tag {
+  display: inline-flex; align-items: center; gap: 3px;
+  font-size: 9px; font-weight: 600; padding: 2px 6px;
+  border-radius: 4px; background: #dcfce7; color: #15803d; margin: 2px;
+}
+.month-sanit { font-size: 11px; color: #64748b; border-top: 1px solid var(--border); padding-top: 8px; }
+.month-sanit b { color: var(--text); }
+.month-obs { font-size: 11px; color: var(--muted); font-style: italic; border-top: 1px solid var(--border); padding-top: 8px; margin-top: 8px; }
+.month-acoes { font-size: 11px; color: #0891b2; border-top: 1px solid var(--border); padding-top: 8px; margin-top: 8px; font-weight: 600; }
+
+/* Summary stat bar */
+.summary-bar {
+  background: linear-gradient(135deg, #f0fdf4, #dcfce7);
+  border: 1px solid #86efac; border-radius: 12px; padding: 14px; margin-bottom: 16px;
+}
+.summary-bar h4 { font-size: 12px; font-weight: 800; color: var(--GD); margin-bottom: 10px; }
+.summary-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 8px; }
+.sg-item { text-align: center; }
+.sg-val { font-size: 20px; font-weight: 900; color: var(--GD); }
+.sg-lbl { font-size: 9px; color: var(--GM); font-weight: 700; text-transform: uppercase; }
+
+/* Incidence chart */
+.inc-row { display: flex; align-items: center; gap: 10px; padding: 7px 0; border-bottom: 1px solid #f1f5f9; }
+.inc-row:last-child { border-bottom: none; }
+.inc-lbl { font-size: 11px; font-weight: 600; flex: 1; }
+.inc-bar { flex: 0 0 100px; height: 6px; background: #f1f5f9; border-radius: 3px; position: relative; }
+.inc-fill { position: absolute; top: 0; left: 0; height: 6px; border-radius: 3px; }
+.inc-val { font-size: 11px; font-weight: 800; min-width: 40px; text-align: right; font-family: 'JetBrains Mono', monospace; }
+
+/* New visit BTN */
+.new-visit-btn {
+  width: 100%; background: linear-gradient(135deg, #0891b2, #0e7490);
+  border: none; border-radius: 10px; color: white; font-size: 13px;
+  font-weight: 700; font-family: 'Inter', sans-serif; padding: 12px;
+  cursor: pointer; margin-bottom: 16px;
+  display: flex; align-items: center; justify-content: center; gap: 8px;
+  box-shadow: 0 4px 12px rgba(8,145,178,0.3);
+}
+.new-visit-btn:hover { opacity: .9; }
+
+/* tec badge in table */
+.tec-tag {
+  display: inline-flex; align-items: center; gap: 4px;
+  font-size: 10px; font-weight: 700; padding: 2px 8px; border-radius: 6px;
+  background: #eff6ff; color: #1d4ed8; margin: 1px;
+}
+
 </style>
 </head>
 <body>
@@ -917,6 +1145,7 @@ tbody td { padding:10px 12px; font-size:12px; }
     </div>
     <div class="modal-tabs">
       <div class="modal-tab on" id="mtab-hist" onclick="switchTab('hist')">📈 Histórico & Gráficos</div>
+      <div class="modal-tab" id="mtab-visit" onclick="switchTab('visit')">📋 Relatório de Visita</div>
       <div class="modal-tab" id="mtab-edit" onclick="switchTab('edit')">✏️ Editar Dados</div>
     </div>
     <div class="modal-body">
@@ -935,6 +1164,595 @@ tbody td { padding:10px 12px; font-size:12px; }
         <!-- Timeline entries -->
         <div style="font-size:12px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:12px">Linha do Tempo</div>
         <div class="hist-timeline" id="hist-timeline"></div>
+      </div>
+
+
+      <!-- TAB RELATÓRIO DE VISITA -->
+      <div id="tab-visit" style="display:none">
+
+        <!-- CABEÇALHO DO RELATÓRIO -->
+        <div style="background:linear-gradient(135deg,#003c09,#1a6b35);border-radius:12px;padding:16px 20px;margin-bottom:20px;color:white">
+          <div style="font-size:15px;font-weight:800;margin-bottom:4px">📋 Relatório de Visita Técnica</div>
+          <div style="font-size:11px;opacity:.75">Meta Nutrição e Saúde Animal — Preencha todos os campos durante a visita</div>
+        </div>
+
+        <!-- ══════════════════════════════════════════ -->
+        <!-- 1. DADOS GERAIS DA VISITA                  -->
+        <!-- ══════════════════════════════════════════ -->
+        <div class="rel-section">
+          <div class="rel-section-title"><span>📅</span>1. Dados Gerais da Visita</div>
+          <div class="rel-grid-3">
+            <div class="rel-group">
+              <label class="rel-label">Data da Visita *</label>
+              <input class="rel-input" id="rv-data" type="date">
+            </div>
+            <div class="rel-group">
+              <label class="rel-label">Horário de Início</label>
+              <input class="rel-input" id="rv-hora" type="time">
+            </div>
+            <div class="rel-group">
+              <label class="rel-label">Duração (minutos)</label>
+              <input class="rel-input" id="rv-duracao" type="number" min="0" placeholder="90">
+            </div>
+          </div>
+          <div class="rel-grid-2">
+            <div class="rel-group">
+              <label class="rel-label">Técnico Responsável *</label>
+              <select class="rel-select" id="rv-tecnico">
+                <option value="">Selecionar...</option>
+                <option value="Rodolfo de Alecrim Oliveira">Rodolfo de Alecrim Oliveira</option>
+                <option value="Alexandre">Alexandre</option>
+                <option value="Gabriella">Gabriella</option>
+              </select>
+            </div>
+            <div class="rel-group">
+              <label class="rel-label">Vendedor Presente</label>
+              <select class="rel-select" id="rv-vendedor">
+                <option value="">Nenhum / Não se aplica</option>
+                <option value="Alexandre">Alexandre</option>
+                <option value="Lucas">Lucas</option>
+                <option value="Paulo">Paulo</option>
+                <option value="Vagner">Vagner</option>
+                <option value="Maicon">Maicon</option>
+                <option value="Arthur">Arthur</option>
+                <option value="Julio">Julio</option>
+                <option value="Joziel">Joziel</option>
+              </select>
+            </div>
+          </div>
+          <div class="rel-grid-3">
+            <div class="rel-group">
+              <label class="rel-label">🌡️ Temp. Máxima (°C)</label>
+              <input class="rel-input" id="rv-temp-max" type="number" placeholder="28">
+            </div>
+            <div class="rel-group">
+              <label class="rel-label">🌡️ Temp. Mínima (°C)</label>
+              <input class="rel-input" id="rv-temp-min" type="number" placeholder="15">
+            </div>
+            <div class="rel-group">
+              <label class="rel-label">☁️ Condição Climática</label>
+              <select class="rel-select" id="rv-clima">
+                <option value="">Selecionar...</option>
+                <option value="Ensolarado">☀️ Ensolarado</option>
+                <option value="Nublado">☁️ Nublado</option>
+                <option value="Chuva leve">🌦️ Chuva leve</option>
+                <option value="Chuva forte">🌧️ Chuva forte</option>
+                <option value="Frio intenso">🥶 Frio intenso</option>
+                <option value="Calor intenso">🔥 Calor intenso</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <!-- ══════════════════════════════════════════ -->
+        <!-- 2. INDICADORES PRODUTIVOS                  -->
+        <!-- ══════════════════════════════════════════ -->
+        <div class="rel-section">
+          <div class="rel-section-title"><span>🥛</span>2. Indicadores Produtivos do Lote</div>
+          <div class="rel-grid-3">
+            <div class="rel-group">
+              <label class="rel-label">Média Produção (L/vaca/dia)</label>
+              <input class="rel-input" id="rv-media-prod" type="number" step="0.1" placeholder="37.5">
+            </div>
+            <div class="rel-group">
+              <label class="rel-label">Produção Total/dia (L)</label>
+              <input class="rel-input" id="rv-prod-total" type="number" placeholder="9500">
+            </div>
+            <div class="rel-group">
+              <label class="rel-label">DEL — Dias em Lactação</label>
+              <input class="rel-input" id="rv-del" type="number" placeholder="165">
+            </div>
+            <div class="rel-group">
+              <label class="rel-label">Vacas em Lactação</label>
+              <input class="rel-input" id="rv-lactacao" type="number" placeholder="250">
+            </div>
+            <div class="rel-group">
+              <label class="rel-label">Vacas Secas</label>
+              <input class="rel-input" id="rv-secas" type="number" placeholder="30">
+            </div>
+            <div class="rel-group">
+              <label class="rel-label">Total do Rebanho</label>
+              <input class="rel-input" id="rv-vacas" type="number" placeholder="300">
+            </div>
+          </div>
+          <div style="font-size:11px;font-weight:600;color:var(--muted);margin-bottom:8px;margin-top:4px">🌡️ Conforto Térmico</div>
+          <div class="score-group" style="margin-bottom:4px">
+            <button class="score-btn bom"   onclick="setScore('termal','Confortável')"    id="sc-termal-ok">😊 Confortável</button>
+            <button class="score-btn medio" onclick="setScore('termal','Estresse leve')"  id="sc-termal-leve">😓 Estresse leve (ITU 72-80)</button>
+            <button class="score-btn ruim"  onclick="setScore('termal','Estresse severo')" id="sc-termal-sev">🥵 Estresse severo (ITU >80)</button>
+          </div>
+          <div style="font-size:10px;color:#94a3b8;margin-bottom:12px">ITU = Índice de Temperatura e Umidade. Acima de 72 já impacta produção.</div>
+          <div style="font-size:11px;font-weight:600;color:var(--muted);margin-bottom:8px">📊 Taxa de Ruminação (% vacas deitadas ruminando)</div>
+          <div class="rel-grid-3">
+            <div class="rel-group">
+              <label class="rel-label">Taxa de Ruminação (%)</label>
+              <input class="rel-input" id="rv-ruminacao" type="number" placeholder="60" min="0" max="100">
+              <div style="font-size:10px;color:#94a3b8;margin-top:3px">Meta: >55% do lote ruminando</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ══════════════════════════════════════════ -->
+        <!-- 3. MONITORAMENTO DO TRATO E ALIMENTAÇÃO    -->
+        <!-- ══════════════════════════════════════════ -->
+        <div class="rel-section">
+          <div class="rel-section-title"><span>🌾</span>3. Monitoramento do Trato e Alimentação</div>
+
+          <div class="rel-group" style="margin-bottom:14px">
+            <label class="rel-label">🌿 Qualidade da Mistura no Vagão / TMR</label>
+            <div class="score-group">
+              <button class="score-btn bom"   onclick="setScore('mistura','Bom')"     id="sc-mistura-bom">✅ Bom (homogênea, sem separação)</button>
+              <button class="score-btn medio" onclick="setScore('mistura','Regular')" id="sc-mistura-reg">⚠️ Regular (leve variação no cocho)</button>
+              <button class="score-btn ruim"  onclick="setScore('mistura','Ruim')"    id="sc-mistura-ruim">❌ Ruim (separação visível concentrado/volumoso)</button>
+            </div>
+          </div>
+
+          <div class="rel-group" style="margin-bottom:8px">
+            <label class="rel-label">💩 Escore de Esterco — Lote de Lactação</label>
+            <div style="font-size:10px;color:#94a3b8;margin-bottom:6px">Avaliar consistência, partículas de fibra longa e grãos inteiros</div>
+            <div class="score-group">
+              <button class="score-btn bom"   onclick="setScore('fecal','3 - Ideal')"         id="sc-fecal-3">✅ 3 - Ideal (pastoso, bolo com depressão)</button>
+              <button class="score-btn medio" onclick="setScore('fecal','2 - Fluido')"        id="sc-fecal-2">⚠️ 2 - Fluido/Diarreico</button>
+              <button class="score-btn ruim"  onclick="setScore('fecal','1 - Muito fluido')"  id="sc-fecal-1">❌ 1 - Muito fluido (excesso amido)</button>
+              <button class="score-btn medio" onclick="setScore('fecal','4 - Firme')"         id="sc-fecal-4">🟠 4 - Firme (falta umidade)</button>
+              <button class="score-btn ruim"  onclick="setScore('fecal','5 - Seco/Muco')"     id="sc-fecal-5">🔴 5 - Seco/Muco/Grãos inteiros</button>
+            </div>
+          </div>
+
+          <div class="rel-grid-2" style="margin-top:14px">
+            <div class="rel-group">
+              <label class="rel-label">📏 Espaço Linear de Cocho (cm/vaca)</label>
+              <input class="rel-input" id="rv-espaco-cocho" type="number" placeholder="60" min="0">
+              <div style="font-size:10px;color:#94a3b8;margin-top:3px">Mínimo recomendado: 60 cm/vaca</div>
+            </div>
+            <div class="rel-group">
+              <label class="rel-label">🍽️ Sobras de Cocho</label>
+              <select class="rel-select" id="rv-sobras">
+                <option value="">Selecionar...</option>
+                <option value="Adequada (3-5%)">✅ Adequada (3–5%)</option>
+                <option value="Excessiva (>5%)">⚠️ Excessiva (>5%)</option>
+                <option value="Cocho vazio">❌ Cocho vazio (falta trato)</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="rel-group" style="margin-top:12px">
+            <label class="rel-label">🍽️ Consumo Geral dos Animais</label>
+            <div class="score-group">
+              <button class="score-btn bom"   onclick="setScore('consumo','Bom')"   id="sc-consumo-bom">😊 Bom</button>
+              <button class="score-btn medio" onclick="setScore('consumo','Médio')" id="sc-consumo-med">😐 Médio</button>
+              <button class="score-btn ruim"  onclick="setScore('consumo','Ruim')"  id="sc-consumo-ruim">😟 Ruim</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- ══════════════════════════════════════════ -->
+        <!-- 4. CONTROLE DE VOLUMOSOS E MATÉRIA SECA   -->
+        <!-- ══════════════════════════════════════════ -->
+        <div class="rel-section">
+          <div class="rel-section-title"><span>🌽</span>4. Controle de Volumosos e Matéria Seca</div>
+
+          <div style="background:#f8fafc;border:1px solid var(--border);border-radius:10px;padding:14px;margin-bottom:14px">
+            <div style="font-size:12px;font-weight:700;color:#15803d;margin-bottom:10px">🌽 Silagem de Milho</div>
+            <div class="rel-grid-2">
+              <div class="rel-group">
+                <label class="rel-label">Teor de MS Atual (%)</label>
+                <input class="rel-input" id="rv-ms-silagem" type="number" step="0.1" placeholder="32.0">
+                <div style="font-size:10px;color:#94a3b8;margin-top:3px">Ideal: 30–35%</div>
+              </div>
+              <div class="rel-group">
+                <label class="rel-label">KPS Visual (Processamento de Grãos)</label>
+                <div class="score-group" style="margin-top:4px">
+                  <button class="score-btn bom"   onclick="setScore('kps','Excelente')" id="sc-kps-ex">⭐ Excelente</button>
+                  <button class="score-btn bom"   onclick="setScore('kps','Adequado')"  id="sc-kps-ad">✅ Adequado</button>
+                  <button class="score-btn ruim"  onclick="setScore('kps','Ruim')"      id="sc-kps-ruim">❌ Ruim (grãos inteiros)</button>
+                </div>
+              </div>
+            </div>
+            <div style="margin-top:10px">
+              <label class="rel-label">Qualidade Geral da Silagem</label>
+              <div class="score-group" style="margin-top:4px">
+                <button class="score-btn bom"   onclick="setScore('silagem','Excelente')" id="sc-silagem-ex">⭐ Excelente</button>
+                <button class="score-btn bom"   onclick="setScore('silagem','Boa')"       id="sc-silagem-boa">✅ Boa</button>
+                <button class="score-btn medio" onclick="setScore('silagem','Regular')"   id="sc-silagem-reg">⚠️ Regular</button>
+                <button class="score-btn ruim"  onclick="setScore('silagem','Ruim (fungos/aquecimento)')" id="sc-silagem-ruim">❌ Ruim</button>
+                <button class="score-btn na"    onclick="setScore('silagem','N/A')"       id="sc-silagem-na">N/A</button>
+              </div>
+              <div style="font-size:10px;color:#94a3b8;margin-top:3px">Cor, cheiro, textura, fungos, aquecimento aeróbico</div>
+            </div>
+          </div>
+
+          <div style="background:#f8fafc;border:1px solid var(--border);border-radius:10px;padding:14px;margin-bottom:14px">
+            <div style="font-size:12px;font-weight:700;color:#0891b2;margin-bottom:10px">🌾 Pré-Secado / Feno</div>
+            <div class="rel-grid-2">
+              <div class="rel-group">
+                <label class="rel-label">Teor de MS Atual (%)</label>
+                <input class="rel-input" id="rv-ms-presecado" type="number" step="0.1" placeholder="45.0">
+                <div style="font-size:10px;color:#94a3b8;margin-top:3px">Ideal: 40–55%</div>
+              </div>
+              <div class="rel-group">
+                <label class="rel-label">Fermentação / Qualidade Visual</label>
+                <div class="score-group" style="margin-top:4px">
+                  <button class="score-btn bom"   onclick="setScore('presecado','Boa')"     id="sc-pres-boa">✅ Boa</button>
+                  <button class="score-btn medio" onclick="setScore('presecado','Regular')" id="sc-pres-reg">⚠️ Regular</button>
+                  <button class="score-btn ruim"  onclick="setScore('presecado','Ruim (bolores/aquecimento)')" id="sc-pres-ruim">❌ Ruim (bolores/aquecimento)</button>
+                  <button class="score-btn na"    onclick="setScore('presecado','N/A')"     id="sc-pres-na">N/A</button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="rel-grid-2">
+            <div class="rel-group">
+              <label class="rel-label">📊 MS da Ração Total (%)</label>
+              <input class="rel-input" id="rv-ms-racao" type="number" step="0.1" placeholder="48.0">
+              <div style="font-size:10px;color:#94a3b8;margin-top:3px">Ideal: 45–55%</div>
+            </div>
+            <div class="rel-group">
+              <label class="rel-label">💊 Consumo do Suplemento Meta</label>
+              <div class="score-group" style="margin-top:4px">
+                <button class="score-btn bom"   onclick="setScore('suplemento','Bom')"   id="sc-sup-bom">👍 Bom</button>
+                <button class="score-btn medio" onclick="setScore('suplemento','Médio')" id="sc-sup-med">👌 Médio</button>
+                <button class="score-btn ruim"  onclick="setScore('suplemento','Ruim')"  id="sc-sup-ruim">👎 Ruim</button>
+                <button class="score-btn na"    onclick="setScore('suplemento','N/A')"   id="sc-sup-na">N/A</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ══════════════════════════════════════════ -->
+        <!-- 5. LOTES ESPECÍFICOS                       -->
+        <!-- ══════════════════════════════════════════ -->
+        <div class="rel-section">
+          <div class="rel-section-title"><span>🐄</span>5. Lotes Específicos — Pré-Parto e Vacas Secas</div>
+
+          <div style="background:#f0fdf4;border:1px solid #86efac;border-radius:10px;padding:14px;margin-bottom:14px">
+            <div style="font-size:12px;font-weight:700;color:#15803d;margin-bottom:12px">🤰 Lote Pré-Parto</div>
+            <div class="rel-grid-3">
+              <div class="rel-group">
+                <label class="rel-label">ECC Médio do Lote</label>
+                <input class="rel-input" id="rv-ecc-preparto" type="number" step="0.25" placeholder="3.25" min="1" max="5">
+                <div style="font-size:10px;color:#94a3b8;margin-top:3px">Ideal na entrada: 3.25–3.5</div>
+              </div>
+              <div class="rel-group">
+                <label class="rel-label">pH Urina (Dieta Aniônica)</label>
+                <input class="rel-input" id="rv-ph-urina" type="number" step="0.1" placeholder="6.2" min="5" max="9">
+                <div style="font-size:10px;color:#94a3b8;margin-top:3px">Meta: 6.0–6.8</div>
+              </div>
+              <div class="rel-group">
+                <label class="rel-label">Consumo de MS</label>
+                <select class="rel-select" id="rv-cms-preparto">
+                  <option value="">Selecionar...</option>
+                  <option value="Na meta">✅ Na meta</option>
+                  <option value="Abaixo da meta">⚠️ Abaixo da meta</option>
+                </select>
+              </div>
+            </div>
+            <div class="rel-grid-2" style="margin-top:10px">
+              <div class="rel-group">
+                <label class="rel-label">Uso de Dieta Aniônica</label>
+                <select class="rel-select" id="rv-anionico">
+                  <option value="">Selecionar...</option>
+                  <option value="Sim">✅ Sim</option>
+                  <option value="Não">❌ Não</option>
+                </select>
+              </div>
+              <div class="rel-group">
+                <label class="rel-label">Conforto e Espaço de Cocho</label>
+                <select class="rel-select" id="rv-conforto-preparto">
+                  <option value="">Selecionar...</option>
+                  <option value="Adequado">✅ Adequado</option>
+                  <option value="Inadequado">❌ Inadequado</option>
+                </select>
+              </div>
+            </div>
+          </div>
+
+          <div style="background:#eff6ff;border:1px solid #93c5fd;border-radius:10px;padding:14px;margin-bottom:14px">
+            <div style="font-size:12px;font-weight:700;color:#1d4ed8;margin-bottom:12px">😴 Lote Vacas Secas</div>
+            <div class="rel-grid-3">
+              <div class="rel-group">
+                <label class="rel-label">ECC Médio do Lote</label>
+                <input class="rel-input" id="rv-ecc-secas" type="number" step="0.25" placeholder="3.25" min="1" max="5">
+                <div style="font-size:10px;color:#94a3b8;margin-top:3px">Ideal: 3.0–3.5</div>
+              </div>
+              <div class="rel-group">
+                <label class="rel-label">Qualidade do Volumoso</label>
+                <select class="rel-select" id="rv-vol-secas">
+                  <option value="">Selecionar...</option>
+                  <option value="Alta qualidade">✅ Alta qualidade</option>
+                  <option value="Fibra grosseira/baixa">⚠️ Fibra grosseira/baixa qualidade</option>
+                </select>
+              </div>
+              <div class="rel-group">
+                <label class="rel-label">Lote Separado da Lactação</label>
+                <select class="rel-select" id="rv-lote-secas">
+                  <option value="">Selecionar...</option>
+                  <option value="Sim">✅ Sim</option>
+                  <option value="Não">❌ Não</option>
+                </select>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ══════════════════════════════════════════ -->
+        <!-- 6. RECRIA — NOVILHAS                       -->
+        <!-- ══════════════════════════════════════════ -->
+        <div class="rel-section">
+          <div class="rel-section-title"><span>🐮</span>6. Recria — Novilhas (5 a 24 meses)</div>
+          <div class="rel-grid-3">
+            <div class="rel-group">
+              <label class="rel-label">Nutrição do Lote</label>
+              <select class="rel-select" id="rv-nutricao-novilhas">
+                <option value="">Selecionar...</option>
+                <option value="Adequada">✅ Adequada</option>
+                <option value="Média (falta GPD)">⚠️ Média (falta ganho de peso)</option>
+                <option value="Ruim (atrasadas)">❌ Ruim (animais atrasados)</option>
+              </select>
+            </div>
+            <div class="rel-group">
+              <label class="rel-label">Escore Fecal das Novilhas</label>
+              <select class="rel-select" id="rv-fecal-novilhas">
+                <option value="">Selecionar...</option>
+                <option value="Bom">✅ Bom</option>
+                <option value="Médio">⚠️ Médio</option>
+                <option value="Ruim">❌ Ruim</option>
+              </select>
+            </div>
+            <div class="rel-group">
+              <label class="rel-label">Idade Média 1ª Inseminação (meses)</label>
+              <input class="rel-input" id="rv-idade-ia" type="number" placeholder="14" min="10" max="24">
+              <div style="font-size:10px;color:#94a3b8;margin-top:3px">Meta: 13–15 meses</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ══════════════════════════════════════════ -->
+        <!-- 7. EVENTOS SANITÁRIOS (ÚLTIMOS 30 DIAS)   -->
+        <!-- ══════════════════════════════════════════ -->
+        <div class="rel-section">
+          <div class="rel-section-title"><span>🏥</span>7. Eventos Sanitários e Distúrbios Metabólicos (Últimos 30 dias)</div>
+          <div class="rel-grid-3">
+            <div class="rel-group">
+              <label class="rel-label">Retenção de Placenta (casos)</label>
+              <input class="rel-input" id="rv-retencao" type="number" placeholder="0" min="0">
+              <div style="font-size:10px;color:#94a3b8;margin-top:3px">Alerta: manejo de transição / hipocalcemia</div>
+            </div>
+            <div class="rel-group">
+              <label class="rel-label">Cetose Clínica (casos)</label>
+              <input class="rel-input" id="rv-cetose" type="number" placeholder="0" min="0">
+              <div style="font-size:10px;color:#94a3b8;margin-top:3px">Alerta: balanço energético negativo / ECC parto</div>
+            </div>
+            <div class="rel-group">
+              <label class="rel-label">Deslocamento de Abomaso (casos)</label>
+              <input class="rel-input" id="rv-da" type="number" placeholder="0" min="0">
+              <div style="font-size:10px;color:#94a3b8;margin-top:3px">Alerta: enchimento de rúmen / fibra no pós-parto</div>
+            </div>
+          </div>
+
+          <div style="font-size:11px;font-weight:700;color:var(--muted);margin:10px 0 8px">Mortalidade e Descarte</div>
+          <div class="rel-grid-2">
+            <div class="rel-group">
+              <label class="rel-label">Morte de Vacas Adultas (cabeças)</label>
+              <input class="rel-input" id="rv-morte-vacas" type="number" placeholder="0" min="0">
+            </div>
+            <div class="rel-group">
+              <label class="rel-label">Causa Principal</label>
+              <input class="rel-input" id="rv-causa-morte-vacas" type="text" placeholder="Ex: Mastite severa, timpanismo...">
+            </div>
+            <div class="rel-group">
+              <label class="rel-label">Descarte Voluntário/Involuntário (cabeças)</label>
+              <input class="rel-input" id="rv-descarte" type="number" placeholder="0" min="0">
+            </div>
+            <div class="rel-group">
+              <label class="rel-label">Causa Principal do Descarte</label>
+              <input class="rel-input" id="rv-causa-descarte" type="text" placeholder="Ex: Mastite crônica, baixa produção...">
+            </div>
+            <div class="rel-group">
+              <label class="rel-label">Morte de Bezerras (0–4 meses)</label>
+              <input class="rel-input" id="rv-morte-bezerras" type="number" placeholder="0" min="0">
+            </div>
+            <div class="rel-group">
+              <label class="rel-label">Morte de Novilhas (5–24 meses)</label>
+              <input class="rel-input" id="rv-morte-novilhas" type="number" placeholder="0" min="0">
+            </div>
+          </div>
+        </div>
+
+        <!-- ══════════════════════════════════════════ -->
+        <!-- 8. AMBIÊNCIA E CONFORTO ANIMAL             -->
+        <!-- ══════════════════════════════════════════ -->
+        <div class="rel-section">
+          <div class="rel-section-title"><span>🏗️</span>8. Ambiência e Conforto Animal</div>
+          <div class="rel-grid-2" style="margin-bottom:12px">
+            <div class="rel-group">
+              <label class="rel-label">Ventiladores e Aspersores</label>
+              <select class="rel-select" id="rv-ventilacao">
+                <option value="">Selecionar...</option>
+                <option value="100% OK">✅ 100% funcionando</option>
+                <option value="Falhas — manutenção necessária">⚠️ Falhas — manutenção necessária</option>
+                <option value="Não possui">❌ Não possui</option>
+              </select>
+            </div>
+            <div class="rel-group">
+              <label class="rel-label">Bebedouros (limpeza e suficiência)</label>
+              <select class="rel-select" id="rv-bebedouros">
+                <option value="">Selecionar...</option>
+                <option value="Excelente">✅ Excelentes — limpos e suficientes</option>
+                <option value="Sujos/insuficientes">⚠️ Sujos ou insuficientes</option>
+                <option value="Crítico">❌ Crítico — animais sem acesso</option>
+              </select>
+            </div>
+          </div>
+          <div class="rel-group" style="margin-bottom:12px">
+            <label class="rel-label">🛏️ Conforto da Cama (Compost Barn / Free Stall)</label>
+            <div class="score-group">
+              <button class="score-btn bom"   onclick="setScore('cama','Seca e fofa')"      id="sc-cama-seca">✅ Seca e fofa</button>
+              <button class="score-btn medio" onclick="setScore('cama','Úmida')"            id="sc-cama-umida">⚠️ Úmida</button>
+              <button class="score-btn ruim"  onclick="setScore('cama','Compactada/Suja')"  id="sc-cama-comp">❌ Compactada / Suja</button>
+              <button class="score-btn na"    onclick="setScore('cama','N/A')"              id="sc-cama-na">N/A</button>
+            </div>
+          </div>
+          <div class="rel-group">
+            <label class="rel-label">🦶 Saúde dos Cascos / Claudicação</label>
+            <div class="score-group">
+              <button class="score-btn bom"   onclick="setScore('cascos','Sem claudicantes')"      id="sc-casc-ok">✅ Sem claudicantes visíveis</button>
+              <button class="score-btn medio" onclick="setScore('cascos','Leve (<5% do lote)')"    id="sc-casc-leve">⚠️ Leve (&lt;5% do lote)</button>
+              <button class="score-btn ruim"  onclick="setScore('cascos','Moderado/Severo (>5%)')" id="sc-casc-sev">❌ Moderado/Severo (&gt;5%)</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- ══════════════════════════════════════════ -->
+        <!-- 9. QUALIDADE DO LEITE                      -->
+        <!-- ══════════════════════════════════════════ -->
+        <div class="rel-section">
+          <div class="rel-section-title"><span>🧪</span>9. Qualidade do Leite (se disponível)</div>
+          <div class="rel-grid-4">
+            <div class="rel-group">
+              <label class="rel-label">Gordura (%)</label>
+              <input class="rel-input" id="rv-gordura" type="number" step="0.01" placeholder="3.80">
+              <div style="font-size:10px;color:#94a3b8;margin-top:3px">IN77: mín. 3.0%</div>
+            </div>
+            <div class="rel-group">
+              <label class="rel-label">Proteína (%)</label>
+              <input class="rel-input" id="rv-proteina" type="number" step="0.01" placeholder="3.20">
+              <div style="font-size:10px;color:#94a3b8;margin-top:3px">IN77: mín. 2.9%</div>
+            </div>
+            <div class="rel-group">
+              <label class="rel-label">CCS (x1.000 cel/mL)</label>
+              <input class="rel-input" id="rv-ccs" type="number" placeholder="200">
+              <div style="font-size:10px;color:#94a3b8;margin-top:3px">Meta: &lt;400 | IN77: &lt;500</div>
+            </div>
+            <div class="rel-group">
+              <label class="rel-label">CBT (x1.000 UFC/mL)</label>
+              <input class="rel-input" id="rv-cbt" type="number" placeholder="50">
+              <div style="font-size:10px;color:#94a3b8;margin-top:3px">Meta: &lt;100 | IN77: &lt;300</div>
+            </div>
+          </div>
+          <div class="rel-group" style="margin-top:8px">
+            <label class="rel-label">🐄 ECC Médio do Lote de Lactação</label>
+            <div class="score-group">
+              <button class="score-btn ruim"  onclick="setScore('ecc','Baixo <2.5')"      id="sc-ecc-baixo">⬇️ Baixo (&lt;2.5)</button>
+              <button class="score-btn bom"   onclick="setScore('ecc','Ideal 2.5–3.5')"  id="sc-ecc-ideal">✅ Ideal (2.5–3.5)</button>
+              <button class="score-btn medio" onclick="setScore('ecc','Alto >3.5')"       id="sc-ecc-alto">⬆️ Alto (&gt;3.5)</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- ══════════════════════════════════════════ -->
+        <!-- 10. CHECKLIST TÉCNICO                      -->
+        <!-- ══════════════════════════════════════════ -->
+        <div class="rel-section">
+          <div class="rel-section-title"><span>✅</span>10. Checklist Técnico — Marque os itens verificados</div>
+          <div class="checklist" id="visit-checklist">
+            <div class="check-item" onclick="toggleCheck(this,'cocho_limpo')"><div class="check-box">✓</div><div><div class="check-label">Cocho e Trilhos Limpos</div><div class="check-sub">Higiene dos equipamentos de alimentação sem resíduos</div></div></div>
+            <div class="check-item" onclick="toggleCheck(this,'cama_conforto')"><div class="check-box">✓</div><div><div class="check-label">Cama e Conforto Adequados</div><div class="check-sub">Qualidade da cama, espaço e ventilação do free stall/compost</div></div></div>
+            <div class="check-item" onclick="toggleCheck(this,'silagem_face')"><div class="check-box">✓</div><div><div class="check-label">Manejo de Face de Silagem Correto</div><div class="check-sub">Avanço mínimo 20 cm/dia, lona bem vedada, sem perdas excessivas</div></div></div>
+            <div class="check-item" onclick="toggleCheck(this,'cocho_abastecido')"><div class="check-box">✓</div><div><div class="check-label">Cocho Sempre Abastecido (mín. 20h/dia)</div><div class="check-sub">Frequência de fornecimento e sobras de 3–5% adequadas</div></div></div>
+            <div class="check-item" onclick="toggleCheck(this,'transicao_nutricional')"><div class="check-box">✓</div><div><div class="check-label">Protocolo de Transição Nutricional</div><div class="check-sub">Vacas pré e pós-parto seguindo protocolo — dieta aniônica aplicada</div></div></div>
+            <div class="check-item" onclick="toggleCheck(this,'mastite_controle')"><div class="check-box">✓</div><div><div class="check-label">Controle de Mastite Adequado</div><div class="check-sub">CCS dentro do limite, caneca de fundo preto realizada, manejo preventivo</div></div></div>
+            <div class="check-item" onclick="toggleCheck(this,'ordenha_higiene')"><div class="check-box">✓</div><div><div class="check-label">Higiene e Rotina de Ordenha Correta</div><div class="check-sub">Pré e pós-dipping, desponte, tempo de ordenha adequado, equipamentos calibrados</div></div></div>
+            <div class="check-item" onclick="toggleCheck(this,'estoque_produto')"><div class="check-box">✓</div><div><div class="check-label">Estoque do Produto Meta Adequado</div><div class="check-sub">Quantidade suficiente até a próxima visita, armazenamento correto</div></div></div>
+            <div class="check-item" onclick="toggleCheck(this,'fornecimento_correto')"><div class="check-box">✓</div><div><div class="check-label">Fornecimento Correto do Produto Meta</div><div class="check-sub">Dose, frequência e mistura conforme recomendação técnica</div></div></div>
+            <div class="check-item" onclick="toggleCheck(this,'balanco_nutricional')"><div class="check-box">✓</div><div><div class="check-label">Balanço Nutricional Adequado</div><div class="check-sub">Formulação da dieta compatível com produção e estágio de lactação</div></div></div>
+            <div class="check-item" onclick="toggleCheck(this,'reproducao_ok')"><div class="check-box">✓</div><div><div class="check-label">Programa Reprodutivo Adequado</div><div class="check-sub">Protocolos de IATF, confirmação de prenhez, taxa de serviço e concepção monitoradas</div></div></div>
+            <div class="check-item" onclick="toggleCheck(this,'pre_parto_separado')"><div class="check-box">✓</div><div><div class="check-label">Grupo Pré-Parto Corretamente Separado</div><div class="check-sub">Separação 21 dias antes do parto, espaço de cocho ≥ 75 cm/vaca</div></div></div>
+            <div class="check-item" onclick="toggleCheck(this,'descarte_definido')"><div class="check-box">✓</div><div><div class="check-label">Critérios de Descarte Definidos</div><div class="check-sub">Vacas com baixa produção, mastite crônica ou improdutivas identificadas</div></div></div>
+            <div class="check-item" onclick="toggleCheck(this,'vacinas_em_dia')"><div class="check-box">✓</div><div><div class="check-label">Protocolo Vacinal em Dia</div><div class="check-sub">IBR, BVD, Clostridioses, Brucelose conforme calendário sanitário</div></div></div>
+            <div class="check-item" onclick="toggleCheck(this,'ventilacao_ok')"><div class="check-box">✓</div><div><div class="check-label">Ventilação e Sombreamento Adequados</div><div class="check-sub">Ventiladores, aspersores e sombra suficiente — ITU monitorado</div></div></div>
+            <div class="check-item" onclick="toggleCheck(this,'bebedouros_ok')"><div class="check-box">✓</div><div><div class="check-label">Bebedouros Limpos e Suficientes</div><div class="check-sub">Mínimo 10 cm de bebedouro/vaca, limpeza semanal realizada</div></div></div>
+            <div class="check-item" onclick="toggleCheck(this,'bezerros_manejo')"><div class="check-box">✓</div><div><div class="check-label">Manejo de Bezerros e Novilhas</div><div class="check-sub">Aleitamento, colostro, desmama, vacinação e crescimento adequados</div></div></div>
+            <div class="check-item" onclick="toggleCheck(this,'instalacoes_ok')"><div class="check-box">✓</div><div><div class="check-label">Instalações Conservadas e Seguras</div><div class="check-sub">Pisos antiderrapantes, cercas, calhas e estruturas em bom estado</div></div></div>
+            <div class="check-item" onclick="toggleCheck(this,'controle_mosca')"><div class="check-box">✓</div><div><div class="check-label">Controle de Mosca e Pragas</div><div class="check-sub">Armadilhas, inseticidas e manejo de esterco para controle de vetores</div></div></div>
+            <div class="check-item" onclick="toggleCheck(this,'biosseguridade')"><div class="check-box">✓</div><div><div class="check-label">Biosseguridade da Propriedade</div><div class="check-sub">Quarentena de animais novos, pedilúvio ativo, controle de visitas externas</div></div></div>
+            <div class="check-item" onclick="toggleCheck(this,'registros_ok')"><div class="check-box">✓</div><div><div class="check-label">Registros Produtivos Atualizados</div><div class="check-sub">Controle leiteiro individual, planilhas de saúde e reprodução em dia</div></div></div>
+            <div class="check-item" onclick="toggleCheck(this,'cascos_cuidados')"><div class="check-box">✓</div><div><div class="check-label">Cuidados Podais em Dia</div><div class="check-sub">Banho de casco periódico, casqueamento preventivo, claudicantes tratados</div></div></div>
+            <div class="check-item" onclick="toggleCheck(this,'satisfacao_produtor')"><div class="check-box">✓</div><div><div class="check-label">Produtor Satisfeito com Resultados Meta</div><div class="check-sub">Percepção positiva de produção, saúde e retorno financeiro do produto</div></div></div>
+          </div>
+        </div>
+
+        <!-- ══════════════════════════════════════════ -->
+        <!-- 11. DIAGNÓSTICO E RECOMENDAÇÕES           -->
+        <!-- ══════════════════════════════════════════ -->
+        <div class="rel-section">
+          <div class="rel-section-title"><span>💡</span>11. Diagnóstico e Plano de Ação</div>
+          <div class="rel-group" style="margin-bottom:10px">
+            <label class="rel-label">✅ Principais Pontos Positivos da Propriedade</label>
+            <textarea class="rel-textarea" id="rv-positivos" placeholder="Ex: Excelente higiene dos cochos, boa uniformidade do rebanho, silagem de alta qualidade..."></textarea>
+          </div>
+          <div class="rel-group" style="margin-bottom:10px">
+            <label class="rel-label">⚠️ Pontos de Atenção / Melhorias Necessárias</label>
+            <textarea class="rel-textarea" id="rv-atencao" placeholder="Ex: Aumentar frequência de fornecimento do volumoso, ajustar MS da silagem, melhorar ventilação..."></textarea>
+          </div>
+          <div class="rel-group" style="margin-bottom:10px">
+            <label class="rel-label">🎯 Ajustes Imediatos na Formulação / Dieta</label>
+            <textarea class="rel-textarea" id="rv-dieta" placeholder="Ex: Aumentar inclusão de pré-secado em 2kg MS, reduzir concentrado em vacas com ECC >3.5..."></textarea>
+          </div>
+          <div class="rel-group" style="margin-bottom:10px">
+            <label class="rel-label">📋 Metas para a Fazenda até a Próxima Visita</label>
+            <textarea class="rel-textarea" id="rv-acoes" placeholder="Ex: Atingir 38 L/vaca/dia, reduzir CCS abaixo de 300k, corrigir manejo de cocho..."></textarea>
+          </div>
+          <div class="rel-group">
+            <label class="rel-label">📝 Observações Gerais</label>
+            <textarea class="rel-textarea" id="rv-obs" placeholder="Outras anotações relevantes da visita..."></textarea>
+          </div>
+        </div>
+
+        <!-- ══════════════════════════════════════════ -->
+        <!-- 12. PRÓXIMA VISITA                         -->
+        <!-- ══════════════════════════════════════════ -->
+        <div class="rel-section">
+          <div class="rel-section-title"><span>📅</span>12. Próxima Visita</div>
+          <div class="rel-grid-2">
+            <div class="rel-group">
+              <label class="rel-label">Data Prevista</label>
+              <input class="rel-input" id="rv-proxima-data" type="date">
+            </div>
+            <div class="rel-group">
+              <label class="rel-label">Objetivo Principal da Próxima Visita</label>
+              <input class="rel-input" id="rv-proxima-obj" type="text" placeholder="Ex: Coleta de leite, avaliação nutricional, análise de silagem...">
+            </div>
+          </div>
+        </div>
+
+        <button class="visit-save-btn" id="visit-save-btn" onclick="salvarVisita()">
+          📋 Salvar Relatório de Visita Técnica
+        </button>
+
+        <!-- HISTÓRICO DE RELATÓRIOS -->
+        <div style="margin-top:28px;border-top:2px solid var(--border);padding-top:20px">
+          <div style="font-size:13px;font-weight:800;color:var(--text);margin-bottom:14px">
+            📁 Relatórios Anteriores desta Propriedade
+          </div>
+          <div id="visit-history-list">
+            <div style="text-align:center;padding:24px;color:var(--muted);font-size:13px">
+              Carregando relatórios...
+            </div>
+          </div>
+        </div>
+
       </div>
 
       <!-- TAB EDIÇÃO -->
@@ -1040,6 +1858,64 @@ tbody td { padding:10px 12px; font-size:12px; }
   </div>
 </div>
 
+
+<!-- ═══ PAINEL LATERAL DE VISITAS ═══ -->
+<div id="visit-side-panel" style="display:none" class="visit-panel-overlay" onclick="if(event.target===this)closeVisitPanel()">
+  <div class="visit-panel">
+    <div class="vp-header">
+      <div class="vp-av" id="vp-av">—</div>
+      <div>
+        <div class="vp-title" id="vp-title">—</div>
+        <div class="vp-sub" id="vp-sub">—</div>
+      </div>
+      <button class="vp-close" onclick="closeVisitPanel()">✕</button>
+    </div>
+    <div class="vp-tabs">
+      <div class="vp-tab on" id="vpt-report" onclick="switchVisitTab('report')">📊 Relatório Mensal</div>
+      <div class="vp-tab" id="vpt-checklist" onclick="switchVisitTab('checklist')">✅ Checklist Visita</div>
+    </div>
+    <div class="vp-body">
+
+      <!-- TAB RELATÓRIO MENSAL -->
+      <div id="vp-tab-report">
+        <div class="summary-bar" id="vp-summary" style="display:none"></div>
+        <div style="margin-bottom:12px">
+          <div style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">
+            📈 Incidência de Doenças Metabólicas (Total)
+          </div>
+          <div id="vp-incidence"></div>
+        </div>
+        <div>
+          <div style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">
+            📁 Histórico por Visita
+          </div>
+          <div id="vp-visits-list">
+            <div style="text-align:center;padding:32px;color:var(--muted)">Carregando...</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- TAB CHECKLIST -->
+      <div id="vp-tab-checklist" style="display:none">
+        <button class="new-visit-btn" onclick="openFarmModalFromPanel()">
+          ✏️ Preencher Novo Relatório de Visita
+        </button>
+        <div style="font-size:11px;color:var(--muted);margin-bottom:12px">
+          Clique no botão acima para abrir o formulário completo de visita técnica
+          e preencher o checklist, scores nutricionais e diagnóstico.
+        </div>
+        <!-- Último checklist preenchido -->
+        <div id="vp-last-checklist">
+          <div style="text-align:center;padding:24px;color:var(--muted);font-size:12px">
+            Nenhum checklist registrado ainda
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
 </div><!-- /app -->
 
 <div class="toast" id="toast"></div>
@@ -1074,22 +1950,39 @@ function avg(arr,k){const v=arr.filter(d=>(d[k]||0)>0);return v.length?v.reduce(
 function sum(arr,k){return arr.reduce((a,d)=>a+(parseFloat(d[k])||0),0);}
 function fmtK(v){return v>=1000?(v/1000).toFixed(1)+'k':v||'—';}
 
+// Map: produtor_name -> firebase_id (for tracking migrated seed clients)
+const MIGRATED_IDS = {};
+try { Object.assign(MIGRATED_IDS, JSON.parse(localStorage.getItem('meta_migrated')||'{}')); } catch(e){}
+
+function saveMigrated(seedId, fbId, name) {
+  MIGRATED_IDS[seedId] = fbId;
+  MIGRATED_IDS[name.toUpperCase().trim()] = fbId;
+  try { localStorage.setItem('meta_migrated', JSON.stringify(MIGRATED_IDS)); } catch(e){}
+}
+
 function mergeWithSeed(fbData){
-  // Firebase data has ABSOLUTE priority - seed data only fills gaps
-  if(fbData.length===0) return SEED_DATA;
-  
-  // Build a map of Firebase records by producer name (uppercase)
-  const fbNames = new Set(fbData.map(d=>(d.produtor||'').toUpperCase().trim()));
-  const fbIds   = new Set(fbData.map(d=>d.id));
-  
-  // Add seed records that don't exist in Firebase (by name)
-  const seedOnly = SEED_DATA.filter(d => {
-    const name = (d.produtor||'').toUpperCase().trim();
-    return !fbNames.has(name);
+  // Build lookup maps from Firebase data
+  const fbByName = {};
+  const fbById   = new Set();
+  fbData.forEach(d => {
+    fbByName[(d.produtor||'').toUpperCase().trim()] = d;
+    fbById.add(d.id);
   });
-  
-  // Return Firebase data first (correct), then only truly missing seed entries
-  return [...fbData, ...seedOnly];
+
+  // If Firebase is empty, show seed data (read-only view)
+  if(fbData.length === 0) return SEED_DATA;
+
+  // Filter seed: exclude any seed record whose name OR migrated ID exists in Firebase
+  const seedToShow = SEED_DATA.filter(d => {
+    const name = (d.produtor||'').toUpperCase().trim();
+    // If this producer was migrated to Firebase, skip seed version
+    if(MIGRATED_IDS[d.id] || MIGRATED_IDS[name]) return false;
+    // If Firebase already has this producer name, skip seed version
+    if(fbByName[name]) return false;
+    return true;
+  });
+
+  return [...fbData, ...seedToShow];
 }
 
 // AUTH
@@ -1469,14 +2362,20 @@ function renderTbl(){
     const sl2=d.situacao==='ATIVO'?'✅ Ativo':d.situacao==='INATIVO'?'❌ Inativo':'🎯 Prospecto';
     return`<tr>
       <td>
-        <button class="prod-btn" onclick="openFarmModal('${d.id}','${(d.produtor||'').replace(/'/g,"\\'")}')" title="Ver histórico e editar">
-          <div class="prod-av" style="background:${vc(d.produtor||'?')}">${(d.produtor||'?').split(' ').slice(0,2).map(w=>w[0]||'').join('').toUpperCase()}</div>
-          <div>
-            <div class="prod-name">${d.produtor||'—'}</div>
-            <div class="prod-city">${d.cidade||''}</div>
-          </div>
-          <span class="prod-hist-ico">📈</span>
-        </button>
+        <div style="display:flex;align-items:center;gap:6px">
+          <button class="prod-btn" onclick="openFarmModal('${d.id}','${(d.produtor||'').replace(/'/g,"\\'")}')" title="Ver histórico e editar">
+            <div class="prod-av" style="background:${vc(d.produtor||'?')}">${(d.produtor||'?').split(' ').slice(0,2).map(w=>w[0]||'').join('').toUpperCase()}</div>
+            <div>
+              <div class="prod-name">${d.produtor||'—'}</div>
+              <div class="prod-city">${d.cidade||''}</div>
+            </div>
+            <span class="prod-hist-ico">📈</span>
+          </button>
+          <button onclick="openVisitPanel('${d.id}','${(d.produtor||'').replace(/'/g,"\\'")}')" title="Relatório de Visitas" style="background:#eff6ff;border:1.5px solid #93c5fd;color:#1d4ed8;border-radius:8px;padding:5px 8px;font-size:11px;font-weight:700;cursor:pointer;white-space:nowrap;font-family:'Inter',sans-serif;transition:all .15s" onmouseover="this.style.background='#dbeafe'" onmouseout="this.style.background='#eff6ff'">
+            📋 Visitas
+          </button>
+        </div>
+        ${d.tecnico_titular?`<div style="margin-top:4px"><span class="tec-tag">🔵 ${d.tecnico_titular}</span>${d.tecnico_substituto?`<span class="tec-tag" style="background:#f5f3ff;color:#6d28d9">🟣 ${d.tecnico_substituto}</span>`:''}</div>`:''}
       </td><td style="color:#94a3b8">${d.propriedade||'—'}</td><td><span class="badge ${sc}">${sl2}</span></td><td>${d.nome_vendedor||d.vendedor||'—'}</td><td style="color:#94a3b8">${d.cidade||'—'}</td><td style="color:#94a3b8">${d.regiao||'—'}</td><td style="font-weight:800;color:${(d.vacas||0)>=200?'#15803d':''}">${d.vacas||'—'}</td><td>${d.media_prod>0?parseFloat(d.media_prod).toFixed(1)+' L':'—'}</td><td>${d.prod_diaria>0?d.prod_diaria.toLocaleString('pt-BR'):'—'}</td><td style="color:#b45309">${d.gordura>0?parseFloat(d.gordura).toFixed(2)+'%':'—'}</td><td style="color:#1d4ed8">${d.proteina>0?parseFloat(d.proteina).toFixed(2)+'%':'—'}</td><td>${d.del>0?d.del+' d':'—'}</td><td><select class="sts" onchange="mudarSit('${d.id}',this.value)"><option value="PROSPEC" ${d.situacao==='PROSPEC'?'selected':''}>🎯 Prospecto</option><option value="ATIVO" ${d.situacao==='ATIVO'?'selected':''}>✅ Ativo</option><option value="INATIVO" ${d.situacao==='INATIVO'?'selected':''}>❌ Inativo</option></select></td></tr>`;
   }).join('');
   let pag=`<span>${(PG-1)*PS+1}–${Math.min(PG*PS,total)} de ${total}</span>`;
@@ -1487,24 +2386,30 @@ function goPg(p){PG=p;renderTbl();}
 async function mudarSit(id,st){
   try{
     if(id.startsWith('xl_')){
-      // Find client in ALL and get their data
       const client = ALL.find(d=>d.id===id);
       if(client){
-        const dados = {...client, situacao:st, atualizado_em:new Date().toISOString(), criado_em:new Date().toISOString()};
+        const dados = {...client, situacao:st,
+          atualizado_em:new Date().toISOString(),
+          criado_em:new Date().toISOString(),
+          atualizado_por:'ADMIN'};
+        const oldId = dados.id;
         delete dados.id;
         const ref = await db.ref('propriedades').push(dados);
-        // Update local
-        const idx = ALL.findIndex(d=>d.id===id);
-        if(idx!==-1){ ALL[idx].id=ref.key; ALL[idx].situacao=st; }
-        toast('✅ Status atualizado e cliente migrado para Firebase');
+        // Track migration
+        saveMigrated(oldId, ref.key, dados.produtor||'');
+        // Update local immediately
+        const aidx = ALL.findIndex(d=>d.id===id);
+        if(aidx!==-1){ ALL[aidx] = {...dados, id:ref.key}; }
+        applyF(); renderAll();
+        toast('✅ Status atualizado');
       }
     } else {
-      await db.ref('propriedades/'+id).update({situacao:st,atualizado_em:new Date().toISOString()});
+      await db.ref('propriedades/'+id).update({situacao:st, atualizado_em:new Date().toISOString(), atualizado_por:'ADMIN'});
       toast('✅ Status atualizado');
     }
   } catch(e){
     console.error(e);
-    toast('Erro ao atualizar: '+e.message,true);
+    toast('Erro: '+e.message, true);
   }
 }
 
@@ -1875,29 +2780,46 @@ function salvarTecnico(key, campo, valor, rowId) {
   if (row) {
     const sel = row.querySelector(campo === 'titular' ? '.titular' : '.substituto');
     const cor = TEC_CORES[valor] || TEC_CORES[''];
-    sel.style.borderColor = cor.bg;
-    sel.style.background = cor.light;
-    sel.style.color = cor.text;
+    if(sel){ sel.style.borderColor = cor.bg; sel.style.background = cor.light; sel.style.color = cor.text; }
   }
 
   // Show saved badge
   const badge = document.getElementById('tsb-' + rowId);
-  if (badge) {
-    badge.classList.add('show');
-    setTimeout(() => badge.classList.remove('show'), 2000);
+  if (badge) { badge.classList.add('show'); setTimeout(() => badge.classList.remove('show'), 2000); }
+
+  const titular   = tecData[key].titular    || '';
+  const substituto = tecData[key].substituto || '';
+
+  // Save to Firebase — for real clients save under 'tecnicos' AND update propriedades
+  if (key && !key.startsWith('xl_')) {
+    // Save to dedicated 'tecnicos' node
+    db.ref('tecnicos/' + key).set({
+      titular, substituto, atualizado_em: new Date().toISOString()
+    }).catch(e => console.error('tec save err:', e));
+    // ALSO update the propriedade directly so it persists with the farm data
+    db.ref('propriedades/' + key).update({
+      tecnico_titular: titular,
+      tecnico_substituto: substituto,
+      tec_atualizado_em: new Date().toISOString()
+    }).catch(e => console.error('prop tec err:', e));
+  } else if (key && key.startsWith('xl_')) {
+    // For seed clients, find if migrated
+    const migratedId = MIGRATED_IDS[key];
+    if (migratedId) {
+      db.ref('tecnicos/' + migratedId).set({ titular, substituto, atualizado_em: new Date().toISOString() }).catch(()=>{});
+      db.ref('propriedades/' + migratedId).update({ tecnico_titular: titular, tecnico_substituto: substituto }).catch(()=>{});
+    }
   }
 
-  // Also save to Firebase if it's a real client (has Firebase id)
-  if (key && !key.startsWith('xl_')) {
-    db.ref('tecnicos/' + key).set({
-      titular: tecData[key].titular || '',
-      substituto: tecData[key].substituto || '',
-      atualizado_em: new Date().toISOString()
-    }).catch(() => {});
+  // Update ALL array so dashboard reflects immediately
+  const clientIdx = ALL.findIndex(d => d.id === key || MIGRATED_IDS[d.id] === key);
+  if (clientIdx !== -1) {
+    ALL[clientIdx].tecnico_titular   = titular;
+    ALL[clientIdx].tecnico_substituto = substituto;
   }
 
   renderTecSummary();
-  toast('✅ Técnico salvo!');
+  toast('✅ Técnico salvo permanentemente!');
 }
 
 function salvarTodosTecnicos() {
@@ -1998,14 +2920,28 @@ function exportarTecnicos() {
 
 // Load Firebase tech assignments on init
 function loadTecFromFirebase() {
+  // Load from dedicated 'tecnicos' node
   db.ref('tecnicos').on('value', snap => {
     const tecData = loadTecData();
     snap.forEach(c => {
-      const existing = tecData[c.key] || {};
-      tecData[c.key] = { ...existing, ...c.val() };
+      tecData[c.key] = { ...(tecData[c.key]||{}), ...c.val() };
     });
     saveTecData(tecData);
-    if (document.getElementById('sc-tec').classList.contains('on')) renderTecnicos();
+    if (document.getElementById('sc-tec')?.classList.contains('on')) renderTecnicos();
+  });
+  // ALSO load from propriedades (backup — tecnico_titular field)
+  db.ref('propriedades').once('value', snap => {
+    const tecData = loadTecData();
+    let changed = false;
+    snap.forEach(c => {
+      const v = c.val();
+      if (v && (v.tecnico_titular || v.tecnico_substituto)) {
+        if (!tecData[c.key]) { tecData[c.key] = {}; }
+        if (!tecData[c.key].titular)    { tecData[c.key].titular    = v.tecnico_titular    || ''; changed=true; }
+        if (!tecData[c.key].substituto) { tecData[c.key].substituto = v.tecnico_substituto || ''; changed=true; }
+      }
+    });
+    if (changed) saveTecData(tecData);
   });
 }
 
@@ -2051,10 +2987,21 @@ function closeModal() {
 }
 
 function switchTab(tab) {
-  document.getElementById('tab-hist').style.display = tab === 'hist' ? 'block' : 'none';
-  document.getElementById('tab-edit').style.display = tab === 'edit' ? 'block' : 'none';
-  document.querySelectorAll('.modal-tab').forEach(t => t.classList.remove('on'));
-  document.getElementById('mtab-' + tab).classList.add('on');
+  ['hist','visit','edit'].forEach(t => {
+    const el = document.getElementById('tab-' + t);
+    if(el) el.style.display = 'none';
+    const mt = document.getElementById('mtab-' + t);
+    if(mt) mt.classList.remove('on');
+  });
+  const show = document.getElementById('tab-' + tab);
+  if(show) show.style.display = 'block';
+  const mt = document.getElementById('mtab-' + tab);
+  if(mt) mt.classList.add('on');
+  // Load visit history when switching to visit tab
+  if(tab === 'visit' && currentFarmId) {
+    loadVisitHistory(currentFarmId);
+    prefillVisitForm();
+  }
 }
 
 // ── LOAD HISTORY ──────────────────────────────────────────────────────────
@@ -2228,6 +3175,12 @@ async function salvarEdicaoAdmin() {
   const media = num('ef-media-prod');
   const prodDia = num('ef-prod-diaria') || (vacas * media);
 
+  // Preserve technician data from current farm
+  const tecData = loadTecData();
+  const farmTecKey = currentFarmId;
+  const titularAtual   = tecData[farmTecKey]?.titular    || currentFarmData?.tecnico_titular    || '';
+  const substitutoAtual = tecData[farmTecKey]?.substituto || currentFarmData?.tecnico_substituto || '';
+
   const dados = {
     produtor: str('ef-produtor').toUpperCase(),
     propriedade: str('ef-propriedade').toUpperCase(),
@@ -2246,6 +3199,9 @@ async function salvarEdicaoAdmin() {
     atualizado_por: 'ADMIN',
     nome_vendedor: currentFarmData?.nome_vendedor || currentFarmData?.vendedor || '',
     vendedor: currentFarmData?.vendedor || '',
+    // PRESERVE technician data — never lose it on edit
+    tecnico_titular:    titularAtual,
+    tecnico_substituto: substitutoAtual,
   };
 
   const btn = document.getElementById('edit-save-btn');
@@ -2257,13 +3213,16 @@ async function salvarEdicaoAdmin() {
       dados.criado_em = new Date().toISOString();
       dados.origem = 'planilha_2025';
       const newRef = await db.ref('propriedades').push(dados);
+      const oldSeedId = id;
       id = newRef.key;
-      // Update local data
+      // Track migration so seed record is hidden
+      saveMigrated(oldSeedId, id, dados.produtor);
+      // Update local references
       currentFarmId = id;
       document.getElementById('edit-farm-id').value = id;
-      // Update ALL array
-      const idx = ALL.findIndex(d => d.id === currentFarmData.id);
-      if (idx !== -1) { ALL[idx].id = id; ALL[idx] = {...ALL[idx], ...dados, id}; }
+      // Replace in ALL array
+      const aidx = ALL.findIndex(d => d.id === oldSeedId);
+      if (aidx !== -1) { ALL[aidx] = {...dados, id}; }
     } else {
       await db.ref('propriedades/' + id).update(dados);
     }
@@ -2296,6 +3255,655 @@ async function salvarEdicaoAdmin() {
     btn.textContent = '💾 Salvar Alterações e Registrar no Histórico';
   }
 }
+
+
+// ═══════════════════════════════════════════
+// RELATÓRIO DE VISITA
+// ═══════════════════════════════════════════
+const visitScores = {};
+
+function setScore(field, value) {
+  visitScores[field] = value;
+  // Update buttons visual
+  const btns = document.querySelectorAll(`[id^="sc-${field}-"]`);
+  btns.forEach(btn => btn.classList.remove('on'));
+  // Find and activate the clicked button
+  btns.forEach(btn => {
+    const btnVal = btn.textContent.replace(/^[^\w]*/,'').trim();
+    if(value.toLowerCase().includes(btnVal.toLowerCase().split(' ')[0].toLowerCase()) ||
+       btnVal.toLowerCase().includes(value.toLowerCase().split(' ')[0].toLowerCase())) {
+      btn.classList.add('on');
+    }
+  });
+}
+
+function toggleCheck(el, key) {
+  el.classList.toggle('checked');
+}
+
+function getCheckedItems() {
+  const items = [];
+  document.querySelectorAll('#visit-checklist .check-item.checked').forEach(el => {
+    const label = el.querySelector('.check-label')?.textContent || '';
+    items.push(label);
+  });
+  return items;
+}
+
+function prefillVisitForm() {
+  // Pre-fill today's date and time
+  const now = new Date();
+  const dateEl = document.getElementById('rv-data');
+  const timeEl = document.getElementById('rv-hora');
+  if(dateEl && !dateEl.value) {
+    dateEl.value = now.toISOString().split('T')[0];
+  }
+  if(timeEl && !timeEl.value) {
+    timeEl.value = now.getHours().toString().padStart(2,'0') + ':' + now.getMinutes().toString().padStart(2,'0');
+  }
+  // Pre-fill with current farm data
+  const d = currentFarmData || {};
+  const setV = (id, v) => { const el = document.getElementById(id); if(el && v) el.value = v; };
+  setV('rv-media-prod', d.media_prod);
+  setV('rv-prod-total', d.prod_diaria);
+  setV('rv-del', d.del);
+  setV('rv-lactacao', d.lactacao);
+  setV('rv-secas', d.secas);
+  setV('rv-vacas', d.vacas);
+  setV('rv-gordura', d.gordura);
+  setV('rv-proteina', d.proteina);
+  setV('rv-ccs', d.ccs);
+  setV('rv-cbt', d.cbt);
+}
+
+async function salvarVisita() {
+  if(!currentFarmId) { toast('Erro: fazenda não identificada', true); return; }
+
+  const num = id => parseFloat(document.getElementById(id)?.value)||0;
+  const str = id => (document.getElementById(id)?.value||'').trim();
+
+  const tecnico = str('rv-tecnico');
+  const vendedor = str('rv-vendedor');
+  if(!tecnico && !vendedor) {
+    toast('⚠️ Informe o técnico ou vendedor responsável', true); return;
+  }
+
+  const visita = {
+    data: str('rv-data') || new Date().toISOString().split('T')[0],
+    hora: str('rv-hora'),
+    duracao: num('rv-duracao'),
+    tecnico, vendedor,
+    preenchido_por: tecnico || vendedor,
+    // Clima
+    temp_max: num('rv-temp-max'),
+    temp_min: num('rv-temp-min'),
+    umidade: num('rv-umidade'),
+    clima: str('rv-clima'),
+    // Produtivo
+    media_prod: num('rv-media-prod'),
+    prod_total: num('rv-prod-total'),
+    del: num('rv-del'),
+    lactacao: num('rv-lactacao'),
+    secas: num('rv-secas'),
+    vacas: num('rv-vacas'),
+    // Scores nutricionais
+    consumo:    visitScores['consumo']    || '',
+    mistura:    visitScores['mistura']    || '',
+    fecal:      visitScores['fecal']      || '',
+    suplemento: visitScores['suplemento'] || '',
+    silagem:    visitScores['silagem']    || '',
+    presecado:  visitScores['presecado']  || '',
+    kps:        visitScores['kps']        || '',
+    ecc:        visitScores['ecc']        || '',
+    // Scores ambiência
+    termal:     visitScores['termal']     || '',
+    cama:       visitScores['cama']       || '',
+    cascos:     visitScores['cascos']     || '',
+    // Matéria seca
+    ms_silagem:   num('rv-ms-silagem'),
+    ms_presecado: num('rv-ms-presecado'),
+    ms_racao:     num('rv-ms-racao'),
+    // Trato
+    espaco_cocho: num('rv-espaco-cocho'),
+    sobras:       str('rv-sobras'),
+    ruminacao:    num('rv-ruminacao'),
+    // Pré-parto
+    ecc_preparto:    num('rv-ecc-preparto'),
+    ph_urina:        num('rv-ph-urina'),
+    cms_preparto:    str('rv-cms-preparto'),
+    anionico:        str('rv-anionico'),
+    conforto_preparto: str('rv-conforto-preparto'),
+    // Secas
+    ecc_secas:  num('rv-ecc-secas'),
+    vol_secas:  str('rv-vol-secas'),
+    lote_secas: str('rv-lote-secas'),
+    // Recria
+    nutricao_novilhas: str('rv-nutricao-novilhas'),
+    fecal_novilhas:    str('rv-fecal-novilhas'),
+    idade_ia:          num('rv-idade-ia'),
+    // Sanitário
+    retencao:           num('rv-retencao'),
+    cetose:             num('rv-cetose'),
+    da:                 num('rv-da'),
+    morte_vacas:        num('rv-morte-vacas'),
+    causa_morte_vacas:  str('rv-causa-morte-vacas'),
+    descarte:           num('rv-descarte'),
+    causa_descarte:     str('rv-causa-descarte'),
+    morte_bezerras:     num('rv-morte-bezerras'),
+    morte_novilhas:     num('rv-morte-novilhas'),
+    // Ambiência
+    ventilacao:  str('rv-ventilacao'),
+    bebedouros:  str('rv-bebedouros'),
+    // Diagnóstico
+    dieta: str('rv-dieta'),
+    // Checklist
+    checklist: getCheckedItems(),
+    // Qualidade leite
+    gordura: num('rv-gordura'),
+    proteina: num('rv-proteina'),
+    ccs: num('rv-ccs'),
+    cbt: num('rv-cbt'),
+    // Diagnóstico
+    positivos: str('rv-positivos'),
+    atencao: str('rv-atencao'),
+    acoes: str('rv-acoes'),
+    obs: str('rv-obs'),
+    // Próxima visita
+    proxima_data: str('rv-proxima-data'),
+    proxima_obj: str('rv-proxima-obj'),
+    // Meta
+    criado_em: new Date().toISOString(),
+    tipo: 'visita_tecnica',
+  };
+
+  const btn = document.getElementById('visit-save-btn');
+  btn.disabled = true;
+  btn.textContent = 'Salvando...';
+
+  try {
+    // Determine Firebase ID (handle seed clients)
+    let fbId = currentFarmId;
+    if(fbId.startsWith('xl_')) {
+      // Migrate client to Firebase first
+      const d = currentFarmData || {};
+      const dados = {...d, atualizado_em: new Date().toISOString(), origem:'planilha_2025'};
+      const oldId = dados.id; delete dados.id;
+      const ref = await db.ref('propriedades').push(dados);
+      fbId = ref.key;
+      saveMigrated(oldId, fbId, dados.produtor||'');
+      currentFarmId = fbId;
+      document.getElementById('edit-farm-id').value = fbId;
+      const aidx = ALL.findIndex(d => d.id === oldId);
+      if(aidx !== -1) ALL[aidx] = {...dados, id: fbId};
+    }
+
+    // Save visita to Firebase
+    await db.ref('visitas/' + fbId).push(visita);
+
+    // Also save to historico for the charts
+    await db.ref('historico/' + fbId).push({
+      data: new Date().toISOString(),
+      vacas: visita.vacas, lactacao: visita.lactacao, secas: visita.secas||0,
+      novilhas: currentFarmData?.novilhas||0, bezerras: currentFarmData?.bezerras||0,
+      media_prod: visita.media_prod, prod_diaria: visita.prod_total,
+      del: visita.del, gordura: visita.gordura, proteina: visita.proteina,
+      ccs: visita.ccs, cbt: visita.cbt,
+      obs: visita.obs || visita.atencao,
+      vendedor: visita.preenchido_por,
+    });
+
+    // Update farm data if production was filled
+    if(visita.media_prod > 0 || visita.vacas > 0) {
+      const update = {atualizado_em: new Date().toISOString(), atualizado_por: visita.preenchido_por};
+      if(visita.media_prod > 0) { update.media_prod = visita.media_prod; update.prod_diaria = visita.prod_total; }
+      if(visita.vacas > 0) { update.vacas = visita.vacas; update.lactacao = visita.lactacao; update.secas = visita.secas||0; }
+      if(visita.del > 0) update.del = visita.del;
+      if(visita.gordura > 0) { update.gordura = visita.gordura; update.proteina = visita.proteina; }
+      if(visita.ccs > 0) { update.ccs = visita.ccs; update.cbt = visita.cbt; }
+      await db.ref('propriedades/' + fbId).update(update);
+    }
+
+    toast('✅ Relatório de visita registrado com sucesso!');
+    btn.textContent = '✅ Relatório Salvo!';
+
+    // Reload visit history
+    loadVisitHistory(fbId);
+
+    // Reset form after 2s
+    setTimeout(() => {
+      btn.disabled = false;
+      btn.innerHTML = '📋 Registrar Relatório de Visita';
+      resetVisitForm();
+    }, 2000);
+
+  } catch(e) {
+    console.error(e);
+    toast('❌ Erro ao salvar: ' + e.message, true);
+    btn.disabled = false;
+    btn.innerHTML = '📋 Registrar Relatório de Visita';
+  }
+}
+
+function resetVisitForm() {
+  // Clear scores
+  Object.keys(visitScores).forEach(k => delete visitScores[k]);
+  document.querySelectorAll('.score-btn').forEach(b => b.classList.remove('on'));
+  // Uncheck all items
+  document.querySelectorAll('#visit-checklist .check-item').forEach(el => el.classList.remove('checked'));
+  // Clear text areas and optional fields
+  ['rv-hora','rv-duracao','rv-tecnico','rv-vendedor','rv-temp-max','rv-temp-min','rv-clima',
+   'rv-media-prod','rv-prod-total','rv-del','rv-lactacao','rv-secas','rv-vacas','rv-ruminacao',
+   'rv-ms-silagem','rv-ms-presecado','rv-ms-racao','rv-espaco-cocho','rv-sobras',
+   'rv-ecc-preparto','rv-ph-urina','rv-cms-preparto','rv-anionico','rv-conforto-preparto',
+   'rv-ecc-secas','rv-vol-secas','rv-lote-secas',
+   'rv-nutricao-novilhas','rv-fecal-novilhas','rv-idade-ia',
+   'rv-retencao','rv-cetose','rv-da','rv-morte-vacas','rv-causa-morte-vacas',
+   'rv-descarte','rv-causa-descarte','rv-morte-bezerras','rv-morte-novilhas',
+   'rv-ventilacao','rv-bebedouros',
+   'rv-gordura','rv-proteina','rv-ccs','rv-cbt',
+   'rv-positivos','rv-atencao','rv-dieta','rv-acoes','rv-obs',
+   'rv-proxima-data','rv-proxima-obj'].forEach(id => {
+    const el = document.getElementById(id);
+    if(el) el.value = '';
+  });
+  // Reset production to current farm data
+  prefillVisitForm();
+}
+
+function loadVisitHistory(farmId) {
+  const list = document.getElementById('visit-history-list');
+  if(!list) return;
+  list.innerHTML = '<div style="text-align:center;padding:16px;color:var(--muted)">Carregando...</div>';
+
+  db.ref('visitas/' + farmId).orderByChild('criado_em').limitToLast(10).once('value', snap => {
+    const visits = [];
+    snap.forEach(c => visits.push({key: c.key, ...c.val()}));
+    visits.reverse();
+
+    if(!visits.length) {
+      list.innerHTML = '<div style="text-align:center;padding:24px;color:var(--muted);font-size:13px">Nenhum relatório registrado ainda.</div>';
+      return;
+    }
+
+    list.innerHTML = visits.map(v => {
+      const dt = v.data ? new Date(v.data + 'T12:00:00').toLocaleDateString('pt-BR', {day:'2-digit',month:'2-digit',year:'numeric'}) : '—';
+      const hora = v.hora || '';
+      const resp = [v.tecnico&&`Tec: ${v.tecnico}`, v.vendedor&&`Vend: ${v.vendedor}`].filter(Boolean).join(' · ');
+
+      const scoreColor = s => s==='Bom'||s==='Boa'||s==='Ideal 2.5-3.5'?'#16a34a':s==='Médio'||s==='Regular'?'#d97706':'#dc2626';
+      const scoreEmoji = s => s==='Bom'||s==='Boa'||s==='Ideal 2.5-3.5'?'✅':s==='Médio'||s==='Regular'?'⚠️':'❌';
+
+      const scores = [
+        {l:'Consumo', v:v.consumo},{l:'Volumoso', v:v.volumoso},
+        {l:'Suplemento', v:v.suplemento},{l:'ECC', v:v.ecc},{l:'Água', v:v.agua},
+        {l:'Score Fecal', v:v.fecal},{l:'Mistura/TMR', v:v.mistura},
+        {l:'Silagem', v:v.silagem},{l:'Pré-Secado', v:v.presecado},
+        {l:'Ordenação', v:v.ordenacao},{l:'Conforto T°', v:v.termal},
+      ].filter(s=>s.v);
+
+      const checks = (v.checklist||[]).slice(0,6);
+      const moreChecks = (v.checklist||[]).length > 6 ? `+${(v.checklist||[]).length-6} itens` : '';
+
+      const clima = v.clima ? `${v.clima}` : '';
+      const temp = v.temp_max ? `🌡️ ${v.temp_min||'—'}°C – ${v.temp_max}°C` : '';
+
+      return `<div class="visit-card">
+        <div class="visit-card-hdr">
+          <div>
+            <div class="visit-card-date">📋 ${dt}${hora ? ' às ' + hora : ''}</div>
+            <div class="visit-card-by">${resp}${clima?' · '+clima:''}${temp?' · '+temp:''}</div>
+          </div>
+          ${v.duracao?`<div style="font-size:11px;opacity:.8;">⏱️ ${v.duracao}min</div>`:''}
+        </div>
+        <div class="visit-card-body">
+          ${scores.length?`
+          <div class="visit-scores">
+            ${scores.map(s=>`<div class="vscore">
+              <div class="vv" style="color:${scoreColor(s.v)}">${scoreEmoji(s.v)}</div>
+              <div class="vl">${s.l}</div>
+              <div style="font-size:10px;color:#64748b;margin-top:2px">${s.v}</div>
+            </div>`).join('')}
+          </div>`:''}
+
+          ${(v.media_prod||v.del||v.vacas||v.gordura||v.ccs)?`
+          <div class="visit-metrics">
+            ${v.media_prod?`<div class="vmetric"><div class="vmv" style="color:#0e7490">${parseFloat(v.media_prod).toFixed(1)}L</div><div class="vml">L/vaca</div></div>`:''}
+            ${v.del?`<div class="vmetric"><div class="vmv" style="color:#7c3aed">${v.del}d</div><div class="vml">DEL</div></div>`:''}
+            ${v.vacas?`<div class="vmetric"><div class="vmv" style="color:#16a34a">${v.vacas}</div><div class="vml">Vacas</div></div>`:''}
+            ${v.gordura?`<div class="vmetric"><div class="vmv" style="color:#b45309">${parseFloat(v.gordura).toFixed(2)}%</div><div class="vml">Gordura</div></div>`:''}
+            ${v.ccs?`<div class="vmetric"><div class="vmv" style="color:#dc2626">${v.ccs}k</div><div class="vml">CCS</div></div>`:''}
+            ${v.ms_silagem?`<div class="vmetric"><div class="vmv" style="color:#15803d">${v.ms_silagem}%</div><div class="vml">MS Silagem</div></div>`:''}
+            ${v.ms_presecado?`<div class="vmetric"><div class="vmv" style="color:#0891b2">${v.ms_presecado}%</div><div class="vml">MS Pré-Sec</div></div>`:''}
+            ${v.ms_racao?`<div class="vmetric"><div class="vmv" style="color:#7c3aed">${v.ms_racao}%</div><div class="vml">MS Ração</div></div>`:''}
+          </div>`:''}
+
+          ${checks.length?`<div class="visit-checks">
+            ${checks.map(c=>`<span class="vcheck-tag">✓ ${c}</span>`).join('')}
+            ${moreChecks?`<span class="vcheck-tag" style="background:#f1f5f9;color:#64748b">+${moreChecks}</span>`:''}
+          </div>`:''}
+
+          ${v.positivos?`<div class="visit-obs">💚 <strong>Positivos:</strong> ${v.positivos}</div>`:''}
+          ${v.atencao?`<div class="visit-obs">⚠️ <strong>Atenção:</strong> ${v.atencao}</div>`:''}
+          ${v.dieta?`<div class="visit-obs">🌾 <strong>Ajuste dieta:</strong> ${v.dieta}</div>`:''}
+          ${v.acoes?`<div class="visit-obs">🎯 <strong>Metas:</strong> ${v.acoes}</div>`:''}
+          ${(v.retencao||v.cetose||v.da)?`<div class="visit-obs">🏥 <strong>Sanitário:</strong> ${[v.retencao?'Ret.Placenta:'+v.retencao:'',v.cetose?'Cetose:'+v.cetose:'',v.da?'DA:'+v.da:''].filter(Boolean).join(' | ')}</div>`:''}
+          ${v.proxima_data?`<div style="font-size:11px;color:#0891b2;margin-top:6px;font-weight:600">📅 Próxima visita: ${new Date(v.proxima_data+'T12:00:00').toLocaleDateString('pt-BR')}${v.proxima_obj?' — '+v.proxima_obj:''}</div>`:''}
+        </div>
+      </div>`;
+    }).join('');
+  });
+}
+
+
+// ═══════════════════════════════════════════════════════════════
+// PAINEL LATERAL DE VISITAS
+// ═══════════════════════════════════════════════════════════════
+let visitPanelFarmId   = null;
+let visitPanelFarmData = null;
+let visitPanelFarmName = '';
+
+function openVisitPanel(id, name) {
+  visitPanelFarmId   = id;
+  visitPanelFarmName = name;
+  visitPanelFarmData = ALL.find(d => d.id === id) || {};
+
+  const cor = vc(name);
+  const ini = ini2(name);
+  document.getElementById('vp-av').textContent      = ini;
+  document.getElementById('vp-av').style.background = cor;
+  document.getElementById('vp-title').textContent   = name;
+
+  const d = visitPanelFarmData;
+  const tecInfo = [d.tecnico_titular && ('🔵 '+d.tecnico_titular), d.tecnico_substituto && ('🟣 '+d.tecnico_substituto)].filter(Boolean).join(' · ');
+  document.getElementById('vp-sub').textContent = (d.cidade||'') + (d.cidade&&tecInfo?' · ':'') + (tecInfo||'');
+
+  document.getElementById('visit-side-panel').style.display = 'flex';
+  document.body.style.overflow = 'hidden';
+
+  switchVisitTab('report');
+  loadVisitPanelData(id);
+}
+
+function closeVisitPanel() {
+  document.getElementById('visit-side-panel').style.display = 'none';
+  document.body.style.overflow = '';
+}
+
+function switchVisitTab(tab) {
+  ['report','checklist'].forEach(t => {
+    const el = document.getElementById('vp-tab-' + t);
+    const bt = document.getElementById('vpt-' + t);
+    if(el) el.style.display = tab === t ? 'block' : 'none';
+    if(bt) bt.classList.toggle('on', tab === t);
+  });
+}
+
+function openFarmModalFromPanel() {
+  closeVisitPanel();
+  openFarmModal(visitPanelFarmId, visitPanelFarmName);
+  setTimeout(() => switchTab('visit'), 300);
+}
+
+// ── LOAD ALL VISIT DATA FOR THIS FARM ────────────────────────────────────
+async function loadVisitPanelData(farmId) {
+  // Resolve real Firebase ID
+  let fbId = farmId;
+  if (fbId && fbId.startsWith('xl_')) {
+    fbId = MIGRATED_IDS[fbId] || fbId;
+  }
+
+  document.getElementById('vp-visits-list').innerHTML =
+    '<div style="text-align:center;padding:24px;color:var(--muted)">Carregando...</div>';
+
+  try {
+    const snap = await db.ref('visitas/' + fbId).orderByChild('criado_em').once('value');
+    const visits = [];
+    snap.forEach(c => visits.push({ key: c.key, ...c.val() }));
+    visits.sort((a, b) => (b.criado_em||'').localeCompare(a.criado_em||''));
+
+    renderVisitSummary(visits);
+    renderVisitMonthlyList(visits);
+    renderLastChecklist(visits);
+    renderIncidence(visits);
+  } catch(e) {
+    console.error(e);
+    document.getElementById('vp-visits-list').innerHTML =
+      '<div style="text-align:center;padding:24px;color:var(--red)">Erro ao carregar visitas</div>';
+  }
+}
+
+// ── SUMMARY BAR ──────────────────────────────────────────────────────────
+function renderVisitSummary(visits) {
+  const el = document.getElementById('vp-summary');
+  if (!visits.length) { el.style.display = 'none'; return; }
+  el.style.display = 'block';
+
+  const totalMort = visits.reduce((a,v) => a + (v.morte_vacas||0) + (v.morte_bezerras||0) + (v.morte_novilhas||0), 0);
+  const totalDesc = visits.reduce((a,v) => a + (v.descarte||0), 0);
+  const avgProd   = visits.filter(v => v.media_prod > 0).reduce((a,v,_,arr) => a + v.media_prod/arr.length, 0);
+  const lastDEL   = visits.find(v => v.del > 0)?.del || 0;
+
+  el.innerHTML = `
+    <h4>📊 Resumo Geral da Propriedade (${visits.length} visita${visits.length!==1?'s':''})</h4>
+    <div class="summary-grid">
+      <div class="sg-item">
+        <div class="sg-val">${visits.length}</div>
+        <div class="sg-lbl">Visitas</div>
+      </div>
+      <div class="sg-item">
+        <div class="sg-val" style="color:${avgProd>35?'#15803d':'#d97706'}">${avgProd>0?avgProd.toFixed(1):'—'}</div>
+        <div class="sg-lbl">Média L/vaca</div>
+      </div>
+      <div class="sg-item">
+        <div class="sg-val" style="color:${totalMort>0?'#dc2626':'#15803d'}">${totalMort}</div>
+        <div class="sg-lbl">Mortes Total</div>
+      </div>
+      <div class="sg-item">
+        <div class="sg-val" style="color:${totalDesc>5?'#d97706':'#15803d'}">${totalDesc}</div>
+        <div class="sg-lbl">Descartes</div>
+      </div>
+      <div class="sg-item">
+        <div class="sg-val" style="color:${lastDEL>0&&(lastDEL<150||lastDEL>200)?'#d97706':'#15803d'}">${lastDEL||'—'}</div>
+        <div class="sg-lbl">DEL (últ.)</div>
+      </div>
+      <div class="sg-item">
+        <div class="sg-val" style="color:#0891b2">${visits.filter(v=>v.ecc==='Ideal 2.5–3.5').length}</div>
+        <div class="sg-lbl">ECC Ideal</div>
+      </div>
+    </div>`;
+}
+
+// ── INCIDENCE CHART ───────────────────────────────────────────────────────
+function renderIncidence(visits) {
+  const el = document.getElementById('vp-incidence');
+  if (!visits.length) { el.innerHTML = '<div style="color:var(--muted);font-size:12px">Sem dados de visitas</div>'; return; }
+
+  const total = visits.length;
+  const totalVacas = Math.max(...visits.filter(v=>v.vacas>0).map(v=>v.vacas), 1);
+
+  const metrics = [
+    { l: '🔴 Retenção de Placenta',  v: visits.reduce((a,v)=>a+(v.retencao||0),0),  color: '#dc2626', pct: false },
+    { l: '🟡 Cetose Clínica',         v: visits.reduce((a,v)=>a+(v.cetose||0),0),    color: '#d97706', pct: false },
+    { l: '🟠 Deslocamento Abomaso',   v: visits.reduce((a,v)=>a+(v.da||0),0),         color: '#ea580c', pct: false },
+    { l: '⚫ Mortalidade Vacas',       v: visits.reduce((a,v)=>a+(v.morte_vacas||0),0), color: '#475569', pct: false },
+    { l: '🟤 Descarte Total',          v: visits.reduce((a,v)=>a+(v.descarte||0),0),   color: '#92400e', pct: false },
+    { l: '🐣 Mort. Bezerras',          v: visits.reduce((a,v)=>a+(v.morte_bezerras||0),0), color: '#7c3aed', pct: false },
+  ].filter(m => m.v > 0);
+
+  if (!metrics.length) {
+    el.innerHTML = '<div style="background:#f0fdf4;border:1px solid #86efac;border-radius:8px;padding:12px;font-size:12px;color:#15803d;font-weight:600">✅ Nenhuma ocorrência registrada nas visitas</div>';
+    return;
+  }
+
+  const maxV = Math.max(...metrics.map(m => m.v), 1);
+  el.innerHTML = metrics.map(m => `
+    <div class="inc-row">
+      <div class="inc-lbl">${m.l}</div>
+      <div class="inc-bar"><div class="inc-fill" style="width:${m.v/maxV*100}%;background:${m.color}"></div></div>
+      <div class="inc-val" style="color:${m.color}">${m.v}</div>
+    </div>`).join('');
+}
+
+// ── MONTHLY VISIT LIST ───────────────────────────────────────────────────
+function renderVisitMonthlyList(visits) {
+  const el = document.getElementById('vp-visits-list');
+  if (!visits.length) {
+    el.innerHTML = `<div style="text-align:center;padding:32px">
+      <div style="font-size:32px;margin-bottom:8px">📋</div>
+      <div style="font-size:13px;font-weight:700;color:var(--text);margin-bottom:4px">Nenhuma visita registrada</div>
+      <div style="font-size:11px;color:var(--muted)">Use o botão "📋 Visitas" para registrar a primeira visita técnica</div>
+    </div>`;
+    return;
+  }
+
+  const scoreColor = s => {
+    if (!s) return '#94a3b8';
+    const sl = (s||'').toLowerCase();
+    if (sl.includes('bom') || sl.includes('boa') || sl.includes('excelente') || sl.includes('ideal') || sl.includes('adequado') || sl.includes('100%') || sl.includes('3 -') || sl.includes('sem ')) return '#16a34a';
+    if (sl.includes('regular') || sl.includes('médio') || sl.includes('médio') || sl.includes('fluido') || sl.includes('firme') || sl.includes('leve')) return '#d97706';
+    return '#dc2626';
+  };
+  const scoreClass = s => {
+    const c = scoreColor(s);
+    if (c === '#16a34a') return 'bom';
+    if (c === '#d97706') return 'medio';
+    return 'ruim';
+  };
+
+  el.innerHTML = visits.map(v => {
+    const dt = v.data ? new Date(v.data+'T12:00:00').toLocaleDateString('pt-BR',{day:'2-digit',month:'long',year:'numeric'}) : '—';
+    const resp = [v.tecnico&&('Tec: '+v.tecnico), v.vendedor&&('Vend: '+v.vendedor)].filter(Boolean).join(' · ');
+
+    const scoreFields = [
+      { l:'Mistura',   v:v.mistura    },
+      { l:'Fecal',     v:v.fecal      },
+      { l:'Consumo',   v:v.consumo    },
+      { l:'Silagem',   v:v.silagem    },
+      { l:'Pré-Sec.',  v:v.presecado  },
+      { l:'ECC',       v:v.ecc        },
+      { l:'Cama',      v:v.cama       },
+      { l:'Cascos',    v:v.cascos     },
+      { l:'Conforto T°',v:v.termal   },
+      { l:'Suplemento',v:v.suplemento },
+    ].filter(s => s.v);
+
+    const checks = (v.checklist||[]);
+    const sanit = [
+      v.retencao   && `Ret.Placenta: ${v.retencao}`,
+      v.cetose     && `Cetose: ${v.cetose}`,
+      v.da         && `D.Abomaso: ${v.da}`,
+      v.morte_vacas && `Morte vacas: ${v.morte_vacas}${v.causa_morte_vacas?' ('+v.causa_morte_vacas+')':''}`,
+      v.descarte   && `Descarte: ${v.descarte}${v.causa_descarte?' ('+v.causa_descarte+')':''}`,
+      v.morte_bezerras && `Morte bezerras: ${v.morte_bezerras}`,
+    ].filter(Boolean);
+
+    return `<div class="month-card">
+      <div class="month-card-hdr">
+        <div>
+          <div class="month-card-title">📋 ${dt}${v.hora?' às '+v.hora:''}</div>
+          <div class="month-card-meta">${resp}${v.clima?' · '+v.clima:''}${v.duracao?' · ⏱️'+v.duracao+'min':''}</div>
+        </div>
+      </div>
+      <div class="month-card-body">
+
+        ${(v.media_prod||v.del||v.vacas||v.gordura||v.ruminacao)?`
+        <div class="month-kpis">
+          ${v.media_prod?`<div class="mkpi"><div class="mv" style="color:#0e7490">${parseFloat(v.media_prod).toFixed(1)}L</div><div class="ml">L/vaca/dia</div></div>`:''}
+          ${v.del?`<div class="mkpi"><div class="mv" style="color:#7c3aed">${v.del}d</div><div class="ml">DEL</div></div>`:''}
+          ${v.vacas?`<div class="mkpi"><div class="mv" style="color:#16a34a">${v.vacas}</div><div class="ml">Vacas</div></div>`:''}
+          ${v.gordura?`<div class="mkpi"><div class="mv" style="color:#b45309">${parseFloat(v.gordura).toFixed(2)}%</div><div class="ml">Gordura</div></div>`:''}
+          ${v.ccs?`<div class="mkpi"><div class="mv" style="color:#dc2626">${v.ccs}k</div><div class="ml">CCS</div></div>`:''}
+          ${v.ruminacao?`<div class="mkpi"><div class="mv" style="color:#0891b2">${v.ruminacao}%</div><div class="ml">Ruminação</div></div>`:''}
+          ${v.ms_silagem?`<div class="mkpi"><div class="mv" style="color:#15803d">${v.ms_silagem}%</div><div class="ml">MS Sil.</div></div>`:''}
+          ${v.espaco_cocho?`<div class="mkpi"><div class="mv" style="color:#475569">${v.espaco_cocho}cm</div><div class="ml">Espaço cocho</div></div>`:''}
+        </div>`:''}
+
+        ${scoreFields.length?`
+        <div class="month-scores">
+          ${scoreFields.map(s=>`<span class="mscore ${scoreClass(s.v)}">${s.l}: ${s.v}</span>`).join('')}
+        </div>`:''}
+
+        ${v.sobras?`<div style="font-size:11px;margin-bottom:6px">🍽️ <b>Sobras cocho:</b> ${v.sobras}</div>`:''}
+        ${v.ecc_preparto?`<div style="font-size:11px;margin-bottom:4px">🤰 <b>ECC Pré-parto:</b> ${v.ecc_preparto}${v.ph_urina?' | pH Urina: '+v.ph_urina:''}</div>`:''}
+        ${v.ecc_secas?`<div style="font-size:11px;margin-bottom:4px">😴 <b>ECC Secas:</b> ${v.ecc_secas}</div>`:''}
+
+        ${checks.length?`
+        <div class="month-checks">
+          <div class="month-checks-title">✅ Checklist (${checks.length} itens OK)</div>
+          ${checks.slice(0,6).map(c=>`<span class="month-check-tag">✓ ${c}</span>`).join('')}
+          ${checks.length>6?`<span class="month-check-tag" style="background:#f1f5f9;color:#64748b">+${checks.length-6} itens</span>`:''}
+        </div>`:''}
+
+        ${sanit.length?`
+        <div class="month-sanit">
+          🏥 <b>Sanitário:</b> ${sanit.join(' | ')}
+        </div>`:''}
+
+        ${v.positivos?`<div class="month-obs">💚 <b>Positivos:</b> ${v.positivos}</div>`:''}
+        ${v.atencao?`<div class="month-obs">⚠️ <b>Atenção:</b> ${v.atencao}</div>`:''}
+        ${v.dieta?`<div class="month-obs">🌾 <b>Ajuste dieta:</b> ${v.dieta}</div>`:''}
+        ${v.acoes?`<div class="month-acoes">🎯 <b>Metas:</b> ${v.acoes}</div>`:''}
+        ${v.proxima_data?`<div style="font-size:11px;color:#0891b2;margin-top:8px;font-weight:700">📅 Próxima visita: ${new Date(v.proxima_data+'T12:00:00').toLocaleDateString('pt-BR')}${v.proxima_obj?' — '+v.proxima_obj:''}</div>`:''}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ── LAST CHECKLIST ────────────────────────────────────────────────────────
+function renderLastChecklist(visits) {
+  const el = document.getElementById('vp-last-checklist');
+  const last = visits.find(v => (v.checklist||[]).length > 0);
+  if (!last) {
+    el.innerHTML = '<div style="text-align:center;padding:24px;color:var(--muted);font-size:12px">Nenhum checklist preenchido ainda</div>';
+    return;
+  }
+
+  const dt = last.data ? new Date(last.data+'T12:00:00').toLocaleDateString('pt-BR') : '—';
+  el.innerHTML = `
+    <div style="font-size:11px;color:var(--muted);margin-bottom:10px">
+      Último checklist: <b>${dt}</b> — ${last.tecnico||last.vendedor||'—'}
+      <span style="background:#dcfce7;color:#15803d;font-size:10px;font-weight:700;padding:2px 8px;border-radius:6px;margin-left:6px">
+        ${last.checklist.length} itens ✓
+      </span>
+    </div>
+    ${ALL_CHECKLIST_ITEMS.map(item => {
+      const done = (last.checklist||[]).includes(item.label);
+      return `<div style="display:flex;align-items:flex-start;gap:10px;padding:10px 12px;margin-bottom:6px;background:${done?'#f0fdf4':'#fff5f5'};border:1.5px solid ${done?'#86efac':'#fca5a5'};border-radius:10px">
+        <div style="width:22px;height:22px;border-radius:6px;background:${done?'#16a34a':'#f1f5f9'};border:2px solid ${done?'#16a34a':'#e2e8f0'};display:flex;align-items:center;justify-content:center;font-size:13px;flex-shrink:0;color:white;margin-top:1px">${done?'✓':''}</div>
+        <div>
+          <div style="font-size:12px;font-weight:700;color:${done?'#15803d':'#dc2626'}">${item.label}</div>
+          <div style="font-size:10px;color:var(--muted);margin-top:2px">${item.sub}</div>
+        </div>
+      </div>`;
+    }).join('')}`;
+}
+
+// All checklist items for rendering (same as in the form)
+const ALL_CHECKLIST_ITEMS = [
+  { label: 'Cocho e Trilhos Limpos',                  sub: 'Higiene dos equipamentos de alimentação sem resíduos' },
+  { label: 'Cama e Conforto Adequados',               sub: 'Qualidade da cama, espaço e ventilação do free stall/compost' },
+  { label: 'Manejo de Face de Silagem Correto',        sub: 'Avanço mínimo 20 cm/dia, lona bem vedada, sem perdas excessivas' },
+  { label: 'Cocho Sempre Abastecido (mín. 20h/dia)',   sub: 'Frequência de fornecimento e sobras de 3–5% adequadas' },
+  { label: 'Protocolo de Transição Nutricional',       sub: 'Vacas pré e pós-parto seguindo protocolo' },
+  { label: 'Controle de Mastite Adequado',             sub: 'CCS dentro do limite, caneca de fundo preto realizada' },
+  { label: 'Higiene e Rotina de Ordenha Correta',      sub: 'Pré e pós-dipping, desponte, tempo de ordenha adequado' },
+  { label: 'Estoque do Produto Meta Adequado',         sub: 'Quantidade suficiente até a próxima visita, armazenamento correto' },
+  { label: 'Fornecimento Correto do Produto Meta',     sub: 'Dose, frequência e mistura conforme recomendação técnica' },
+  { label: 'Balanço Nutricional Adequado',             sub: 'Formulação compatível com produção e estágio de lactação' },
+  { label: 'Programa Reprodutivo Adequado',            sub: 'Protocolos de IATF, confirmação de prenhez monitorados' },
+  { label: 'Grupo Pré-Parto Corretamente Separado',    sub: 'Separação 21 dias antes do parto, espaço de cocho ≥ 75 cm/vaca' },
+  { label: 'Critérios de Descarte Definidos',          sub: 'Vacas com baixa produção, mastite crônica ou improdutivas identificadas' },
+  { label: 'Protocolo Vacinal em Dia',                 sub: 'IBR, BVD, Clostridioses, Brucelose conforme calendário' },
+  { label: 'Ventilação e Sombreamento Adequados',      sub: 'Ventiladores, aspersores e sombra suficiente' },
+  { label: 'Bebedouros Limpos e Suficientes',          sub: 'Mínimo 10 cm de bebedouro/vaca, limpeza semanal realizada' },
+  { label: 'Manejo de Bezerros e Novilhas',            sub: 'Aleitamento, colostro, desmama, vacinação e crescimento adequados' },
+  { label: 'Instalações Conservadas e Seguras',        sub: 'Pisos antiderrapantes, cercas, calhas e estruturas em bom estado' },
+  { label: 'Controle de Mosca e Pragas',               sub: 'Armadilhas, inseticidas e manejo de esterco' },
+  { label: 'Biosseguridade da Propriedade',            sub: 'Quarentena de animais novos, pedilúvio ativo' },
+  { label: 'Registros Produtivos Atualizados',         sub: 'Controle leiteiro individual, planilhas de saúde e reprodução em dia' },
+  { label: 'Cuidados Podais em Dia',                   sub: 'Banho de casco periódico, casqueamento preventivo' },
+  { label: 'Produtor Satisfeito com Resultados Meta',  sub: 'Percepção positiva de produção, saúde e retorno do produto' },
+];
 
 </script>
 </body>
