@@ -776,6 +776,107 @@ tbody td { padding:10px 12px; font-size:12px; }
   background: #eff6ff; color: #1d4ed8; margin: 1px;
 }
 
+
+/* ── ÍNDICES DA PROPRIEDADE ── */
+.idx-overview {
+  background: white; border: 1px solid var(--border);
+  border-radius: 14px; overflow: hidden; margin-bottom: 14px;
+  box-shadow: var(--shadow);
+}
+.idx-header {
+  background: linear-gradient(135deg, #003c09, #1a6b35);
+  color: white; padding: 14px 18px;
+  display: flex; align-items: center; justify-content: space-between;
+}
+.idx-header-title { font-size: 14px; font-weight: 800; }
+.idx-header-sub   { font-size: 10px; opacity: .75; margin-top: 2px; }
+.idx-total-score {
+  text-align: right;
+}
+.idx-total-val {
+  font-size: 36px; font-weight: 900; line-height: 1;
+  font-family: 'JetBrains Mono', monospace;
+}
+.idx-total-lbl { font-size: 10px; opacity: .75; margin-top: 2px; }
+.idx-body { padding: 16px 18px; }
+
+/* Score ring */
+.idx-ring-wrap {
+  display: grid; grid-template-columns: repeat(5,1fr);
+  gap: 10px; margin-bottom: 16px;
+}
+.idx-ring-card {
+  text-align: center; background: #f8fafc;
+  border-radius: 12px; padding: 12px 8px;
+  border: 1.5px solid var(--border); transition: all .2s;
+}
+.idx-ring-card:hover { border-color: var(--G); transform: translateY(-2px); box-shadow: var(--shadow-md); }
+.idx-ring-title { font-size: 9px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: .4px; margin-bottom: 8px; }
+.idx-ring-val   { font-size: 22px; font-weight: 900; line-height: 1; font-family: 'JetBrains Mono', monospace; }
+.idx-ring-max   { font-size: 9px; color: var(--muted); font-weight: 600; }
+.idx-ring-bar   { height: 5px; background: var(--border); border-radius: 3px; margin: 8px 4px 4px; overflow: hidden; }
+.idx-ring-fill  { height: 100%; border-radius: 3px; transition: width .8s cubic-bezier(.4,0,.2,1); }
+.idx-ring-grade {
+  display: inline-block; font-size: 10px; font-weight: 800;
+  padding: 2px 8px; border-radius: 10px; margin-top: 6px;
+}
+
+/* Score breakdown */
+.idx-breakdown { margin-bottom: 14px; }
+.idx-breakdown-title {
+  font-size: 10px; font-weight: 700; color: var(--muted);
+  text-transform: uppercase; letter-spacing: .5px; margin-bottom: 10px;
+}
+.idx-item {
+  display: flex; align-items: center; gap: 10px;
+  padding: 8px 0; border-bottom: 1px solid #f1f5f9;
+}
+.idx-item:last-child { border-bottom: none; }
+.idx-item-icon { font-size: 16px; width: 24px; text-align: center; flex-shrink: 0; }
+.idx-item-label { flex: 1; font-size: 12px; font-weight: 600; color: var(--text); }
+.idx-item-detail { font-size: 10px; color: var(--muted); }
+.idx-item-bar  { flex: 0 0 80px; height: 6px; background: #f1f5f9; border-radius: 3px; position: relative; }
+.idx-item-fill { position: absolute; top:0; left:0; height:6px; border-radius:3px; transition: width .6s; }
+.idx-item-score {
+  font-size: 12px; font-weight: 800; min-width: 36px; text-align: right;
+  font-family: 'JetBrains Mono', monospace;
+}
+.idx-item-grade {
+  font-size: 10px; font-weight: 800; padding: 2px 6px;
+  border-radius: 6px; min-width: 28px; text-align: center;
+}
+
+/* Grade colors */
+.grade-A { background: #dcfce7; color: #15803d; }
+.grade-B { background: #dbeafe; color: #1d4ed8; }
+.grade-C { background: #fef9c3; color: #a16207; }
+.grade-D { background: #fee2e2; color: #dc2626; }
+.grade-nd { background: #f1f5f9; color: #94a3b8; }
+
+/* Trend */
+.idx-trend {
+  display: flex; gap: 8px; align-items: center;
+  font-size: 11px; color: var(--muted); margin-top: 4px;
+}
+.idx-trend-up   { color: #16a34a; font-weight: 700; }
+.idx-trend-down { color: #dc2626; font-weight: 700; }
+.idx-trend-eq   { color: #64748b; font-weight: 700; }
+
+/* Overall grade badge */
+.idx-grade-badge {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 52px; height: 52px; border-radius: 14px;
+  font-size: 24px; font-weight: 900; color: white;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+}
+
+/* In table - mini score badge */
+.idx-mini {
+  display: inline-flex; align-items: center; gap: 4px;
+  font-size: 10px; font-weight: 800; padding: 3px 8px;
+  border-radius: 8px; white-space: nowrap;
+}
+
 </style>
 </head>
 <body>
@@ -1871,13 +1972,24 @@ tbody td { padding:10px 12px; font-size:12px; }
       <button class="vp-close" onclick="closeVisitPanel()">✕</button>
     </div>
     <div class="vp-tabs">
-      <div class="vp-tab on" id="vpt-report" onclick="switchVisitTab('report')">📊 Relatório Mensal</div>
-      <div class="vp-tab" id="vpt-checklist" onclick="switchVisitTab('checklist')">✅ Checklist Visita</div>
+      <div class="vp-tab on" id="vpt-indices" onclick="switchVisitTab('indices')">🏆 Índices</div>
+      <div class="vp-tab" id="vpt-report" onclick="switchVisitTab('report')">📊 Relatórios</div>
+      <div class="vp-tab" id="vpt-checklist" onclick="switchVisitTab('checklist')">✅ Checklist</div>
     </div>
     <div class="vp-body">
 
+      <!-- TAB ÍNDICES -->
+      <div id="vp-tab-indices">
+        <div id="vp-indices-content">
+          <div style="text-align:center;padding:40px;color:var(--muted)">
+            <div style="font-size:32px;margin-bottom:8px">📊</div>
+            <div style="font-size:13px;font-weight:700">Calculando índices...</div>
+          </div>
+        </div>
+      </div>
+
       <!-- TAB RELATÓRIO MENSAL -->
-      <div id="vp-tab-report">
+      <div id="vp-tab-report" style="display:none">
         <div class="summary-bar" id="vp-summary" style="display:none"></div>
         <div style="margin-bottom:12px">
           <div style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">
@@ -3620,7 +3732,7 @@ function openVisitPanel(id, name) {
   document.getElementById('visit-side-panel').style.display = 'flex';
   document.body.style.overflow = 'hidden';
 
-  switchVisitTab('report');
+  switchVisitTab('indices');
   loadVisitPanelData(id);
 }
 
@@ -3630,7 +3742,7 @@ function closeVisitPanel() {
 }
 
 function switchVisitTab(tab) {
-  ['report','checklist'].forEach(t => {
+  ['indices','report','checklist'].forEach(t => {
     const el = document.getElementById('vp-tab-' + t);
     const bt = document.getElementById('vpt-' + t);
     if(el) el.style.display = tab === t ? 'block' : 'none';
@@ -3661,6 +3773,7 @@ async function loadVisitPanelData(farmId) {
     snap.forEach(c => visits.push({ key: c.key, ...c.val() }));
     visits.sort((a, b) => (b.criado_em||'').localeCompare(a.criado_em||''));
 
+    renderPropertyIndices(visits);
     renderVisitSummary(visits);
     renderVisitMonthlyList(visits);
     renderLastChecklist(visits);
@@ -3904,6 +4017,430 @@ const ALL_CHECKLIST_ITEMS = [
   { label: 'Cuidados Podais em Dia',                   sub: 'Banho de casco periódico, casqueamento preventivo' },
   { label: 'Produtor Satisfeito com Resultados Meta',  sub: 'Percepção positiva de produção, saúde e retorno do produto' },
 ];
+
+
+// ════════════════════════════════════════════════════════════════════
+// SISTEMA DE ÍNDICES DA PROPRIEDADE
+// ════════════════════════════════════════════════════════════════════
+
+// ── Helpers ──────────────────────────────────────────────────────────
+function gradeColor(pct) {
+  if (pct >= 80) return '#16a34a';
+  if (pct >= 60) return '#2563eb';
+  if (pct >= 40) return '#d97706';
+  return '#dc2626';
+}
+function gradeLetter(pct) {
+  if (pct >= 80) return 'A';
+  if (pct >= 60) return 'B';
+  if (pct >= 40) return 'C';
+  return 'D';
+}
+function gradeClass(pct) {
+  if (pct >= 80) return 'grade-A';
+  if (pct >= 60) return 'grade-B';
+  if (pct >= 40) return 'grade-C';
+  if (pct > 0)   return 'grade-D';
+  return 'grade-nd';
+}
+function scoreBadge(val, max, label, icon, detail='') {
+  const pct = max > 0 ? Math.min(val/max*100, 100) : 0;
+  const color = gradeColor(pct);
+  const gl    = gradeLetter(pct);
+  return { val, max, pct, color, gl, label, icon, detail };
+}
+function scoreFromBool(conditions) {
+  // conditions: array of {ok: bool, weight: number, label: string}
+  const total  = conditions.reduce((a,c) => a + c.weight, 0);
+  const earned = conditions.reduce((a,c) => a + (c.ok ? c.weight : 0), 0);
+  return total > 0 ? earned/total*100 : null;
+}
+function avgScore(arr) {
+  const valid = arr.filter(v => v !== null && v !== undefined);
+  if (!valid.length) return null;
+  return valid.reduce((a,b) => a+b, 0) / valid.length;
+}
+function scoreFromText(val, goodValues, medValues) {
+  if (!val) return null;
+  const v = (val||'').toLowerCase();
+  if (goodValues.some(g => v.includes(g))) return 100;
+  if (medValues.some(m => v.includes(m)))  return 55;
+  return 20;
+}
+
+// ── MAIN INDEX CALCULATOR ─────────────────────────────────────────────
+function calcPropertyIndices(visits, farmData) {
+  // Use last 3 visits for scoring (most recent data)
+  const recent = visits.slice(0, 3);
+  const last   = visits[0] || {};
+  const farm   = farmData || {};
+
+  // ═══════════════════════════════════════════════════════
+  // ÍNDICE 1: PRODUTIVIDADE (0-100)
+  // ═══════════════════════════════════════════════════════
+  const mediaProd = recent.filter(v=>v.media_prod>0).map(v=>v.media_prod);
+  const avgMedia  = mediaProd.length ? mediaProd.reduce((a,b)=>a+b,0)/mediaProd.length : 0;
+  // Benchmark: 45L = 100, 35L = 75, 25L = 50, <15L = 20
+  let prodScore = null;
+  if (avgMedia > 0) {
+    if (avgMedia >= 45)      prodScore = 100;
+    else if (avgMedia >= 40) prodScore = 90;
+    else if (avgMedia >= 35) prodScore = 75;
+    else if (avgMedia >= 30) prodScore = 60;
+    else if (avgMedia >= 25) prodScore = 45;
+    else if (avgMedia >= 20) prodScore = 30;
+    else                     prodScore = 20;
+  }
+
+  const del = last.del || farm.del || 0;
+  let delScore = null;
+  if (del > 0) {
+    // Ideal 150-180 days
+    if (del >= 150 && del <= 180)   delScore = 100;
+    else if (del >= 130 && del <= 200) delScore = 75;
+    else if (del >= 110)              delScore = 50;
+    else                              delScore = 30;
+  }
+
+  const ruminacao = last.ruminacao || 0;
+  let rumScore = null;
+  if (ruminacao > 0) {
+    if (ruminacao >= 60)      rumScore = 100;
+    else if (ruminacao >= 55) rumScore = 80;
+    else if (ruminacao >= 45) rumScore = 55;
+    else                      rumScore = 30;
+  }
+
+  const produtividadeScore = avgScore([prodScore, delScore, rumScore]);
+
+  const prodItems = [
+    { icon:'🥛', label:'Média L/vaca/dia', detail: avgMedia > 0 ? avgMedia.toFixed(1)+'L' : 'Sem dados', val: prodScore, max: 100 },
+    { icon:'📅', label:'DEL (dias em lactação)', detail: del > 0 ? del+'d (ideal 150-180)' : 'Sem dados', val: delScore, max: 100 },
+    { icon:'💭', label:'Taxa de Ruminação', detail: ruminacao > 0 ? ruminacao+'% (meta >55%)' : 'Sem dados', val: rumScore, max: 100 },
+  ];
+
+  // ═══════════════════════════════════════════════════════
+  // ÍNDICE 2: NUTRIÇÃO (0-100)
+  // ═══════════════════════════════════════════════════════
+  const misturaScores = recent.filter(v=>v.mistura).map(v => scoreFromText(v.mistura,['bom','excelente'],['regular']));
+  const consumoScores = recent.filter(v=>v.consumo).map(v => scoreFromText(v.consumo,['bom','excelente'],['médio','medio']));
+  const fecalScores   = recent.filter(v=>v.fecal).map(v => {
+    const f = (v.fecal||'').toLowerCase();
+    if (f.includes('3 - ideal') || f.includes('ideal'))  return 100;
+    if (f.includes('2 - fluido') || f.includes('4 - firme')) return 55;
+    return 20;
+  });
+  const supScores = recent.filter(v=>v.suplemento&&v.suplemento!=='N/A').map(v => scoreFromText(v.suplemento,['bom','excelente'],['médio','medio']));
+
+  const msMilho = last.ms_silagem || 0;
+  let msScore = null;
+  if (msMilho > 0) {
+    // Ideal 30-35%
+    if (msMilho >= 28 && msMilho <= 37) msScore = 100;
+    else if (msMilho >= 25 && msMilho <= 40) msScore = 65;
+    else msScore = 35;
+  }
+
+  const sobrasOk = recent.filter(v=>v.sobras).map(v => scoreFromText(v.sobras,['adequada'],['excessiva']));
+
+  const nutricaoScore = avgScore([
+    avgScore(misturaScores), avgScore(consumoScores),
+    avgScore(fecalScores), avgScore(supScores),
+    msScore, avgScore(sobrasOk)
+  ]);
+
+  const nutItems = [
+    { icon:'🌾', label:'Qualidade Mistura/TMR', detail: last.mistura||'Sem dados', val: avgScore(misturaScores), max:100 },
+    { icon:'🍽️', label:'Consumo dos Animais', detail: last.consumo||'Sem dados', val: avgScore(consumoScores), max:100 },
+    { icon:'💩', label:'Score Fecal', detail: last.fecal||'Sem dados', val: avgScore(fecalScores), max:100 },
+    { icon:'💊', label:'Consumo Suplemento Meta', detail: last.suplemento||'Sem dados', val: avgScore(supScores), max:100 },
+    { icon:'📊', label:'MS Silagem Milho', detail: msMilho > 0 ? msMilho+'% (ideal 30-35%)' : 'Sem dados', val: msScore, max:100 },
+    { icon:'🍽️', label:'Sobras de Cocho (3-5%)', detail: last.sobras||'Sem dados', val: avgScore(sobrasOk), max:100 },
+  ];
+
+  // ═══════════════════════════════════════════════════════
+  // ÍNDICE 3: SAÚDE ANIMAL (0-100)
+  // ═══════════════════════════════════════════════════════
+  const cscScores = recent.filter(v=>v.cascos).map(v => scoreFromText(v.cascos,['sem claudic'],['leve']));
+  const ccsVal    = last.ccs || farm.ccs || 0;
+  let ccsScore = null;
+  if (ccsVal > 0) {
+    if (ccsVal <= 200)      ccsScore = 100;
+    else if (ccsVal <= 300) ccsScore = 80;
+    else if (ccsVal <= 400) ccsScore = 60;
+    else if (ccsVal <= 500) ccsScore = 40;
+    else                    ccsScore = 20;
+  }
+
+  // Penalize for disease occurrences (per 100 cows)
+  const totalVacas = Math.max(last.vacas || farm.vacas || 100, 1);
+  const totalRet  = visits.reduce((a,v)=>a+(v.retencao||0),0);
+  const totalCet  = visits.reduce((a,v)=>a+(v.cetose||0),0);
+  const totalDA   = visits.reduce((a,v)=>a+(v.da||0),0);
+  const totalMort = visits.reduce((a,v)=>a+(v.morte_vacas||0),0);
+
+  const incidRet  = totalRet / totalVacas * 100;
+  const incidCet  = totalCet / totalVacas * 100;
+  const incidDA   = totalDA  / totalVacas * 100;
+  const incidMort = totalMort / totalVacas * 100;
+
+  let diseaseScore = null;
+  if (visits.length > 0) {
+    const retPenalty  = Math.max(0, 100 - incidRet  * 10);
+    const cetPenalty  = Math.max(0, 100 - incidCet  * 10);
+    const daPenalty   = Math.max(0, 100 - incidDA   * 20);
+    const mortPenalty = Math.max(0, 100 - incidMort * 15);
+    diseaseScore = (retPenalty + cetPenalty + daPenalty + mortPenalty) / 4;
+  }
+
+  const saudeScore = avgScore([avgScore(cscScores), ccsScore, diseaseScore]);
+
+  const saudeItems = [
+    { icon:'🦶', label:'Saúde dos Cascos', detail: last.cascos||'Sem dados', val: avgScore(cscScores), max:100 },
+    { icon:'🔬', label:'CCS (Mastite)', detail: ccsVal > 0 ? ccsVal+'k cel/mL' : 'Sem dados', val: ccsScore, max:100 },
+    { icon:'🏥', label:'Ocorrências Metabólicas', detail: visits.length > 0 ? `Ret:${totalRet} | Cet:${totalCet} | DA:${totalDA}` : 'Sem dados', val: diseaseScore, max:100 },
+    { icon:'💀', label:'Mortalidade de Vacas', detail: totalMort > 0 ? `${totalMort} mortes (${incidMort.toFixed(1)}%)` : '✅ 0 registros', val: totalMort===0&&visits.length>0?100:diseaseScore, max:100 },
+  ];
+
+  // ═══════════════════════════════════════════════════════
+  // ÍNDICE 4: AMBIÊNCIA E CONFORTO (0-100)
+  // ═══════════════════════════════════════════════════════
+  const camaScores = recent.filter(v=>v.cama).map(v => scoreFromText(v.cama,['seca e fofa'],['úmida']));
+  const ventScores = recent.filter(v=>v.ventilacao).map(v => scoreFromText(v.ventilacao,['100%'],['falhas']));
+  const aguaScores = recent.filter(v=>v.bebedouros).map(v => scoreFromText(v.bebedouros,['excelente'],['sujos']));
+  const termalScores = recent.filter(v=>v.termal).map(v => scoreFromText(v.termal,['confortável'],['leve']));
+
+  const ambScore = avgScore([
+    avgScore(camaScores), avgScore(ventScores),
+    avgScore(aguaScores), avgScore(termalScores)
+  ]);
+
+  const ambItems = [
+    { icon:'🛏️', label:'Conforto da Cama', detail: last.cama||'Sem dados', val: avgScore(camaScores), max:100 },
+    { icon:'💨', label:'Ventilação/Aspersores', detail: last.ventilacao||'Sem dados', val: avgScore(ventScores), max:100 },
+    { icon:'💧', label:'Bebedouros', detail: last.bebedouros||'Sem dados', val: avgScore(aguaScores), max:100 },
+    { icon:'🌡️', label:'Conforto Térmico', detail: last.termal||'Sem dados', val: avgScore(termalScores), max:100 },
+  ];
+
+  // ═══════════════════════════════════════════════════════
+  // ÍNDICE 5: CHECKLIST DE BOAS PRÁTICAS (0-100)
+  // ═══════════════════════════════════════════════════════
+  let checkScore = null;
+  if (visits.some(v => (v.checklist||[]).length > 0)) {
+    const totalItems = 23; // total checklist items
+    const avgChecked = recent
+      .filter(v => (v.checklist||[]).length > 0)
+      .map(v => (v.checklist||[]).length / totalItems * 100);
+    checkScore = avgChecked.length ? avgScore(avgChecked) : null;
+  }
+
+  const checkDetail = last.checklist?.length > 0
+    ? `${last.checklist.length}/23 itens OK (última visita)`
+    : 'Checklist não preenchido';
+
+  // ═══════════════════════════════════════════════════════
+  // ÍNDICE GERAL
+  // ═══════════════════════════════════════════════════════
+  const indexWeights = [
+    { name: 'Produtividade',     score: produtividadeScore, weight: 0.30, icon: '🥛', items: prodItems },
+    { name: 'Nutrição',          score: nutricaoScore,      weight: 0.25, icon: '🌾', items: nutItems  },
+    { name: 'Saúde Animal',      score: saudeScore,         weight: 0.25, icon: '🏥', items: saudeItems},
+    { name: 'Ambiência',         score: ambScore,           weight: 0.15, icon: '🏗️', items: ambItems  },
+    { name: 'Boas Práticas',     score: checkScore,         weight: 0.05, icon: '✅', items: [
+      { icon:'✅', label:'Checklist de Boas Práticas', detail: checkDetail, val: checkScore, max:100 }
+    ]},
+  ];
+
+  const validWeights = indexWeights.filter(i => i.score !== null && i.score !== undefined);
+  let totalScore = null;
+  if (validWeights.length > 0) {
+    const totalWeight = validWeights.reduce((a,i) => a+i.weight, 0);
+    totalScore = validWeights.reduce((a,i) => a + (i.score * i.weight), 0) / totalWeight;
+  }
+
+  return { indices: indexWeights, total: totalScore, visits: visits.length };
+}
+
+// ── RENDER INDICES ─────────────────────────────────────────────────────
+function renderPropertyIndices(visits) {
+  const el = document.getElementById('vp-indices-content');
+  if (!el) return;
+
+  const farm  = visitPanelFarmData || {};
+  const result = calcPropertyIndices(visits, farm);
+
+  if (!result.visits) {
+    el.innerHTML = `
+      <div style="text-align:center;padding:40px">
+        <div style="font-size:48px;margin-bottom:12px">📋</div>
+        <div style="font-size:14px;font-weight:800;color:var(--text);margin-bottom:6px">Nenhuma visita registrada</div>
+        <div style="font-size:12px;color:var(--muted);margin-bottom:20px">
+          Os índices são calculados automaticamente a partir dos relatórios de visita.<br>
+          Registre a primeira visita técnica para ver os índices desta propriedade.
+        </div>
+        <button onclick="openFarmModalFromPanel()" style="background:linear-gradient(135deg,#0891b2,#0e7490);color:white;border:none;border-radius:10px;padding:10px 20px;font-size:13px;font-weight:700;font-family:'Inter',sans-serif;cursor:pointer">
+          📋 Registrar Primeira Visita
+        </button>
+      </div>`;
+    return;
+  }
+
+  const total   = result.total;
+  const totalPct = total !== null ? Math.round(total) : null;
+  const totalColor = total !== null ? gradeColor(total) : '#94a3b8';
+  const totalGL    = total !== null ? gradeLetter(total) : '?';
+
+  const gradeDesc = {
+    'A': 'Excelente — propriedade referência',
+    'B': 'Bom — acima da média, pontos a melhorar',
+    'C': 'Regular — necessita atenção',
+    'D': 'Crítico — intervenção prioritária',
+    '?': 'Dados insuficientes para avaliação',
+  };
+
+  // Header with overall score
+  let html = `
+    <div class="idx-overview">
+      <div class="idx-header">
+        <div>
+          <div class="idx-header-title">🏆 Índice Geral da Propriedade</div>
+          <div class="idx-header-sub">
+            Calculado a partir de ${result.visits} visita${result.visits!==1?'s':''} técnica${result.visits!==1?'s':''} • Pesos: Produtividade 30% · Nutrição 25% · Saúde 25% · Ambiência 15% · Boas Práticas 5%
+          </div>
+        </div>
+        <div class="idx-total-score">
+          ${totalPct !== null ? `
+            <div class="idx-grade-badge" style="background:${totalColor}">${totalGL}</div>
+            <div style="font-size:10px;opacity:.75;margin-top:4px;text-align:center">${totalPct}/100</div>
+          ` : '<div style="font-size:10px;opacity:.75">Sem dados</div>'}
+        </div>
+      </div>
+      <div class="idx-body">
+        <div style="font-size:11px;color:${totalColor};font-weight:700;margin-bottom:14px;padding:8px 12px;background:${totalColor}22;border-radius:8px;border-left:3px solid ${totalColor}">
+          ${gradeDesc[totalGL]}
+        </div>
+
+        <!-- MINI CARDS DOS 5 ÍNDICES -->
+        <div class="idx-ring-wrap">
+          ${result.indices.map(idx => {
+            const pct = idx.score !== null ? Math.round(idx.score) : null;
+            const col = pct !== null ? gradeColor(pct) : '#94a3b8';
+            const gl  = pct !== null ? gradeLetter(pct) : '?';
+            const gc  = pct !== null ? gradeClass(pct) : 'grade-nd';
+            const barPct = pct !== null ? pct : 0;
+            return `<div class="idx-ring-card">
+              <div class="idx-ring-title">${idx.icon} ${idx.name}</div>
+              <div class="idx-ring-val" style="color:${col}">${pct !== null ? pct : '—'}</div>
+              <div class="idx-ring-max">/100</div>
+              <div class="idx-ring-bar"><div class="idx-ring-fill" style="width:${barPct}%;background:${col}"></div></div>
+              <span class="idx-ring-grade ${gc}">${gl}</span>
+            </div>`;
+          }).join('')}
+        </div>
+      </div>
+    </div>`;
+
+  // DETAIL BREAKDOWN for each index
+  result.indices.forEach(idx => {
+    const pct   = idx.score !== null ? Math.round(idx.score) : null;
+    const col   = pct !== null ? gradeColor(pct) : '#94a3b8';
+    const gl    = pct !== null ? gradeLetter(pct) : '?';
+    const gc    = pct !== null ? gradeClass(pct) : 'grade-nd';
+
+    html += `
+      <div class="idx-overview">
+        <div class="idx-header" style="padding:10px 16px">
+          <div style="display:flex;align-items:center;gap:10px">
+            <span style="font-size:20px">${idx.icon}</span>
+            <div>
+              <div class="idx-header-title" style="font-size:13px">${idx.name}</div>
+            </div>
+          </div>
+          <div style="text-align:right">
+            <div style="font-size:22px;font-weight:900;color:white">${pct !== null ? pct : '—'}</div>
+            <span class="idx-ring-grade ${gc}" style="font-size:11px">${gl}</span>
+          </div>
+        </div>
+        <div class="idx-body" style="padding:12px 16px">
+          <div class="idx-breakdown">
+            ${idx.items.map(item => {
+              const ipct = item.val !== null && item.val !== undefined ? Math.round(item.val) : null;
+              const icol = ipct !== null ? gradeColor(ipct) : '#94a3b8';
+              const igl  = ipct !== null ? gradeLetter(ipct) : '?';
+              const igc  = ipct !== null ? gradeClass(ipct) : 'grade-nd';
+              return `<div class="idx-item">
+                <div class="idx-item-icon">${item.icon}</div>
+                <div style="flex:1">
+                  <div class="idx-item-label">${item.label}</div>
+                  <div class="idx-item-detail">${item.detail||'—'}</div>
+                </div>
+                <div class="idx-item-bar">
+                  <div class="idx-item-fill" style="width:${ipct||0}%;background:${icol}"></div>
+                </div>
+                <div class="idx-item-score" style="color:${icol}">${ipct !== null ? ipct : '—'}</div>
+                <span class="idx-item-grade ${igc}">${igl}</span>
+              </div>`;
+            }).join('')}
+          </div>
+        </div>
+      </div>`;
+  });
+
+  // Recomendações automáticas
+  const recs = [];
+  if (result.indices[0].score !== null && result.indices[0].score < 60)
+    recs.push({ icon:'🥛', text:'Produção abaixo da meta — revisar balanço energético e DEL' });
+  if (result.indices[1].score !== null && result.indices[1].score < 60)
+    recs.push({ icon:'🌾', text:'Score nutricional baixo — verificar qualidade da mistura e MS dos volumosos' });
+  if (result.indices[2].score !== null && result.indices[2].score < 60)
+    recs.push({ icon:'🏥', text:'Saúde animal comprometida — analisar incidência de doenças metabólicas' });
+  if (result.indices[3].score !== null && result.indices[3].score < 60)
+    recs.push({ icon:'🏗️', text:'Ambiência deficiente — priorizar ventilação e conforto da cama' });
+  if (result.indices[4].score !== null && result.indices[4].score < 60)
+    recs.push({ icon:'✅', text:'Boas práticas incompletas — revisar checklist nas próximas visitas' });
+
+  if (recs.length) {
+    html += `
+      <div style="background:#fffbeb;border:1.5px solid #fcd34d;border-radius:12px;padding:14px 16px;margin-bottom:12px">
+        <div style="font-size:11px;font-weight:800;color:#a16207;text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px">
+          ⚠️ Recomendações Prioritárias
+        </div>
+        ${recs.map(r => `
+          <div style="display:flex;align-items:flex-start;gap:8px;margin-bottom:8px">
+            <span style="font-size:16px;flex-shrink:0">${r.icon}</span>
+            <div style="font-size:12px;font-weight:600;color:#78350f">${r.text}</div>
+          </div>`).join('')}
+      </div>`;
+  }
+
+  if (result.total !== null && result.total >= 80) {
+    html += `
+      <div style="background:#f0fdf4;border:1.5px solid #86efac;border-radius:12px;padding:14px 16px">
+        <div style="font-size:12px;font-weight:700;color:#15803d">
+          🏆 Propriedade de alta performance! Use como referência e case de sucesso dos produtos Meta.
+        </div>
+      </div>`;
+  }
+
+  el.innerHTML = html;
+}
+
+// ── ADD MINI INDEX TO TABLE (called from renderTbl) ─────────────────────
+function getMiniIndex(d) {
+  // Quick score based on available farm data (without visits)
+  const scores = [];
+  if (d.media_prod > 0) {
+    if (d.media_prod >= 40)      scores.push(100);
+    else if (d.media_prod >= 35) scores.push(80);
+    else if (d.media_prod >= 28) scores.push(60);
+    else                         scores.push(35);
+  }
+  if (d.gordura > 0) scores.push(d.gordura >= 3.5 ? 100 : d.gordura >= 3.0 ? 65 : 30);
+  if (d.ccs > 0)     scores.push(d.ccs <= 200 ? 100 : d.ccs <= 400 ? 65 : 30);
+  if (!scores.length) return null;
+  const avg = scores.reduce((a,b)=>a+b,0)/scores.length;
+  return Math.round(avg);
+}
 
 </script>
 </body>
