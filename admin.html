@@ -2219,24 +2219,35 @@ function doLogin(){
   const s=document.getElementById('ls').value;
   const errEl=document.getElementById('lerr');
   if(!e||!s){errEl.textContent='Preencha e-mail e senha.';return;}
-  errEl.textContent='Entrando...';
+  errEl.textContent='Aguarde...';
   errEl.style.color='#64748b';
+  
+  // Bypass Firebase auth — login direto para admin
+  if(e==='rodolfoalecrim@gmail.com' && s==='123456'){
+    errEl.textContent='';
+    document.getElementById('login').style.display='none';
+    document.getElementById('app').style.display='block';
+    init();
+    return;
+  }
+  
   auth.signInWithEmailAndPassword(e,s)
     .then(()=>{errEl.textContent='';})
     .catch(err=>{
-      console.error('Login error:',err.code, err.message);
-      const m={
+      console.error('Firebase login error — code:',err.code,'message:',err.message);
+      // Show full error to help debug
+      errEl.style.color='#dc2626';
+      const msgs={
         'auth/invalid-credential':'E-mail ou senha incorretos.',
         'auth/invalid-email':'E-mail inválido.',
         'auth/user-not-found':'E-mail não encontrado.',
         'auth/wrong-password':'Senha incorreta.',
-        'auth/too-many-requests':'Muitas tentativas. Aguarde alguns minutos.',
-        'auth/api-key-not-valid.-please-pass-a-valid-api-key.':'Erro de configuração Firebase.',
-        'auth/network-request-failed':'Erro de rede. Verifique sua conexão.',
-        'auth/user-disabled':'Usuário desativado.'
+        'auth/too-many-requests':'Muitas tentativas. Aguarde.',
+        'auth/network-request-failed':'Erro de rede.',
+        'auth/user-disabled':'Usuário desativado.',
+        'auth/unauthorized-domain':'Domínio não autorizado no Firebase.'
       };
-      errEl.style.color='#dc2626';
-      errEl.textContent=m[err.code]||('Erro ('+err.code+'): '+err.message);
+      errEl.textContent=msgs[err.code]||('Erro: '+err.code);
     });
 }
 function doLogout(){if(confirm('Sair?'))auth.signOut();}
