@@ -2201,75 +2201,63 @@ function mergeWithSeed(fbData){
 }
 
 // AUTH
-auth.onAuthStateChanged(u=>{
+auth.onAuthStateChanged(function(u){
   if(u){
-    document.getElementById('login').style.display='none';
-    document.getElementById('app').style.display='flex';
-    document.getElementById('app').style.flexDirection='column';
-    document.getElementById('tbuser').textContent=u.email;
-    init();
+    console.log('USER LOGGED IN:', u.email);
+    try {
+      document.getElementById('login').style.display='none';
+      document.getElementById('app').style.display='flex';
+      document.getElementById('app').style.flexDirection='column';
+      document.getElementById('tbuser').textContent=u.email;
+    } catch(e){ console.error('Display error:', e); }
+    try {
+      init();
+      console.log('init() called OK');
+    } catch(e){ 
+      console.error('init() ERROR:', e);
+      alert('Erro ao iniciar sistema: ' + e.message + '\nAbra o console (F12) para detalhes.');
+    }
   } else {
+    console.log('NO USER - showing login');
     document.getElementById('login').style.display='flex';
     document.getElementById('app').style.display='none';
   }
 });
 
 function doLogin(){
-  var emailEl = document.getElementById('le');
-  var senhaEl = document.getElementById('ls');
-  var errEl   = document.getElementById('lerr');
-  var e = emailEl ? emailEl.value.trim() : '';
-  var s = senhaEl ? senhaEl.value : '';
-
-  if(!e || !s){
-    errEl.textContent = 'Preencha e-mail e senha.';
-    errEl.style.color = '#dc2626';
-    return;
+  var e = document.getElementById('le').value.trim();
+  var s = document.getElementById('ls').value;
+  var errEl = document.getElementById('lerr');
+  
+  if(!e || !s){ 
+    errEl.style.color='#dc2626';
+    errEl.textContent='Preencha e-mail e senha.'; 
+    return; 
   }
-
-  errEl.textContent = 'Aguarde...';
-  errEl.style.color = '#64748b';
-
-  // Login direto para o admin (bypass Firebase Auth se necessário)
-  var ADMIN_EMAIL = 'rodolfoalecrim@gmail.com';
-  var ADMIN_PASS  = '123456';
-
-  if(e === ADMIN_EMAIL && s === ADMIN_PASS){
-    console.log('Login bypass ativado para admin');
-    errEl.textContent = '';
-    var loginDiv = document.getElementById('login');
-    var appDiv   = document.getElementById('app');
-    var userSpan = document.getElementById('tbuser');
-    if(loginDiv) loginDiv.style.display = 'none';
-    if(appDiv)   appDiv.style.display   = 'block';
-    if(userSpan) userSpan.textContent   = e;
-    // Tenta logar no Firebase também (para onAuthStateChanged funcionar)
-    try {
-      auth.signInWithEmailAndPassword(e, s).catch(function(){ /* ignora erro */ });
-    } catch(ex){ /* ignora */ }
-    init();
-    return;
-  }
-
-  // Login Firebase para outros usuários
+  
+  errEl.style.color='#94a3b8';
+  errEl.textContent='Entrando...';
+  
   auth.signInWithEmailAndPassword(e, s)
-    .then(function(){ errEl.textContent = ''; })
+    .then(function(cred){
+      console.log('Login OK:', cred.user.email);
+      errEl.textContent = '';
+    })
     .catch(function(err){
-      console.error('Firebase login error:', err.code, err.message);
-      var msgs = {
-        'auth/invalid-credential'  : 'E-mail ou senha incorretos.',
-        'auth/invalid-email'       : 'E-mail inválido.',
-        'auth/user-not-found'      : 'E-mail não encontrado.',
-        'auth/wrong-password'      : 'Senha incorreta.',
-        'auth/too-many-requests'   : 'Muitas tentativas. Aguarde.',
-        'auth/network-request-failed': 'Erro de rede. Verifique conexão.',
-        'auth/user-disabled'       : 'Usuário desativado.',
-        'auth/unauthorized-domain' : 'Domínio não autorizado no Firebase.'
+      console.error('Login err:', err.code, err.message);
+      var m = {
+        'auth/invalid-credential':'E-mail ou senha incorretos.',
+        'auth/wrong-password':'Senha incorreta.',
+        'auth/user-not-found':'Usuário não encontrado.',
+        'auth/too-many-requests':'Muitas tentativas. Aguarde.',
+        'auth/network-request-failed':'Sem conexão com internet.',
+        'auth/unauthorized-domain':'Domínio não autorizado.'
       };
-      errEl.style.color   = '#dc2626';
-      errEl.textContent   = msgs[err.code] || ('Erro: ' + err.code);
+      errEl.style.color='#dc2626';
+      errEl.textContent = m[err.code] || ('Erro: ' + err.code);
     });
 }
+
 function doLogout(){if(confirm('Sair?'))auth.signOut();}
 document.getElementById('ls').addEventListener('keydown',e=>{if(e.key==='Enter')doLogin();});
 
