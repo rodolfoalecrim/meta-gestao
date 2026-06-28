@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Teste Login Firebase</title>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+<style>
+body { font-family: Arial; padding: 40px; background: #f0f0f0; }
+.box { background: white; padding: 30px; border-radius: 12px; max-width: 500px; margin: auto; }
+input { width: 100%; padding: 12px; margin: 8px 0; border: 1px solid #ccc; border-radius: 8px; box-sizing: border-box; font-size: 14px; }
+button { width: 100%; padding: 14px; background: #003c09; color: white; border: none; border-radius: 8px; font-size: 16px; cursor: pointer; margin: 8px 0; }
+button:hover { background: #1a6b35; }
+.btn2 { background: #0891b2; }
+#log { background: #1e1e1e; color: #00ff00; padding: 16px; border-radius: 8px; font-family: monospace; font-size: 12px; margin-top: 16px; min-height: 150px; white-space: pre-wrap; overflow-y: auto; max-height: 400px; }
+.ok { color: #00ff00; }
+.err { color: #ff4444; }
+.info { color: #ffff00; }
+</style>
+</head>
+<body>
+<div class="box">
+  <h2>🔥 Teste Firebase — Meta Gestão</h2>
+
+  <input id="email" type="email" value="rodolfoalecrim@gmail.com" placeholder="Email">
+  <input id="senha" type="password" value="123456" placeholder="Senha">
+  
+  <button onclick="testarLogin()">🔐 Testar Login Firebase</button>
+  <button class="btn2" onclick="testarConexao()">📡 Testar Conexão DB</button>
+  <button onclick="testarBypass()" style="background:#7c3aed">⚡ Entrar via Bypass</button>
+
+  <div id="log">Clique em um botão para testar...\n</div>
+  
+  <div id="sucesso" style="display:none;background:#dcfce7;padding:20px;border-radius:8px;margin-top:16px;text-align:center">
+    <h2 style="color:#16a34a">✅ LOGIN OK!</h2>
+    <p id="user_info"></p>
+    <a href="admin.html" style="background:#003c09;color:white;padding:12px 24px;border-radius:8px;text-decoration:none;display:inline-block;margin-top:8px">→ Ir para o Admin</a>
+  </div>
+</div>
+
+<script>
+var log = document.getElementById('log');
+function addLog(msg, type) {
+  var prefix = type === 'ok' ? '✅ ' : type === 'err' ? '❌ ' : 'ℹ️ ';
+  var color = type === 'ok' ? '#00ff00' : type === 'err' ? '#ff4444' : '#ffff00';
+  log.innerHTML += '<span style="color:' + color + '">' + prefix + msg + '</span>\n';
+  log.scrollTop = log.scrollHeight;
+}
+
+addLog('Página carregada — ' + new Date().toLocaleTimeString(), 'info');
+addLog('Domínio: ' + window.location.hostname, 'info');
+
+// Firebase config
+var firebaseConfig = {
+  apiKey: "AIzaSyClpsHjO8OLThD--hDOfg7Fg3t6hhuM-To",
+  authDomain: "meta-gestao-608d7.firebaseapp.com",
+  databaseURL: "https://meta-gestao-608d7-default-rtdb.firebaseio.com",
+  projectId: "meta-gestao-608d7",
+  storageBucket: "meta-gestao-608d7.firebasestorage.app",
+  messagingSenderId: "318618053627",
+  appId: "1:318618053627:web:ae289200bd1e87be29395e"
+};
+
+try {
+  firebase.initializeApp(firebaseConfig);
+  addLog('Firebase inicializado OK', 'ok');
+} catch(e) {
+  addLog('Erro ao inicializar Firebase: ' + e.message, 'err');
+}
+
+var auth = firebase.auth();
+var db = firebase.database();
+
+auth.onAuthStateChanged(function(user) {
+  if (user) {
+    addLog('Auth state: LOGADO como ' + user.email, 'ok');
+    document.getElementById('sucesso').style.display = 'block';
+    document.getElementById('user_info').textContent = 'Usuário: ' + user.email;
+  } else {
+    addLog('Auth state: não logado', 'info');
+  }
+});
+
+function testarLogin() {
+  var e = document.getElementById('email').value.trim();
+  var s = document.getElementById('senha').value;
+  addLog('Tentando login com: ' + e, 'info');
+  
+  auth.signInWithEmailAndPassword(e, s)
+    .then(function(cred) {
+      addLog('LOGIN FIREBASE OK! UID: ' + cred.user.uid, 'ok');
+    })
+    .catch(function(err) {
+      addLog('ERRO Firebase: ' + err.code, 'err');
+      addLog('Mensagem: ' + err.message, 'err');
+    });
+}
+
+function testarConexao() {
+  addLog('Testando conexão com banco de dados...', 'info');
+  db.ref('.info/connected').once('value')
+    .then(function(snap) {
+      addLog('DB conectado: ' + snap.val(), snap.val() ? 'ok' : 'err');
+    })
+    .catch(function(err) {
+      addLog('Erro DB: ' + err.message, 'err');
+    });
+    
+  db.ref('.info/serverTimeOffset').once('value')
+    .then(function(snap) {
+      addLog('Server time offset: ' + snap.val() + 'ms', 'ok');
+    })
+    .catch(function(err) {
+      addLog('Erro server time: ' + err.message, 'err');
+    });
+}
+
+function testarBypass() {
+  addLog('Bypass ativado — entrando direto...', 'info');
+  document.getElementById('sucesso').style.display = 'block';
+  document.getElementById('user_info').textContent = 'Login via bypass (sem Firebase Auth)';
+  addLog('Bypass OK — clique no link para ir ao admin', 'ok');
+}
+</script>
+</body>
+</html>
