@@ -2215,39 +2215,59 @@ auth.onAuthStateChanged(u=>{
 });
 
 function doLogin(){
-  const e=document.getElementById('le').value.trim();
-  const s=document.getElementById('ls').value;
-  const errEl=document.getElementById('lerr');
-  if(!e||!s){errEl.textContent='Preencha e-mail e senha.';return;}
-  errEl.textContent='Aguarde...';
-  errEl.style.color='#64748b';
-  
-  // Bypass Firebase auth — login direto para admin
-  if(e==='rodolfoalecrim@gmail.com' && s==='123456'){
-    errEl.textContent='';
-    document.getElementById('login').style.display='none';
-    document.getElementById('app').style.display='block';
+  var emailEl = document.getElementById('le');
+  var senhaEl = document.getElementById('ls');
+  var errEl   = document.getElementById('lerr');
+  var e = emailEl ? emailEl.value.trim() : '';
+  var s = senhaEl ? senhaEl.value : '';
+
+  if(!e || !s){
+    errEl.textContent = 'Preencha e-mail e senha.';
+    errEl.style.color = '#dc2626';
+    return;
+  }
+
+  errEl.textContent = 'Aguarde...';
+  errEl.style.color = '#64748b';
+
+  // Login direto para o admin (bypass Firebase Auth se necessário)
+  var ADMIN_EMAIL = 'rodolfoalecrim@gmail.com';
+  var ADMIN_PASS  = '123456';
+
+  if(e === ADMIN_EMAIL && s === ADMIN_PASS){
+    console.log('Login bypass ativado para admin');
+    errEl.textContent = '';
+    var loginDiv = document.getElementById('login');
+    var appDiv   = document.getElementById('app');
+    var userSpan = document.getElementById('tbuser');
+    if(loginDiv) loginDiv.style.display = 'none';
+    if(appDiv)   appDiv.style.display   = 'block';
+    if(userSpan) userSpan.textContent   = e;
+    // Tenta logar no Firebase também (para onAuthStateChanged funcionar)
+    try {
+      auth.signInWithEmailAndPassword(e, s).catch(function(){ /* ignora erro */ });
+    } catch(ex){ /* ignora */ }
     init();
     return;
   }
-  
-  auth.signInWithEmailAndPassword(e,s)
-    .then(()=>{errEl.textContent='';})
-    .catch(err=>{
-      console.error('Firebase login error — code:',err.code,'message:',err.message);
-      // Show full error to help debug
-      errEl.style.color='#dc2626';
-      const msgs={
-        'auth/invalid-credential':'E-mail ou senha incorretos.',
-        'auth/invalid-email':'E-mail inválido.',
-        'auth/user-not-found':'E-mail não encontrado.',
-        'auth/wrong-password':'Senha incorreta.',
-        'auth/too-many-requests':'Muitas tentativas. Aguarde.',
-        'auth/network-request-failed':'Erro de rede.',
-        'auth/user-disabled':'Usuário desativado.',
-        'auth/unauthorized-domain':'Domínio não autorizado no Firebase.'
+
+  // Login Firebase para outros usuários
+  auth.signInWithEmailAndPassword(e, s)
+    .then(function(){ errEl.textContent = ''; })
+    .catch(function(err){
+      console.error('Firebase login error:', err.code, err.message);
+      var msgs = {
+        'auth/invalid-credential'  : 'E-mail ou senha incorretos.',
+        'auth/invalid-email'       : 'E-mail inválido.',
+        'auth/user-not-found'      : 'E-mail não encontrado.',
+        'auth/wrong-password'      : 'Senha incorreta.',
+        'auth/too-many-requests'   : 'Muitas tentativas. Aguarde.',
+        'auth/network-request-failed': 'Erro de rede. Verifique conexão.',
+        'auth/user-disabled'       : 'Usuário desativado.',
+        'auth/unauthorized-domain' : 'Domínio não autorizado no Firebase.'
       };
-      errEl.textContent=msgs[err.code]||('Erro: '+err.code);
+      errEl.style.color   = '#dc2626';
+      errEl.textContent   = msgs[err.code] || ('Erro: ' + err.code);
     });
 }
 function doLogout(){if(confirm('Sair?'))auth.signOut();}
