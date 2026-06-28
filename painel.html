@@ -990,6 +990,24 @@
                 <option value="OUTRO">OUTRO</option>
               </select>
             </div>
+            <div class="edit-group"><label class="edit-label">👤 Vendedor Responsável</label>
+              <select class="edit-select" id="ef-vendedor">
+                <option value="">— Selecionar vendedor —</option>
+                <option value="ALEXANDRE">Alexandre</option>
+                <option value="ARTHUR">Arthur</option>
+                <option value="JOZIEL">Joziel</option>
+                <option value="JULIO">Julio</option>
+                <option value="LUCAS">Lucas</option>
+                <option value="MAICON">Maicon</option>
+                <option value="PAULO">Paulo</option>
+                <option value="VAGNER">Vagner</option>
+              </select>
+            </div>
+            <div class="edit-group" style="display:flex;align-items:flex-end;padding-bottom:4px">
+              <div style="font-size:11px;color:#94a3b8;line-height:1.5">
+                💡 Alterar o vendedor transfere o cliente para a carteira do novo responsável.
+              </div>
+            </div>
           </div>
         </div>
         <div class="edit-section">
@@ -2308,6 +2326,20 @@ set('ef-est', d.est);
 set('ef-sistema', d.sistema || 'FREE STALL');
 set('ef-ordenha', d.ordenha || 'CONVENCIONAL');
 set('ef-obs', d.obs);
+// Vendedor — populate select with current value
+const vendSel = document.getElementById('ef-vendedor');
+if (vendSel) {
+  const currentVend = (d.nome_vendedor || d.vendedor || '').toUpperCase().trim();
+  // Add option if not in list
+  const existing = [...vendSel.options].some(o => o.value === currentVend);
+  if (currentVend && !existing) {
+    const opt = document.createElement('option');
+    opt.value = currentVend;
+    opt.textContent = currentVend.charAt(0) + currentVend.slice(1).toLowerCase();
+    vendSel.appendChild(opt);
+  }
+  vendSel.value = currentVend;
+}
 }
 async function salvarEdicaoAdmin() {
 let id = document.getElementById('edit-farm-id').value;
@@ -2337,8 +2369,8 @@ ccs: num('ef-ccs'), cbt: num('ef-cbt'), est: num('ef-est'),
 sistema: str('ef-sistema'), ordenha: str('ef-ordenha'), obs: str('ef-obs'),
 atualizado_em: new Date().toISOString(),
 atualizado_por: 'ADMIN',
-nome_vendedor: currentFarmData?.nome_vendedor || currentFarmData?.vendedor || '',
-vendedor: currentFarmData?.vendedor || '',
+nome_vendedor: str('ef-vendedor') || currentFarmData?.nome_vendedor || currentFarmData?.vendedor || '',
+vendedor: str('ef-vendedor') || currentFarmData?.vendedor || '',
 tecnico_titular: titularAtual,
 tecnico_substituto: substitutoAtual,
 };
