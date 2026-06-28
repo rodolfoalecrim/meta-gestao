@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<title>Meta — Migrar Seed para Firebase</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+<style>
+body{font-family:'Inter',sans-serif;background:#f0fdf4;display:flex;align-items:center;justify-content:center;min-height:100vh;margin:0}
+.box{background:white;border-radius:20px;padding:40px;max-width:520px;width:90%;box-shadow:0 20px 60px rgba(0,0,0,.15)}
+h2{color:#003c09;margin:0 0 8px}
+p{color:#64748b;font-size:13px;margin-bottom:24px}
+.dropzone{border:2px dashed #86efac;border-radius:12px;padding:32px;text-align:center;cursor:pointer;margin-bottom:16px;font-size:14px;color:#1a6b35;font-weight:700}
+.dropzone:hover{background:#f0fdf4}
+input[type=file]{display:none}
+button{width:100%;background:linear-gradient(135deg,#003c09,#1a6b35);color:white;border:none;border-radius:10px;padding:14px;font-size:14px;font-weight:700;cursor:pointer;margin-top:8px}
+button:disabled{opacity:.5}
+#log{background:#1e1e1e;color:#00ff00;font-family:monospace;font-size:12px;padding:16px;border-radius:10px;min-height:100px;max-height:300px;overflow-y:auto;white-space:pre-wrap;margin-top:16px;display:none}
+.ok{color:#22c55e}.err{color:#ef4444}.info{color:#60a5fa}
+</style>
+</head>
+<body>
+<div class="box">
+  <h2>📤 Migrar Planilha → Firebase</h2>
+  <p>Use esta ferramenta UMA VEZ para enviar os dados da planilha Excel para o Firebase.<br>
+  Depois, o painel admin carregará os dados direto do Firebase, sem precisar do arquivo local.</p>
+  
+  <div class="dropzone" onclick="document.getElementById('xfile').click()"
+       ondragover="event.preventDefault();this.style.background='#dcfce7'"
+       ondragleave="this.style.background=''"
+       ondrop="event.preventDefault();handleFile(event.dataTransfer.files[0])">
+    📂 Clique ou arraste o arquivo .xlsx aqui
+  </div>
+  <input id="xfile" type="file" accept=".xlsx,.xls" onchange="handleFile(this.files[0])">
+  
+  <button id="uploadBtn" onclick="uploadToFirebase()" disabled>
+    ☁️ Enviar para Firebase
+  </button>
+  <div id="log"></div>
+</div>
+<script>
+const firebaseConfig = {
+  apiKey:"AIzaSyClpsHjO8OLThD--hDOfg7Fg3t6hhuM-To",
+  authDomain:"meta-gestao-608d7.firebaseapp.com",
+  databaseURL:"https://meta-gestao-608d7-default-rtdb.firebaseio.com",
+  projectId:"meta-gestao-608d7",
+  storageBucket:"meta-gestao-608d7.firebasestorage.app",
+  messagingSenderId:"318618053627",
+  appId:"1:318618053627:web:ae289200bd1e87be29395e"
+};
+firebase.initializeApp(firebaseConfig);
+const db = firebase.database();
+
+let parsedData = null;
+const logEl = document.getElementById('log');
+const log = (msg, type='') => {
+  logEl.style.display='block';
+  logEl.innerHTML += `<span class="${type}">${msg}\n</span>`;
+  logEl.scrollTop = logEl.scrollHeight;
+};
+
+function handleFile(file) {
+  if (!file) return;
+  log('📂 Lendo: ' + file.name, 'info');
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    try {
+      const wb = XLSX.read(e.target.result, {type:'array'});
+      const ws = wb.Sheets[wb.SheetNames[0]];
+      const rows = XLSX.utils.sheet_to_json(ws, {defval:''});
+      log('📋 ' + rows.length + ' linhas encontradas', 'info');
+      
+      const get = (row,...keys) => { for(const k of keys){ if(row[k]!==undefined&&row[k]!=='') return row[k]; } return ''; };
+      const num = (row,...keys) => parseFloat(String(get(row,...keys)).replace(',','.')) || 0;
+      
+      parsedData = rows.map((row,i) => ({
+        id:'xl_'+i,
+        produtor:String(get(row,'PRODUTOR','Produtor','NOME')||'').toUpperCase().trim(),
+        situacao:String(get(row,'SITUAÇÃO','SITUACAO','STATUS')||'').toUpperCase().includes('ATIV')?'ATIVO':String(get(row,'SITUAÇÃO','SITUACAO','STATUS')||'').toUpperCase().includes('INAT')?'INATIVO':'PROSPEC',
+        vendedor:String(get(row,'VENDEDOR','Vendedor')||'').toUpperCase().trim(),
+        nome_vendedor:String(get(row,'VENDEDOR','Vendedor')||'').toUpperCase().trim(),
+        cidade:String(get(row,'CIDADE','Cidade','MUNICÍPIO')||'').toUpperCase().trim(),
+        estado:String(get(row,'ESTADO','Estado','UF')||'').toUpperCase().trim(),
+        regiao:String(get(row,'REGIÃO','REGIAO','Região')||'').toUpperCase().trim(),
+        produto:String(get(row,'PRODUTO','Produto')||'').toUpperCase().trim(),
+        vacas:num(row,'VACAS','Vacas'),
+        lactacao:num(row,'LACTAÇÃO','LACTACAO','Em Lactação'),
+        novilhas:num(row,'NOVILHAS','Novilhas'),
+        secas:num(row,'SECAS','Secas'),
+        bezerras:num(row,'BEZERRAS','Bezerras'),
+        media_prod:num(row,'MÉDIA','MEDIA','L/VACA','L/vaca'),
+        prod_diaria:num(row,'PROD DIÁRIA','PROD DIARIA','Litros/Dia'),
+        gordura:num(row,'GORDURA','Gordura'),
+        proteina:num(row,'PROTEÍNA','PROTEINA','Proteína'),
+        ccs:num(row,'CCS'),
+        cbt:num(row,'CBT'),
+        sistema:String(get(row,'SISTEMA','Sistema')||'').toUpperCase().trim(),
+        ordenha:String(get(row,'ORDENHA','Ordenha')||'').toUpperCase().trim(),
+        obs:String(get(row,'OBS','Obs','OBSERVAÇÕES')||'').trim(),
+      })).filter(r => r.produtor && r.produtor.length > 1);
+      
+      const at=parsedData.filter(r=>r.situacao==='ATIVO').length;
+      const pr=parsedData.filter(r=>r.situacao==='PROSPEC').length;
+      log('✅ ' + parsedData.length + ' registros mapeados','ok');
+      log('   Ativos: '+at+' | Prospectos: '+pr,'info');
+      document.getElementById('uploadBtn').disabled = false;
+    } catch(err) { log('❌ '+err.message,'err'); }
+  };
+  reader.readAsArrayBuffer(file);
+}
+
+async function uploadToFirebase() {
+  if (!parsedData) return;
+  const btn = document.getElementById('uploadBtn');
+  btn.disabled = true;
+  btn.textContent = '⏳ Enviando...';
+  log('\n📤 Enviando '+parsedData.length+' registros para Firebase...','info');
+  try {
+    await db.ref('seed_data').set(parsedData);
+    log('✅ SUCESSO! Dados salvos no Firebase.','ok');
+    log('🎉 O painel admin agora carregará direto do Firebase!','ok');
+    btn.textContent = '✅ Enviado!';
+  } catch(e) {
+    log('❌ Erro: '+e.message,'err');
+    btn.disabled = false;
+    btn.textContent = '☁️ Enviar para Firebase';
+  }
+}
+</script>
+</body>
+</html>
