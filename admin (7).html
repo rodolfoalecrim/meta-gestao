@@ -118,7 +118,7 @@ canvas { max-height:280px !important; }
 .vc-av { width:44px; height:44px; border-radius:12px; display:flex; align-items:center; justify-content:center; font-size:14px; font-weight:800; color:white; }
 .vc-name { font-size:14px; font-weight:800; }
 .vc-pct { font-size:22px; font-weight:900; color:var(--blue-dark); }
-.vc-plbl { font-size:9px; color:var(--muted); font-weight:600; text-transform:uppercase; }
+.vc-plbl { font-size:9px; color:var(--muted); font-weight:600; text-transform:uppercase; margin:10px 0 0 0; }
 .vc-stats { display:grid; grid-template-columns:repeat(4,1fr); gap:6px; padding-top:10px; border-top:1px solid #f1f5f9; }
 .vc-st { text-align:center; }
 .vc-sv { font-size:16px; font-weight:800; }
@@ -246,7 +246,6 @@ tbody td { padding:10px 12px; font-size:12px; }
 </head>
 <body>
 
-<!-- LOGIN -->
 <div id="login">
   <div class="lbox">
     <h1>Painel de Gestão</h1>
@@ -258,7 +257,6 @@ tbody td { padding:10px 12px; font-size:12px; }
   </div>
 </div>
 
-<!-- APP -->
 <div id="app">
   <div class="topbar">
     <span class="tb-title">Painel de Gestão</span>
@@ -299,7 +297,6 @@ tbody td { padding:10px 12px; font-size:12px; }
     </div>
 
     <div class="content">
-      <!-- DASHBOARD -->
       <div class="sc on" id="sc-dash">
         <div class="ph">
           <div><h2>Dashboard</h2><p>Visão completa da carteira em tempo real</p></div>
@@ -320,7 +317,6 @@ tbody td { padding:10px 12px; font-size:12px; }
         </div>
       </div>
 
-      <!-- PROPRIEDADES -->
       <div class="sc" id="sc-props">
         <div class="tc">
           <div class="tc-head">
@@ -337,7 +333,6 @@ tbody td { padding:10px 12px; font-size:12px; }
         </div>
       </div>
 
-      <!-- VENDEDORES -->
       <div class="sc" id="sc-vends">
         <div class="ph"><div><h2>Performance por Vendedor</h2><p>Análise de mercado e volume gerenciado por consultor técnico</p></div></div>
         <div class="vg" id="vgrid"></div>
@@ -346,7 +341,6 @@ tbody td { padding:10px 12px; font-size:12px; }
   </div>
 </div>
 
-<!-- MODAL FHA PROPRIEDADE -->
 <div class="modal-overlay" id="modal-prop">
   <div class="modal-box">
     <div class="modal-header">
@@ -369,7 +363,7 @@ tbody td { padding:10px 12px; font-size:12px; }
         </div>
         <div class="hist-timeline" id="timeline-container"></div>
       </div>
-      
+       
       <div id="sec-edit" style="display:none;">
         <div class="edit-section">
           <div class="edit-section-title">🏡 Identificação Geral</div>
@@ -409,10 +403,9 @@ tbody td { padding:10px 12px; font-size:12px; }
   </div>
 </div>
 
-<!-- MODAL ANÁLISE COMPLETA DO VENDEDOR -->
 <div class="m-vendor-overlay" id="modal-vendor" onclick="if(event.target===this)closeM()">
   <div class="m-vendor-box">
-    <div class="modal-hdr">
+    <div class="modal-header">
       <div class="modal-title" id="m-title">Análise de Performance do Consultor</div>
       <button class="modal-close" onclick="closeM()">✕</button>
     </div>
@@ -445,7 +438,11 @@ tbody td { padding:10px 12px; font-size:12px; }
   </div>
 </div>
 
+<div id="toast" class="toast"></div>
+
 <script>
+// Insira as configurações de inicialização do seu Firebase aqui
+// const firebaseConfig = { ... };
 firebase.initializeApp(firebaseConfig);
 const db = firebase.database();
 
@@ -505,7 +502,6 @@ function init(){
           let timestamps = Object.keys(visits).sort((a,b)=>b-a);
           if(timestamps.length > 0){
             let newest = visits[timestamps[0]];
-            // Encontra se houver algum nó com estrutura de checklist de nutrição interno
             latestVisits[farmId] = newest;
           }
         });
@@ -533,8 +529,20 @@ function updateVendedoresDropdowns() {
   const ev = document.getElementById('e-vendedor');
   if(!ev) return;
   
-  const uniqueVendors = new Set();
-  rawData.forEach(x => { if(x.vendedor) uniqueVendors.add(x.vendedor.toUpperCase()); });
+  // Lista oficial de consultores cadastrados na empresa (ajuste conforme necessário)
+  const listaOficialVendedores = [
+    "RODOLFO",
+    "ANA SILVA",
+    "CARLOS SOUZA",
+    "MARCOS LIMA"
+  ];
+  
+  const uniqueVendors = new Set(listaOficialVendedores.map(v => v.toUpperCase()));
+  
+  // Preserva nomes de vendedores antigos que porventura estejam vinculados no banco de dados
+  rawData.forEach(x => { 
+    if(x.vendedor) uniqueVendors.add(x.vendedor.toUpperCase()); 
+  });
   
   ev.innerHTML = '';
   [...uniqueVendors].sort().forEach(v => {
@@ -739,7 +747,7 @@ function openPropModal(id){
   document.getElementById('m-prop-title').textContent = p.produtor;
   document.getElementById('m-prop-sub').textContent = `${p.propriedade || 'Sem nome'} · ${p.cidade || 'Sem cidade'}`;
 
-  // Forçar atualização do dropdown de vendedores antes de setar o valor
+  // Força a atualização estrutural dos vendedores permitidos antes de alimentar o valor selecionado
   updateVendedoresDropdowns();
 
   document.getElementById('e-produtor').value = p.produtor;
@@ -859,10 +867,14 @@ function salvarEdicaoCompleta(){
       gordura: updateObj.gordura,
       proteina: updateObj.proteina,
       ccs: updateObj.ccs,
-      cbt: updateObj.cbt
+      cbt: updateObj.cbt,
+      vendedor: vVendedor
     });
-    showToast("Propriedade atualizada com sucesso!");
+    showToast("Propriedade e consultor atualizados com sucesso!");
     closePropModal();
+  }).catch(error => {
+    console.error("Erro ao salvar dados administrativos:", error);
+    alert("Erro crítico ao salvar atualizações.");
   });
 }
 
@@ -893,8 +905,11 @@ function doExport(){
 }
 
 function showToast(m){
-  const t = document.getElementById('toast'); t.textContent = m; t.className = "toast on";
-  setTimeout(() => t.className = "toast", 3000);
+  const t = document.getElementById('toast'); 
+  if(t) {
+    t.textContent = m; t.className = "toast on";
+    setTimeout(() => t.className = "toast", 3000);
+  }
 }
 
 String.prototype.hashCode = function() {
