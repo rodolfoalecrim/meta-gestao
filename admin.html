@@ -11,9 +11,9 @@
 <meta http-equiv="Expires" content="0">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Meta Gestão · Painel Admin</title>
-<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
@@ -2215,12 +2215,29 @@ auth.onAuthStateChanged(u=>{
 });
 
 function doLogin(){
-  const e=document.getElementById('le').value.trim(),s=document.getElementById('ls').value;
-  document.getElementById('lerr').textContent='Entrando...';
-  auth.signInWithEmailAndPassword(e,s).catch(err=>{
-    const m={'auth/invalid-credential':'Senha incorreta.','auth/user-not-found':'E-mail não encontrado.','auth/wrong-password':'Senha incorreta.','auth/too-many-requests':'Muitas tentativas. Aguarde.','auth/api-key-not-valid':'Erro de configuração.'};
-    document.getElementById('lerr').textContent=m[err.code]||'Erro: '+err.code;
-  });
+  const e=document.getElementById('le').value.trim();
+  const s=document.getElementById('ls').value;
+  const errEl=document.getElementById('lerr');
+  if(!e||!s){errEl.textContent='Preencha e-mail e senha.';return;}
+  errEl.textContent='Entrando...';
+  errEl.style.color='#64748b';
+  auth.signInWithEmailAndPassword(e,s)
+    .then(()=>{errEl.textContent='';})
+    .catch(err=>{
+      console.error('Login error:',err.code, err.message);
+      const m={
+        'auth/invalid-credential':'E-mail ou senha incorretos.',
+        'auth/invalid-email':'E-mail inválido.',
+        'auth/user-not-found':'E-mail não encontrado.',
+        'auth/wrong-password':'Senha incorreta.',
+        'auth/too-many-requests':'Muitas tentativas. Aguarde alguns minutos.',
+        'auth/api-key-not-valid.-please-pass-a-valid-api-key.':'Erro de configuração Firebase.',
+        'auth/network-request-failed':'Erro de rede. Verifique sua conexão.',
+        'auth/user-disabled':'Usuário desativado.'
+      };
+      errEl.style.color='#dc2626';
+      errEl.textContent=m[err.code]||('Erro ('+err.code+'): '+err.message);
+    });
 }
 function doLogout(){if(confirm('Sair?'))auth.signOut();}
 document.getElementById('ls').addEventListener('keydown',e=>{if(e.key==='Enter')doLogin();});
