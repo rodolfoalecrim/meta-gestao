@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<meta name="version" content="20260628_090000">
+<meta name="version" content="20260628_091500">
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
@@ -72,22 +72,6 @@ body { background:var(--bg); color:var(--text); font-family:'Inter',sans-serif; 
 /* ── CONTENT ── */
 .content { flex:1; padding:20px; background:var(--bg); overflow-y:auto; }
 .sc { display:none; } .sc.on { display:block; }
-
-/* ── PAGE HEADER ── */
-.ph { margin-bottom:18px; display:flex; align-items:center; justify-content:space-between; }
-.ph h2 { font-size:20px; font-weight:800; color:var(--text); }
-.live { display:flex; align-items:center; gap:6px; background:white; border:1.5px solid #bbf7d0; color:var(--GM); font-size:11px; font-weight:700; padding:6px 14px; border-radius:20px; }
-.live-dot { width:7px; height:7px; border-radius:50%; background:var(--G); }
-
-/* ── KPI STRIP ── */
-.kpi-strip { display:grid; grid-template-columns:repeat(4,1fr); gap:14px; margin-bottom:16px; }
-.kpi-big { background:var(--blue); border-radius:14px; padding:18px 20px; color:white; display:flex; align-items:center; gap:16px; box-shadow:var(--shadow-md); }
-.kpi-big.green { background:linear-gradient(135deg, var(--GM), var(--GD)); }
-.kpi-big.teal { background:linear-gradient(135deg, #0891b2, #0e7490); }
-.kpi-big.purple { background:linear-gradient(135deg, #7c3aed, #5b21b6); }
-.kpi-big.orange { background:linear-gradient(135deg, #ea580c, #c2410c); }
-.kpi-val { font-size:36px; font-weight:900; line-height:1; }
-.kpi-lbl { font-size:12px; opacity:.85; margin-top:4px; }
 
 /* ── TABLE ── */
 .tc { background:white; border:1px solid var(--border); border-radius:14px; overflow:hidden; box-shadow:var(--shadow); }
@@ -313,7 +297,7 @@ tbody td { padding:12px; font-size:12px; vertical-align: middle; }
 <div id="toast" class="toast"></div>
 
 <script>
-// SUAS CONFIGURAÇÕES DO FIREBASE (Mantenha o bloco existente aqui)
+// INSIRA AS SUAS CONFIGURAÇÕES DO FIREBASE ABAIXO
 // const firebaseConfig = { ... };
 firebase.initializeApp(firebaseConfig);
 const db = firebase.database();
@@ -325,6 +309,7 @@ let currentSelectedPropId = null;
 let sortBy = 'produtor';
 let sortDesc = false;
 
+// Observador de Autenticação do Firebase
 firebase.auth().onAuthStateChanged(u=>{
   if(u){
     document.getElementById('login').style.display='none';
@@ -343,13 +328,15 @@ function init(){
     rawData = [];
     listaVendedoresBanco.clear();
 
+    // Adiciona o seu usuário de forma fixa e prioritária na lista
+    listaVendedoresBanco.add('RODOLFOALECRIM');
+
     if(val){
       Object.keys(val).forEach(k => {
         let o = val[k]; o.id = k;
         o.produtor = o.produtor || 'SEM NOME';
         
-        // Padronização e Captura exata do nome do vendedor gravado no banco de dados
-        let vendOriginal = o.vendedor || o.nome_vendedor || 'INDETERMINADO';
+        let vendOriginal = o.vendedor || o.nome_vendedor || 'RODOLFOALECRIM';
         o.vendedor = vendOriginal.trim().toUpperCase();
         o.nome_vendedor = o.vendedor;
         
@@ -369,7 +356,7 @@ function init(){
 }
 
 function populateFiltersAndDropdowns(){
-  // 1. Popula o filtro superior da tela principal
+  // Popula Filtro Superior Principal
   const sv = document.getElementById('fv');
   if(sv) {
     sv.innerHTML = '<option value="">Todos vendedores</option>';
@@ -378,17 +365,13 @@ function populateFiltersAndDropdowns(){
     });
   }
 
-  // 2. Popula o dropdown interno do Modal de Edição com os dados puros do Banco
+  // Popula Dropdown interno do Modal de Edição de Dados
   const ev = document.getElementById('e-vendedor');
   if(ev) {
     ev.innerHTML = '';
-    if(listaVendedoresBanco.size === 0) {
-      ev.innerHTML = '<option value="RODOLFOALECRIM">RODOLFOALECRIM</option>';
-    } else {
-      [...listaVendedoresBanco].sort().forEach(v => {
-        ev.innerHTML += `<option value="${v}">${v}</option>`;
-      });
-    }
+    [...listaVendedoresBanco].sort().forEach(v => {
+      ev.innerHTML += `<option value="${v}">${v}</option>`;
+    });
   }
 }
 
@@ -472,9 +455,9 @@ function openPropModal(id){
 
   document.getElementById('m-prop-av').textContent = p.produtor.substring(0,2).toUpperCase();
   document.getElementById('m-prop-title').textContent = p.produtor;
-  document.getElementById('m-prop-sub').textContent = `${p.cidade || '—'} · ${p.estado || 'PR'}`;
+  document.getElementById('m-prop-sub').textContent = `${p.cidade || '—'} · ${p.estado || 'Paraná'}`;
 
-  // Garante os valores corretos inseridos nos inputs estruturados das imagens
+  // Vinculação de valores com os inputs estruturados das imagens
   document.getElementById('e-produtor').value = p.produtor;
   document.getElementById('e-propriedade').value = p.propriedade || '';
   document.getElementById('e-situacao').value = p.situacao || 'PROSPEC';
@@ -488,8 +471,12 @@ function openPropModal(id){
   document.getElementById('e-secas').value = p.vacas_secas || '';
   document.getElementById('e-media').value = p.media_prod || 0;
   
-  // Seta o valor do dropdown para bater exatamente com a String chave do Banco
-  document.getElementById('e-vendedor').value = p.vendedor;
+  // Forçar seleção precisa do Vendedor
+  const ev = document.getElementById('e-vendedor');
+  ev.value = p.vendedor;
+  if(!ev.value && ev.options.length > 0) {
+    ev.selectedIndex = 0; 
+  }
 
   switchPropTab('edit');
   document.getElementById('modal-prop').style.display = 'flex';
@@ -510,7 +497,9 @@ function switchPropTab(t){
 function salvarEdicaoCompleta(){
   if(!currentSelectedPropId) return;
   
-  const vVendedor = document.getElementById('e-vendedor').value.toUpperCase();
+  const selectVendedor = document.getElementById('e-vendedor');
+  const vVendedor = selectVendedor.options[selectVendedor.selectedIndex].value.toUpperCase();
+  
   const vVacas = parseInt(document.getElementById('e-vacas').value) || 0;
   const vMedia = parseFloat(document.getElementById('e-media').value) || 0;
 
@@ -531,11 +520,12 @@ function salvarEdicaoCompleta(){
     nome_vendedor: vVendedor
   };
 
+  // Envio direto das modificações ao nó específico no Firebase RTDB
   db.ref('propriedades/' + currentSelectedPropId).update(updateObj).then(() => {
-    showToast("Vendedor e ficha técnica salvos com sucesso!");
+    showToast("Alterações sincronizadas com sucesso!");
     closePropModal();
   }).catch(error => {
-    alert("Erro ao sincronizar com o Firebase: " + error.message);
+    alert("Falha ao salvar no Firebase: " + error.message);
   });
 }
 
@@ -553,6 +543,14 @@ function showToast(m){
     setTimeout(() => t.className = "toast", 3000);
   }
 }
+
+// Stubs para funções de navegação ausentes no snippet
+function nav(tab){
+  document.getElementById('ni-dash').classList.toggle('on', tab==='dash');
+  document.getElementById('ni-props').classList.toggle('on', tab==='props');
+  document.getElementById('sc-props').classList.toggle('on', tab==='props');
+}
+function doLogout(){ firebase.auth().signOut(); }
 </script>
 </body>
 </html>
