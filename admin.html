@@ -881,84 +881,6 @@ tbody td { padding:10px 12px; font-size:12px; }
   border-radius: 8px; white-space: nowrap;
 }
 
-
-/* ── PAINEL LATERAL DO VENDEDOR ── */
-.vend-panel-overlay {
-  position: fixed; inset: 0; background: rgba(0,0,0,0.45);
-  z-index: 3500; display: flex; justify-content: flex-end;
-  backdrop-filter: blur(3px);
-}
-.vend-panel {
-  background: white; width: 100%; max-width: 500px;
-  height: 100vh; display: flex; flex-direction: column;
-  box-shadow: -8px 0 40px rgba(0,0,0,0.2);
-  animation: slideIn .25s ease-out;
-}
-.vp2-header {
-  padding: 16px 20px; flex-shrink: 0;
-  display: flex; align-items: center; gap: 14px;
-  color: white;
-}
-.vp2-av {
-  width: 52px; height: 52px; border-radius: 16px;
-  display: flex; align-items: center; justify-content: center;
-  font-size: 18px; font-weight: 800; flex-shrink: 0;
-  background: rgba(255,255,255,0.2); border: 2px solid rgba(255,255,255,0.3);
-}
-.vp2-name { font-size: 18px; font-weight: 800; }
-.vp2-sub  { font-size: 11px; opacity: .75; margin-top: 2px; }
-.vp2-close {
-  margin-left: auto; background: rgba(255,255,255,0.15);
-  border: 1px solid rgba(255,255,255,0.3); color: white;
-  width: 32px; height: 32px; border-radius: 8px; font-size:16px;
-  cursor: pointer; display: flex; align-items: center; justify-content: center;
-}
-.vp2-body { flex: 1; overflow-y: auto; padding: 16px; scrollbar-width: thin; }
-.vp2-body::-webkit-scrollbar { width: 3px; }
-.vp2-body::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
-
-.vp2-kpis { display: grid; grid-template-columns: repeat(3,1fr); gap: 10px; margin-bottom: 16px; }
-.vp2-kpi { background: #f8fafc; border: 1px solid var(--border); border-radius: 12px; padding: 12px; text-align: center; }
-.vp2-kpi .v { font-size: 22px; font-weight: 900; line-height: 1; }
-.vp2-kpi .l { font-size: 9px; font-weight: 700; color: var(--muted); text-transform: uppercase; margin-top: 4px; }
-
-/* Técnico destaque */
-.tec-highlight {
-  background: linear-gradient(135deg, #eff6ff, #dbeafe);
-  border: 1.5px solid #93c5fd; border-radius: 12px;
-  padding: 14px; margin-bottom: 14px;
-}
-.tec-hl-title { font-size: 11px; font-weight: 700; color: #1d4ed8; text-transform: uppercase; letter-spacing: .5px; margin-bottom: 10px; }
-.tec-hl-row { display: flex; align-items: center; gap: 12px; margin-bottom: 8px; }
-.tec-hl-av { width: 38px; height: 38px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 800; color: white; flex-shrink: 0; }
-.tec-hl-name { font-size: 13px; font-weight: 800; flex: 1; }
-.tec-hl-count { font-size: 11px; color: #64748b; }
-.tec-hl-bar { height: 5px; background: #dbeafe; border-radius: 3px; overflow: hidden; margin-top: 4px; }
-.tec-hl-fill { height: 100%; border-radius: 3px; background: #2563eb; }
-
-/* Client list in vendor panel */
-.vp2-cli-list { display: flex; flex-direction: column; gap: 8px; }
-.vp2-cli-card {
-  background: white; border: 1px solid var(--border); border-radius: 10px;
-  padding: 10px 14px; display: flex; align-items: center; gap: 10px;
-  transition: all .15s; cursor: pointer;
-}
-.vp2-cli-card:hover { border-color: var(--G); background: #f0fdf4; transform: translateX(4px); }
-.vp2-cli-av { width: 34px; height: 34px; border-radius: 9px; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 800; color: white; flex-shrink: 0; }
-.vp2-cli-name { font-size: 12px; font-weight: 700; flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.vp2-cli-city { font-size: 10px; color: var(--muted); }
-.vp2-cli-badge { font-size: 10px; font-weight: 700; padding: 2px 8px; border-radius: 6px; white-space: nowrap; }
-.vp2-cli-stats { display: flex; gap: 8px; margin-top: 4px; }
-.vp2-cli-stat { font-size: 10px; font-weight: 700; color: var(--muted); }
-.vp2-section-title { font-size: 11px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: .5px; margin-bottom: 10px; margin-top: 4px; padding-bottom: 6px; border-bottom: 1px solid var(--border); }
-
-/* Vendor card — make icon clickable */
-.vc-av-btn {
-  cursor: pointer; border-radius: 12px;
-  transition: transform .2s, box-shadow .2s;
-}
-.vc-av-btn:hover { transform: scale(1.12); box-shadow: 0 6px 18px rgba(0,0,0,0.2); }
-
 </style>
 </head>
 <body>
@@ -2110,27 +2032,6 @@ tbody td { padding:10px 12px; font-size:12px; }
   </div>
 </div>
 
-
-<!-- ═══ PAINEL LATERAL DO VENDEDOR ═══ -->
-<div id="vend-side-panel" style="display:none" class="vend-panel-overlay" onclick="if(event.target===this)closeVendorPanel()">
-  <div class="vend-panel">
-    <div class="vp2-header" id="vp2-header">
-      <div class="vp2-av" id="vp2-av">—</div>
-      <div>
-        <div class="vp2-name" id="vp2-name">—</div>
-        <div class="vp2-sub" id="vp2-sub">—</div>
-      </div>
-      <button class="vp2-close" onclick="closeVendorPanel()">✕</button>
-    </div>
-    <div class="vp2-body">
-      <div class="vp2-kpis" id="vp2-kpis"></div>
-      <div class="tec-highlight" id="vp2-tec" style="display:none"></div>
-      <div class="vp2-section-title" id="vp2-cli-title">Clientes</div>
-      <div class="vp2-cli-list" id="vp2-cli-list"></div>
-    </div>
-  </div>
-</div>
-
 </div><!-- /app -->
 
 <div class="toast" id="toast"></div>
@@ -2306,54 +2207,14 @@ function renderKPIs(){
   const robot=at.filter(d=>d.ordenha==='ROBOTIZADA').length;
   const ultra=FIL.filter(d=>d.produto==='ULTRAMAX').length;
   const poli=FIL.filter(d=>d.produto==='POLINUTRI').length;
-  // Calcular métricas de desempenho para substituir duplicatas
-  const gorduraAt = at.filter(d=>d.gordura>0);
-  const proteinaAt = at.filter(d=>d.proteina>0);
-  const ccsAt = at.filter(d=>d.ccs>0);
-  const avgGord = gorduraAt.length ? gorduraAt.reduce((a,d)=>a+parseFloat(d.gordura),0)/gorduraAt.length : 0;
-  const avgProt = proteinaAt.length ? proteinaAt.reduce((a,d)=>a+parseFloat(d.proteina),0)/proteinaAt.length : 0;
-  const avgCCS  = ccsAt.length  ? ccsAt.reduce((a,d)=>a+parseFloat(d.ccs),0)/ccsAt.length : 0;
-  const vacSec  = at.filter(d=>d.secas>0).reduce((a,d)=>a+(d.secas||0),0);
-  const vacLact = at.filter(d=>d.lactacao>0).reduce((a,d)=>a+(d.lactacao||0),0);
-  const pctLact = tv>0&&vacLact>0 ? (vacLact/tv*100).toFixed(0) : '—';
-  const robot=at.filter(d=>d.ordenha==='ROBOTIZADA').length;
-  const ultra=FIL.filter(d=>d.produto==='ULTRAMAX').length;
-  const poli=FIL.filter(d=>d.produto==='POLINUTRI').length;
-
   document.getElementById('stat-row').innerHTML=`
-    <div class="stat-box blue" title="Total de vacas em lactação nos ativos">
-      <div class="stat-val blue">${vacLact>0?vacLact.toLocaleString('pt-BR'):'—'}</div>
-      <div class="stat-lbl">Em Lactação</div>
-      <div style="font-size:10px;color:#94a3b8;margin-top:2px">${pctLact}% do rebanho</div>
-    </div>
-    <div class="stat-box green" title="Média de gordura do leite nos ativos">
-      <div class="stat-val green">${avgGord>0?avgGord.toFixed(2)+'%':'—'}</div>
-      <div class="stat-lbl">Gordura Média</div>
-      <div style="font-size:10px;color:#94a3b8;margin-top:2px">Meta IN77 ≥3.0%</div>
-    </div>
-    <div class="stat-box purple" title="Média de proteína do leite nos ativos">
-      <div class="stat-val purple">${avgProt>0?avgProt.toFixed(2)+'%':'—'}</div>
-      <div class="stat-lbl">Proteína Média</div>
-      <div style="font-size:10px;color:#94a3b8;margin-top:2px">Meta IN77 ≥2.9%</div>
-    </div>
-    <div class="stat-box ${avgCCS>0&&avgCCS<=400?'green':'red'}" title="CCS médio dos ativos">
-      <div class="stat-val ${avgCCS>0&&avgCCS<=400?'green':'red'}">${avgCCS>0?Math.round(avgCCS)+'k':'—'}</div>
-      <div class="stat-lbl">CCS Médio</div>
-      <div style="font-size:10px;color:#94a3b8;margin-top:2px">Meta &lt;400k</div>
-    </div>
-    <div class="stat-box blue" title="Clientes com ordenha robotizada">
-      <div class="stat-val blue">${robot}</div>
-      <div class="stat-lbl">Robotizadas</div>
-      <div style="font-size:10px;color:#94a3b8;margin-top:2px">${at.length>0?Math.round(robot/at.length*100):0}% ativos</div>
-    </div>
-    <div class="stat-box blue" title="Clientes usando ULTRAMAX">
-      <div class="stat-val blue">${ultra}</div>
-      <div class="stat-lbl">ULTRAMAX</div>
-    </div>
-    <div class="stat-box purple" title="Clientes usando POLINUTRI">
-      <div class="stat-val purple">${poli}</div>
-      <div class="stat-lbl">POLINUTRI</div>
-    </div>`;
+    <div class="stat-box green"><div class="stat-val green">${at.length}</div><div class="stat-lbl">Ativos</div></div>
+    <div class="stat-box yellow"><div class="stat-val yellow">${pr.length}</div><div class="stat-lbl">Prospectos</div></div>
+    <div class="stat-box red"><div class="stat-val red">${in_.length}</div><div class="stat-lbl">Inativos</div></div>
+    <div class="stat-box blue"><div class="stat-val blue">${ultra}</div><div class="stat-lbl">ULTRAMAX</div></div>
+    <div class="stat-box purple"><div class="stat-val purple">${poli}</div><div class="stat-lbl">POLINUTRI</div></div>
+    <div class="stat-box green"><div class="stat-val green">${robot}</div><div class="stat-lbl">Robotizadas</div></div>
+    <div class="stat-box blue"><div class="stat-val blue">${FIL.length}</div><div class="stat-lbl">Total</div></div>`;
 }
 
 // ── GAUGES (semicirculares estilo Leigado) ────────────────────────────────
@@ -2702,40 +2563,11 @@ function renderVends(){
   const vends=[...new Set(ALL.map(d=>d.nome_vendedor||d.vendedor||''))].filter(Boolean).sort();
   document.getElementById('vgrid').innerHTML=vends.map(v=>{
     const rows=ALL.filter(d=>(d.nome_vendedor||d.vendedor||'')===v);
-    const at=rows.filter(d=>d.situacao==='ATIVO');
-    const pr=rows.filter(d=>d.situacao==='PROSPEC');
-    const in_=rows.filter(d=>d.situacao==='INATIVO');
-    const col=vc(v);
-    const ini=v.substring(0,2).toUpperCase();
+    const at=rows.filter(d=>d.situacao==='ATIVO'),pr=rows.filter(d=>d.situacao==='PROSPEC');
+    const conv=rows.length?at.length/rows.length*100:0;
     const vacs=sum(at,'vacas'),prod=sum(at,'prod_diaria'),mp=avg(at,'media_prod');
-    const gord=at.filter(d=>d.gordura>0);
-    const avgG=gord.length?gord.reduce((a,d)=>a+parseFloat(d.gordura),0)/gord.length:0;
-    return`<div class="vc">
-      <div class="vc-hdr">
-        <div class="vc-av vc-av-btn" style="background:${col};cursor:pointer" onclick="openVendorPanel('${v.replace(/'/g,"\'")}')">
-          ${ini}
-        </div>
-        <div>
-          <div class="vc-name">${v}</div>
-          <div class="vc-sub">${rows.length} prop. · <span style="color:#16a34a;font-weight:700">${at.length} ativo${at.length!==1?'s':''}</span></div>
-        </div>
-        <div style="margin-left:auto;text-align:right">
-          <div style="font-size:18px;font-weight:900;color:#0891b2">${prod>=1000?(prod/1000).toFixed(1)+'k':'—'}</div>
-          <div style="font-size:9px;font-weight:600;color:#94a3b8;text-transform:uppercase">L/dia</div>
-        </div>
-      </div>
-      <div class="vc-bar"><div class="vc-bar-f" style="width:${rows.length?at.length/rows.length*100:0}%;background:${col}"></div></div>
-      <div class="vc-stats">
-        <div class="vc-st"><div class="vc-sv" style="color:#16a34a">${at.length}</div><div class="vc-sl">Ativos</div></div>
-        <div class="vc-st"><div class="vc-sv" style="color:#d97706">${pr.length}</div><div class="vc-sl">Prospec</div></div>
-        <div class="vc-st"><div class="vc-sv" style="color:#1d4ed8">${vacs>=1000?(vacs/1000).toFixed(1)+'k':vacs||'—'}</div><div class="vc-sl">Vacas</div></div>
-        <div class="vc-st"><div class="vc-sv" style="color:#0891b2">${mp>0?mp.toFixed(1):'—'}</div><div class="vc-sl">L/vaca</div></div>
-      </div>
-      <div style="padding:7px 0 2px;border-top:1px solid #f1f5f9;display:flex;justify-content:space-between;font-size:10px">
-        <span style="color:#94a3b8">${avgG>0?'🧈 '+avgG.toFixed(2)+'% gord':''}</span>
-        <span style="cursor:pointer;color:#1d4ed8;font-weight:700" onclick="openVendorPanel('${v.replace(/'/g,"\'")}')">👁 Ver clientes →</span>
-      </div>
-    </div>`;
+    const col=vc(v);
+    return`<div class="vc"><div class="vc-hdr"><div class="vc-av" style="background:${col}">${v.substring(0,2)}</div><div><div class="vc-name">${v}</div><div class="vc-sub">${rows.length} propriedades</div></div><div style="margin-left:auto;text-align:right"><div class="vc-pct" style="color:${conv>=60?'#16a34a':conv>=30?'#d97706':'#dc2626'}">${conv.toFixed(0)}%</div><div class="vc-plbl">conversão</div></div></div><div class="vc-bar"><div class="vc-bar-f" style="width:${conv}%;background:${col}"></div></div><div class="vc-stats"><div class="vc-st"><div class="vc-sv" style="color:#16a34a">${at.length}</div><div class="vc-sl">Ativos</div></div><div class="vc-st"><div class="vc-sv" style="color:#d97706">${pr.length}</div><div class="vc-sl">Prospec</div></div><div class="vc-st"><div class="vc-sv" style="color:#1d4ed8">${vacs>=1000?(vacs/1000).toFixed(1)+'k':vacs}</div><div class="vc-sl">Vacas</div></div><div class="vc-st"><div class="vc-sv" style="color:#0891b2">${mp>0?mp.toFixed(1):'—'}</div><div class="vc-sl">L/vaca</div></div></div></div>`;
   }).join('');
   mk('ch-conv','bar',{labels:vends,datasets:[{data:vends.map(v=>{const r=ALL.filter(d=>(d.nome_vendedor||d.vendedor||'')===v);return r.length?r.filter(d=>d.situacao==='ATIVO').length/r.length*100:0;}).map(v=>v.toFixed(1)),backgroundColor:vends.map(v=>vc(v)),borderRadius:6,borderSkipped:false}]},{...NL,scales:{x:{...SX},y:{max:100,...SY,ticks:{color:'#94a3b8',callback:v=>v+'%'}}}});
   mk('ch-vprod','bar',{labels:vends,datasets:[{data:vends.map(v=>sum(ALL.filter(d=>(d.nome_vendedor||d.vendedor||'')===v&&d.situacao==='ATIVO'),'prod_diaria')),backgroundColor:'#0891b2',borderRadius:6,borderSkipped:false}]},{...NL,scales:{x:{...SX},y:{...SY,ticks:{color:'#94a3b8',callback:v=>(v/1000).toFixed(0)+'k'}}}});
@@ -4706,152 +4538,6 @@ function getMiniIndex(d) {
   if (!scores.length) return null;
   const avg = scores.reduce((a,b)=>a+b,0)/scores.length;
   return Math.round(avg);
-}
-
-
-// ════════════════════════════════════════════════════════
-// PAINEL LATERAL DO VENDEDOR
-// ════════════════════════════════════════════════════════
-function openVendorPanel(vendName) {
-  const col = vc(vendName);
-  const ini = vendName.substring(0,2).toUpperCase();
-
-  // Header
-  document.getElementById('vp2-av').textContent = ini;
-  document.getElementById('vp2-av').style.background = col;
-  document.getElementById('vp2-header').style.background = `linear-gradient(135deg, ${col}dd, ${col})`;
-  document.getElementById('vp2-name').textContent = vendName;
-
-  // Get all clients of this vendor
-  const todos  = ALL.filter(d => (d.nome_vendedor||d.vendedor) === vendName);
-  const ativos = todos.filter(d => d.situacao === 'ATIVO');
-  const prosp  = todos.filter(d => d.situacao === 'PROSPEC');
-  const inat   = todos.filter(d => d.situacao === 'INATIVO');
-
-  document.getElementById('vp2-sub').textContent =
-    `${todos.length} propriedades · ${ativos.length} ativas · ${prosp.length} prospectos`;
-
-  // ── KPIs ──────────────────────────────────────────────
-  const totalVacas = ativos.reduce((a,d)=>a+(d.vacas||0),0);
-  const totalProd  = ativos.reduce((a,d)=>a+(d.prod_diaria||0),0);
-  const validProd  = ativos.filter(d=>d.media_prod>0);
-  const avgProd    = validProd.length ? validProd.reduce((a,d)=>a+parseFloat(d.media_prod),0)/validProd.length : 0;
-  const avgRebanho = ativos.length ? totalVacas/ativos.length : 0;
-  const validGord  = ativos.filter(d=>d.gordura>0);
-  const avgGord    = validGord.length ? validGord.reduce((a,d)=>a+parseFloat(d.gordura),0)/validGord.length : 0;
-  const validProt  = ativos.filter(d=>d.proteina>0);
-  const avgProt    = validProt.length ? validProt.reduce((a,d)=>a+parseFloat(d.proteina),0)/validProt.length : 0;
-  const validCCS   = ativos.filter(d=>d.ccs>0);
-  const avgCCS     = validCCS.length ? validCCS.reduce((a,d)=>a+parseFloat(d.ccs),0)/validCCS.length : 0;
-
-  document.getElementById('vp2-kpis').innerHTML = `
-    <div class="vp2-kpi">
-      <div class="v" style="color:#16a34a">${ativos.length}</div>
-      <div class="l">Ativos</div>
-    </div>
-    <div class="vp2-kpi">
-      <div class="v" style="color:#1d4ed8">${totalVacas>0?totalVacas.toLocaleString('pt-BR'):'—'}</div>
-      <div class="l">Total Vacas</div>
-    </div>
-    <div class="vp2-kpi">
-      <div class="v" style="color:#0891b2">${totalProd>=1000?(totalProd/1000).toFixed(1)+'k':totalProd||'—'}</div>
-      <div class="l">L/dia</div>
-    </div>
-    <div class="vp2-kpi">
-      <div class="v" style="color:#0891b2">${avgProd>0?avgProd.toFixed(1):'—'}</div>
-      <div class="l">Média L/vaca</div>
-    </div>
-    <div class="vp2-kpi">
-      <div class="v" style="color:#64748b">${avgRebanho>0?Math.round(avgRebanho):'—'}</div>
-      <div class="l">Rebanho Médio</div>
-    </div>
-    <div class="vp2-kpi">
-      <div class="v" style="color:#b45309">${avgGord>0?avgGord.toFixed(2)+'%':'—'}</div>
-      <div class="l">Gordura Média</div>
-    </div>
-    ${avgProt>0?`<div class="vp2-kpi"><div class="v" style="color:#7c3aed">${avgProt.toFixed(2)}%</div><div class="l">Proteína Média</div></div>`:''}
-    ${avgCCS>0?`<div class="vp2-kpi"><div class="v" style="color:${avgCCS<=400?'#16a34a':'#dc2626'}">${Math.round(avgCCS)}k</div><div class="l">CCS Médio</div></div>`:''}
-    <div class="vp2-kpi">
-      <div class="v" style="color:#d97706">${prosp.length}</div>
-      <div class="l">Prospectos</div>
-    </div>`;
-
-  // ── TÉCNICO QUE MAIS APOIA ────────────────────────────
-  const tecData = loadTecData();
-  const tecCount = {};
-  ativos.forEach(d => {
-    const key = d.id;
-    const td  = tecData[key] || tecData[MIGRATED_IDS[key]];
-    if (td?.titular)    tecCount[td.titular]    = (tecCount[td.titular]   ||0)+1;
-    if (td?.substituto) tecCount[td.substituto] = (tecCount[td.substituto]||0)+1;
-  });
-
-  const tecEl = document.getElementById('vp2-tec');
-  if (Object.keys(tecCount).length > 0) {
-    tecEl.style.display = 'block';
-    const sorted = Object.entries(tecCount).sort((a,b)=>b[1]-a[1]);
-    const maxCnt = sorted[0][1];
-    tecEl.innerHTML = `
-      <div class="tec-hl-title">👨‍🔬 Técnicos que Mais Apoiam esta Carteira</div>
-      ${sorted.map(([name, cnt]) => {
-        const c = TEC_CORES[name] || TEC_CORES[''];
-        return `<div class="tec-hl-row">
-          <div class="tec-hl-av" style="background:${c.bg}">${name.substring(0,2).toUpperCase()}</div>
-          <div style="flex:1">
-            <div style="display:flex;justify-content:space-between">
-              <div class="tec-hl-name">${name}</div>
-              <div class="tec-hl-count">${cnt} cliente${cnt!==1?'s':''}</div>
-            </div>
-            <div class="tec-hl-bar"><div class="tec-hl-fill" style="width:${cnt/maxCnt*100}%;background:${c.bg}"></div></div>
-          </div>
-        </div>`;
-      }).join('')}`;
-  } else {
-    tecEl.style.display = 'none';
-  }
-
-  // ── LISTA DE CLIENTES ─────────────────────────────────
-  const sections = [
-    { label: `✅ Clientes Ativos (${ativos.length})`, list: ativos, color: '#16a34a', bg: '#dcfce7' },
-    { label: `🎯 Prospectos (${prosp.length})`,       list: prosp,  color: '#ca8a04', bg: '#fef9c3' },
-    { label: `❌ Inativos (${inat.length})`,          list: inat,   color: '#dc2626', bg: '#fee2e2' },
-  ].filter(s => s.list.length > 0);
-
-  document.getElementById('vp2-cli-title').textContent = `Todas as Propriedades (${todos.length})`;
-  document.getElementById('vp2-cli-list').innerHTML = sections.map(sec => `
-    <div style="font-size:10px;font-weight:700;color:${sec.color};text-transform:uppercase;letter-spacing:.5px;margin:10px 0 6px">${sec.label}</div>
-    ${sec.list.sort((a,b)=>(b.vacas||0)-(a.vacas||0)).map(d => {
-      const td = (() => {
-        const key = d.id;
-        const t = loadTecData();
-        return t[key] || t[MIGRATED_IDS[key]] || {};
-      })();
-      return `<div class="vp2-cli-card" onclick="closeVendorPanel();openFarmModal('${d.id}','${(d.produtor||'').replace(/'/g,"\\'")}')" title="Abrir histórico de ${d.produtor}">
-        <div class="vp2-cli-av" style="background:${vc(d.produtor||'?')}">${(d.produtor||'?').split(' ').slice(0,2).map(w=>w[0]||'').join('').toUpperCase()}</div>
-        <div style="flex:1;min-width:0">
-          <div class="vp2-cli-name">${d.produtor||'—'}</div>
-          <div class="vp2-cli-city">${d.cidade||''}${d.regiao?' · '+d.regiao:''}</div>
-          <div class="vp2-cli-stats">
-            ${d.vacas>0?`<span class="vp2-cli-stat">🐄 ${d.vacas}</span>`:''}
-            ${d.media_prod>0?`<span class="vp2-cli-stat">🥛 ${parseFloat(d.media_prod).toFixed(1)}L</span>`:''}
-            ${td.titular?`<span class="vp2-cli-stat" style="color:#1d4ed8">🔵 ${td.titular}</span>`:''}
-          </div>
-        </div>
-        <div style="text-align:right;flex-shrink:0">
-          <span class="vp2-cli-badge" style="background:${sec.bg};color:${sec.color}">${d.produto||''}</span>
-          ${d.prod_diaria>0?`<div style="font-size:10px;font-weight:700;color:#0891b2;margin-top:3px">${d.prod_diaria>=1000?(d.prod_diaria/1000).toFixed(1)+'k L':d.prod_diaria+' L'}</div>`:''}
-        </div>
-      </div>`;
-    }).join('')}
-  `).join('');
-
-  document.getElementById('vend-side-panel').style.display = 'flex';
-  document.body.style.overflow = 'hidden';
-}
-
-function closeVendorPanel() {
-  document.getElementById('vend-side-panel').style.display = 'none';
-  document.body.style.overflow = '';
 }
 
 </script>
