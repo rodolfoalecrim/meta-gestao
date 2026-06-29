@@ -17,6 +17,7 @@
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/chartjs-plugin-annotation/3.0.1/chartjs-plugin-annotation.min.js"></script>
 <style>@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');:root{
 --bg:#f4f6f9;--white:#fff;--border:#e8edf2;
@@ -131,6 +132,30 @@ tbody td{padding:10px 14px;font-size:12px;}.badge{display:inline-flex;align-item
 .score-badge{display:inline-flex;align-items:center;gap:4px;font-size:10px;font-weight:700;padding:2px 8px;border-radius:20px;}
 .score-A{background:#dcfce7;color:#15803d;}.score-B{background:#dbeafe;color:#1d4ed8;}
 .score-C{background:#fef9c3;color:#92400e;}.score-D{background:#fee2e2;color:#dc2626;}
+.cmp2-wrap{display:grid;grid-template-columns:1fr 56px 1fr;gap:0;align-items:stretch;}
+.cmp2-col{display:flex;flex-direction:column;gap:0;}
+.cmp2-mid{display:flex;flex-direction:column;align-items:center;justify-content:flex-start;gap:0;padding-top:60px;}
+.cmp2-hero{border-radius:16px;padding:20px;color:white;display:flex;flex-direction:column;align-items:center;text-align:center;margin-bottom:3px;}
+.cmp2-av{width:52px;height:52px;border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:17px;font-weight:900;color:white;margin:0 auto 10px;}
+.cmp2-nome{font-size:15px;font-weight:800;letter-spacing:-.2px;}
+.cmp2-sub{font-size:10px;opacity:.75;margin-top:3px;}
+.cmp2-score-badge{font-size:28px;font-weight:900;margin-top:10px;line-height:1;}
+.cmp2-row{display:grid;grid-template-columns:1fr;background:white;border:1px solid var(--border);border-radius:10px;padding:12px 14px;margin-bottom:3px;}
+.cmp2-row-val{font-size:16px;font-weight:800;line-height:1.1;}
+.cmp2-row-lbl{font-size:9px;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.4px;margin-top:3px;}
+.cmp2-win{background:#f0fdf4;border-color:#86efac;}
+.cmp2-lose{background:#fef2f2;border-color:#fca5a5;}
+.cmp2-tie{background:#f8fafc;border-color:var(--border);}
+.cmp2-mid-row{height:52px;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:var(--muted);margin-bottom:3px;}
+.cmp2-vs{width:36px;height:36px;border-radius:50%;background:#f1f5f9;border:2px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;color:var(--muted);margin-bottom:6px;}
+.cmp2-winner{width:28px;height:28px;border-radius:50%;background:#15803d;display:flex;align-items:center;justify-content:center;font-size:12px;flex-shrink:0;}
+.cmp2-select-wrap{background:white;border:1px solid var(--border);border-radius:14px;padding:16px 20px;margin-bottom:16px;display:flex;align-items:center;gap:14px;flex-wrap:wrap;}
+.cmp2-sel{flex:1;min-width:200px;background:#f8fafc;border:1.5px solid var(--border);border-radius:8px;color:var(--text);font-size:12px;font-family:Inter,sans-serif;padding:8px 12px;outline:none;transition:border-color .15s;}
+.cmp2-sel:focus{border-color:#15803d;background:white;}
+.cmp2-btn{background:linear-gradient(135deg,#15803d,#052e16);color:white;border:none;border-radius:8px;padding:9px 20px;font-size:12px;font-weight:700;font-family:Inter,sans-serif;cursor:pointer;white-space:nowrap;}
+.cmp2-summary{background:linear-gradient(135deg,#052e16,#15803d);border-radius:14px;padding:16px 20px;color:white;margin-bottom:16px;display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;text-align:center;}
+.cmp2-sum-val{font-size:24px;font-weight:900;line-height:1;}
+.cmp2-sum-lbl{font-size:10px;opacity:.75;font-weight:600;margin-top:4px;}
 .zoo-card{background:white;border:1px solid var(--border);border-radius:12px;overflow:hidden;transition:box-shadow .15s;margin-bottom:0;}
 .zoo-card:hover{box-shadow:var(--shadow-md);}
 .zoo-card-hdr{display:flex;align-items:center;gap:12px;padding:14px 16px;cursor:pointer;}
@@ -216,7 +241,7 @@ tbody td{padding:10px 14px;font-size:12px;}.badge{display:inline-flex;align-item
 </div>
 <script>
 (function(){
-  var BUILT = '2026-06-29T20:15:00';
+  var BUILT = '2026-06-29T22:30:00';
   function pad(n){return String(n).padStart(2,'0');}
   function fmt(d){
     var dias=['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'];
@@ -308,6 +333,7 @@ tbody td{padding:10px 14px;font-size:12px;}.badge{display:inline-flex;align-item
       <div class="sg">FERRAMENTAS</div>
       <div class="ni" id="ni-alertas-zoo" onclick="nav('alertas-zoo')" style="position:relative"><span class="ni-i">🚨</span>Alertas Zootécnicos<span class="ni-b" id="badge-zoo" style="display:none">0</span></div>
       <div class="ni" id="ni-impacto" onclick="nav('impacto')"><span class="ni-i">📊</span>Impacto em Números</div>
+      <div class="ni" id="ni-comparador" onclick="nav('comparador')"><span class="ni-i">⚡</span>Comparar Fazendas</div>
       <div class="ni" id="ni-calc" onclick="nav('calc')"><span class="ni-i">💰</span>Calculadora</div>
     </div>
     <!-- CONTENT -->
@@ -582,18 +608,33 @@ tbody td{padding:10px 14px;font-size:12px;}.badge{display:inline-flex;align-item
       <div class="modal-tab on" id="mtab-hist" onclick="switchTab('hist')">📈 Histórico & Gráficos</div>
       <div class="modal-tab" id="mtab-visit" onclick="switchTab('visit')">📋 Relatório de Visita</div>
       <div class="modal-tab" id="mtab-edit" onclick="switchTab('edit')">✏️ Editar Dados</div>
+      <button onclick="gerarPDFFazenda()" style="margin-left:auto;background:linear-gradient(135deg,#dc2626,#b91c1c);color:white;border:none;border-radius:8px;padding:6px 14px;font-size:11px;font-weight:700;cursor:pointer;font-family:Inter,sans-serif;display:flex;align-items:center;gap:5px" title="Exportar relatório PDF desta fazenda">
+        📄 Exportar PDF
+      </button>
     </div>
     <div class="modal-body">
       <!-- TAB HISTÓRICO -->
       <div id="tab-hist">
         <!-- KPIs atuais -->
         <div style="display:grid;grid-template-columns:repeat(6,1fr);gap:10px;margin-bottom:16px" id="modal-kpis"></div>
-        <!-- Gráficos linha do tempo -->
-        <div class="hist-charts" id="hist-charts-wrap">
-          <div class="hist-chart-card"><h4>🥛 Produção Diária (L/dia)</h4><canvas id="hch-prod" height="160"></canvas></div>
-          <div class="hist-chart-card"><h4>🐄 Rebanho — Evolução</h4><canvas id="hch-rebanho" height="160"></canvas></div>
-          <div class="hist-chart-card"><h4>📊 Média L/vaca/dia</h4><canvas id="hch-media" height="160"></canvas></div>
-          <div class="hist-chart-card"><h4>🧈 Gordura & Proteína (%)</h4><canvas id="hch-qual" height="160"></canvas></div>
+        <!-- Gráfico principal: antes e depois -->
+        <div id="hist-charts-wrap">
+          <div class="hist-chart-card" style="margin-bottom:12px;grid-column:1/-1">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+              <h4 style="margin:0">📈 Evolução da Produção — L/vaca/dia</h4>
+              <div style="display:flex;gap:8px;align-items:center">
+                <span id="hist-trend-badge" style="display:none;font-size:10px;font-weight:700;padding:3px 10px;border-radius:20px"></span>
+                <span id="hist-inicio-badge" style="display:none;background:#f0fdf4;color:#15803d;font-size:10px;font-weight:700;padding:3px 10px;border-radius:20px;border:1px solid #86efac">🌿 Início Meta marcado</span>
+              </div>
+            </div>
+            <canvas id="hch-media" height="180"></canvas>
+          </div>
+          <div class="hist-charts">
+            <div class="hist-chart-card"><h4>🥛 Produção Diária (L/dia)</h4><canvas id="hch-prod" height="150"></canvas></div>
+            <div class="hist-chart-card"><h4>🧈 Gordura & Proteína (%)</h4><canvas id="hch-qual" height="150"></canvas></div>
+            <div class="hist-chart-card"><h4>🐄 Rebanho — Evolução</h4><canvas id="hch-rebanho" height="150"></canvas></div>
+            <div class="hist-chart-card"><h4>🧬 NUL & CCS</h4><canvas id="hch-nulccs" height="150"></canvas></div>
+          </div>
         </div>
         <!-- Timeline entries -->
         <div style="font-size:12px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:12px">Linha do Tempo</div>
@@ -1379,6 +1420,39 @@ tbody td{padding:10px 14px;font-size:12px;}.badge{display:inline-flex;align-item
   </div>
 </div>
 
+
+      <!-- ═══ COMPARADOR DE FAZENDAS ═══ -->
+      <div class="sc" id="sc-comparador">
+        <div class="ph">
+          <div><h2>⚡ Comparar Fazendas</h2><p>Análise lado a lado de duas propriedades — ideal para mostrar ao prospecto um cliente similar</p></div>
+        </div>
+        <!-- Seleção -->
+        <div class="cmp2-select-wrap">
+          <div style="font-size:11px;font-weight:700;color:var(--muted);white-space:nowrap">Fazenda A</div>
+          <select id="cmp2-sel-a" class="cmp2-sel" onchange="renderComparador()">
+            <option value="">— Selecionar produtor —</option>
+          </select>
+          <div style="font-size:14px;font-weight:900;color:var(--muted)">vs</div>
+          <select id="cmp2-sel-b" class="cmp2-sel" onchange="renderComparador()">
+            <option value="">— Selecionar produtor —</option>
+          </select>
+          <button class="cmp2-btn" onclick="cmp2Aleatorio()">🎲 Aleatório</button>
+          <button class="cmp2-btn" style="background:linear-gradient(135deg,#dc2626,#991b1b)" onclick="gerarPDFComparacao()">📄 PDF</button>
+        </div>
+        <!-- Painel vazio -->
+        <div id="cmp2-empty" style="text-align:center;padding:60px 20px;color:var(--muted)">
+          <div style="font-size:48px;margin-bottom:12px">⚡</div>
+          <div style="font-size:15px;font-weight:700;color:var(--text)">Selecione duas fazendas para comparar</div>
+          <div style="font-size:12px;margin-top:6px">Use os seletores acima ou clique em Aleatório para ver um exemplo</div>
+        </div>
+        <!-- Resultado -->
+        <div id="cmp2-result" style="display:none">
+          <!-- Resumo placar -->
+          <div class="cmp2-summary" id="cmp2-summary"></div>
+          <!-- Grid principal -->
+          <div class="cmp2-wrap" id="cmp2-grid"></div>
+        </div>
+      </div>
 
       <!-- ═══ ALERTAS ZOOTÉCNICOS ═══ -->
       <div class="sc" id="sc-alertas-zoo">
@@ -2188,9 +2262,15 @@ const refs=[
 {key:'del',l:'DEL Médio',u:'dias',ref:175,meta:160,icon:'📅',desc:'Ideal 150-180 dias em lactação',dec:0},
 {key:'prod_diaria',l:'Prod. Média/Fazenda',u:'L',ref:3000,meta:8000,icon:'🏭',desc:'Produção diária média por propriedade ativa',dec:0,fn:a=>a.length?sum(a,'prod_diaria')/a.length:0},
 {key:'nul',l:'NUL Médio',u:' mg/dL',ref:12,meta:18,icon:'🧬',desc:'Nitrogênio Ureico: ideal 12–18 mg/dL | Alerta: <10 ou >20',dec:1,idealRange:true,idealMin:12,idealMax:18},
+{key:'novilhas',l:'Novilhas / Rebanho',u:'%',ref:15,meta:25,icon:'🐮',desc:'Índice de reposição: ideal 20–30% das vacas | Garante renovação genética',dec:0,pctOf:'vacas',idealRange:true,idealMin:15,idealMax:35},
+{key:'secas',l:'Vacas Secas / Rebanho',u:'%',ref:12,meta:18,icon:'🌙',desc:'Período seco: ideal 15–20% do rebanho | Indica manejo reprodutivo correto',dec:0,pctOf:'vacas',idealRange:true,idealMin:10,idealMax:22},
+{key:'bezerras',l:'Bezerras / Rebanho',u:'%',ref:10,meta:20,icon:'🍼',desc:'Índice de natalidade: presença indica reposição ativa e bom manejo',dec:0,pctOf:'vacas',idealRange:true,idealMin:8,idealMax:30},
 ];
 document.getElementById('bm-cards').innerHTML=refs.map(r=>{
-const val=r.fn?r.fn(at):avg(at,r.key);
+const val=r.fn?r.fn(at):r.pctOf?(()=>{
+const pairs=at.filter(d=>d[r.key]>0&&d[r.pctOf]>0);
+return pairs.length?pairs.reduce((s,d)=>s+(d[r.key]/d[r.pctOf]*100),0)/pairs.length:0;
+})():avg(at,r.key);
 const pct=r.idealRange?(val>0?Math.min(val/r.idealMax*100,100):0):(r.meta>0?Math.min(val/r.meta*100,100):0);
 let cls,col,status;
 if(r.idealRange){
@@ -2204,7 +2284,7 @@ if(r.idealRange){
   col=val>=r.meta?'#16a34a':val>=r.ref?'#d97706':'#dc2626';
   status=val>=r.meta?'✅':val>=r.ref?'⚠️':'❌';
 }
-const fv=val>0?(r.u==='%'?val.toFixed(r.dec)+'%':r.u===' mg/dL'?val.toFixed(r.dec)+r.u:val>=1000?(val/1000).toFixed(1)+'k '+r.u:val.toFixed(r.dec)+' '+r.u):'Sem dados';
+const fv=val>0?(r.u==='%'?(r.pctOf?val.toFixed(r.dec)+'%':val.toFixed(r.dec)+'%'):r.u===' mg/dL'?val.toFixed(r.dec)+r.u:val>=1000?(val/1000).toFixed(1)+'k '+r.u:val.toFixed(r.dec)+' '+r.u):'Sem dados';
 const scale=r.idealRange?`<span>0</span><span>Min: ${r.idealMin}${r.u}</span><span>Max: ${r.idealMax}${r.u}</span>`:`<span>0</span><span>Ref: ${r.ref}${r.u}</span><span>Meta: ${r.meta}${r.u}</span>`;
 return `<div class="bm">
 <div class="bm-top"><div class="bm-icon">${r.icon}</div><div class="bm-lbl">${r.l}</div><div style="margin-left:auto;font-size:18px">${status}</div></div>
@@ -2720,6 +2800,7 @@ document.getElementById('sc-'+name).classList.add('on');
 const niEl=document.getElementById('ni-'+name);
 if(niEl) niEl.classList.add('on');
 document.querySelector('.content').scrollTop=0;
+if(name==='comparador'){initComparador();}
 if(name==='alertas-zoo'){initZooVendFilter();setTimeout(renderZooAlerts,50);}
 if(name==='impacto') setTimeout(renderImpacto,50);
 if(name==='calc') setTimeout(renderCalc,50);
@@ -3337,6 +3418,7 @@ ${d.nome_vendedor?`<div style="font-size:10px;opacity:.7;margin-top:2px">👤 ${
 <div style="font-size:13px;opacity:.8">⭐ Score de Saúde</div>
 <div style="font-size:28px;font-weight:900;margin-top:4px">${calcHealthScore(d)}<span style="font-size:14px;opacity:.7">/100</span></div>
 <div style="font-size:12px;font-weight:800;margin-top:2px">${healthGrade(calcHealthScore(d)).g} — ${calcHealthScore(d)>=80?'Excelente':calcHealthScore(d)>=60?'Bom':calcHealthScore(d)>=40?'Regular':'Atenção'}</div>
+<div style="font-size:9px;opacity:.6;margin-top:3px">Prod·Qualidade·CCS·NUL·Novilhas·Secas·Bezerras</div>
 </div>`;
 db.ref('historico/' + id).orderByChild('data').limitToLast(20).once('value', snap => {
 const entries = [];
@@ -3349,51 +3431,190 @@ renderHistoryTimeline(entries);
 function renderHistoryCharts(entries) {
 if (entries.length === 0) {
 document.getElementById('hist-charts-wrap').innerHTML =
-'<div style="text-align:center;padding:32px;color:#94a3b8;font-size:13px;grid-column:1/-1">📭 Ainda sem histórico. Após a primeira atualização dos dados, os gráficos aparecerão aqui.</div>';
+'<div style="text-align:center;padding:48px;color:#94a3b8;font-size:13px"><div style="font-size:32px;margin-bottom:12px">📭</div><div style="font-weight:700;color:#64748b">Ainda sem histórico</div><div style="margin-top:4px">Após a primeira visita registrada, os gráficos aparecerão aqui.</div></div>';
 return;
 }
-const labels = entries.map(e => new Date(e.data).toLocaleDateString('pt-BR', {day:'2-digit',month:'2-digit'}));
-const C = { responsive:true, maintainAspectRatio:true,
+
+// Ordena cronologicamente (mais antigo primeiro para gráficos)
+const sorted = [...entries].reverse();
+const labels = sorted.map(e => new Date(e.data).toLocaleDateString('pt-BR', {day:'2-digit',month:'2-digit',year:'2-digit'}));
+
+// ── Detecta ponto de início do produto Meta ──────────────────────────────────
+// Usa o registro mais antigo como marcador de início (primeira visita = início do acompanhamento)
+const inicioIdx = 0;
+const inicioLabel = labels[inicioIdx];
+
+// ── Calcula linha de tendência (regressão linear) ────────────────────────────
+function tendencia(dados) {
+const pts = dados.map((v,i)=>({x:i,y:parseFloat(v)||0})).filter(p=>p.y>0);
+if(pts.length < 2) return [];
+const n=pts.length, sx=pts.reduce((a,p)=>a+p.x,0), sy=pts.reduce((a,p)=>a+p.y,0);
+const sxy=pts.reduce((a,p)=>a+p.x*p.y,0), sxx=pts.reduce((a,p)=>a+p.x*p.x,0);
+const m=(n*sxy-sx*sy)/(n*sxx-sx*sx||1);
+const b=(sy-m*sx)/n;
+return dados.map((_,i)=>+(m*i+b).toFixed(2));
+}
+
+// ── Calcula variação início → fim ──────────────────────────────────────────
+function variacao(dados) {
+const vals = dados.filter(v=>v>0);
+if(vals.length < 2) return null;
+return ((vals[vals.length-1] - vals[0]) / vals[0] * 100).toFixed(1);
+}
+
+const mediasData = sorted.map(e=>e.media_prod||0);
+const trendData = tendencia(mediasData);
+const varPct = variacao(mediasData);
+
+// Badge de tendência
+const badge = document.getElementById('hist-trend-badge');
+if(badge && varPct !== null) {
+const v = parseFloat(varPct);
+badge.style.display = '';
+if(v > 2) { badge.style.background='#dcfce7'; badge.style.color='#15803d'; badge.textContent='↑ +'+varPct+'% desde o início'; }
+else if(v < -2) { badge.style.background='#fee2e2'; badge.style.color='#dc2626'; badge.textContent='↓ '+varPct+'% desde o início'; }
+else { badge.style.background='#f1f5f9'; badge.style.color='#64748b'; badge.textContent='→ Estável ('+varPct+'%)'; }
+}
+if(document.getElementById('hist-inicio-badge')) document.getElementById('hist-inicio-badge').style.display='';
+
+const C = {
+responsive:true, maintainAspectRatio:true,
 plugins:{legend:{labels:{color:'#64748b',font:{size:10},boxWidth:10}}},
-scales:{x:{grid:{display:false},ticks:{color:'#94a3b8',font:{size:9}}},y:{grid:{color:'#f1f5f9'},ticks:{color:'#94a3b8'}}}
+scales:{x:{grid:{display:false},ticks:{color:'#94a3b8',font:{size:9}}},
+y:{grid:{color:'rgba(0,0,0,0.04)'},ticks:{color:'#94a3b8',font:{size:9}}}}
 };
 function mkH(id, type, data, opts={}) {
 if(histCharts[id]) histCharts[id].destroy();
 const ctx = document.getElementById(id); if(!ctx) return;
-histCharts[id] = new Chart(ctx, {type, data, options:{...C,...opts,plugins:{...C.plugins,...(opts.plugins||{})}}});
+histCharts[id] = new Chart(ctx, {type, data,
+options:{...C,...opts,plugins:{...C.plugins,...(opts.plugins||{})}}});
 }
-mkH('hch-prod', 'line', {
-labels,
-datasets:[{label:'Prod/dia (L)', data: entries.map(e=>e.prod_diaria||0),
-borderColor:'#0e7490', backgroundColor:'rgba(14,116,144,0.1)', borderWidth:2.5,
-pointRadius:4, pointBackgroundColor:'#0e7490', tension:0.4, fill:true}]
-}, {plugins:{legend:{display:false}}});
-mkH('hch-rebanho', 'bar', {
-labels,
-datasets:[
-{label:'Lactação', data:entries.map(e=>e.lactacao||0), backgroundColor:'#16a34a', borderRadius:3},
-{label:'Secas', data:entries.map(e=>e.secas||0), backgroundColor:'#ca8a04', borderRadius:3},
-{label:'Novilhas', data:entries.map(e=>e.novilhas||0), backgroundColor:'#0891b2', borderRadius:3},
-{label:'Bezerras', data:entries.map(e=>e.bezerras||0), backgroundColor:'#7c3aed', borderRadius:3},
-]
-}, {scales:{x:{stacked:true,grid:{display:false},ticks:{color:'#94a3b8',font:{size:9}}},y:{stacked:true,grid:{color:'#f1f5f9'},ticks:{color:'#94a3b8'}}}});
+
+// ── Anotações reutilizáveis ──────────────────────────────────────────────────
+const annoInicio = {
+type:'line', xMin:inicioLabel, xMax:inicioLabel,
+borderColor:'#15803d', borderWidth:2, borderDash:[6,3],
+label:{display:true, content:'🌿 Início Meta',
+color:'#052e16', font:{size:9,weight:'bold'},
+backgroundColor:'rgba(240,253,244,0.95)',
+position:'start', padding:{x:6,y:3}, borderRadius:4}
+};
+const annoEmbrapa = {
+type:'line', yMin:28, yMax:28,
+borderColor:'rgba(148,163,184,0.6)', borderWidth:1.5, borderDash:[4,4],
+label:{display:true, content:'Embrapa 28L',
+color:'#64748b', font:{size:8}, position:'end',
+backgroundColor:'rgba(255,255,255,0.9)', padding:{x:4,y:2}, borderRadius:3}
+};
+const annoTop100 = {
+type:'line', yMin:35.4, yMax:35.4,
+borderColor:'rgba(217,119,6,0.5)', borderWidth:1.5, borderDash:[4,4],
+label:{display:true, content:'Top100 ML 35.4L',
+color:'#92400e', font:{size:8}, position:'start',
+backgroundColor:'rgba(255,251,235,0.9)', padding:{x:4,y:2}, borderRadius:3}
+};
+
+// ── GRÁFICO PRINCIPAL: L/vaca/dia com tendência e marcadores ────────────────
 mkH('hch-media', 'line', {
 labels,
-datasets:[{label:'L/vaca/dia', data:entries.map(e=>e.media_prod||0),
-borderColor:'#15803d', backgroundColor:'rgba(21,128,61,0.1)', borderWidth:2.5,
-pointRadius:4, pointBackgroundColor:'#15803d', tension:0.4, fill:true}]
-}, {plugins:{legend:{display:false}}});
+datasets:[
+{label:'L/vaca/dia',
+data: mediasData,
+borderColor:'#15803d', backgroundColor:'rgba(21,128,61,0.08)',
+borderWidth:2.5, pointRadius:5, pointBackgroundColor:'#15803d',
+pointBorderColor:'white', pointBorderWidth:2,
+tension:0.4, fill:true, order:2},
+{label:'Tendência',
+data: trendData,
+borderColor:'rgba(220,38,38,0.7)', backgroundColor:'transparent',
+borderWidth:2, borderDash:[6,4],
+pointRadius:0, tension:0, fill:false, order:1},
+]
+},{
+plugins:{
+legend:{labels:{color:'#64748b',font:{size:10},boxWidth:10,filter:i=>i.text!=='Tendência'||trendData.length>1}},
+annotation:{annotations:{annoInicio, annoEmbrapa, annoTop100}}
+},
+scales:{
+x:{grid:{display:false},ticks:{color:'#94a3b8',font:{size:9}}},
+y:{grid:{color:'rgba(0,0,0,0.04)'},ticks:{color:'#94a3b8',font:{size:9},
+callback:v=>v.toFixed(1)+' L'}}
+}
+});
+
+// ── Produção diária ──────────────────────────────────────────────────────────
+mkH('hch-prod', 'line', {
+labels,
+datasets:[{label:'L/dia',
+data:sorted.map(e=>e.prod_diaria||0),
+borderColor:'#0891b2', backgroundColor:'rgba(8,145,178,0.08)',
+borderWidth:2, pointRadius:4, pointBackgroundColor:'#0891b2',
+tension:0.4, fill:true}]
+},{plugins:{
+legend:{display:false},
+annotation:{annotations:{annoInicio}}
+}});
+
+// ── Gordura, Proteína e NUL ──────────────────────────────────────────────────
 mkH('hch-qual', 'line', {
 labels,
 datasets:[
-{label:'Gordura %', data:entries.map(e=>e.gordura||0),
-borderColor:'#b45309', backgroundColor:'rgba(180,83,9,0.08)', borderWidth:2,
-pointRadius:4, tension:0.4, fill:true},
-{label:'Proteína %', data:entries.map(e=>e.proteina||0),
-borderColor:'#1d4ed8', backgroundColor:'rgba(29,78,216,0.08)', borderWidth:2,
-pointRadius:4, tension:0.4, fill:false},
+{label:'Gordura %', data:sorted.map(e=>e.gordura||0),
+borderColor:'#b45309', backgroundColor:'rgba(180,83,9,0.06)',
+borderWidth:2, pointRadius:3.5, tension:0.4, fill:true},
+{label:'Proteína %', data:sorted.map(e=>e.proteina||0),
+borderColor:'#1d4ed8', backgroundColor:'rgba(29,78,216,0.06)',
+borderWidth:2, pointRadius:3.5, tension:0.4, fill:false},
 ]
-});
+},{plugins:{
+legend:{labels:{color:'#64748b',font:{size:10},boxWidth:8}},
+annotation:{annotations:{
+annoInicio,
+minGord:{type:'line',yMin:3.0,yMax:3.0,borderColor:'rgba(180,83,9,0.4)',borderWidth:1,borderDash:[3,3]},
+minProt:{type:'line',yMin:2.9,yMax:2.9,borderColor:'rgba(29,78,216,0.4)',borderWidth:1,borderDash:[3,3]}
+}}
+},scales:{...C.scales,y:{...C.scales.y,ticks:{...C.scales.y.ticks,callback:v=>v.toFixed(1)+'%'}}}});
+
+// ── Rebanho (stacked bar) ────────────────────────────────────────────────────
+mkH('hch-rebanho', 'bar', {
+labels,
+datasets:[
+{label:'Lactação', data:sorted.map(e=>e.lactacao||0), backgroundColor:'#16a34a', borderRadius:2},
+{label:'Secas',    data:sorted.map(e=>e.secas||0),    backgroundColor:'#ca8a04', borderRadius:2},
+{label:'Novilhas', data:sorted.map(e=>e.novilhas||0), backgroundColor:'#0891b2', borderRadius:2},
+{label:'Bezerras', data:sorted.map(e=>e.bezerras||0), backgroundColor:'#7c3aed', borderRadius:2},
+]
+},{
+plugins:{legend:{labels:{color:'#64748b',font:{size:10},boxWidth:8}},annotation:{annotations:{annoInicio}}},
+scales:{
+x:{stacked:true,grid:{display:false},ticks:{color:'#94a3b8',font:{size:9}}},
+y:{stacked:true,grid:{color:'rgba(0,0,0,0.04)'},ticks:{color:'#94a3b8',font:{size:9}}}
+}});
+
+// ── NUL e CCS ────────────────────────────────────────────────────────────────
+mkH('hch-nulccs', 'line', {
+labels,
+datasets:[
+{label:'NUL mg/dL', data:sorted.map(e=>e.nul||0),
+borderColor:'#15803d', backgroundColor:'rgba(21,128,61,0.06)',
+borderWidth:2, pointRadius:3.5, tension:0.4, fill:true, yAxisID:'yNul'},
+{label:'CCS (k)',   data:sorted.map(e=>e.ccs||0),
+borderColor:'#dc2626', backgroundColor:'rgba(220,38,38,0.06)',
+borderWidth:2, pointRadius:3.5, tension:0.4, fill:false, yAxisID:'yCcs'},
+]
+},{
+plugins:{
+legend:{labels:{color:'#64748b',font:{size:10},boxWidth:8}},
+annotation:{annotations:{
+annoInicio,
+nulMin:{type:'box',yMin:12,yMax:18,yScaleID:'yNul',backgroundColor:'rgba(21,128,61,0.06)',borderWidth:0},
+}}
+},
+scales:{
+x:{grid:{display:false},ticks:{color:'#94a3b8',font:{size:9}}},
+yNul:{position:'left',title:{display:true,text:'NUL mg/dL',color:'#15803d',font:{size:8}},grid:{color:'rgba(0,0,0,0.04)'},ticks:{color:'#15803d',font:{size:8}}},
+yCcs:{position:'right',title:{display:true,text:'CCS k',color:'#dc2626',font:{size:8}},grid:{display:false},ticks:{color:'#dc2626',font:{size:8}}}
+}});
 }
 function renderHistoryTimeline(entries) {
 const tl = document.getElementById('hist-timeline');
@@ -4847,16 +5068,53 @@ const prot=parseFloat(d.proteina)||0;
 const ccs=parseFloat(d.ccs)||0;
 const cbt=parseFloat(d.cbt)||0;
 const nul=parseFloat(d.nul)||0;
-// Produção (0–40 pts)
-if(mp>=37) score+=40; else if(mp>=28) score+=20+Math.round((mp-28)/9*20); else score+=Math.max(0,Math.round(mp/28*20));
-// Gordura (0–20 pts)
-if(gord>=3.5) score+=20; else if(gord>=3.0) score+=10; else if(gord>0) score+=5;
-// Proteína (0–15 pts)
-if(prot>=3.0) score+=15; else if(prot>=2.9) score+=8; else if(prot>0) score+=3;
-// CCS (0–15 pts)
-if(ccs>0){ if(ccs<200) score+=15; else if(ccs<400) score+=8; else score+=2; }
+const vacas=parseFloat(d.vacas)||0;
+const novilhas=parseFloat(d.novilhas)||0;
+const bezerras=parseFloat(d.bezerras)||0;
+const secas=parseFloat(d.secas)||0;
+const lactacao=parseFloat(d.lactacao)||0;
+
+// Produção (0–30 pts) — reduzido para abrir espaço ao rebanho
+if(mp>=37) score+=30; else if(mp>=28) score+=15+Math.round((mp-28)/9*15); else score+=Math.max(0,Math.round(mp/28*15));
+
+// Gordura (0–15 pts)
+if(gord>=3.5) score+=15; else if(gord>=3.0) score+=8; else if(gord>0) score+=3;
+
+// Proteína (0–10 pts)
+if(prot>=3.0) score+=10; else if(prot>=2.9) score+=6; else if(prot>0) score+=2;
+
+// CCS (0–10 pts)
+if(ccs>0){ if(ccs<200) score+=10; else if(ccs<400) score+=5; else score+=1; }
+
 // NUL (0–10 pts)
 if(nul>=12&&nul<=18) score+=10; else if(nul>0) score+=4;
+
+// Estrutura do rebanho — novilhas (0–10 pts)
+// Novilhas ideais: 20–30% do total de vacas (garantia de reposição)
+if(vacas>0&&novilhas>0){
+const pctNov=novilhas/vacas;
+if(pctNov>=0.20&&pctNov<=0.35) score+=10;
+else if(pctNov>=0.10&&pctNov<0.50) score+=5;
+else if(novilhas>0) score+=2;
+}
+
+// Bezerras (0–5 pts)
+// Presença de bezerras indica reposição ativa e manejo reprodutivo
+if(bezerras>0&&vacas>0){
+const pctBez=bezerras/vacas;
+if(pctBez>=0.10&&pctBez<=0.30) score+=5;
+else if(bezerras>0) score+=2;
+}
+
+// Vacas secas (0–10 pts)
+// Ideal: 15–20% do rebanho em período seco (indica manejo reprodutivo correto)
+if(vacas>0&&secas>0){
+const pctSec=secas/vacas;
+if(pctSec>=0.10&&pctSec<=0.22) score+=10;
+else if(pctSec>0&&pctSec<0.30) score+=5;
+else if(secas>0) score+=2;
+}
+
 return Math.min(score,100);
 }
 
@@ -4944,6 +5202,9 @@ function camposFaltando(d){
   if(!(d.del>0)) f.push({n:'DEL',t:'warn'});
   if(!(d.ccs>0)) f.push({n:'CCS',t:'warn'});
   if(!(d.nul>0)) f.push({n:'NUL',t:'warn'});
+  if(!(d.novilhas>0)) f.push({n:'Novilhas',t:'warn'});
+  if(!(d.secas>0)) f.push({n:'Secas',t:'warn'});
+  if(!(d.bezerras>0)) f.push({n:'Bezerras',t:'warn'});
   return f;
 }
 
@@ -5026,6 +5287,465 @@ function renderZooAlerts(){
 ${campos.length?`<div class="zoo-campos"><span style="font-size:10px;color:var(--muted);font-weight:600;margin-right:4px">Campos faltando:</span>${camposHtml}</div>`:'<div style="padding:0 16px 10px 68px;font-size:11px;color:#16a34a;font-weight:600">✅ Todos os campos preenchidos — apenas desatualizado</div>'}
 </div>`;
   }).join('');
+}
+
+
+// ════════════════════════════════════════════════════════════════
+// EXPORTAÇÃO PDF POR FAZENDA
+// ════════════════════════════════════════════════════════════════
+async function gerarPDFFazenda(){
+if(typeof window.jspdf === 'undefined'){
+toast('⏳ Carregando gerador de PDF...'); 
+setTimeout(gerarPDFFazenda, 800); return;
+}
+const {jsPDF} = window.jspdf;
+const id = currentFarmId;
+const d = ALL.find(x => x.id === id) || {};
+const nome = d.produtor || 'Fazenda';
+toast('📄 Gerando PDF...');
+
+// Busca histórico do Firebase
+let hist = [];
+try {
+const snap = await db.ref('historico/' + id).orderByChild('data').limitToLast(12).once('value');
+snap.forEach(c => hist.push(c.val()));
+hist.reverse();
+} catch(e){ hist = []; }
+
+const doc = new jsPDF({orientation:'portrait', unit:'mm', format:'a4'});
+const W = 210, H = 297;
+const margin = 14;
+const colW = W - margin * 2;
+let y = 0;
+
+// ── Paleta de cores ──────────────────────────────────────────────────────────
+const verde = [5, 46, 22];
+const verdeM = [21, 128, 61];
+const verdeL = [220, 252, 231];
+const azul  = [29, 78, 216];
+const azulL = [219, 234, 254];
+const am    = [217, 119, 6];
+const amL   = [254, 249, 195];
+const verm  = [220, 38, 38];
+const vermL = [254, 226, 226];
+const cinza = [100, 116, 139];
+const cinzaL= [248, 250, 252];
+const branco= [255, 255, 255];
+const preto = [15, 23, 42];
+
+// ── Helper: adiciona nova página se necessário ───────────────────────────────
+function checkPage(needed=20){
+if(y + needed > H - 16){ doc.addPage(); y = margin; }
+}
+
+// ── Helper: caixa colorida ───────────────────────────────────────────────────
+function box(x, bY, w, h, fill, radius=2){
+doc.setFillColor(...fill);
+doc.roundedRect(x, bY, w, h, radius, radius, 'F');
+}
+
+// ── Helper: texto seguro ─────────────────────────────────────────────────────
+function txt(text, x, tY, opts={}){
+doc.setFontSize(opts.size||10);
+doc.setFont('helvetica', opts.bold?'bold':'normal');
+doc.setTextColor(...(opts.color||preto));
+doc.text(String(text||'—'), x, tY, {align: opts.align||'left', maxWidth: opts.maxW});
+}
+
+// ── Helper: linha divisória ──────────────────────────────────────────────────
+function hr(hY, col=cinzaL){
+doc.setDrawColor(...col);
+doc.setLineWidth(0.3);
+doc.line(margin, hY, W-margin, hY);
+}
+
+// ════════════════════════════════════════════════════════════════
+// CABEÇALHO HERO
+// ════════════════════════════════════════════════════════════════
+box(0, 0, W, 46, verde);
+// Logo texto
+txt('META', 12, 12, {size:16, bold:true, color:branco});
+txt('Nutrição e Saúde Animal', 12, 18, {size:7, color:[180,220,180]});
+// Nome da fazenda
+const nomeFit = nome.length > 35 ? nome.substring(0,33)+'...' : nome;
+txt(nomeFit, W/2, 16, {size:18, bold:true, color:branco, align:'center'});
+txt((d.cidade||'')+(d.regiao?' — '+d.regiao:''), W/2, 22, {size:8, color:[200,230,200], align:'center'});
+// Tags situação e produto
+const sit = d.situacao||'';
+const sitCol = sit==='ATIVO'?verdeL:sit==='PROSPEC'?amL:vermL;
+const sitTxt = sit==='ATIVO'?verdeM:sit==='PROSPEC'?[180,100,0]:verm;
+box(margin, 26, 36, 7, sitCol, 3);
+txt(sit, margin+18, 31.5, {size:8, bold:true, color:sitTxt, align:'center'});
+if(d.produto){ box(margin+40, 26, 36, 7, azulL, 3); txt(d.produto, margin+58, 31.5, {size:8, bold:true, color:azul, align:'center'}); }
+// Vendedor e data
+const vend = d.nome_vendedor||d.vendedor||'—';
+txt('Vendedor: '+vend, W-margin, 29, {size:8, color:[200,230,200], align:'right'});
+const hoje = new Date().toLocaleDateString('pt-BR',{day:'2-digit',month:'long',year:'numeric'});
+txt('Relatório gerado em '+hoje, W-margin, 34, {size:7, color:[180,210,180], align:'right'});
+y = 52;
+
+// ════════════════════════════════════════════════════════════════
+// KPIs PRINCIPAIS — linha de 4 cards
+// ════════════════════════════════════════════════════════════════
+const kpis = [
+{lbl:'Total Vacas', val: d.vacas||'—', unit:'', col:verdeL, txt:verdeM},
+{lbl:'L/vaca/dia', val: d.media_prod>0?parseFloat(d.media_prod).toFixed(1):'—', unit:'L', col:azulL, txt:azul},
+{lbl:'Prod. Diária', val: d.prod_diaria>=1000?(d.prod_diaria/1000).toFixed(0)+'k':d.prod_diaria||'—', unit:'L/dia', col:[f2l=240,f2=245,f2r=255], txt:[79,70,229]},
+{lbl:'Sistema', val:(d.sistema||'—').substring(0,10), unit:'', col:cinzaL, txt:cinza},
+];
+const kw = (colW-9)/4;
+kpis.forEach((k,i)=>{
+const kx = margin + i*(kw+3);
+box(kx, y, kw, 18, k.col, 3);
+txt(String(k.val), kx+kw/2, y+8, {size:13, bold:true, color:k.txt, align:'center'});
+txt((k.unit?k.unit+' — ':'')+k.lbl, kx+kw/2, y+14, {size:7, color:cinza, align:'center'});
+});
+y += 22;
+
+// ════════════════════════════════════════════════════════════════
+// QUALIDADE DO LEITE — 6 indicadores
+// ════════════════════════════════════════════════════════════════
+checkPage(30);
+box(margin, y, colW, 7, verde, 2);
+txt('QUALIDADE DO LEITE', margin+4, y+4.8, {size:9, bold:true, color:branco});
+y += 10;
+
+const ql = [
+{lbl:'Gordura', val:d.gordura>0?parseFloat(d.gordura).toFixed(2)+'%':'—', ok:d.gordura>=3.0, ref:'IN77 ≥ 3%'},
+{lbl:'Proteína', val:d.proteina>0?parseFloat(d.proteina).toFixed(2)+'%':'—', ok:d.proteina>=2.9, ref:'IN77 ≥ 2.9%'},
+{lbl:'NUL', val:d.nul>0?parseFloat(d.nul).toFixed(1)+' mg/dL':'—', ok:d.nul>=12&&d.nul<=18, ref:'Ideal 12–18'},
+{lbl:'CCS', val:d.ccs>0?d.ccs+'k cel/mL':'—', ok:d.ccs>0&&d.ccs<400, ref:'Meta <400k'},
+{lbl:'CBT', val:d.cbt>0?d.cbt+'k UFC/mL':'—', ok:d.cbt>0&&d.cbt<100, ref:'Meta <100k'},
+{lbl:'DEL', val:d.del>0?d.del+' dias':'—', ok:d.del>=150&&d.del<=180, ref:'Ideal 150–180d'},
+];
+const qw = (colW-10)/6;
+ql.forEach((q,i)=>{
+const qx = margin + i*(qw+2);
+const bgC = q.val==='—'?cinzaL:q.ok?verdeL:vermL;
+const txC = q.val==='—'?cinza:q.ok?verdeM:verm;
+box(qx, y, qw, 20, bgC, 2);
+txt(q.val, qx+qw/2, y+8, {size:9, bold:true, color:txC, align:'center'});
+txt(q.lbl, qx+qw/2, y+13, {size:7, bold:true, color:txC, align:'center'});
+txt(q.ref, qx+qw/2, y+18, {size:6, color:cinza, align:'center'});
+});
+y += 24;
+
+// ════════════════════════════════════════════════════════════════
+// SCORE DE SAÚDE
+// ════════════════════════════════════════════════════════════════
+checkPage(20);
+const score = calcHealthScore(d);
+const grade = healthGrade(score);
+const scoreCol = score>=80?verdeM:score>=60?azul:score>=40?am:verm;
+const scoreColL = score>=80?verdeL:score>=60?azulL:score>=40?amL:vermL;
+box(margin, y, colW, 16, scoreColL, 3);
+box(margin, y, 16, 16, scoreCol, 3);
+txt(grade.g, margin+8, y+10.5, {size:12, bold:true, color:branco, align:'center'});
+txt('Score de Saúde do Rebanho: '+score+'/100', margin+22, y+7, {size:10, bold:true, color:scoreCol});
+txt(score>=80?'Excelente — rebanho saudável e produtivo':score>=60?'Bom — pequenos pontos de atenção':score>=40?'Regular — atenção nos indicadores':
+'Atenção — intervenção recomendada', margin+22, y+13, {size:8, color:cinza});
+txt(grade.g, W-margin-20, y+10, {size:22, bold:true, color:scoreCol, align:'center'});
+y += 20;
+
+// ════════════════════════════════════════════════════════════════
+// HISTÓRICO DE VISITAS
+// ════════════════════════════════════════════════════════════════
+checkPage(14);
+box(margin, y, colW, 7, verdeM, 2);
+txt('HISTÓRICO DE VISITAS E EVOLUÇÃO (últimas '+hist.length+')', margin+4, y+4.8, {size:9, bold:true, color:branco});
+y += 10;
+
+if(!hist.length){
+box(margin, y, colW, 12, cinzaL, 2);
+txt('Nenhuma visita registrada ainda.', W/2, y+7.5, {size:9, color:cinza, align:'center'});
+y += 16;
+} else {
+// Cabeçalho da tabela
+const cols = ['Data','Vacas','L/vaca','Prod/dia','Gordura','Proteína','NUL','CCS'];
+const cws = [28,16,16,20,18,18,16,16];
+let cx = margin;
+box(margin, y, colW, 7, verde, 1);
+cols.forEach((c,i)=>{
+txt(c, cx+cws[i]/2, y+4.8, {size:7, bold:true, color:branco, align:'center'});
+cx += cws[i];
+});
+y += 8;
+
+hist.forEach((h,ri)=>{
+checkPage(9);
+const rowBg = ri%2===0?branco:cinzaL;
+box(margin, y, colW, 8, rowBg);
+hr(y+8, [235,238,242]);
+const pad = n => n>String(n).length ? String(n) : String(n);
+const vals = [
+h.data?new Date(h.data).toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit',year:'2-digit'}):'—',
+h.vacas||'—',
+h.media_prod>0?parseFloat(h.media_prod).toFixed(1):'—',
+h.prod_diaria>=1000?(h.prod_diaria/1000).toFixed(0)+'k':h.prod_diaria||'—',
+h.gordura>0?parseFloat(h.gordura).toFixed(2)+'%':'—',
+h.proteina>0?parseFloat(h.proteina).toFixed(2)+'%':'—',
+h.nul>0?parseFloat(h.nul).toFixed(1):'—',
+h.ccs>0?h.ccs+'k':'—',
+];
+cx = margin;
+vals.forEach((v,i)=>{
+const isData = i===0;
+const numV = parseFloat(String(v));
+let col = preto;
+if(i===4 && h.gordura>0) col = h.gordura>=3.5?verdeM:h.gordura>=3.0?azul:verm;
+if(i===5 && h.proteina>0) col = h.proteina>=3.0?verdeM:h.proteina>=2.9?azul:verm;
+if(i===6 && h.nul>0) col = h.nul>=12&&h.nul<=18?verdeM:am;
+if(i===7 && h.ccs>0) col = h.ccs<200?verdeM:h.ccs<400?am:verm;
+txt(v, cx+cws[i]/2, y+5.2, {size:7.5, bold:isData, color:col, align:'center'});
+cx += cws[i];
+});
+if(h.obs){ y += 8; checkPage(7); box(margin, y, colW, 6, amL); txt('Obs: '+h.obs, margin+3, y+4, {size:7, color:[120,80,0], maxW:colW-6}); }
+y += 8;
+});
+}
+
+// ════════════════════════════════════════════════════════════════
+// COMPARATIVO COM REFERÊNCIAS
+// ════════════════════════════════════════════════════════════════
+checkPage(40);
+box(margin, y, colW, 7, azul, 2);
+txt('BENCHMARKS — POSICIONAMENTO NA CARTEIRA', margin+4, y+4.8, {size:9, bold:true, color:branco});
+y += 10;
+
+const refs = [
+{lbl:'Produção L/vaca/dia', dVal:d.media_prod>0?parseFloat(d.media_prod).toFixed(1)+' L':'—', emb:'28 L', ml:'35.4 L', prem:'37 L', max:50, cur:d.media_prod||0},
+{lbl:'Gordura (%)', dVal:d.gordura>0?parseFloat(d.gordura).toFixed(2)+'%':'—', emb:'3.0%', ml:'3.5%', prem:'4.0%', max:6, cur:d.gordura||0},
+{lbl:'Proteína (%)', dVal:d.proteina>0?parseFloat(d.proteina).toFixed(2)+'%':'—', emb:'2.9%', ml:'3.1%', prem:'3.5%', max:5, cur:d.proteina||0},
+];
+refs.forEach(r=>{
+checkPage(18);
+txt(r.lbl, margin, y+4, {size:9, bold:true, color:preto});
+txt(r.dVal, W-margin, y+4, {size:9, bold:true, color:verdeM, align:'right'});
+y += 6;
+// barra principal
+const barW = colW;
+const pct = r.max>0?Math.min(r.cur/r.max,1):0;
+box(margin, y, barW, 5, [240,242,245], 2);
+if(pct>0) box(margin, y, barW*pct, 5, pct>=37/r.max?verdeM:pct>=28/r.max?azul:am, 2);
+// marcadores
+const mkEmb = r.max>0?(parseFloat(r.emb)/r.max*barW)+margin:0;
+const mkML  = r.max>0?(parseFloat(r.ml)/r.max*barW)+margin:0;
+const mkPrem= r.max>0?(parseFloat(r.prem)/r.max*barW)+margin:0;
+[[mkEmb,'Embrapa
+'+r.emb,cinza],[mkML,'Top100 ML
+'+r.ml,am],[mkPrem,'Premium
+'+r.prem,azul]].forEach(([x,lbl,col])=>{
+doc.setDrawColor(...col); doc.setLineWidth(0.5);
+doc.line(x, y-1, x, y+6);
+});
+y += 6;
+txt('Embrapa: '+r.emb, margin, y+3.5, {size:6.5, color:cinza});
+txt('Top 100 MilkPoint 2026: '+r.ml, W/2, y+3.5, {size:6.5, color:am, align:'center'});
+txt('Premium: '+r.prem, W-margin, y+3.5, {size:6.5, color:azul, align:'right'});
+y += 9;
+});
+
+// ════════════════════════════════════════════════════════════════
+// RODAPÉ
+// ════════════════════════════════════════════════════════════════
+const pgCount = doc.getNumberOfPages();
+for(let p=1; p<=pgCount; p++){
+doc.setPage(p);
+box(0, H-10, W, 10, verde);
+txt('Meta Nutrição e Saúde Animal  •  Relatório confidencial  •  Página '+p+' de '+pgCount, W/2, H-4, {size:7, color:[180,220,180], align:'center'});
+txt('Dados ao vivo: '+hoje, W-margin, H-4, {size:6.5, color:[160,200,160], align:'right'});
+}
+
+// ── Salva ────────────────────────────────────────────────────────────────────
+const filename = 'Meta_'+nome.replace(/[^a-zA-Z0-9]/g,'_').substring(0,30)+'_'+new Date().toISOString().split('T')[0]+'.pdf';
+doc.save(filename);
+toast('✅ PDF gerado: '+filename);
+}
+
+
+// ════════════════════════════════════════════════════════════════
+// COMPARADOR DE FAZENDAS
+// ════════════════════════════════════════════════════════════════
+function initComparador(){
+['cmp2-sel-a','cmp2-sel-b'].forEach(selId=>{
+const sel=document.getElementById(selId);
+if(!sel||sel.options.length>1) return;
+const sorted=[...ALL].sort((a,b)=>(a.produtor||'').localeCompare(b.produtor||''));
+sorted.forEach(d=>{
+const o=document.createElement('option');
+o.value=d.id;
+o.textContent=(d.produtor||'?')+' — '+(d.cidade||'')+(d.situacao?' ('+d.situacao.charAt(0)+d.situacao.slice(1).toLowerCase()+')':'');
+sel.appendChild(o);
+});
+});
+}
+
+function cmp2Aleatorio(){
+const ativos=ALL.filter(d=>d.situacao==='ATIVO'&&d.media_prod>0);
+if(ativos.length<2) return;
+const sh=[...ativos].sort(()=>Math.random()-.5);
+const a=sh[0], b=sh[1];
+document.getElementById('cmp2-sel-a').value=a.id;
+document.getElementById('cmp2-sel-b').value=b.id;
+renderComparador();
+}
+
+function renderComparador(){
+const idA=document.getElementById('cmp2-sel-a')?.value;
+const idB=document.getElementById('cmp2-sel-b')?.value;
+const dA=ALL.find(d=>d.id===idA);
+const dB=ALL.find(d=>d.id===idB);
+const empty=document.getElementById('cmp2-empty');
+const result=document.getElementById('cmp2-result');
+if(!dA||!dB||idA===idB){
+if(empty) empty.style.display='block';
+if(result) result.style.display='none';
+return;
+}
+if(empty) empty.style.display='none';
+if(result) result.style.display='block';
+
+const scoreA=calcHealthScore(dA), scoreB=calcHealthScore(dB);
+const gradeA=healthGrade(scoreA), gradeB=healthGrade(scoreB);
+
+// Campos para comparar
+const metrics=[
+{key:'media_prod', lbl:'L/vaca/dia', fmt:v=>v>0?parseFloat(v).toFixed(1)+' L':'—', high:true, dec:1},
+{key:'prod_diaria', lbl:'Produção total/dia', fmt:v=>v>=1000?(v/1000).toFixed(1)+'k L':v>0?v+' L':'—', high:true},
+{key:'vacas', lbl:'Total de vacas', fmt:v=>v||'—', high:true},
+{key:'lactacao', lbl:'Em lactação', fmt:v=>v||'—', high:true},
+{key:'gordura', lbl:'Gordura %', fmt:v=>v>0?parseFloat(v).toFixed(2)+'%':'—', high:true},
+{key:'proteina', lbl:'Proteína %', fmt:v=>v>0?parseFloat(v).toFixed(2)+'%':'—', high:true},
+{key:'nul', lbl:'NUL mg/dL', fmt:v=>v>0?parseFloat(v).toFixed(1)+' mg/dL':'—', ideal:[12,18]},
+{key:'ccs', lbl:'CCS (cel/mL)', fmt:v=>v>0?v+'k':'—', high:false},
+{key:'del', lbl:'DEL (dias)', fmt:v=>v>0?v+' d':'—', ideal:[150,180]},
+{key:'novilhas', lbl:'Novilhas', fmt:v=>v||'—', high:true},
+{key:'bezerras', lbl:'Bezerras', fmt:v=>v||'—', high:true},
+{key:'secas', lbl:'Vacas Secas', fmt:v=>v||'—', high:true},
+];
+
+// Placar
+let winsA=0,winsB=0,empates=0;
+metrics.forEach(m=>{
+const vA=parseFloat(dA[m.key])||0;
+const vB=parseFloat(dB[m.key])||0;
+if(!vA&&!vB){empates++;return;}
+if(m.ideal){
+const [mn,mx]=m.ideal;
+const okA=vA>=mn&&vA<=mx, okB=vB>=mn&&vB<=mx;
+if(okA&&!okB) winsA++;
+else if(okB&&!okA) winsB++;
+else empates++;
+} else if(m.high){
+if(vA>vB) winsA++;
+else if(vB>vA) winsB++;
+else empates++;
+} else {
+if(vA<vB&&vA>0) winsA++;
+else if(vB<vA&&vB>0) winsB++;
+else empates++;
+}
+});
+
+// Summary
+const sumEl=document.getElementById('cmp2-summary');
+const vencedor=winsA>winsB?dA:winsB>winsA?dB:null;
+sumEl.innerHTML=`
+<div>
+<div class="cmp2-sum-val">${winsA}</div>
+<div class="cmp2-sum-lbl">pontos — ${(dA.produtor||'A').split(' ')[0]}</div>
+</div>
+<div style="border-left:1px solid rgba(255,255,255,.2);border-right:1px solid rgba(255,255,255,.2)">
+<div class="cmp2-sum-val" style="font-size:14px">${vencedor?'🏆 Vencedor':'🤝 Empate'}</div>
+<div class="cmp2-sum-val" style="font-size:11px;opacity:.8;margin-top:4px">${vencedor?(vencedor.produtor||'').split(' ')[0]:'Nenhum'}</div>
+<div class="cmp2-sum-lbl">${empates} empates</div>
+</div>
+<div>
+<div class="cmp2-sum-val">${winsB}</div>
+<div class="cmp2-sum-lbl">pontos — ${(dB.produtor||'B').split(' ')[0]}</div>
+</div>`;
+
+// Grid
+const colA=vc(dA.produtor), colB=vc(dB.produtor);
+const sitBadge=d=>d.situacao==='ATIVO'?'<span style="background:#dcfce7;color:#15803d;font-size:9px;font-weight:700;padding:2px 8px;border-radius:10px">ATIVO</span>':d.situacao==='PROSPEC'?'<span style="background:#fef9c3;color:#92400e;font-size:9px;font-weight:700;padding:2px 8px;border-radius:10px">PROSPEC</span>':'';
+
+let colsA='', colsMid='', colsB='';
+
+// Hero cards
+colsA+=`<div class="cmp2-hero" style="background:${colA}">
+<div class="cmp2-av" style="background:rgba(255,255,255,.2)">${ini(dA.produtor)}</div>
+<div class="cmp2-nome">${dA.produtor||'—'}</div>
+<div class="cmp2-sub">${dA.cidade||''} · ${dA.regiao||''}</div>
+<div class="cmp2-sub" style="margin-top:4px">${dA.nome_vendedor||dA.vendedor||''}</div>
+<div style="margin-top:8px;display:flex;gap:6px;align-items:center;justify-content:center;flex-wrap:wrap">
+${sitBadge(dA)}
+${dA.produto?`<span style="background:rgba(255,255,255,.2);color:white;font-size:9px;font-weight:700;padding:2px 8px;border-radius:10px">${dA.produto}</span>`:''}
+</div>
+<div class="cmp2-score-badge">${scoreA}<span style="font-size:12px;opacity:.7">/100</span></div>
+<div style="font-size:11px;opacity:.8;margin-top:2px">Score ${gradeA.g}</div>
+</div>`;
+
+colsMid+=`<div style="height:186px;display:flex;align-items:center;justify-content:center;margin-bottom:3px">
+<div class="cmp2-vs">VS</div>
+</div>`;
+
+colsB+=`<div class="cmp2-hero" style="background:${colB}">
+<div class="cmp2-av" style="background:rgba(255,255,255,.2)">${ini(dB.produtor)}</div>
+<div class="cmp2-nome">${dB.produtor||'—'}</div>
+<div class="cmp2-sub">${dB.cidade||''} · ${dB.regiao||''}</div>
+<div class="cmp2-sub" style="margin-top:4px">${dB.nome_vendedor||dB.vendedor||''}</div>
+<div style="margin-top:8px;display:flex;gap:6px;align-items:center;justify-content:center;flex-wrap:wrap">
+${sitBadge(dB)}
+${dB.produto?`<span style="background:rgba(255,255,255,.2);color:white;font-size:9px;font-weight:700;padding:2px 8px;border-radius:10px">${dB.produto}</span>`:''}
+</div>
+<div class="cmp2-score-badge">${scoreB}<span style="font-size:12px;opacity:.7">/100</span></div>
+<div style="font-size:11px;opacity:.8;margin-top:2px">Score ${gradeB.g}</div>
+</div>`;
+
+// Métricas
+metrics.forEach(m=>{
+const vA=parseFloat(dA[m.key])||0;
+const vB=parseFloat(dB[m.key])||0;
+let winA=false,winB=false;
+if(vA>0||vB>0){
+if(m.ideal){const[mn,mx]=m.ideal;const oA=vA>=mn&&vA<=mx,oB=vB>=mn&&vB<=mx;if(oA&&!oB)winA=true;else if(oB&&!oA)winB=true;}
+else if(m.high){if(vA>vB)winA=true;else if(vB>vA)winB=true;}
+else{if(vA<vB&&vA>0)winA=true;else if(vB<vA&&vB>0)winB=true;}
+}
+const clA=winA?'cmp2-win':winB?'cmp2-lose':'cmp2-tie';
+const clB=winB?'cmp2-win':winA?'cmp2-lose':'cmp2-tie';
+const arrow=winA?'←':winB?'→':'=';
+const arrowCol=winA?colA:winB?colB:'#94a3b8';
+colsA+=`<div class="cmp2-row ${clA}">
+<div class="cmp2-row-val" style="color:${winA?'#15803d':winB?'#dc2626':'#0f172a'}">${m.fmt(dA[m.key])}</div>
+<div class="cmp2-row-lbl">${m.lbl}</div>
+</div>`;
+colsMid+=`<div class="cmp2-mid-row"><span style="font-weight:900;font-size:16px;color:${arrowCol}">${arrow}</span></div>`;
+colsB+=`<div class="cmp2-row ${clB}">
+<div class="cmp2-row-val" style="color:${winB?'#15803d':winA?'#dc2626':'#0f172a'}">${m.fmt(dB[m.key])}</div>
+<div class="cmp2-row-lbl">${m.lbl}</div>
+</div>`;
+});
+
+// Sistema/Ordenha
+[[dA.sistema,dB.sistema,'Sistema'],[dA.ordenha,dB.ordenha,'Ordenha']].forEach(([vA,vB,lbl])=>{
+const same=vA===vB;
+colsA+=`<div class="cmp2-row"><div class="cmp2-row-val" style="font-size:13px">${vA||'—'}</div><div class="cmp2-row-lbl">${lbl}</div></div>`;
+colsMid+=`<div class="cmp2-mid-row">${same?'=':'≠'}</div>`;
+colsB+=`<div class="cmp2-row"><div class="cmp2-row-val" style="font-size:13px">${vB||'—'}</div><div class="cmp2-row-lbl">${lbl}</div></div>`;
+});
+
+document.getElementById('cmp2-grid').innerHTML=`
+<div class="cmp2-col">${colsA}</div>
+<div class="cmp2-mid">${colsMid}</div>
+<div class="cmp2-col">${colsB}</div>`;
+}
+
+function gerarPDFComparacao(){
+const idA=document.getElementById('cmp2-sel-a')?.value;
+const idB=document.getElementById('cmp2-sel-b')?.value;
+if(!idA||!idB){toast('❌ Selecione duas fazendas');return;}
+toast('📄 PDF de comparação em breve!');
 }
 
 </script>
