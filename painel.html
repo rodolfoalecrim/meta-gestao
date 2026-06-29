@@ -3429,6 +3429,7 @@ renderHistoryTimeline(entries);
 });
 }
 function renderHistoryCharts(entries) {
+try {
 if (entries.length === 0) {
 document.getElementById('hist-charts-wrap').innerHTML =
 '<div style="text-align:center;padding:48px;color:#94a3b8;font-size:13px"><div style="font-size:32px;margin-bottom:12px">📭</div><div style="font-weight:700;color:#64748b">Ainda sem histórico</div><div style="margin-top:4px">Após a primeira visita registrada, os gráficos aparecerão aqui.</div></div>';
@@ -3492,9 +3493,9 @@ options:{...C,...opts,plugins:{...C.plugins,...(opts.plugins||{})}}});
 
 // ── Anotações reutilizáveis ──────────────────────────────────────────────────
 const annoInicio = {
-type:'line', xMin:inicioLabel, xMax:inicioLabel,
+type:'line', xMin:0, xMax:0,
 borderColor:'#15803d', borderWidth:2, borderDash:[6,3],
-label:{display:true, content:'🌿 Início Meta',
+label:{display:true, content:'Inicio Meta',
 color:'#052e16', font:{size:9,weight:'bold'},
 backgroundColor:'rgba(240,253,244,0.95)',
 position:'start', padding:{x:6,y:3}, borderRadius:4}
@@ -3515,6 +3516,10 @@ backgroundColor:'rgba(255,251,235,0.9)', padding:{x:4,y:2}, borderRadius:3}
 };
 
 // ── GRÁFICO PRINCIPAL: L/vaca/dia com tendência e marcadores ────────────────
+// Verifica se plugin annotation está disponível
+const hasAnnotation = typeof Chart !== 'undefined' && Chart.registry &&
+  typeof Chart.registry.plugins !== 'undefined';
+
 mkH('hch-media', 'line', {
 labels,
 datasets:[
@@ -3533,7 +3538,7 @@ pointRadius:0, tension:0, fill:false, order:1},
 },{
 plugins:{
 legend:{labels:{color:'#64748b',font:{size:10},boxWidth:10,filter:i=>i.text!=='Tendência'||trendData.length>1}},
-annotation:{annotations:{annoInicio, annoEmbrapa, annoTop100}}
+...(hasAnnotation?{annotation:{annotations:{annoInicio, annoEmbrapa, annoTop100}}}:{}),
 },
 scales:{
 x:{grid:{display:false},ticks:{color:'#94a3b8',font:{size:9}}},
@@ -3615,6 +3620,7 @@ x:{grid:{display:false},ticks:{color:'#94a3b8',font:{size:9}}},
 yNul:{position:'left',title:{display:true,text:'NUL mg/dL',color:'#15803d',font:{size:8}},grid:{color:'rgba(0,0,0,0.04)'},ticks:{color:'#15803d',font:{size:8}}},
 yCcs:{position:'right',title:{display:true,text:'CCS k',color:'#dc2626',font:{size:8}},grid:{display:false},ticks:{color:'#dc2626',font:{size:8}}}
 }});
+} catch(e) { console.error('renderHistoryCharts error:', e); }
 }
 function renderHistoryTimeline(entries) {
 const tl = document.getElementById('hist-timeline');
