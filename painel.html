@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<meta name="version" content="20260628_NUL">
+<meta name="version" content="20260629_NUL">
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
@@ -49,9 +49,48 @@
 </style>
 </head>
 <body>
-<div id="ver-banner" style="position:fixed;bottom:10px;right:10px;background:#003c09;color:white;font-size:11px;padding:4px 10px;border-radius:6px;z-index:99999;font-family:monospace;opacity:.7">
-  v7-RESTAURADO
+<!-- ═══ FOOTER VERSÃO ═══ -->
+<div id="sys-footer" style="position:fixed;bottom:0;left:0;right:0;z-index:99998;background:linear-gradient(90deg,#003c09 0%,#1a6b35 100%);color:white;font-size:11px;font-family:'Inter',sans-serif;padding:7px 20px;display:flex;align-items:center;gap:10px;box-shadow:0 -2px 10px rgba(0,0,0,0.25);">
+  <span style="font-size:14px;flex-shrink:0">🌿</span>
+  <span style="font-weight:700;letter-spacing:.3px;flex-shrink:0">Meta Gestão</span>
+  <span style="opacity:.35;flex-shrink:0">|</span>
+  <span style="opacity:.75;flex-shrink:0">Última atualização:</span>
+  <span id="footer-ts" style="font-weight:800;background:rgba(255,255,255,.18);padding:2px 10px;border-radius:10px;letter-spacing:.4px;flex-shrink:0">—</span>
+  <span id="footer-age" style="opacity:.6;font-size:10px;flex-shrink:0"></span>
+  <div style="flex:1"></div>
+  <span style="opacity:.45;font-size:10px">v8 · NUL Edition</span>
 </div>
+<script>
+(function(){
+  var BUILT = '2026-06-29T17:42:00';
+  function pad(n){return String(n).padStart(2,'0');}
+  function fmt(d){
+    var dias=['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'];
+    var mes=['jan','fev','mar','abr','mai','jun','jul','ago','set','out','nov','dez'];
+    return dias[d.getDay()]+', '+pad(d.getDate())+' '+mes[d.getMonth()]+' '+d.getFullYear()+' às '+pad(d.getHours())+':'+pad(d.getMinutes());
+  }
+  function age(d){
+    var ms=Date.now()-d.getTime(), min=Math.floor(ms/60000), h=Math.floor(min/60), day=Math.floor(h/24);
+    if(day>1)return '(há '+day+' dias)';
+    if(day===1)return '(há 1 dia)';
+    if(h>1)return '(há '+h+'h)';
+    if(min>1)return '(há '+min+'min)';
+    return '(agora mesmo)';
+  }
+  var dt=new Date(BUILT);
+  var ts=document.getElementById('footer-ts');
+  var ag=document.getElementById('footer-age');
+  if(ts)ts.textContent=fmt(dt);
+  if(ag)ag.textContent=age(dt);
+  // padding extra no conteúdo para não ficar atrás do footer
+  function addPad(){
+    var c=document.querySelector('.content');
+    if(c)c.style.paddingBottom='40px';
+  }
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',addPad);
+  else addPad();
+})();
+</script>
 <!-- LOGIN -->
 <div id="login">
   <div class="lbox">
@@ -173,6 +212,16 @@
           <div class="cc"><div class="cc-hdr"><span class="cc-ico">📊</span><span class="cc-title">Distribuição — Média L/vaca/dia</span></div><canvas id="ch-hm" height="220"></canvas></div>
           <div class="cc"><div class="cc-hdr"><span class="cc-ico">🐄</span><span class="cc-title">Distribuição — Tamanho do Rebanho</span></div><canvas id="ch-hv" height="220"></canvas></div>
           <div class="cc"><div class="cc-hdr"><span class="cc-ico">📅</span><span class="cc-title">Distribuição — DEL Médio</span></div><canvas id="ch-hd" height="220"></canvas></div>
+        </div>
+        <div class="g2">
+          <div class="cc">
+            <div class="cc-hdr"><span class="cc-ico">📈</span><span class="cc-title">Dispersão — Produção Média (L/vaca) × DEL (dias em lactação)</span><span class="cc-sub" style="margin-left:auto;color:#0891b2;font-weight:600">cada ponto = 1 fazenda ativa</span></div>
+            <canvas id="ch-scat-del" height="240"></canvas>
+          </div>
+          <div class="cc">
+            <div class="cc-hdr"><span class="cc-ico">🧈</span><span class="cc-title">Dispersão — Gordura do Leite (%) × Produção Média (L/vaca/dia)</span><span class="cc-sub" style="margin-left:auto;color:#b45309;font-weight:600">cada ponto = 1 fazenda ativa</span></div>
+            <canvas id="ch-scat-gord" height="240"></canvas>
+          </div>
         </div>
         <div class="cc" style="margin-bottom:16px">
           <div class="cc-hdr"><span class="cc-ico">🎯</span><span class="cc-title">Radar — Carteira Ativa vs Referência Nacional</span></div>
@@ -1604,6 +1653,64 @@ const fV=[[0,50],[50,100],[100,200],[200,400],[400,1000]];
 mk('ch-hv','bar',{labels:fV.map(([a,b])=>`${a}-${b}`),datasets:[{data:fV.map(([a,b])=>at.filter(d=>d.vacas>=a&&d.vacas<b).length),backgroundColor:'#2563eb',borderRadius:5,borderSkipped:false}]},f5);
 const fD=[[0,60],[60,120],[120,180],[180,240],[240,365]],atD=at.filter(d=>d.del>0);
 mk('ch-hd','bar',{labels:fD.map(([a,b])=>`${a}-${b}d`),datasets:[{data:fD.map(([a,b])=>atD.filter(d=>d.del>=a&&d.del<b).length),backgroundColor:'#ea580c',borderRadius:5,borderSkipped:false}]},f5);
+// ── SCATTER 1: Produção Média × DEL ──────────────────────────────────────
+const scDEL=at.filter(d=>d.del>0&&d.media_prod>0).map(d=>({x:d.del,y:parseFloat(d.media_prod),label:d.produtor||'?',vacas:d.vacas||0}));
+mk('ch-scat-del','scatter',{
+datasets:[{
+label:'Fazendas Ativas',
+data:scDEL,
+backgroundColor:scDEL.map(p=>{
+const r=p.x>=150&&p.x<=180?'rgba(22,163,74,0.75)':p.x<120?'rgba(220,38,38,0.7)':'rgba(14,116,144,0.7)';
+return r;
+}),
+pointRadius:scDEL.map(p=>Math.max(5,Math.min(14,Math.sqrt(p.vacas)*0.7))),
+pointHoverRadius:10,
+borderColor:'rgba(255,255,255,0.6)',
+borderWidth:1,
+}]},{
+plugins:{
+legend:{display:false},
+tooltip:{callbacks:{label:c=>`${c.raw.label} — DEL: ${c.raw.x}d | ${c.raw.y.toFixed(1)} L/vaca | ${c.raw.vacas} vacas`}},
+annotation:{annotations:{
+zoneOk:{type:'box',xMin:150,xMax:180,backgroundColor:'rgba(22,163,74,0.06)',borderColor:'rgba(22,163,74,0.3)',borderWidth:1.5,label:{display:true,content:'Zona ideal DEL',color:'#15803d',font:{size:9,weight:'bold'},position:{x:'center',y:'start'}}},
+}},
+},
+scales:{
+x:{title:{display:true,text:'DEL — Dias em Lactação',color:'#94a3b8',font:{size:10}},min:0,...SY,ticks:{color:'#94a3b8'}},
+y:{title:{display:true,text:'Média L/vaca/dia',color:'#94a3b8',font:{size:10}},...SY,ticks:{color:'#94a3b8'}},
+}
+});
+
+// ── SCATTER 2: Gordura × Produção Média ───────────────────────────────────
+const scGord=at.filter(d=>d.gordura>0&&d.media_prod>0).map(d=>({x:parseFloat(d.media_prod),y:parseFloat(d.gordura),label:d.produtor||'?',vacas:d.vacas||0}));
+mk('ch-scat-gord','scatter',{
+datasets:[{
+label:'Fazendas Ativas',
+data:scGord,
+backgroundColor:scGord.map(p=>{
+const ok=p.y>=3.5;
+const prem=p.y>=4.0;
+return prem?'rgba(180,83,9,0.8)':ok?'rgba(14,116,144,0.75)':'rgba(220,38,38,0.65)';
+}),
+pointRadius:scGord.map(p=>Math.max(5,Math.min(14,Math.sqrt(p.vacas)*0.7))),
+pointHoverRadius:10,
+borderColor:'rgba(255,255,255,0.6)',
+borderWidth:1,
+}]},{
+plugins:{
+legend:{display:false},
+tooltip:{callbacks:{label:c=>`${c.raw.label} — ${c.raw.x.toFixed(1)} L/vaca | Gordura: ${c.raw.y.toFixed(2)}% | ${c.raw.vacas} vacas`}},
+annotation:{annotations:{
+minIN77:{type:'line',yMin:3.0,yMax:3.0,borderColor:'rgba(220,38,38,0.5)',borderWidth:1.5,borderDash:[6,4],label:{display:true,content:'IN77 mín 3,0%',color:'#dc2626',font:{size:9},position:'start'}},
+premium:{type:'line',yMin:4.0,yMax:4.0,borderColor:'rgba(180,83,9,0.5)',borderWidth:1.5,borderDash:[6,4],label:{display:true,content:'Premium 4,0%',color:'#b45309',font:{size:9},position:'start'}},
+}},
+},
+scales:{
+x:{title:{display:true,text:'Média L/vaca/dia',color:'#94a3b8',font:{size:10}},min:0,...SY,ticks:{color:'#94a3b8'}},
+y:{title:{display:true,text:'Gordura (%)',color:'#94a3b8',font:{size:10}},min:2.0,max:6.0,...SY,ticks:{color:'#94a3b8',callback:v=>v.toFixed(1)+'%'}},
+}
+});
+
 const mp=avg(at,'media_prod'),mr=at.length?sum(at,'vacas')/at.length:0,mg=avg(at,'gordura'),mpr=avg(at,'proteina'),md=avg(at,'del');
 const mnul=avg(at.filter(d=>d.nul>0),'nul');
 const nulScore=mnul>0?Math.max(0,100-Math.abs(mnul-15)/5*50):0;
