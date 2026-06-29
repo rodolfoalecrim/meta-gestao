@@ -2460,18 +2460,10 @@ const MAP_CLIENTES = []; // Carregado do Firebase (map_coords)
 let MAP_COORDS_LOADED = false;
 
 async function loadMapCoords() {
-  if (MAP_COORDS_LOADED) return;
+  // Se já carregado, retorna imediatamente
+  if (MAP_COORDS_LOADED && MAP_CLIENTES.length > 0) return;
   try {
-    // 1. Tenta localStorage cache primeiro (carregamento instantâneo)
-    const cached = localStorage.getItem('meta_map_coords_cache');
-    if (cached) {
-      const arr = JSON.parse(cached);
-      MAP_CLIENTES.push(...arr);
-      MAP_COORDS_LOADED = true;
-      buildMapCoordsIndex();
-      console.log('✅ MAP_COORDS carregado do cache:', arr.length, 'registros');
-    }
-    // 2. Atualiza do Firebase em segundo plano (sempre)
+    // 1. Firebase primeiro (fonte de verdade)
     const snap = await db.ref('map_coords').once('value');
     if (snap.val()) {
       const obj = snap.val();
@@ -2482,36 +2474,49 @@ async function loadMapCoords() {
         MAP_COORDS_LOADED = true;
         buildMapCoordsIndex();
         try { localStorage.setItem('meta_map_coords_cache', JSON.stringify(arr)); } catch(e){}
-        console.log('✅ MAP_COORDS atualizado do Firebase:', arr.length, 'registros');
-        // Re-renderiza mapa se estiver aberto
-        if (typeof theMap !== 'undefined' && theMap &&
-            document.getElementById('sc-mapa')?.classList.contains('on')) {
-          renderMapAll();
-        }
+        console.log('✅ MAP_COORDS do Firebase:', arr.length, 'registros');
+        return;
       }
     }
+    // 2. Fallback: cache local
+    const cached = localStorage.getItem('meta_map_coords_cache');
+    if (cached) {
+      const arr = JSON.parse(cached);
+      if (arr.length) {
+        MAP_CLIENTES.length = 0;
+        MAP_CLIENTES.push(...arr);
+        MAP_COORDS_LOADED = true;
+        buildMapCoordsIndex();
+        console.log('✅ MAP_COORDS do cache:', arr.length, 'registros');
+        return;
+      }
+    }
+    console.warn('⚠️ MAP_COORDS vazio — importe map_clientes_firebase.json no Firebase (nó map_coords)');
+    MAP_COORDS_LOADED = true; // evita loop
   } catch(e) {
     console.warn('MAP_COORDS load error:', e);
-    // Fallback: se nada funcionou, tenta cache novamente
-    if (!MAP_COORDS_LOADED) {
-      try {
-        const cached = localStorage.getItem('meta_map_coords_cache');
-        if (cached) {
-          MAP_CLIENTES.push(...JSON.parse(cached));
-          MAP_COORDS_LOADED = true;
-          buildMapCoordsIndex();
-        }
-      } catch(e2) {}
-    }
+    // Fallback final: cache local
+    try {
+      const cached = localStorage.getItem('meta_map_coords_cache');
+      if (cached) {
+        const arr = JSON.parse(cached);
+        MAP_CLIENTES.length = 0;
+        MAP_CLIENTES.push(...arr);
+        buildMapCoordsIndex();
+      }
+    } catch(e2) {}
+    MAP_COORDS_LOADED = true;
   }
 }
 
 function buildMapCoordsIndex() {
-  // Reconstrói o MAP_COORDS index após carregar
   Object.keys(MAP_COORDS).forEach(k => delete MAP_COORDS[k]);
   MAP_CLIENTES.forEach(c => {
     if (c.lat && c.nome) MAP_COORDS[(c.nome||'').toUpperCase().trim()] = {lat: c.lat, lng: c.lng};
+    // Também indexa pelo campo produtor (usado no ALL)
+    if (c.lat && c.produtor) MAP_COORDS[(c.produtor||'').toUpperCase().trim()] = {lat: c.lat, lng: c.lng};
   });
+  console.log('MAP_COORDS index:', Object.keys(MAP_COORDS).length, 'entradas');
 }
 let theMap = null, mapLayerGroup = null, mapInited = false;
 let mapFiltro = 'all', mapModo = 'city', mapVendedor = '';
@@ -2522,8 +2527,12 @@ document.querySelectorAll('.sc').forEach(s => s.classList.remove('on'));
 document.querySelectorAll('.ni').forEach(n => n.classList.remove('on'));
 document.getElementById('sc-mapa').classList.add('on');
 document.getElementById('ni-mapa').classList.add('on');
-// Garante que coordenadas estão carregadas antes de iniciar o mapa
+// Carrega coordenadas do Firebase e depois inicia o mapa
 loadMapCoords().then(() => {
+  if (!mapInited) initMap();
+  else renderMapAll();
+}).catch(e => {
+  console.error('Erro ao carregar mapa:', e);
   if (!mapInited) initMap();
   else renderMapAll();
 });
