@@ -2053,6 +2053,36 @@ mk('ch-rm','bar',{labels:regs,datasets:[{label:'L/vaca/dia',data:regs.map(r=>avg
 document.getElementById('reg-tbl').innerHTML=`<div class="tc"><div class="tc-head"><h3>Resumo por Região</h3></div><div class="tw"><table><thead><tr><th>Região</th><th>Total</th><th>Ativos</th><th>Prospectos</th><th>Inativos</th><th>Total Vacas</th><th>Média L/vaca</th><th>L/dia Ativos</th></tr></thead><tbody>${regs.map(r=>{const arr=FIL.filter(d=>d.regiao===r),at=arr.filter(d=>d.situacao==='ATIVO');return`<tr><td style="font-weight:700">${r}</td><td>${arr.length}</td><td style="color:#16a34a;font-weight:700">${at.length}</td><td style="color:#ca8a04">${arr.filter(d=>d.situacao==='PROSPEC').length}</td><td style="color:#dc2626">${arr.filter(d=>d.situacao==='INATIVO').length}</td><td style="font-weight:700">${sum(at,'vacas').toLocaleString('pt-BR')}</td><td>${avg(at,'media_prod')>0?avg(at,'media_prod').toFixed(1)+' L':'—'}</td><td>${sum(at,'prod_diaria')>0?(sum(at,'prod_diaria')/1000).toFixed(0)+'k L':'—'}</td></tr>`;}).join('')}</tbody></table></div></div>`;
 }
 function srt(k){SK=k;SD*=-1;PG=1;renderTbl();}
+function getVendOptions(atual){
+const vends=[...new Set(ALL.map(d=>(d.nome_vendedor||d.vendedor||'').toUpperCase().trim()).filter(Boolean))].sort();
+const atualUp=(atual||'').toUpperCase().trim();
+let opts=`<option value="">— Vendedor —</option>`;
+vends.forEach(v=>{opts+=`<option value="${v}" ${v===atualUp?'selected':''}>${v.charAt(0)+v.slice(1).toLowerCase()}</option>`;});
+if(atualUp&&!vends.includes(atualUp))opts+=`<option value="${atualUp}" selected>${atualUp.charAt(0)+atualUp.slice(1).toLowerCase()}</option>`;
+return opts;
+}
+async function mudarVendedor(id,vend){
+const v=(vend||'').toUpperCase().trim();
+try{
+// Atualiza ALL localmente primeiro (feedback imediato)
+const idx=ALL.findIndex(d=>d.id===id);
+if(idx!==-1){ALL[idx].nome_vendedor=v;ALL[idx].vendedor=v;}
+// Salva no Firebase
+if(id.startsWith('xl_')){
+// Cliente ainda não migrado: cria no Firebase
+const d=ALL.find(d=>d.id===id)||{};
+const dados={...d,nome_vendedor:v,vendedor:v,atualizado_em:new Date().toISOString(),atualizado_por:'ADMIN'};
+delete dados.id;
+const ref=await db.ref('propriedades').push(dados);
+saveMigrated(id,ref.key,d.produtor||'');
+ALL[idx].id=ref.key;
+}else{
+await db.ref('propriedades/'+id).update({nome_vendedor:v,vendedor:v,atualizado_em:new Date().toISOString(),atualizado_por:'ADMIN'});
+}
+toast('✅ Vendedor atualizado: '+((v.charAt(0)+v.slice(1).toLowerCase())||'—'));
+applyF();renderAll();
+}catch(e){toast('❌ Erro ao salvar vendedor');console.error(e);}
+}
 function renderTbl(){
 const q=(document.getElementById('tq').value||'').toLowerCase();
 let rows=[...FIL].filter(d=>!q||(d.produtor||'').toLowerCase().includes(q)||(d.propriedade||'').toLowerCase().includes(q)||(d.cidade||'').toLowerCase().includes(q)||(d.nome_vendedor||d.vendedor||'').toLowerCase().includes(q));
@@ -2079,7 +2109,7 @@ return`<tr>
 </button>
 </div>
 ${d.tecnico_titular?`<div style="margin-top:4px"><span class="tec-tag">🔵 ${d.tecnico_titular}</span>${d.tecnico_substituto?`<span class="tec-tag" style="background:#f5f3ff;color:#6d28d9">🟣 ${d.tecnico_substituto}</span>`:''}</div>`:''}
-</td><td style="color:#94a3b8">${d.propriedade||'—'}</td><td><span class="badge ${sc}">${sl2}</span></td><td>${d.nome_vendedor||d.vendedor||'—'}</td><td style="color:#94a3b8">${d.cidade||'—'}</td><td style="color:#94a3b8">${d.regiao||'—'}</td><td style="font-weight:800;color:${(d.vacas||0)>=200?'#15803d':''}">${d.vacas||'—'}</td><td>${d.media_prod>0?parseFloat(d.media_prod).toFixed(1)+' L':'—'}</td><td>${d.prod_diaria>0?d.prod_diaria.toLocaleString('pt-BR'):'—'}</td><td style="color:#b45309">${d.gordura>0?parseFloat(d.gordura).toFixed(2)+'%':'—'}</td><td style="color:#1d4ed8">${d.proteina>0?parseFloat(d.proteina).toFixed(2)+'%':'—'}</td><td style="color:${d.nul>0?(d.nul>=12&&d.nul<=18?'#15803d':d.nul>20?'#dc2626':'#d97706'):'#94a3b8'}">${d.nul>0?parseFloat(d.nul).toFixed(1)+' mg/dL':'—'}</td><td>${d.del>0?d.del+' d':'—'}</td><td><select class="sts" onchange="mudarSit('${d.id}',this.value)"><option value="PROSPEC" ${d.situacao==='PROSPEC'?'selected':''}>🎯 Prospecto</option><option value="ATIVO" ${d.situacao==='ATIVO'?'selected':''}>✅ Ativo</option><option value="INATIVO" ${d.situacao==='INATIVO'?'selected':''}>❌ Inativo</option></select></td></tr>`;
+</td><td style="color:#94a3b8">${d.propriedade||'—'}</td><td><span class="badge ${sc}">${sl2}</span></td><td><select class="sts" style="min-width:100px;border-color:${(d.nome_vendedor||d.vendedor)?'#93c5fd':'#e2e8f0'};color:${(d.nome_vendedor||d.vendedor)?'#1d4ed8':'#94a3b8'}" onchange="mudarVendedor('${d.id}',this.value)">${getVendOptions(d.nome_vendedor||d.vendedor||'')}</select></td><td style="color:#94a3b8">${d.cidade||'—'}</td><td style="color:#94a3b8">${d.regiao||'—'}</td><td style="font-weight:800;color:${(d.vacas||0)>=200?'#15803d':''}">${d.vacas||'—'}</td><td>${d.media_prod>0?parseFloat(d.media_prod).toFixed(1)+' L':'—'}</td><td>${d.prod_diaria>0?d.prod_diaria.toLocaleString('pt-BR'):'—'}</td><td style="color:#b45309">${d.gordura>0?parseFloat(d.gordura).toFixed(2)+'%':'—'}</td><td style="color:#1d4ed8">${d.proteina>0?parseFloat(d.proteina).toFixed(2)+'%':'—'}</td><td style="color:${d.nul>0?(d.nul>=12&&d.nul<=18?'#15803d':d.nul>20?'#dc2626':'#d97706'):'#94a3b8'}">${d.nul>0?parseFloat(d.nul).toFixed(1)+' mg/dL':'—'}</td><td>${d.del>0?d.del+' d':'—'}</td><td><select class="sts" onchange="mudarSit('${d.id}',this.value)"><option value="PROSPEC" ${d.situacao==='PROSPEC'?'selected':''}>🎯 Prospecto</option><option value="ATIVO" ${d.situacao==='ATIVO'?'selected':''}>✅ Ativo</option><option value="INATIVO" ${d.situacao==='INATIVO'?'selected':''}>❌ Inativo</option></select></td></tr>`;
 }).join('');
 let pag=`<span>${(PG-1)*PS+1}–${Math.min(PG*PS,total)} de ${total}</span>`;
 if(tp>1){pag+=`<button class="pb" onclick="goPg(${PG-1})" ${PG===1?'disabled':''}>‹</button>`;for(let i=1;i<=tp;i++){if(tp<=7||Math.abs(i-PG)<=2||i===1||i===tp)pag+=`<button class="pb${i===PG?' on':''}" onclick="goPg(${i})">${i}</button>`;else if(Math.abs(i-PG)===3)pag+='<span>…</span>';}pag+=`<button class="pb" onclick="goPg(${PG+1})" ${PG===tp?'disabled':''}>›</button>`;}
