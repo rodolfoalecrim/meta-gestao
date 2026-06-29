@@ -1336,41 +1336,41 @@ MIGRATED_IDS[name.toUpperCase().trim()] = fbId;
 try { localStorage.setItem('meta_migrated', JSON.stringify(MIGRATED_IDS)); } catch(e){}
 }
 function mergeWithSeed(fbData){
-// Firebase 'propriedades/' = alterações manuais (técnicos, visitas, mudança de status)
-// SEED_DATA = base da planilha Excel (todos os 288 registros)
-// Regra: Firebase ATUALIZA o SEED, não substitui
+// Indexa Firebase por NOME (uppercase) — fonte de verdade para campos editáveis
 const fbByName = {};
 fbData.forEach(d => {
-fbByName[(d.produtor||'').toUpperCase().trim()] = d;
+// Normaliza: uppercase, sem espaços duplos, sem acentos comuns
+const key = (d.produtor||'').toUpperCase().trim().replace(/\s+/g,' ');
+if (!fbByName[key] || (d.atualizado_em||'') > (fbByName[key].atualizado_em||'')) {
+fbByName[key] = d;
+}
 });
-// Para cada registro do SEED, verificar se Firebase tem versão atualizada
+
 const merged = SEED_DATA.map(seed => {
-const name = (seed.produtor||'').toUpperCase().trim();
-const fbVersion = fbByName[name];
-if (fbVersion) {
-// Mescla: FB tem prioridade ABSOLUTA para campos editáveis.
-// SEED é apenas fallback quando FB não tem o campo.
+const name = (seed.produtor||'').toUpperCase().trim().replace(/\s+/g,' ');
+// Tenta casar pelo nome; também tenta pelo ID migrado no localStorage
+const migratedFbId = MIGRATED_IDS && MIGRATED_IDS[seed.id || ''];
+const fb = fbByName[name] || (migratedFbId ? fbData.find(d=>d.id===migratedFbId) : null);
+if (fb) {
 return {
 ...seed,
-...fbVersion,
-// Produtivos: FB prevalece, SEED como fallback
-vacas: fbVersion.vacas || seed.vacas,
-media_prod: fbVersion.media_prod || seed.media_prod,
-prod_diaria: fbVersion.prod_diaria || seed.prod_diaria,
-gordura: fbVersion.gordura || seed.gordura,
-proteina: fbVersion.proteina || seed.proteina,
-// Gestão: FB SEMPRE prevalece — SEED não tem mais campo vendedor
-nome_vendedor: fbVersion.nome_vendedor || fbVersion.vendedor || '',
-vendedor:      fbVersion.vendedor || fbVersion.nome_vendedor || '',
-situacao:      fbVersion.situacao || seed.situacao || 'PROSPEC',
-produto:       fbVersion.produto  || seed.produto  || '',
-tecnico_titular:    fbVersion.tecnico_titular    || seed.tecnico_titular    || '',
-tecnico_substituto: fbVersion.tecnico_substituto || seed.tecnico_substituto || '',
+...fb,
+vacas:      fb.vacas      || seed.vacas,
+media_prod: fb.media_prod || seed.media_prod,
+prod_diaria:fb.prod_diaria|| seed.prod_diaria,
+gordura:    fb.gordura    || seed.gordura,
+proteina:   fb.proteina   || seed.proteina,
+// Gestão: SOMENTE do Firebase — nunca do SEED
+nome_vendedor: fb.nome_vendedor || fb.vendedor || '',
+vendedor:      fb.vendedor      || fb.nome_vendedor || '',
+situacao:      fb.situacao      || seed.situacao || 'PROSPEC',
+produto:       fb.produto       || seed.produto  || '',
 };
 }
-return seed;
+return {...seed, nome_vendedor:'', vendedor:''};
 });
-// Adicionar registros Firebase que NÃO existem no SEED (criados manualmente)
+
+// Clientes novos criados no Firebase que não existem no SEED
 fbData.forEach(fb => {
 const name = (fb.produtor||'').toUpperCase().trim();
 const inSeed = SEED_DATA.some(s => (s.produtor||'').toUpperCase().trim() === name);
@@ -1378,6 +1378,7 @@ if (!inSeed && fb.id && !fb.id.startsWith('xl_')) {
 merged.push(fb);
 }
 });
+
 console.log('mergeWithSeed: SEED='+SEED_DATA.length+' FB='+fbData.length+' merged='+merged.length);
 return merged;
 }
@@ -1410,10 +1411,7 @@ if(s.val()){d.className='tb-dot';t.textContent='Online';}else{d.className='tb-do
 });
 function init(){
 loadSeedData().then(()=>{
-let _suppressNextFbReload = false;
 db.ref('propriedades').on('value',snap=>{
-// Quando o admin acaba de salvar, suprime o reload para evitar conflito
-if(_suppressNextFbReload){ _suppressNextFbReload=false; return; }
 const fb=[];
 snap.forEach(c=>{
 const val = c.val();
@@ -2975,7 +2973,7 @@ const farmTecKey = currentFarmId;
 const titularAtual = tecData[farmTecKey]?.titular || currentFarmData?.tecnico_titular || '';
 const substitutoAtual = tecData[farmTecKey]?.substituto || currentFarmData?.tecnico_substituto || '';
 const dados = {
-produtor: str('ef-produtor').toUpperCase(),
+produtor: str('ef-produtor').toUpperCase().trim().replace(/\s+/g,' '),
 propriedade: str('ef-propriedade').toUpperCase(),
 situacao: str('ef-situacao'),
 produto: str('ef-produto'),
@@ -3019,16 +3017,7 @@ const aidx = ALL.findIndex(d => d.id === oldSeedId);
 if (aidx !== -1) { ALL[aidx] = {...dados, id}; }
 else { ALL.push({...dados, id}); }
 } else {
-// Suprime o próximo disparo do on('value') pois já vamos atualizar ALL[] localmente
-_suppressNextFbReload = true;
 await db.ref('propriedades/' + id).update(dados);
-// Atualiza objeto local em ALL[] com os dados novos imediatamente
-const aidx = ALL.findIndex(d => d.id === id);
-if (aidx !== -1) {
-ALL[aidx] = {...ALL[aidx], ...dados, id};
-} else {
-ALL.push({...dados, id});
-}
 }
 // Re-renderiza tudo para refletir novo vendedor/dados imediatamente
 applyF();
