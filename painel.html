@@ -137,7 +137,7 @@
       <div class="sg">PAINEL</div>
       <div class="ni on" id="ni-dash" onclick="nav('dash')"><span class="ni-i">📊</span>Dashboard</div>
       <div class="ni" id="ni-bench" onclick="nav('bench')"><span class="ni-i">🎯</span>Benchmarks</div>
-      <div class="ni" id="ni-alerts" onclick="nav('alerts')"><span class="ni-i">🔔</span>Alertas<span class="ni-b" id="alert-badge"></span></div>
+
       <div class="sg">ANÁLISE</div>
       <div class="ni" id="ni-compare" onclick="nav('compare')"><span class="ni-i">⚖️</span>Comparativo</div>
       <div class="ni" id="ni-qual" onclick="nav('qual')"><span class="ni-i">🥛</span>Qualidade</div>
@@ -307,10 +307,10 @@
       </div>
       <!-- ═══ VENDEDORES ═══ -->
       <div class="sc" id="sc-vends">
-        <div class="ph"><div><h2>Performance por Vendedor</h2><p>Carteira, conversão e produção de cada vendedor da equipe Meta</p></div></div>
+        <div class="ph"><div><h2>Performance por Vendedor</h2><p>Vacas em lactação atendidas e produção — clique no vendedor para ver o ranking de produtores</p></div></div>
         <div class="vg" id="vgrid"></div>
         <div class="g3">
-          <div class="cc"><div class="cc-hdr"><span class="cc-ico">📈</span><span class="cc-title">Taxa de Conversão (%)</span></div><canvas id="ch-conv" height="220"></canvas></div>
+          <div class="cc"><div class="cc-hdr"><span class="cc-ico">🐄</span><span class="cc-title">Vacas em Lactação por Vendedor</span></div><canvas id="ch-conv" height="220"></canvas></div>
           <div class="cc"><div class="cc-hdr"><span class="cc-ico">💧</span><span class="cc-title">Produção Diária (L/dia — ativos)</span></div><canvas id="ch-vprod" height="220"></canvas></div>
           <div class="cc"><div class="cc-hdr"><span class="cc-ico">🐄</span><span class="cc-title">Rebanho Médio por Vendedor</span></div><canvas id="ch-vreb" height="220"></canvas></div>
         </div>
@@ -1357,7 +1357,7 @@ if(val && val.produtor) fb.push({id:c.key,...val});
 });
 ALL=mergeWithSeed(fb);
 popFilters();applyF();renderAll();
-document.getElementById('alert-badge').textContent=countAlerts();
+
 console.log('Loaded:', fb.length, 'from Firebase +', (ALL.length-fb.length), 'from planilha');
 });
 ['fs','fv','fr','fp','fsi'].forEach(id=>document.getElementById(id).addEventListener('change',()=>{PG=1;applyF();renderAll();}));
@@ -1388,7 +1388,7 @@ document.getElementById('tq').value='';
 PG=1;applyF();renderAll();
 }
 function renderAll(){
-renderKPIs();renderGauges();renderDashCharts();renderBench();renderAlerts();renderCompare();renderQual();renderReg();renderTbl();renderVends();
+renderKPIs();renderGauges();renderDashCharts();renderBench();renderCompare();renderQual();renderReg();renderTbl();renderVends();
 }
 function renderKPIs(){
 const at=FIL.filter(d=>d.situacao==='ATIVO');
@@ -1916,17 +1916,173 @@ toast('Erro: '+e.message, true);
 }
 function renderVends(){
 const vends=[...new Set(ALL.map(d=>d.nome_vendedor||d.vendedor||''))].filter(Boolean).sort();
-document.getElementById('vgrid').innerHTML=vends.map(v=>{
+// ordena por vacas em lactação (desc)
+const vendsSorted=[...vends].sort((a,b)=>{
+const la=sum(ALL.filter(d=>(d.nome_vendedor||d.vendedor||'')===a&&d.situacao==='ATIVO'),'lactacao');
+const lb=sum(ALL.filter(d=>(d.nome_vendedor||d.vendedor||'')===b&&d.situacao==='ATIVO'),'lactacao');
+return lb-la;
+});
+// max vacas em lactação para barra de progresso
+const maxLac=Math.max(1,...vendsSorted.map(v=>sum(ALL.filter(d=>(d.nome_vendedor||d.vendedor||'')===v&&d.situacao==='ATIVO'),'lactacao')));
+document.getElementById('vgrid').innerHTML=vendsSorted.map(v=>{
 const rows=ALL.filter(d=>(d.nome_vendedor||d.vendedor||'')===v);
 const at=rows.filter(d=>d.situacao==='ATIVO'),pr=rows.filter(d=>d.situacao==='PROSPEC');
-const conv=rows.length?at.length/rows.length*100:0;
 const vacs=sum(at,'vacas'),prod=sum(at,'prod_diaria'),mp=avg(at,'media_prod');
+const lac=sum(at,'lactacao');
+const lacPct=Math.min(lac/maxLac*100,100);
 const col=vc(v);
-return`<div class="vc"><div class="vc-hdr"><div class="vc-av" style="background:${col}">${v.substring(0,2)}</div><div><div class="vc-name">${v}</div><div class="vc-sub">${rows.length} propriedades</div></div><div style="margin-left:auto;text-align:right"><div class="vc-pct" style="color:${conv>=60?'#16a34a':conv>=30?'#d97706':'#dc2626'}">${conv.toFixed(0)}%</div><div class="vc-plbl">conversão</div></div></div><div class="vc-bar"><div class="vc-bar-f" style="width:${conv}%;background:${col}"></div></div><div class="vc-stats"><div class="vc-st"><div class="vc-sv" style="color:#16a34a">${at.length}</div><div class="vc-sl">Ativos</div></div><div class="vc-st"><div class="vc-sv" style="color:#d97706">${pr.length}</div><div class="vc-sl">Prospec</div></div><div class="vc-st"><div class="vc-sv" style="color:#1d4ed8">${vacs>=1000?(vacs/1000).toFixed(1)+'k':vacs}</div><div class="vc-sl">Vacas</div></div><div class="vc-st"><div class="vc-sv" style="color:#0891b2">${mp>0?mp.toFixed(1):'—'}</div><div class="vc-sl">L/vaca</div></div></div></div>`;
+// cor baseada em desempenho (vacas em lactação)
+const lacColor=lacPct>=70?'#16a34a':lacPct>=35?'#d97706':'#dc2626';
+return`<div class="vc" style="cursor:pointer" onclick="openVendRanking('${v}')" title="Ver ranking de produtores de ${v}">
+<div class="vc-hdr">
+  <div class="vc-av" style="background:${col};position:relative">
+    ${v.substring(0,2).toUpperCase()}
+    <div style="position:absolute;bottom:-3px;right:-3px;width:14px;height:14px;background:white;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:8px;box-shadow:0 1px 3px rgba(0,0,0,.2)">🔍</div>
+  </div>
+  <div>
+    <div class="vc-name">${v}</div>
+    <div class="vc-sub">${rows.length} propriedades · clique para ranking</div>
+  </div>
+  <div style="margin-left:auto;text-align:right">
+    <div class="vc-pct" style="color:${lacColor}">${lac>=1000?(lac/1000).toFixed(1)+'k':lac}</div>
+    <div class="vc-plbl">em lactação</div>
+  </div>
+</div>
+<div class="vc-bar"><div class="vc-bar-f" style="width:${lacPct}%;background:${col}"></div></div>
+<div class="vc-stats">
+  <div class="vc-st"><div class="vc-sv" style="color:#16a34a">${at.length}</div><div class="vc-sl">Ativos</div></div>
+  <div class="vc-st"><div class="vc-sv" style="color:#d97706">${pr.length}</div><div class="vc-sl">Prospec</div></div>
+  <div class="vc-st"><div class="vc-sv" style="color:#1d4ed8">${vacs>=1000?(vacs/1000).toFixed(1)+'k':vacs}</div><div class="vc-sl">Vacas</div></div>
+  <div class="vc-st"><div class="vc-sv" style="color:#0891b2">${mp>0?mp.toFixed(1):'—'}</div><div class="vc-sl">L/vaca</div></div>
+</div>
+</div>`;
 }).join('');
-mk('ch-conv','bar',{labels:vends,datasets:[{data:vends.map(v=>{const r=ALL.filter(d=>(d.nome_vendedor||d.vendedor||'')===v);return r.length?r.filter(d=>d.situacao==='ATIVO').length/r.length*100:0;}).map(v=>v.toFixed(1)),backgroundColor:vends.map(v=>vc(v)),borderRadius:6,borderSkipped:false}]},{...NL,scales:{x:{...SX},y:{max:100,...SY,ticks:{color:'#94a3b8',callback:v=>v+'%'}}}});
+// gráfico: vacas em lactação por vendedor
+mk('ch-conv','bar',{
+labels:vendsSorted,
+datasets:[{
+data:vendsSorted.map(v=>sum(ALL.filter(d=>(d.nome_vendedor||d.vendedor||'')===v&&d.situacao==='ATIVO'),'lactacao')),
+backgroundColor:vendsSorted.map(v=>vc(v)),
+borderRadius:6,borderSkipped:false
+}]
+},{...NL,scales:{x:{...SX},y:{...SY,ticks:{color:'#94a3b8',callback:v=>v>=1000?(v/1000).toFixed(1)+'k':v}}}});
 mk('ch-vprod','bar',{labels:vends,datasets:[{data:vends.map(v=>sum(ALL.filter(d=>(d.nome_vendedor||d.vendedor||'')===v&&d.situacao==='ATIVO'),'prod_diaria')),backgroundColor:'#0891b2',borderRadius:6,borderSkipped:false}]},{...NL,scales:{x:{...SX},y:{...SY,ticks:{color:'#94a3b8',callback:v=>(v/1000).toFixed(0)+'k'}}}});
 mk('ch-vreb','bar',{labels:vends,datasets:[{data:vends.map(v=>{const at=ALL.filter(d=>(d.nome_vendedor||d.vendedor||'')===v&&d.situacao==='ATIVO');return at.length?sum(at,'vacas')/at.length:0;}).map(v=>v.toFixed(0)),backgroundColor:'#ca8a04',borderRadius:6,borderSkipped:false}]},{...NL,scales:{x:{...SX},y:{...SY}}});
+}
+
+// ── MODAL RANKING DO VENDEDOR ─────────────────────────────────────────────
+function openVendRanking(vendedor){
+const at=ALL.filter(d=>(d.nome_vendedor||d.vendedor||'')===vendedor&&d.situacao==='ATIVO');
+const pr=ALL.filter(d=>(d.nome_vendedor||d.vendedor||'')===vendedor&&d.situacao==='PROSPEC');
+const sorted=[...at].sort((a,b)=>(b.lactacao||b.vacas||0)-(a.lactacao||a.vacas||0));
+const col=vc(vendedor);
+const totalLac=sum(at,'lactacao'), totalVac=sum(at,'vacas'), totalProd=sum(at,'prod_diaria'), mpVend=avg(at,'media_prod');
+const maxLac2=Math.max(1,...sorted.map(d=>d.lactacao||d.vacas||0));
+
+const rows=sorted.map((d,i)=>{
+const lac=d.lactacao||d.vacas||0;
+const barW=Math.round(lac/maxLac2*100);
+const prodColor=d.media_prod>=38?'#15803d':d.media_prod>=28?'#0891b2':'#d97706';
+return`<tr style="border-bottom:1px solid #f1f5f9">
+<td style="padding:10px 12px;font-size:12px;font-weight:700;color:#94a3b8;width:28px">${i+1}</td>
+<td style="padding:10px 12px">
+  <div style="display:flex;align-items:center;gap:8px">
+    <div style="width:32px;height:32px;border-radius:9px;background:${vc(d.produtor)};display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;color:white;flex-shrink:0">${ini(d.produtor)}</div>
+    <div>
+      <div style="font-size:12px;font-weight:700;color:#1a202c">${d.produtor||'—'}</div>
+      <div style="font-size:10px;color:#94a3b8">${d.cidade||'—'} · ${d.sistema||'—'}</div>
+    </div>
+  </div>
+</td>
+<td style="padding:10px 12px;text-align:center">
+  <div style="font-size:14px;font-weight:900;color:#15803d">${lac>=1000?(lac/1000).toFixed(1)+'k':lac||'—'}</div>
+  <div style="font-size:9px;color:#94a3b8;font-weight:600;text-transform:uppercase">em lact.</div>
+</td>
+<td style="padding:10px 12px;text-align:center">
+  <div style="font-size:13px;font-weight:800;color:#1d4ed8">${d.vacas||'—'}</div>
+  <div style="font-size:9px;color:#94a3b8;font-weight:600;text-transform:uppercase">total</div>
+</td>
+<td style="padding:10px 14px;width:130px">
+  <div style="height:6px;background:#f1f5f9;border-radius:3px;overflow:hidden">
+    <div style="height:100%;width:${barW}%;background:${col};border-radius:3px"></div>
+  </div>
+</td>
+<td style="padding:10px 12px;text-align:center">
+  <div style="font-size:13px;font-weight:800;color:${prodColor}">${d.media_prod>0?parseFloat(d.media_prod).toFixed(1)+' L':'—'}</div>
+  <div style="font-size:9px;color:#94a3b8;font-weight:600;text-transform:uppercase">L/vaca</div>
+</td>
+<td style="padding:10px 12px;text-align:center">
+  <div style="font-size:12px;font-weight:700;color:#0891b2">${d.prod_diaria>0?(d.prod_diaria/1000).toFixed(1)+'k':'—'}</div>
+  <div style="font-size:9px;color:#94a3b8;font-weight:600;text-transform:uppercase">L/dia</div>
+</td>
+<td style="padding:10px 12px;text-align:center">
+  <div style="font-size:11px;font-weight:700;color:#b45309">${d.gordura>0?parseFloat(d.gordura).toFixed(2)+'%':'—'}</div>
+  <div style="font-size:9px;color:#94a3b8;font-weight:600;text-transform:uppercase">gordura</div>
+</td>
+</tr>`;
+}).join('');
+
+const prospecRows=pr.length?`<div style="margin-top:16px;padding-top:14px;border-top:2px solid #f1f5f9">
+<div style="font-size:10px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px">🎯 Prospectos (${pr.length})</div>
+<div style="display:flex;flex-wrap:wrap;gap:6px">${[...pr].sort((a,b)=>(b.vacas||0)-(a.vacas||0)).map(d=>`<div style="background:#fffbeb;border:1px solid #fcd34d;border-radius:8px;padding:6px 10px;font-size:11px"><span style="font-weight:700;color:#92400e">${d.produtor||'—'}</span> <span style="color:#94a3b8">${d.vacas?d.vacas+' vacas':''} ${d.cidade||''}</span></div>`).join('')}</div>
+</div>`:'';
+
+const html=`
+<div style="position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:5000;display:flex;align-items:center;justify-content:center;padding:16px;backdrop-filter:blur(4px)" id="vend-modal-overlay" onclick="if(event.target===this)closeVendRanking()">
+  <div style="background:white;border-radius:20px;width:100%;max-width:820px;max-height:88vh;display:flex;flex-direction:column;box-shadow:0 20px 60px rgba(0,0,0,0.25);overflow:hidden">
+    <!-- header -->
+    <div style="background:linear-gradient(135deg,${col},${col}cc);padding:18px 24px;display:flex;align-items:center;gap:14px;flex-shrink:0">
+      <div style="width:48px;height:48px;border-radius:14px;background:rgba(255,255,255,.2);display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:800;color:white">${vendedor.substring(0,2).toUpperCase()}</div>
+      <div style="color:white">
+        <div style="font-size:18px;font-weight:800">${vendedor}</div>
+        <div style="font-size:11px;opacity:.8">${at.length} clientes ativos · ${pr.length} prospectos</div>
+      </div>
+      <div style="margin-left:auto;display:flex;gap:20px">
+        <div style="text-align:center;color:white">
+          <div style="font-size:22px;font-weight:900">${totalLac>=1000?(totalLac/1000).toFixed(1)+'k':totalLac}</div>
+          <div style="font-size:9px;opacity:.8;text-transform:uppercase;font-weight:700">Vacas em Lact.</div>
+        </div>
+        <div style="text-align:center;color:white">
+          <div style="font-size:22px;font-weight:900">${mpVend>0?mpVend.toFixed(1):'—'}</div>
+          <div style="font-size:9px;opacity:.8;text-transform:uppercase;font-weight:700">L/vaca/dia</div>
+        </div>
+        <div style="text-align:center;color:white">
+          <div style="font-size:22px;font-weight:900">${totalProd>=1000?(totalProd/1000).toFixed(0)+'k':totalProd}</div>
+          <div style="font-size:9px;opacity:.8;text-transform:uppercase;font-weight:700">L/dia total</div>
+        </div>
+      </div>
+      <button onclick="closeVendRanking()" style="background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.3);color:white;width:32px;height:32px;border-radius:8px;font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;margin-left:16px">✕</button>
+    </div>
+    <!-- table -->
+    <div style="overflow-y:auto;flex:1;padding:16px 20px">
+      <table style="width:100%;border-collapse:collapse">
+        <thead>
+          <tr style="border-bottom:2px solid #f1f5f9">
+            <th style="padding:8px 12px;text-align:left;font-size:9px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:.5px">#</th>
+            <th style="padding:8px 12px;text-align:left;font-size:9px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:.5px">Produtor</th>
+            <th style="padding:8px 12px;text-align:center;font-size:9px;font-weight:700;color:#15803d;text-transform:uppercase;letter-spacing:.5px">Em Lactação ▼</th>
+            <th style="padding:8px 12px;text-align:center;font-size:9px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:.5px">Total Vacas</th>
+            <th style="padding:8px 12px;font-size:9px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:.5px"></th>
+            <th style="padding:8px 12px;text-align:center;font-size:9px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:.5px">Prod. Média</th>
+            <th style="padding:8px 12px;text-align:center;font-size:9px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:.5px">L/dia</th>
+            <th style="padding:8px 12px;text-align:center;font-size:9px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:.5px">Gordura</th>
+          </tr>
+        </thead>
+        <tbody>${rows}</tbody>
+      </table>
+      ${prospecRows}
+    </div>
+  </div>
+</div>`;
+
+const div=document.createElement('div');
+div.id='vend-modal-wrap';
+div.innerHTML=html;
+document.body.appendChild(div);
+}
+function closeVendRanking(){
+const el=document.getElementById('vend-modal-wrap');
+if(el) el.remove();
 }
 function doExport(){
 const h=['Produtor','Propriedade','Situação','Vendedor','Cidade','Região','Vacas','Lactação','Novilhas','Média Prod','Prod Diária','DEL','Sistema','Ordenha','Gordura','Proteína','NUL (mg/dL)','CCS','CBT','Produto','Data Visita'];
