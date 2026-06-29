@@ -1555,7 +1555,7 @@ tbody td{padding:10px 14px;font-size:12px;}.badge{display:inline-flex;align-item
                 </div>
                 <div style="background:#f8fafc;border-radius:10px;padding:12px;text-align:center">
                   <div style="font-size:24px;font-weight:900;color:#0f172a" id="calc-qtd-meta">—</div>
-                  <div style="font-size:10px;color:var(--muted);font-weight:600;margin-top:3px;text-transform:uppercase">Produtores na região</div>
+                  <div id="calc-qtd-lbl" style="font-size:10px;color:var(--muted);font-weight:600;margin-top:3px;text-transform:uppercase">Clientes ativos Meta</div>
                 </div>
               </div>
               <div id="calc-barra-wrap" style="margin-bottom:4px">
@@ -4805,12 +4805,18 @@ const regiao=document.getElementById('calc-regiao')?.value||'';
 const set=(id,v)=>{const el=document.getElementById(id);if(el)el.textContent=v;};
 
 // Filtra clientes Meta ativos da região
+const totalAtivos=ALL.filter(d=>d.situacao==='ATIVO').length;
 let base=ALL.filter(d=>d.situacao==='ATIVO'&&d.media_prod>0);
 if(regiao) base=base.filter(d=>d.regiao===regiao);
 const mediaMetaVacas = base.length ? sum(base,'media_prod')/base.length : 0;
 
 set('calc-media-meta', mediaMetaVacas>0?mediaMetaVacas.toFixed(1)+' L':'—');
-set('calc-qtd-meta', base.length);
+// Com região selecionada: mostra produtores daquela região
+// Sem região: mostra total de clientes ativos (não apenas os com prod. cadastrada)
+set('calc-qtd-meta', regiao ? base.length : totalAtivos);
+// Atualiza label dinamicamente
+const qlbl=document.getElementById('calc-qtd-lbl');
+if(qlbl) qlbl.textContent=regiao?'Produtores na região':'Clientes ativos Meta';
 
 // Cálculo de ganho
 const extraPorVaca=Math.max(0, mediaMetaVacas-atual);
