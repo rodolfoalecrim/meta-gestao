@@ -130,6 +130,28 @@ tbody td{padding:10px 14px;font-size:12px;}.badge{display:inline-flex;align-item
 .score-badge{display:inline-flex;align-items:center;gap:4px;font-size:10px;font-weight:700;padding:2px 8px;border-radius:20px;}
 .score-A{background:#dcfce7;color:#15803d;}.score-B{background:#dbeafe;color:#1d4ed8;}
 .score-C{background:#fef9c3;color:#92400e;}.score-D{background:#fee2e2;color:#dc2626;}
+.zoo-card{background:white;border:1px solid var(--border);border-radius:12px;overflow:hidden;transition:box-shadow .15s;margin-bottom:0;}
+.zoo-card:hover{box-shadow:var(--shadow-md);}
+.zoo-card-hdr{display:flex;align-items:center;gap:12px;padding:14px 16px;cursor:pointer;}
+.zoo-card-hdr:hover{background:#fafbfc;}
+.zoo-urgency{width:4px;border-radius:2px;align-self:stretch;flex-shrink:0;}
+.zoo-avatar{width:36px;height:36px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;color:white;flex-shrink:0;}
+.zoo-info{flex:1;min-width:0;}
+.zoo-nome{font-size:13px;font-weight:700;color:var(--text);}
+.zoo-meta{font-size:11px;color:var(--muted);margin-top:2px;}
+.zoo-dias{text-align:right;flex-shrink:0;}
+.zoo-dias-num{font-size:20px;font-weight:900;line-height:1;}
+.zoo-dias-lbl{font-size:9px;color:var(--muted);font-weight:600;text-transform:uppercase;}
+.zoo-campos{display:flex;flex-wrap:wrap;gap:6px;padding:0 16px 12px 68px;}
+.zoo-campo{display:inline-flex;align-items:center;gap:4px;background:#fef2f2;border:1px solid #fca5a5;color:#dc2626;font-size:10px;font-weight:700;padding:2px 8px;border-radius:20px;}
+.zoo-campo.warn{background:#fffbeb;border-color:#fcd34d;color:#92400e;}
+.zoo-filters{display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap;align-items:center;}
+.zoo-filter-btn{background:white;border:1.5px solid var(--border);color:var(--muted);font-size:11px;font-family:Inter,sans-serif;padding:6px 14px;border-radius:20px;cursor:pointer;font-weight:600;transition:all .15s;}
+.zoo-filter-btn.on{border-color:var(--GM);color:var(--GM);background:#f0fdf4;}
+.zoo-summary{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px;}
+.zoo-sum-card{background:white;border:1px solid var(--border);border-radius:12px;padding:16px;text-align:center;box-shadow:var(--shadow);}
+.zoo-sum-num{font-size:28px;font-weight:900;line-height:1;}
+.zoo-sum-lbl{font-size:10px;color:var(--muted);font-weight:600;text-transform:uppercase;margin-top:4px;}
 .calc-card{background:white;border:1px solid var(--border);border-radius:16px;padding:24px;box-shadow:var(--shadow);}
 .calc-result{background:linear-gradient(135deg,#052e16,#15803d);border-radius:12px;padding:20px;color:white;margin-top:16px;}
 .calc-result-val{font-size:36px;font-weight:900;letter-spacing:-1px;line-height:1;}
@@ -188,7 +210,7 @@ tbody td{padding:10px 14px;font-size:12px;}.badge{display:inline-flex;align-item
 </div>
 <script>
 (function(){
-  var BUILT = '2026-06-29T19:00:00';
+  var BUILT = '2026-06-29T19:30:00';
   function pad(n){return String(n).padStart(2,'0');}
   function fmt(d){
     var dias=['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'];
@@ -278,6 +300,7 @@ tbody td{padding:10px 14px;font-size:12px;}.badge{display:inline-flex;align-item
       <div class="ni" id="ni-tec" onclick="nav('tec')"><span class="ni-i">👨‍🔬</span>Técnicos</div>
       <div class="ni" id="ni-mapa" onclick="navMapa()"><span class="ni-i">🗺️</span>Mapa de Clientes</div>
       <div class="sg">FERRAMENTAS</div>
+      <div class="ni" id="ni-alertas-zoo" onclick="nav('alertas-zoo')" style="position:relative"><span class="ni-i">🚨</span>Alertas Zootécnicos<span class="ni-b" id="badge-zoo" style="display:none">0</span></div>
       <div class="ni" id="ni-impacto" onclick="nav('impacto')"><span class="ni-i">📊</span>Impacto em Números</div>
       <div class="ni" id="ni-calc" onclick="nav('calc')"><span class="ni-i">💰</span>Calculadora</div>
     </div>
@@ -1351,6 +1374,31 @@ tbody td{padding:10px 14px;font-size:12px;}.badge{display:inline-flex;align-item
 </div>
 
 
+      <!-- ═══ ALERTAS ZOOTÉCNICOS ═══ -->
+      <div class="sc" id="sc-alertas-zoo">
+        <div class="ph">
+          <div><h2>🚨 Alertas Zootécnicos</h2><p>Produtores ativos com dados desatualizados há mais de 30 dias</p></div>
+          <div class="live"><span class="live-dot"></span>Ao Vivo</div>
+        </div>
+        <div class="zoo-summary">
+          <div class="zoo-sum-card"><div class="zoo-sum-num" id="zoo-cnt-crit" style="color:#dc2626">—</div><div class="zoo-sum-lbl">Críticos +90 dias</div></div>
+          <div class="zoo-sum-card"><div class="zoo-sum-num" id="zoo-cnt-warn" style="color:#d97706">—</div><div class="zoo-sum-lbl">Atenção 60–90 dias</div></div>
+          <div class="zoo-sum-card"><div class="zoo-sum-num" id="zoo-cnt-info" style="color:#3b82f6">—</div><div class="zoo-sum-lbl">Aviso 30–60 dias</div></div>
+          <div class="zoo-sum-card"><div class="zoo-sum-num" id="zoo-cnt-ok" style="color:#15803d">—</div><div class="zoo-sum-lbl">Em dia &lt;30 dias</div></div>
+        </div>
+        <div class="zoo-filters">
+          <button class="zoo-filter-btn on" onclick="filterZoo('todos',this)">Todos</button>
+          <button class="zoo-filter-btn" onclick="filterZoo('crit',this)">🔴 Críticos +90d</button>
+          <button class="zoo-filter-btn" onclick="filterZoo('warn',this)">🟡 Atenção 60–90d</button>
+          <button class="zoo-filter-btn" onclick="filterZoo('info',this)">🔵 Aviso 30–60d</button>
+          <button class="zoo-filter-btn" onclick="filterZoo('sem',this)">⚫ Sem registro</button>
+          <select id="zoo-vend-filter" class="fsel" onchange="renderZooAlerts()" style="margin-left:auto">
+            <option value="">Todos os vendedores</option>
+          </select>
+        </div>
+        <div id="zoo-list" style="display:flex;flex-direction:column;gap:8px;"></div>
+      </div>
+
       <!-- ═══ IMPACTO EM NÚMEROS ═══ -->
       <div class="sc" id="sc-impacto">
         <div class="ph"><div><h2>📊 Impacto em Números</h2><p>Resultados reais da carteira Meta — dados ao vivo para apresentar a prospectos</p></div></div>
@@ -1821,7 +1869,7 @@ document.getElementById('tq').value='';
 PG=1;applyF();renderAll();
 }
 function renderAll(){
-renderKPIs();renderGauges();renderDashCharts();renderBench();renderCompare();renderQual();renderReg();renderTbl();renderVends();updateHealthScores();renderInactivityAlerts();
+renderKPIs();renderGauges();renderDashCharts();renderBench();renderCompare();renderQual();renderReg();renderTbl();renderVends();updateHealthScores();renderInactivityAlerts();updateZooBadge();
 }
 function renderKPIs(){
 const at=FIL.filter(d=>d.situacao==='ATIVO');
@@ -2585,6 +2633,7 @@ document.getElementById('sc-'+name).classList.add('on');
 const niEl=document.getElementById('ni-'+name);
 if(niEl) niEl.classList.add('on');
 document.querySelector('.content').scrollTop=0;
+if(name==='alertas-zoo'){initZooVendFilter();setTimeout(renderZooAlerts,50);}
 if(name==='impacto') setTimeout(renderImpacto,50);
 if(name==='calc') setTimeout(renderCalc,50);
 }
@@ -4754,6 +4803,118 @@ el.innerHTML=alerts.map(({d,dias})=>`
 function getVendGoal(vend){
 // Meta padrão: 30% de conversão
 return 0.30;
+}
+
+
+// ══════════════════════════════════════════════════
+// ALERTAS ZOOTÉCNICOS
+// ══════════════════════════════════════════════════
+let zooFiltroAtivo = 'todos';
+
+function diasSemAtualizar(d){
+  if(!d.atualizado_em) return 9999;
+  return Math.floor((Date.now()-new Date(d.atualizado_em).getTime())/86400000);
+}
+
+function urgenciaZoo(dias){
+  if(dias===9999) return 'sem';
+  if(dias>=90) return 'crit';
+  if(dias>=60) return 'warn';
+  if(dias>=30) return 'info';
+  return 'ok';
+}
+
+function camposFaltando(d){
+  const f=[];
+  if(!(d.vacas>0)) f.push({n:'Vacas',t:'crit'});
+  if(!(d.media_prod>0)) f.push({n:'Produção',t:'crit'});
+  if(!(d.gordura>0)) f.push({n:'Gordura',t:'warn'});
+  if(!(d.proteina>0)) f.push({n:'Proteína',t:'warn'});
+  if(!(d.del>0)) f.push({n:'DEL',t:'warn'});
+  if(!(d.ccs>0)) f.push({n:'CCS',t:'warn'});
+  if(!(d.nul>0)) f.push({n:'NUL',t:'warn'});
+  return f;
+}
+
+function updateZooBadge(){
+  const at=ALL.filter(d=>d.situacao==='ATIVO');
+  const total=at.filter(d=>urgenciaZoo(diasSemAtualizar(d))!=='ok').length;
+  const badge=document.getElementById('badge-zoo');
+  if(badge){badge.textContent=total>9?'9+':total;badge.style.display=total>0?'':'none';}
+}
+
+function initZooVendFilter(){
+  const sel=document.getElementById('zoo-vend-filter');
+  if(!sel||sel.options.length>1) return;
+  const vends=[...new Set(ALL.map(d=>(d.nome_vendedor||d.vendedor||'').toUpperCase().trim()).filter(Boolean))].sort();
+  vends.forEach(v=>{const o=document.createElement('option');o.value=v;o.textContent=v.charAt(0)+v.slice(1).toLowerCase();sel.appendChild(o);});
+}
+
+function filterZoo(filtro,btn){
+  zooFiltroAtivo=filtro;
+  document.querySelectorAll('.zoo-filter-btn').forEach(b=>b.classList.remove('on'));
+  if(btn) btn.classList.add('on');
+  renderZooAlerts();
+}
+
+function renderZooAlerts(){
+  const vendFilt=(document.getElementById('zoo-vend-filter')?.value||'').toUpperCase().trim();
+  let base=ALL.filter(d=>d.situacao==='ATIVO');
+  if(vendFilt) base=base.filter(d=>(d.nome_vendedor||d.vendedor||'').toUpperCase()===vendFilt);
+
+  const items=base.map(d=>({d,dias:diasSemAtualizar(d),urgencia:urgenciaZoo(diasSemAtualizar(d)),campos:camposFaltando(d)}));
+
+  const cnt={crit:0,warn:0,info:0,ok:0,sem:0};
+  items.forEach(i=>{const u=i.urgencia;if(u==='sem'){cnt.sem++;cnt.crit++;}else cnt[u]++;});
+  const s=(id,v)=>{const el=document.getElementById(id);if(el)el.textContent=v;};
+  s('zoo-cnt-crit',cnt.crit);s('zoo-cnt-warn',cnt.warn);s('zoo-cnt-info',cnt.info);
+  s('zoo-cnt-ok',base.length-cnt.crit-cnt.warn-cnt.info);
+  updateZooBadge();
+
+  let filtered=items.filter(i=>i.urgencia!=='ok');
+  if(zooFiltroAtivo!=='todos') filtered=filtered.filter(i=>i.urgencia===zooFiltroAtivo);
+  filtered.sort((a,b)=>{
+    const o={sem:0,crit:1,warn:2,info:3,ok:4};
+    if(o[a.urgencia]!==o[b.urgencia]) return o[a.urgencia]-o[b.urgencia];
+    return b.dias-a.dias;
+  });
+
+  const list=document.getElementById('zoo-list');
+  if(!list) return;
+  if(!filtered.length){
+    list.innerHTML='<div style="text-align:center;padding:48px;color:var(--muted)"><div style="font-size:36px;margin-bottom:12px">✅</div><div style="font-size:14px;font-weight:700;color:var(--text)">Nenhum alerta nessa categoria</div><div style="font-size:12px;margin-top:4px">Todos os clientes estão com dados atualizados</div></div>';
+    return;
+  }
+
+  const pad=n=>String(n).padStart(2,'0');
+  const fmtDate=iso=>{if(!iso)return'Nunca';const d=new Date(iso);return pad(d.getDate())+'/'+pad(d.getMonth()+1)+'/'+d.getFullYear();};
+  const corU={crit:'#dc2626',warn:'#d97706',info:'#3b82f6',sem:'#64748b'};
+  const lblU={crit:'Crítico',warn:'Atenção',info:'Aviso',sem:'Sem dados'};
+
+  list.innerHTML=filtered.map(({d,dias,urgencia,campos})=>{
+    const cor=corU[urgencia]||'#94a3b8';
+    const diasLabel=dias===9999?'—':dias+'d';
+    const camposHtml=campos.map(c=>`<span class="zoo-campo ${c.t}">${c.n}</span>`).join('');
+    const nome=(d.produtor||'').replace(/'/g,"\'");
+    return `<div class="zoo-card">
+<div class="zoo-card-hdr" onclick="openFarmModal('${d.id}','${nome}')">
+  <div class="zoo-urgency" style="background:${cor}"></div>
+  <div class="zoo-avatar" style="background:${vc(d.produtor)}">${ini(d.produtor)}</div>
+  <div class="zoo-info">
+    <div class="zoo-nome">${d.produtor||'—'}</div>
+    <div class="zoo-meta">👤 ${d.nome_vendedor||d.vendedor||'—'} &nbsp;·&nbsp; 📍 ${d.cidade||'—'} &nbsp;·&nbsp; 🐄 ${d.vacas||'?'} vacas &nbsp;·&nbsp; <span style="color:${cor};font-weight:700">${lblU[urgencia]}</span> &nbsp;·&nbsp; atualizado: ${fmtDate(d.atualizado_em)}</div>
+  </div>
+  <div class="zoo-dias"><div class="zoo-dias-num" style="color:${cor}">${diasLabel}</div><div class="zoo-dias-lbl">sem atualizar</div></div>
+  <div style="margin-left:12px">
+    <button onclick="event.stopPropagation();openFarmModal('${d.id}','${nome}');setTimeout(()=>switchTab('edit'),400)"
+      style="background:${cor};color:white;border:none;border-radius:8px;padding:6px 12px;font-size:11px;font-weight:700;cursor:pointer;font-family:Inter,sans-serif;white-space:nowrap">
+      ✏️ Atualizar
+    </button>
+  </div>
+</div>
+${campos.length?`<div class="zoo-campos"><span style="font-size:10px;color:var(--muted);font-weight:600;margin-right:4px">Campos faltando:</span>${camposHtml}</div>`:'<div style="padding:0 16px 10px 68px;font-size:11px;color:#16a34a;font-weight:600">✅ Todos os campos preenchidos — apenas desatualizado</div>'}
+</div>`;
+  }).join('');
 }
 
 </script>
