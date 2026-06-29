@@ -1419,6 +1419,10 @@ if(val && val.produtor) fb.push({id:c.key,...val});
 });
 ALL=mergeWithSeed(fb);
 popFilters();applyF();renderAll();
+// Se o mapa estiver aberto, atualiza também
+if (typeof theMap !== 'undefined' && theMap && document.getElementById('sc-mapa')?.classList.contains('on')) {
+renderMapAll();
+}
 console.log('Loaded:', fb.length, 'from Firebase +', (ALL.length-fb.length), 'from planilha');
 });
 ['fs','fv','fr','fp','fsi'].forEach(id=>document.getElementById(id).addEventListener('change',()=>{PG=1;applyF();renderAll();}));
@@ -2345,12 +2349,19 @@ attribution: '© OpenStreetMap',
 maxZoom: 18,
 }).addTo(theMap);
 mapLayerGroup = L.layerGroup().addTo(theMap);
-const vends = [...new Set(MAP_CLIENTES.map(c => c.vendedor).filter(Boolean))].sort();
+// Popula vendedores a partir do ALL (tempo real) com fallback para MAP_CLIENTES
+function populateMapVendSel() {
+const source = (typeof ALL !== 'undefined' && ALL.length) ? ALL : MAP_CLIENTES;
+const vends = [...new Set(source.map(c => (c.nome_vendedor||c.vendedor||'').toUpperCase().trim()).filter(Boolean))].sort();
 const sel = document.getElementById('map-vend-sel');
+// Limpa opções antigas (exceto "Todos os vendedores")
+while(sel.options.length > 1) sel.remove(1);
 vends.forEach(v => {
 const opt = document.createElement('option');
-opt.value = v; opt.textContent = v; sel.appendChild(opt);
+opt.value = v; opt.textContent = v.charAt(0)+v.slice(1).toLowerCase(); sel.appendChild(opt);
 });
+}
+populateMapVendSel();
 const st = document.createElement('style');
 st.textContent = `.leaflet-popup-content-wrapper{border-radius:12px!important;padding:0!important;box-shadow:0 4px 20px rgba(0,0,0,.15)!important}.leaflet-popup-content{margin:14px!important}.leaflet-popup-tip{background:white!important}`;
 document.head.appendChild(st);
@@ -2371,15 +2382,20 @@ renderMapAll();
 }
 function getMapFiltered() {
 mapVendedor = document.getElementById('map-vend-sel')?.value || '';
-return MAP_CLIENTES.filter(c => {
+// Usa ALL (dados em tempo real do Firebase + SEED) em vez do MAP_CLIENTES estático
+const source = (typeof ALL !== 'undefined' && ALL.length) ? ALL : MAP_CLIENTES;
+return source.filter(c => {
 if (!c.lat) return false;
-if (mapFiltro !== 'all' && c.situacao.toLowerCase() !== mapFiltro) return false;
-if (mapVendedor && c.vendedor !== mapVendedor) return false;
+if (mapFiltro !== 'all' && (c.situacao||'').toLowerCase() !== mapFiltro) return false;
+const vend = (c.nome_vendedor || c.vendedor || '').toUpperCase().trim();
+if (mapVendedor && vend !== mapVendedor.toUpperCase().trim()) return false;
 return true;
 });
 }
 function renderMapAll() {
 if (!theMap) return;
+// Atualiza lista de vendedores com dados atuais
+if (typeof populateMapVendSel === 'function') populateMapVendSel();
 const filt = getMapFiltered();
 renderMapMarkers(filt);
 renderMapSidebar(filt);
