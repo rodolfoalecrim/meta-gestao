@@ -155,6 +155,26 @@ tbody td{padding:10px 14px;font-size:12px;}.badge{display:inline-flex;align-item
 .cmp2-summary{background:linear-gradient(135deg,#052e16,#15803d);border-radius:14px;padding:16px 20px;color:white;margin-bottom:16px;display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;text-align:center;}
 .cmp2-sum-val{font-size:24px;font-weight:900;line-height:1;}
 .cmp2-sum-lbl{font-size:10px;opacity:.75;font-weight:600;margin-top:4px;}
+.rnk-card{background:white;border:1px solid var(--border);border-radius:14px;padding:16px 20px;display:flex;align-items:center;gap:14px;cursor:pointer;transition:all .15s;position:relative;}
+.rnk-card:hover{box-shadow:var(--shadow-md);transform:translateY(-1px);}
+.rnk-pos{width:32px;font-size:13px;font-weight:900;color:var(--muted);text-align:center;flex-shrink:0;}
+.rnk-av{width:44px;height:44px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:900;color:white;flex-shrink:0;}
+.rnk-info{flex:1;min-width:0;}
+.rnk-nome{font-size:13px;font-weight:700;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.rnk-meta{font-size:11px;color:var(--muted);margin-top:2px;}
+.rnk-score{text-align:right;flex-shrink:0;}
+.rnk-score-num{font-size:26px;font-weight:900;line-height:1;letter-spacing:-1px;}
+.rnk-score-lbl{font-size:9px;color:var(--muted);font-weight:600;text-transform:uppercase;margin-top:2px;}
+.rnk-bar-wrap{flex:0 0 100px;height:6px;background:#f1f5f9;border-radius:3px;overflow:hidden;}
+.rnk-bar-fill{height:100%;border-radius:3px;transition:width .8s cubic-bezier(.4,0,.2,1);}
+.rnk-grade{width:32px;height:32px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:900;flex-shrink:0;}
+.rnk-filter-bar{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px;align-items:center;}
+.rnk-filter-btn{background:white;border:1.5px solid var(--border);color:var(--muted);font-size:11px;font-family:Inter,sans-serif;padding:6px 14px;border-radius:20px;cursor:pointer;font-weight:600;transition:all .15s;}
+.rnk-filter-btn.on{border-color:#15803d;color:#15803d;background:#f0fdf4;}
+.rnk-summary{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px;}
+.rnk-sum-card{background:white;border:1px solid var(--border);border-radius:12px;padding:16px;text-align:center;box-shadow:var(--shadow);}
+.rnk-sum-num{font-size:28px;font-weight:900;line-height:1;}
+.rnk-sum-lbl{font-size:10px;color:var(--muted);font-weight:600;text-transform:uppercase;margin-top:4px;}
 .zoo-card{background:white;border:1px solid var(--border);border-radius:12px;overflow:hidden;transition:box-shadow .15s;margin-bottom:0;}
 .zoo-card:hover{box-shadow:var(--shadow-md);}
 .zoo-card-hdr{display:flex;align-items:center;gap:12px;padding:14px 16px;cursor:pointer;}
@@ -240,7 +260,7 @@ tbody td{padding:10px 14px;font-size:12px;}.badge{display:inline-flex;align-item
 </div>
 <script>
 (function(){
-  var BUILT = '2026-06-29T23:00:00';
+  var BUILT = '2026-06-29T23:30:00';
   function pad(n){return String(n).padStart(2,'0');}
   function fmt(d){
     var dias=['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'];
@@ -321,6 +341,7 @@ tbody td{padding:10px 14px;font-size:12px;}.badge{display:inline-flex;align-item
       </div>
 
       <div class="sg">ANÁLISE</div>
+      <div class="ni" id="ni-ranking" onclick="nav('ranking')"><span class="ni-i">🏆</span>Ranking Score</div>
       <div class="ni" id="ni-compare" onclick="nav('compare')"><span class="ni-i">⚖️</span>Comparativo</div>
       <div class="ni" id="ni-qual" onclick="nav('qual')"><span class="ni-i">🥛</span>Qualidade</div>
       <div class="ni" id="ni-reg" onclick="nav('reg')"><span class="ni-i">🗺️</span>Por Região</div>
@@ -425,6 +446,64 @@ tbody td{padding:10px 14px;font-size:12px;}.badge{display:inline-flex;align-item
         <div class="ph"><div><h2>Central de Alertas</h2><p>Oportunidades e riscos identificados automaticamente</p></div></div>
         <div class="al" id="al-list"></div>
       </div>
+      <!-- ═══ RANKING SCORE ═══ -->
+      <div class="sc" id="sc-ranking">
+        <div class="ph">
+          <div><h2>🏆 Ranking por Score de Saúde</h2><p>Fazendas ativas ordenadas pela pontuação geral do rebanho (0–100)</p></div>
+          <div class="live"><span class="live-dot"></span>Ao Vivo</div>
+        </div>
+
+        <!-- Resumo por grade -->
+        <div class="rnk-summary">
+          <div class="rnk-sum-card">
+            <div class="rnk-sum-num" id="rnk-cnt-a" style="color:#15803d">—</div>
+            <div style="display:flex;align-items:center;justify-content:center;gap:6px;margin-top:6px">
+              <span style="background:#dcfce7;color:#15803d;font-size:11px;font-weight:800;padding:2px 8px;border-radius:8px">A</span>
+              <span class="rnk-sum-lbl" style="margin:0">Score ≥ 80</span>
+            </div>
+          </div>
+          <div class="rnk-sum-card">
+            <div class="rnk-sum-num" id="rnk-cnt-b" style="color:#1d4ed8">—</div>
+            <div style="display:flex;align-items:center;justify-content:center;gap:6px;margin-top:6px">
+              <span style="background:#dbeafe;color:#1d4ed8;font-size:11px;font-weight:800;padding:2px 8px;border-radius:8px">B</span>
+              <span class="rnk-sum-lbl" style="margin:0">Score 60–79</span>
+            </div>
+          </div>
+          <div class="rnk-sum-card">
+            <div class="rnk-sum-num" id="rnk-cnt-c" style="color:#d97706">—</div>
+            <div style="display:flex;align-items:center;justify-content:center;gap:6px;margin-top:6px">
+              <span style="background:#fef9c3;color:#92400e;font-size:11px;font-weight:800;padding:2px 8px;border-radius:8px">C</span>
+              <span class="rnk-sum-lbl" style="margin:0">Score 40–59</span>
+            </div>
+          </div>
+          <div class="rnk-sum-card">
+            <div class="rnk-sum-num" id="rnk-cnt-d" style="color:#dc2626">—</div>
+            <div style="display:flex;align-items:center;justify-content:center;gap:6px;margin-top:6px">
+              <span style="background:#fee2e2;color:#dc2626;font-size:11px;font-weight:800;padding:2px 8px;border-radius:8px">D</span>
+              <span class="rnk-sum-lbl" style="margin:0">Score &lt; 40</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Filtros -->
+        <div class="rnk-filter-bar">
+          <button class="rnk-filter-btn on" onclick="rnkFilter('todos',this)">Todos</button>
+          <button class="rnk-filter-btn" onclick="rnkFilter('A',this)"><span style="background:#dcfce7;color:#15803d;padding:1px 6px;border-radius:6px;font-weight:800;margin-right:3px">A</span>Excelentes</button>
+          <button class="rnk-filter-btn" onclick="rnkFilter('B',this)"><span style="background:#dbeafe;color:#1d4ed8;padding:1px 6px;border-radius:6px;font-weight:800;margin-right:3px">B</span>Bons</button>
+          <button class="rnk-filter-btn" onclick="rnkFilter('C',this)"><span style="background:#fef9c3;color:#92400e;padding:1px 6px;border-radius:6px;font-weight:800;margin-right:3px">C</span>Regulares</button>
+          <button class="rnk-filter-btn" onclick="rnkFilter('D',this)"><span style="background:#fee2e2;color:#dc2626;padding:1px 6px;border-radius:6px;font-weight:800;margin-right:3px">D</span>Atenção</button>
+          <select id="rnk-vend-sel" class="fsel" onchange="renderRanking()" style="margin-left:auto">
+            <option value="">Todos os vendedores</option>
+          </select>
+          <select id="rnk-reg-sel" class="fsel" onchange="renderRanking()">
+            <option value="">Todas as regiões</option>
+          </select>
+        </div>
+
+        <!-- Lista -->
+        <div id="rnk-list" style="display:flex;flex-direction:column;gap:6px;"></div>
+      </div>
+
       <!-- ═══ COMPARATIVO ═══ -->
       <div class="sc" id="sc-compare">
         <div class="ph"><div><h2>Comparativo</h2><p>Ativos × Inativos × Prospectos — análise lado a lado</p></div></div>
@@ -2017,7 +2096,8 @@ document.getElementById('tq').value='';
 PG=1;applyF();renderAll();
 }
 function renderAll(){
-renderKPIs();renderGauges();renderDashCharts();renderBench();renderCompare();renderQual();renderReg();renderTbl();renderVends();updateHealthScores();renderInactivityAlerts();updateZooBadge();
+renderKPIs();renderGauges();renderDashCharts();renderBench();
+if(document.getElementById('sc-ranking')?.classList.contains('on')) renderRanking();renderCompare();renderQual();renderReg();renderTbl();renderVends();updateHealthScores();renderInactivityAlerts();updateZooBadge();
 }
 function renderKPIs(){
 const at=FIL.filter(d=>d.situacao==='ATIVO');
@@ -2787,6 +2867,7 @@ document.getElementById('sc-'+name).classList.add('on');
 const niEl=document.getElementById('ni-'+name);
 if(niEl) niEl.classList.add('on');
 document.querySelector('.content').scrollTop=0;
+if(name==='ranking'){initRanking();}
 if(name==='comparador'){initComparador();}
 if(name==='alertas-zoo'){initZooVendFilter();setTimeout(renderZooAlerts,50);}
 if(name==='impacto') setTimeout(renderImpacto,50);
@@ -5462,6 +5543,109 @@ const idA=document.getElementById('cmp2-sel-a')?.value;
 const idB=document.getElementById('cmp2-sel-b')?.value;
 if(!idA||!idB){toast('❌ Selecione duas fazendas');return;}
 toast('📄 PDF de comparação em breve!');
+}
+
+
+// ════════════════════════════════════════════════════════════════
+// RANKING POR SCORE DE SAÚDE
+// ════════════════════════════════════════════════════════════════
+let rnkGradeFilter = 'todos';
+
+function initRanking(){
+  // Popula filtros de vendedor e região
+  const vSel = document.getElementById('rnk-vend-sel');
+  const rSel = document.getElementById('rnk-reg-sel');
+  if(vSel && vSel.options.length <= 1){
+    const vends = [...new Set(ALL.map(d=>(d.nome_vendedor||d.vendedor||'').trim()).filter(Boolean))].sort();
+    vends.forEach(v=>{ const o=document.createElement('option'); o.value=v; o.textContent=v.charAt(0)+v.slice(1).toLowerCase(); vSel.appendChild(o); });
+  }
+  if(rSel && rSel.options.length <= 1){
+    const regs = [...new Set(ALL.filter(d=>d.situacao==='ATIVO').map(d=>d.regiao||'').filter(Boolean))].sort();
+    regs.forEach(r=>{ const o=document.createElement('option'); o.value=r; o.textContent=r; rSel.appendChild(o); });
+  }
+  renderRanking();
+}
+
+function rnkFilter(grade, btn){
+  rnkGradeFilter = grade;
+  document.querySelectorAll('.rnk-filter-btn').forEach(b=>b.classList.remove('on'));
+  if(btn) btn.classList.add('on');
+  renderRanking();
+}
+
+function renderRanking(){
+  const vendFilt = (document.getElementById('rnk-vend-sel')?.value||'').trim();
+  const regFilt  = (document.getElementById('rnk-reg-sel')?.value||'').trim();
+
+  // Base: apenas ativos
+  let base = ALL.filter(d=>d.situacao==='ATIVO');
+  if(vendFilt) base = base.filter(d=>(d.nome_vendedor||d.vendedor||'').trim()===vendFilt);
+  if(regFilt)  base = base.filter(d=>(d.regiao||'')===regFilt);
+
+  // Calcula score de cada um
+  const scored = base.map(d=>({d, score:calcHealthScore(d), grade:healthGrade(calcHealthScore(d))}));
+  scored.sort((a,b)=>b.score-a.score);
+
+  // Contadores por grade
+  const cnt = {A:0,B:0,C:0,D:0};
+  scored.forEach(({grade})=>cnt[grade.g]++);
+  const setTxt=(id,v)=>{const el=document.getElementById(id);if(el)el.textContent=v;};
+  setTxt('rnk-cnt-a', cnt.A);
+  setTxt('rnk-cnt-b', cnt.B);
+  setTxt('rnk-cnt-c', cnt.C);
+  setTxt('rnk-cnt-d', cnt.D);
+
+  // Filtra por grade se selecionado
+  let filtered = scored;
+  if(rnkGradeFilter !== 'todos') filtered = scored.filter(({grade})=>grade.g===rnkGradeFilter);
+
+  const list = document.getElementById('rnk-list');
+  if(!list) return;
+
+  if(!filtered.length){
+    list.innerHTML = '<div style="text-align:center;padding:40px;color:var(--muted)"><div style="font-size:32px;margin-bottom:8px">🏆</div><div style="font-size:14px;font-weight:700">Nenhuma fazenda nessa categoria</div></div>';
+    return;
+  }
+
+  const maxScore = scored[0]?.score || 100;
+
+  // Cores por grade
+  const gradeColor = {A:'#15803d', B:'#1d4ed8', C:'#d97706', D:'#dc2626'};
+  const gradeBg    = {A:'#dcfce7', B:'#dbeafe', C:'#fef9c3', D:'#fee2e2'};
+  const gradeBar   = {A:'linear-gradient(90deg,#22c55e,#15803d)', B:'linear-gradient(90deg,#60a5fa,#1d4ed8)', C:'linear-gradient(90deg,#fbbf24,#d97706)', D:'linear-gradient(90deg,#f87171,#dc2626)'};
+
+  list.innerHTML = filtered.map(({d, score, grade}, i)=>{
+    const pos = scored.findIndex(s=>s.d===d)+1;
+    const medal = pos===1?'🥇':pos===2?'🥈':pos===3?'🥉':'';
+    const barW = Math.round(score/maxScore*100);
+    const vend = d.nome_vendedor||d.vendedor||'—';
+    const col = vc(d.produtor);
+
+    // Detalhes dos campos preenchidos
+    const campos = [];
+    if(d.media_prod>0) campos.push(`${parseFloat(d.media_prod).toFixed(1)} L/vaca`);
+    if(d.gordura>0)    campos.push(`Gord. ${parseFloat(d.gordura).toFixed(2)}%`);
+    if(d.nul>0)        campos.push(`NUL ${parseFloat(d.nul).toFixed(1)}`);
+    if(d.vacas>0)      campos.push(`${d.vacas} vacas`);
+
+    return `<div class="rnk-card" onclick="openFarmModal('${d.id}','${(d.produtor||'').replace(/'/g,"\'")}')">
+      <div class="rnk-pos">${medal||'#'+pos}</div>
+      <div class="rnk-av" style="background:${col}">${ini(d.produtor)}</div>
+      <div class="rnk-info">
+        <div class="rnk-nome">${d.produtor||'—'}</div>
+        <div class="rnk-meta">👤 ${vend} &nbsp;·&nbsp; 📍 ${d.cidade||'—'}${d.regiao?' · '+d.regiao:''}</div>
+        ${campos.length?`<div style="display:flex;flex-wrap:wrap;gap:4px;margin-top:5px">${campos.map(c=>`<span style="background:#f1f5f9;color:#64748b;font-size:10px;font-weight:600;padding:2px 7px;border-radius:8px">${c}</span>`).join('')}</div>`:''}
+      </div>
+      <div class="rnk-bar-wrap">
+        <div class="rnk-bar-fill" style="width:${barW}%;background:${gradeBar[grade.g]}"></div>
+      </div>
+      <div class="rnk-score">
+        <div class="rnk-score-num" style="color:${gradeColor[grade.g]}">${score}</div>
+        <div class="rnk-score-lbl">/ 100</div>
+      </div>
+      <div class="rnk-grade" style="background:${gradeBg[grade.g]};color:${gradeColor[grade.g]}">${grade.g}</div>
+    </div>`;
+  }).join('');
 }
 
 </script>
