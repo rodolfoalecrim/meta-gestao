@@ -17,6 +17,7 @@
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/chartjs-plugin-annotation/3.0.1/chartjs-plugin-annotation.min.js"></script>
 <style>@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');:root{
 --bg:#f4f6f9;--white:#fff;--border:#e8edf2;
 --G:#22c55e;--GD:#052e16;--GM:#15803d;--GL:#dcfce7;
@@ -215,7 +216,7 @@ tbody td{padding:10px 14px;font-size:12px;}.badge{display:inline-flex;align-item
 </div>
 <script>
 (function(){
-  var BUILT = '2026-06-29T19:30:00';
+  var BUILT = '2026-06-29T20:15:00';
   function pad(n){return String(n).padStart(2,'0');}
   function fmt(d){
     var dias=['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'];
@@ -1475,6 +1476,13 @@ tbody td{padding:10px 14px;font-size:12px;}.badge{display:inline-flex;align-item
           <div class="impact-card" style="padding:18px 20px">
             <div style="font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:12px">📊 Meta vs. Referências nacionais</div>
             <div id="imp-gauge-wrap" style="display:flex;flex-direction:column;gap:10px"></div>
+            <div style="margin-top:12px;padding-top:10px;border-top:1px solid var(--border)">
+              <div style="font-size:9px;color:var(--dim);line-height:1.5">
+                <strong style="color:#d97706">🏆 Top 100 MilkPoint/ABRALEITE 2026</strong><br>
+                Média de 35.392 L/fazenda/dia entre os 100 maiores do Brasil (+8,72% vs. 2025). Região Sul: 40,47 L/animal/dia.<br>
+                <a href="https://www.milkpoint.com.br/os-100-maiores-produtores-de-leite-do-brasil/2026/" target="_blank" style="color:#d97706;text-decoration:none;font-weight:600">Fonte: MilkPoint ↗</a>
+              </div>
+            </div>
           </div>
         </div>
 
@@ -2173,7 +2181,7 @@ document.getElementById('rk-main').innerHTML=top.map((d,i)=>`
 function renderBench(){
 const at=FIL.filter(d=>d.situacao==='ATIVO');
 const refs=[
-{key:'media_prod',l:'Média L/vaca/dia',u:'L',ref:28,meta:37,icon:'🥛',desc:'Ref. Embrapa 2024: 28L | Sua carteira meta: 37L',dec:1},
+{key:'media_prod',l:'Média L/vaca/dia',u:'L',ref:28,meta:37,icon:'🥛',desc:'Embrapa: 28L | Top 100 MilkPoint 2026: 35.4L | Premium: 37L',dec:1},
 {key:'vacas',l:'Tamanho Rebanho',u:'vacas',ref:60,meta:200,icon:'🐄',desc:'Média nacional: 60 | Meta carteira: 200',dec:0,fn:a=>a.length?sum(a,'vacas')/a.length:0},
 {key:'gordura',l:'Gordura',u:'%',ref:3.5,meta:4.0,icon:'🧈',desc:'IN77 mínimo: 3.0% | Premium: 4.0%',dec:2},
 {key:'proteina',l:'Proteína',u:'%',ref:3.1,meta:3.5,icon:'🧪',desc:'IN77 mínimo: 2.9% | Premium: 3.5%',dec:2},
@@ -4712,9 +4720,31 @@ const tick=()=>{cur+=target/steps;if(cur>=target){el.textContent=fmt(target);ret
 animCount('imp-litros',tp,0);animCount('imp-vacas',tv,1);animCount('imp-fat',tp*365/1e6,1);
 set('imp-media',mp>0?mp.toFixed(1)+' L':'—');
 set('imp-ativos',at.length);set('imp-regioes',regioes);set('imp-robot',robot);
-if(mp>0) set('imp-ref','+'+(((mp/28-1)*100).toFixed(0))+'% acima da ref. Embrapa 28L');
+if(mp>0){
+const vsEmbrapa=((mp/28-1)*100).toFixed(0);
+const vsTop100=mp>=35.4?'+'+(((mp/35.4-1)*100).toFixed(0))+'% acima do Top 100 MilkPoint':'próx. ao Top 100 MilkPoint';
+set('imp-ref','+'+vsEmbrapa+'% vs. Embrapa · '+vsTop100);
+}
 const gaugeEl=document.getElementById('imp-gauge-wrap');
-if(gaugeEl){const items=[{lbl:'Carteira Meta',v:mp,col:'#15803d'},{lbl:'Ref. Embrapa',v:28,col:'#94a3b8'},{lbl:'Ref. Premium',v:37,col:'#3b82f6'}];const mx=50;gaugeEl.innerHTML=items.map(g=>`<div><div class="imp-gauge-labels"><span>${g.lbl}</span><span style="color:${g.col};font-weight:700">${g.v.toFixed(1)} L</span></div><div class="imp-gauge-bar"><div class="imp-gauge-fill" style="width:${g.v/mx*100}%;background:${g.col}"></div></div></div>`).join('');}
+if(gaugeEl){
+const items=[
+{lbl:'🌿 Carteira Meta',v:mp,col:'#15803d',src:''},
+{lbl:'🏆 Top 100 MilkPoint 2026',v:35.4,col:'#d97706',src:'35.392 L/fazenda/dia'},
+{lbl:'⭐ Ref. Premium (37L)',v:37,col:'#3b82f6',src:''},
+{lbl:'📊 Ref. Embrapa',v:28,col:'#94a3b8',src:'Embrapa 2024'},
+];
+const mx=50;
+gaugeEl.innerHTML=items.map(g=>`<div>
+<div class="imp-gauge-labels">
+<span style="font-weight:600">${g.lbl}</span>
+<div style="display:flex;align-items:center;gap:6px">
+${g.src?`<span style="font-size:8px;color:var(--dim)">${g.src}</span>`:''}
+<span style="color:${g.col};font-weight:800">${g.v.toFixed(1)} L</span>
+</div>
+</div>
+<div class="imp-gauge-bar"><div class="imp-gauge-fill" style="width:${g.v/mx*100}%;background:${g.col}"></div></div>
+</div>`).join('');
+}
 const nulScore=mnul>=12&&mnul<=18?100:mnul>0?60:50;
 mk('ch-imp-radar','radar',{labels:['Produção\nL/vaca','Gordura\n%','Proteína\n%','Saúde CCS','DEL Ideal','Balanço NUL'],datasets:[{label:'Carteira Meta',data:[Math.min(mp/45*100,100),mg>0?Math.min(mg/4.5*100,100):50,mprot>0?Math.min(mprot/3.8*100,100):50,mcs>0?Math.max(0,100-mcs/500*100):50,del_m>0?Math.max(0,100-Math.abs(del_m-165)/80*100):50,nulScore],backgroundColor:'rgba(21,128,61,0.15)',borderColor:'#15803d',borderWidth:2.5,pointBackgroundColor:'#15803d',pointRadius:5},{label:'Ref. Embrapa',data:[62,67,76,70,70,70],backgroundColor:'rgba(148,163,184,0.08)',borderColor:'rgba(148,163,184,0.5)',borderWidth:1.5,borderDash:[5,5],pointBackgroundColor:'#94a3b8',pointRadius:4}]},{...NL,scales:{r:{beginAtZero:true,max:100,ticks:{display:false},grid:{color:'rgba(0,0,0,0.05)'},pointLabels:{font:{size:10,weight:'600'},color:'#64748b'}}}});
 const regCount={};at.forEach(d=>{const r=d.regiao||'Outras';regCount[r]=(regCount[r]||0)+1;});
@@ -4726,7 +4756,25 @@ const topEl=document.getElementById('imp-top-prod');
 if(topEl) topEl.innerHTML=top.map((d,i)=>{const pct=d.media_prod/maxProd*100,medal=i===0?'🥇':i===1?'🥈':i===2?'🥉':'',acima=((d.media_prod/28-1)*100).toFixed(0);return`<div class="rr"><div class="rr-num" style="font-size:13px">${medal||'#'+(i+1)}</div><div class="rr-av" style="background:${vc(d.produtor)}">${ini(d.produtor)}</div><div style="flex:1;min-width:0"><div class="rr-name">${d.produtor}</div><div class="rr-meta">${d.cidade||''} · ${d.nome_vendedor||d.vendedor||''}</div></div><div class="rr-bar-w"><div class="rr-bar-bg"></div><div class="rr-bar-f" style="width:${pct}%;background:linear-gradient(90deg,#15803d,#22c55e)"></div></div><div style="text-align:right;flex-shrink:0"><div class="rr-val" style="color:#15803d">${parseFloat(d.media_prod).toFixed(1)} L</div><div style="font-size:9px;color:#16a34a;font-weight:700">+${acima}% Embrapa</div></div></div>`;}).join('');
 const vends=[...new Set(at.map(d=>d.nome_vendedor||d.vendedor||'').filter(Boolean))].sort();
 const mediasVend=vends.map(v=>{const g=at.filter(d=>(d.nome_vendedor||d.vendedor||'')===v&&d.media_prod>0);return g.length?+(sum(g,'media_prod')/g.length).toFixed(1):0;});
-mk('ch-impacto-bar','bar',{labels:[...vends,'📊 Embrapa','⭐ Premium'],datasets:[{label:'L/vaca/dia',data:[...mediasVend,28,37],backgroundColor:[...mediasVend.map(v=>v>=37?'rgba(21,128,61,0.85)':v>=28?'rgba(37,99,235,0.75)':'rgba(217,119,6,0.75)'),'rgba(148,163,184,0.5)','rgba(59,130,246,0.5)'],borderRadius:6,borderSkipped:false}]},{...NL,scales:{x:{...SX},y:{...SY,min:0,ticks:{color:'#94a3b8'}}}});
+mk('ch-impacto-bar','bar',{
+labels:[...vends,'📊 Embrapa','🏆 Top100 ML','⭐ Premium'],
+datasets:[{
+label:'L/vaca/dia',
+data:[...mediasVend,28,35.4,37],
+backgroundColor:[
+...mediasVend.map(v=>v>=37?'rgba(21,128,61,0.85)':v>=35.4?'rgba(21,128,61,0.65)':v>=28?'rgba(37,99,235,0.75)':'rgba(217,119,6,0.75)'),
+'rgba(148,163,184,0.5)','rgba(217,119,6,0.6)','rgba(59,130,246,0.5)'],
+borderRadius:6,borderSkipped:false
+}]
+},{...NL,
+plugins:{...NL.plugins,
+annotation:{annotations:{
+mkLine:{type:'line',yMin:35.4,yMax:35.4,borderColor:'#d97706',borderWidth:1.5,borderDash:[6,4],
+label:{display:true,content:'Top 100 MilkPoint 2026 — 35.4 L/fazenda/dia',color:'#92400e',font:{size:9,weight:'bold'},position:'end',backgroundColor:'rgba(255,251,235,0.95)',padding:{x:6,y:3},borderRadius:4}},
+embrapaLine:{type:'line',yMin:28,yMax:28,borderColor:'#94a3b8',borderWidth:1,borderDash:[4,4],
+label:{display:true,content:'Embrapa 28L',color:'#64748b',font:{size:8},position:'start',backgroundColor:'rgba(255,255,255,0.9)',padding:{x:4,y:2},borderRadius:4}},
+}}},
+scales:{x:{...SX},y:{...SY,min:0,ticks:{color:'#94a3b8'}}}});
 const regFull={};at.forEach(d=>{const r=d.regiao||'Outras';if(!regFull[r])regFull[r]={n:0,prod:0,vacas:0};regFull[r].n++;regFull[r].prod+=parseFloat(d.media_prod)||0;regFull[r].vacas+=parseInt(d.vacas)||0;});
 const regList=Object.entries(regFull).sort((a,b)=>b[1].vacas-a[1].vacas);
 const maxV=regList[0]?.[1].vacas||1;
