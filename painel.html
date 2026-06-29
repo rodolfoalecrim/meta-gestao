@@ -1348,17 +1348,24 @@ const merged = SEED_DATA.map(seed => {
 const name = (seed.produtor||'').toUpperCase().trim();
 const fbVersion = fbByName[name];
 if (fbVersion) {
-// Mescla: FB tem prioridade para campos editáveis (situacao, tecnico, etc)
-// SEED mantém dados produtivos originais se FB não tiver
+// Mescla: FB tem prioridade ABSOLUTA para campos editáveis.
+// SEED é apenas fallback quando FB não tem o campo.
 return {
 ...seed,
 ...fbVersion,
-// Preservar dados do SEED se Firebase não tiver
+// Produtivos: FB prevalece, SEED como fallback
 vacas: fbVersion.vacas || seed.vacas,
 media_prod: fbVersion.media_prod || seed.media_prod,
 prod_diaria: fbVersion.prod_diaria || seed.prod_diaria,
 gordura: fbVersion.gordura || seed.gordura,
 proteina: fbVersion.proteina || seed.proteina,
+// Gestão: FB SEMPRE prevalece — nunca deixar SEED apagar o que foi editado
+nome_vendedor: fbVersion.nome_vendedor || fbVersion.vendedor || seed.nome_vendedor || seed.vendedor || '',
+vendedor:      fbVersion.vendedor || fbVersion.nome_vendedor || seed.vendedor || seed.nome_vendedor || '',
+situacao:      fbVersion.situacao || seed.situacao || 'PROSPEC',
+produto:       fbVersion.produto  || seed.produto  || '',
+tecnico_titular:    fbVersion.tecnico_titular    || seed.tecnico_titular    || '',
+tecnico_substituto: fbVersion.tecnico_substituto || seed.tecnico_substituto || '',
 };
 }
 return seed;
@@ -1403,7 +1410,10 @@ if(s.val()){d.className='tb-dot';t.textContent='Online';}else{d.className='tb-do
 });
 function init(){
 loadSeedData().then(()=>{
+let _suppressNextFbReload = false;
 db.ref('propriedades').on('value',snap=>{
+// Quando o admin acaba de salvar, suprime o reload para evitar conflito
+if(_suppressNextFbReload){ _suppressNextFbReload=false; return; }
 const fb=[];
 snap.forEach(c=>{
 const val = c.val();
@@ -1411,7 +1421,6 @@ if(val && val.produtor) fb.push({id:c.key,...val});
 });
 ALL=mergeWithSeed(fb);
 popFilters();applyF();renderAll();
-
 console.log('Loaded:', fb.length, 'from Firebase +', (ALL.length-fb.length), 'from planilha');
 });
 ['fs','fv','fr','fp','fsi'].forEach(id=>document.getElementById(id).addEventListener('change',()=>{PG=1;applyF();renderAll();}));
@@ -2934,16 +2943,22 @@ set('ef-obs', d.obs);
 const vendSel = document.getElementById('ef-vendedor');
 if (vendSel) {
   const currentVend = (d.nome_vendedor || d.vendedor || '').toUpperCase().trim();
-  // Match select option regardless of case stored in Firebase
-  const matchOpt = [...vendSel.options].find(o => o.value.toUpperCase() === currentVend);
-  if (matchOpt) {
+  if (currentVend) {
+    // Tenta achar a opção existente (case-insensitive)
+    let matchOpt = [...vendSel.options].find(o => o.value.toUpperCase() === currentVend);
+    if (!matchOpt) {
+      // Cria a opção caso não exista (vendedor cadastrado depois)
+      const opt = document.createElement('option');
+      opt.value = currentVend;
+      opt.textContent = currentVend.charAt(0) + currentVend.slice(1).toLowerCase();
+      vendSel.appendChild(opt);
+      matchOpt = opt;
+    }
     vendSel.value = matchOpt.value;
-  } else if (currentVend) {
-    const opt = document.createElement('option');
-    opt.value = currentVend;
-    opt.textContent = currentVend.charAt(0) + currentVend.slice(1).toLowerCase();
-    vendSel.appendChild(opt);
-    vendSel.value = currentVend;
+    // Confirma que o select foi setado corretamente
+    if (vendSel.value !== matchOpt.value) vendSel.value = currentVend;
+  } else {
+    vendSel.value = '';
   }
 }
 }
@@ -2975,8 +2990,15 @@ ccs: num('ef-ccs'), cbt: num('ef-cbt'), est: num('ef-est'), nul: num('ef-nul'),
 sistema: str('ef-sistema'), ordenha: str('ef-ordenha'), obs: str('ef-obs'),
 atualizado_em: new Date().toISOString(),
 atualizado_por: 'ADMIN',
-nome_vendedor: (str('ef-vendedor') || currentFarmData?.nome_vendedor || currentFarmData?.vendedor || '').toUpperCase().trim(),
-vendedor: (str('ef-vendedor') || currentFarmData?.vendedor || currentFarmData?.nome_vendedor || '').toUpperCase().trim(),
+nome_vendedor: (() => {
+  const v = str('ef-vendedor');
+  // Se o select tem valor selecionado, usa ele; senão mantém o atual do banco
+  return (v || currentFarmData?.nome_vendedor || currentFarmData?.vendedor || '').toUpperCase().trim();
+})(),
+vendedor: (() => {
+  const v = str('ef-vendedor');
+  return (v || currentFarmData?.vendedor || currentFarmData?.nome_vendedor || '').toUpperCase().trim();
+})(),
 tecnico_titular: titularAtual,
 tecnico_substituto: substitutoAtual,
 };
@@ -2997,8 +3019,10 @@ const aidx = ALL.findIndex(d => d.id === oldSeedId);
 if (aidx !== -1) { ALL[aidx] = {...dados, id}; }
 else { ALL.push({...dados, id}); }
 } else {
+// Suprime o próximo disparo do on('value') pois já vamos atualizar ALL[] localmente
+_suppressNextFbReload = true;
 await db.ref('propriedades/' + id).update(dados);
-// ── CORREÇÃO: atualiza o objeto local em ALL[] imediatamente ──
+// Atualiza objeto local em ALL[] com os dados novos imediatamente
 const aidx = ALL.findIndex(d => d.id === id);
 if (aidx !== -1) {
 ALL[aidx] = {...ALL[aidx], ...dados, id};
@@ -3006,7 +3030,7 @@ ALL[aidx] = {...ALL[aidx], ...dados, id};
 ALL.push({...dados, id});
 }
 }
-// Atualiza filtros e re-renderiza tudo para refletir novo vendedor/dados na tela
+// Re-renderiza tudo para refletir novo vendedor/dados imediatamente
 applyF();
 renderAll();
 const snapshot = {
