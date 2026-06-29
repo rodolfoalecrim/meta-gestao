@@ -1339,11 +1339,18 @@ function mergeWithSeed(fbData){
 // Indexa Firebase por NOME (uppercase) — fonte de verdade para campos editáveis
 const fbByName = {};
 fbData.forEach(d => {
-// Normaliza: uppercase, sem espaços duplos, sem acentos comuns
 const key = (d.produtor||'').toUpperCase().trim().replace(/\s+/g,' ');
-if (!fbByName[key] || (d.atualizado_em||'') > (fbByName[key].atualizado_em||'')) {
-fbByName[key] = d;
-}
+if (!key) return;
+const existing = fbByName[key];
+if (!existing) { fbByName[key] = d; return; }
+// Prioridade: 1) ID gerado pelo Firebase (não numérico = editado manualmente)
+// 2) atualizado_em mais recente
+const dIsManual = d.id && !/^\d+$/.test(d.id);
+const exIsManual = existing.id && !/^\d+$/.test(existing.id);
+if (dIsManual && !exIsManual) { fbByName[key] = d; return; }
+if (!dIsManual && exIsManual) { return; }
+// Ambos manual ou ambos numérico: pega o mais recente
+if ((d.atualizado_em||'') > (existing.atualizado_em||'')) { fbByName[key] = d; }
 });
 
 const merged = SEED_DATA.map(seed => {
@@ -1417,6 +1424,9 @@ snap.forEach(c=>{
 const val = c.val();
 if(val && val.produtor) fb.push({id:c.key,...val});
 });
+// Registros com ID numérico vieram da importação da planilha
+// Registros com ID Firebase (-Oabc...) são edições manuais
+// O mergeWithSeed já prioriza os manuais via fbByName
 ALL=mergeWithSeed(fb);
 popFilters();applyF();renderAll();
 // Atualiza mapa se estiver aberto (dados novos do Firebase)
@@ -2064,10 +2074,14 @@ return opts;
 async function mudarVendedor(id,vend){
 const v=(vend||'').toUpperCase().trim();
 try{
-// Atualiza ALL localmente primeiro (feedback imediato)
 const idx=ALL.findIndex(d=>d.id===id);
 if(idx!==-1){ALL[idx].nome_vendedor=v;ALL[idx].vendedor=v;}
-// Salva no Firebase
+// ID numérico: importado da planilha, atualiza o nó existente
+if(id && /^\d+$/.test(id)){
+await db.ref('propriedades/'+id).update({nome_vendedor:v,vendedor:v,atualizado_em:new Date().toISOString(),atualizado_por:'ADMIN'});
+toast('✅ Vendedor atualizado: '+(v.charAt(0)+v.slice(1).toLowerCase()||'—'));
+applyF();renderAll();return;
+}
 if(id.startsWith('xl_')){
 // Cliente ainda não migrado: cria no Firebase
 const d=ALL.find(d=>d.id===id)||{};
@@ -2118,6 +2132,14 @@ document.getElementById('tpag').innerHTML=pag;
 function goPg(p){PG=p;renderTbl();}
 async function mudarSit(id,st){
 try{
+// ID numérico: registro importado da planilha — atualiza direto
+if(id && /^\d+$/.test(id)){
+await db.ref('propriedades/'+id).update({situacao:st,atualizado_em:new Date().toISOString(),atualizado_por:'ADMIN'});
+const aidx=ALL.findIndex(d=>d.id===id);
+if(aidx!==-1) ALL[aidx].situacao=st;
+toast(st==='ATIVO'?'✅ Marcado como Ativo':st==='PROSPEC'?'🎯 Marcado como Prospecto':'❌ Marcado como Inativo');
+applyF();renderAll();return;
+}
 if(id.startsWith('xl_')){
 const alreadyMigrated = MIGRATED_IDS[id];
 if(alreadyMigrated) {
@@ -3153,6 +3175,9 @@ document.getElementById('edit-farm-id').value = id;
 const aidx = ALL.findIndex(d => d.id === oldSeedId);
 if (aidx !== -1) { ALL[aidx] = {...dados, id}; }
 else { ALL.push({...dados, id}); }
+} else if (id && /^\d+$/.test(id)) {
+// ID numérico: registro importado da planilha — atualiza o nó existente
+await db.ref('propriedades/' + id).update(dados);
 } else {
 await db.ref('propriedades/' + id).update(dados);
 }
