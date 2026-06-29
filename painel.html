@@ -260,7 +260,7 @@ tbody td{padding:10px 14px;font-size:12px;}.badge{display:inline-flex;align-item
 </div>
 <script>
 (function(){
-  var BUILT = '2026-06-29T23:30:00';
+  var BUILT = '2026-06-30T00:00:00';
   function pad(n){return String(n).padStart(2,'0');}
   function fmt(d){
     var dias=['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'];
@@ -2604,7 +2604,7 @@ return`<tr>
 </button>
 </div>
 ${d.tecnico_titular?`<div style="margin-top:4px"><span class="tec-tag">🔵 ${d.tecnico_titular}</span>${d.tecnico_substituto?`<span class="tec-tag" style="background:#f5f3ff;color:#6d28d9">🟣 ${d.tecnico_substituto}</span>`:''}</div>`:''}
-</td><td style="color:#94a3b8">${d.propriedade||'—'}</td><td><span class="badge ${sc}">${sl2}</span></td><td><select class="sts" style="min-width:100px;border-color:${(d.nome_vendedor||d.vendedor)?'#93c5fd':'#e2e8f0'};color:${(d.nome_vendedor||d.vendedor)?'#1d4ed8':'#94a3b8'}" onchange="mudarVendedor('${d.id}',this.value)">${getVendOptions(d.nome_vendedor||d.vendedor||'')}</select></td><td style="color:#94a3b8">${d.cidade||'—'}</td><td style="color:#94a3b8">${d.regiao||'—'}</td><td><span class="score-badge ${healthGrade(calcHealthScore(d)).cls}">${healthGrade(calcHealthScore(d)).g} ${calcHealthScore(d)}</span></td><td style="font-weight:800;color:${(d.vacas||0)>=200?'#15803d':''}">${d.vacas||'—'}</td><td>${d.media_prod>0?parseFloat(d.media_prod).toFixed(1)+' L':'—'}</td><td>${d.prod_diaria>0?d.prod_diaria.toLocaleString('pt-BR'):'—'}</td><td style="color:#b45309">${d.gordura>0?parseFloat(d.gordura).toFixed(2)+'%':'—'}</td><td style="color:#1d4ed8">${d.proteina>0?parseFloat(d.proteina).toFixed(2)+'%':'—'}</td><td style="color:${d.nul>0?(d.nul>=12&&d.nul<=18?'#15803d':d.nul>20?'#dc2626':'#d97706'):'#94a3b8'}">${d.nul>0?parseFloat(d.nul).toFixed(1)+' mg/dL':'—'}</td><td>${d.del>0?d.del+' d':'—'}</td><td><select class="sts" onchange="mudarSit('${d.id}',this.value)"><option value="PROSPEC" ${d.situacao==='PROSPEC'?'selected':''}>🎯 Prospecto</option><option value="ATIVO" ${d.situacao==='ATIVO'?'selected':''}>✅ Ativo</option><option value="INATIVO" ${d.situacao==='INATIVO'?'selected':''}>❌ Inativo</option></select></td></tr>`;
+</td><td style="color:#94a3b8">${d.propriedade||'—'}</td><td><span class="badge ${sc}">${sl2}</span></td><td><select class="sts" style="min-width:100px;border-color:${(d.nome_vendedor||d.vendedor)?'#93c5fd':'#e2e8f0'};color:${(d.nome_vendedor||d.vendedor)?'#1d4ed8':'#94a3b8'}" onchange="mudarVendedor('${d.id}',this.value)">${getVendOptions(d.nome_vendedor||d.vendedor||'')}</select></td><td style="color:#94a3b8">${d.cidade||'—'}</td><td style="color:#94a3b8">${d.regiao||'—'}</td><td><span class="score-badge ${healthGrade(healthGrade(calcHealthScoreSimple(d)).cls}">${healthGrade(healthGrade(calcHealthScoreSimple(d)).g} ${calcHealthScoreSimple(d)}</span></td><td style="font-weight:800;color:${(d.vacas||0)>=200?'#15803d':''}">${d.vacas||'—'}</td><td>${d.media_prod>0?parseFloat(d.media_prod).toFixed(1)+' L':'—'}</td><td>${d.prod_diaria>0?d.prod_diaria.toLocaleString('pt-BR'):'—'}</td><td style="color:#b45309">${d.gordura>0?parseFloat(d.gordura).toFixed(2)+'%':'—'}</td><td style="color:#1d4ed8">${d.proteina>0?parseFloat(d.proteina).toFixed(2)+'%':'—'}</td><td style="color:${d.nul>0?(d.nul>=12&&d.nul<=18?'#15803d':d.nul>20?'#dc2626':'#d97706'):'#94a3b8'}">${d.nul>0?parseFloat(d.nul).toFixed(1)+' mg/dL':'—'}</td><td>${d.del>0?d.del+' d':'—'}</td><td><select class="sts" onchange="mudarSit('${d.id}',this.value)"><option value="PROSPEC" ${d.situacao==='PROSPEC'?'selected':''}>🎯 Prospecto</option><option value="ATIVO" ${d.situacao==='ATIVO'?'selected':''}>✅ Ativo</option><option value="INATIVO" ${d.situacao==='INATIVO'?'selected':''}>❌ Inativo</option></select></td></tr>`;
 }).join('');
 let pag=`<span>${(PG-1)*PS+1}–${Math.min(PG*PS,total)} de ${total}</span>`;
 if(tp>1){pag+=`<button class="pb" onclick="goPg(${PG-1})" ${PG===1?'disabled':''}>‹</button>`;for(let i=1;i<=tp;i++){if(tp<=7||Math.abs(i-PG)<=2||i===1||i===tp)pag+=`<button class="pb${i===PG?' on':''}" onclick="goPg(${i})">${i}</button>`;else if(Math.abs(i-PG)===3)pag+='<span>…</span>';}pag+=`<button class="pb" onclick="goPg(${PG+1})" ${PG===tp?'disabled':''}>›</button>`;}
@@ -3484,8 +3484,8 @@ ${d.nome_vendedor?`<div style="font-size:10px;opacity:.7;margin-top:2px">👤 ${
 </div>
 <div class="kpi-big" style="background:${(()=>{const s=calcHealthScore(d);const g=healthGrade(s);return s>=80?'linear-gradient(135deg,#15803d,#052e16)':s>=60?'linear-gradient(135deg,#1d4ed8,#1e3a8a)':s>=40?'linear-gradient(135deg,#d97706,#92400e)':'linear-gradient(135deg,#dc2626,#991b1b)'})()};padding:14px">
 <div style="font-size:13px;opacity:.8">⭐ Score de Saúde</div>
-<div style="font-size:28px;font-weight:900;margin-top:4px">${calcHealthScore(d)}<span style="font-size:14px;opacity:.7">/100</span></div>
-<div style="font-size:12px;font-weight:800;margin-top:2px">${healthGrade(calcHealthScore(d)).g} — ${calcHealthScore(d)>=80?'Excelente':calcHealthScore(d)>=60?'Bom':calcHealthScore(d)>=40?'Regular':'Atenção'}</div>
+<div style="font-size:28px;font-weight:900;margin-top:4px">${calcHealthScoreSimple(d)}<span style="font-size:14px;opacity:.7">/100</span></div>
+<div style="font-size:12px;font-weight:800;margin-top:2px">${healthGrade(healthGrade(calcHealthScoreSimple(d)).g} — ${calcHealthScoreSimple(d)>=80?'Excelente':calcHealthScoreSimple(d)>=60?'Bom':calcHealthScoreSimple(d)>=40?'Regular':'Atenção'}</div>
 </div>`;
 db.ref('historico/' + id).orderByChild('data').limitToLast(20).once('value', snap => {
 const entries = [];
@@ -5133,68 +5133,164 @@ if(bar){bar.style.width=pct+'%';bar.style.background=pct>=90?'#16a34a':pct>=60?'
 // ════════════════════════════════════════════════════════════════
 // SCORE DE SAÚDE DO CLIENTE
 // ════════════════════════════════════════════════════════════════
-function calcHealthScore(d){
-let score=0;
-const mp=parseFloat(d.media_prod)||0;
-const gord=parseFloat(d.gordura)||0;
-const prot=parseFloat(d.proteina)||0;
-const ccs=parseFloat(d.ccs)||0;
-const cbt=parseFloat(d.cbt)||0;
-const nul=parseFloat(d.nul)||0;
-const vacas=parseFloat(d.vacas)||0;
-const novilhas=parseFloat(d.novilhas)||0;
-const bezerras=parseFloat(d.bezerras)||0;
-const secas=parseFloat(d.secas)||0;
-const lactacao=parseFloat(d.lactacao)||0;
+// ── CACHE DE VISITAS para Score (carregado assincronamente) ────────────────
+const VISITAS_CACHE = {}; // {farmId: [visita, ...]} última visita de cada fazenda
 
-// Produção (0–30 pts) — reduzido para abrir espaço ao rebanho
-if(mp>=37) score+=30; else if(mp>=28) score+=15+Math.round((mp-28)/9*15); else score+=Math.max(0,Math.round(mp/28*15));
-
-// Gordura (0–15 pts)
-if(gord>=3.5) score+=15; else if(gord>=3.0) score+=8; else if(gord>0) score+=3;
-
-// Proteína (0–10 pts)
-if(prot>=3.0) score+=10; else if(prot>=2.9) score+=6; else if(prot>0) score+=2;
-
-// CCS (0–10 pts)
-if(ccs>0){ if(ccs<200) score+=10; else if(ccs<400) score+=5; else score+=1; }
-
-// NUL (0–10 pts)
-if(nul>=12&&nul<=18) score+=10; else if(nul>0) score+=4;
-
-// Estrutura do rebanho — novilhas (0–10 pts)
-// Novilhas ideais: 20–30% do total de vacas (garantia de reposição)
-if(vacas>0&&novilhas>0){
-const pctNov=novilhas/vacas;
-if(pctNov>=0.20&&pctNov<=0.35) score+=10;
-else if(pctNov>=0.10&&pctNov<0.50) score+=5;
-else if(novilhas>0) score+=2;
+async function loadVisitasParaScore(ids){
+// Carrega a última visita de cada fazenda que ainda não está em cache
+const promises = ids
+.filter(id => id && !VISITAS_CACHE[id])
+.map(async id => {
+try {
+const snap = await db.ref('visitas/'+id).orderByChild('criado_em').limitToLast(3).once('value');
+const list = [];
+snap.forEach(c => list.push(c.val()));
+VISITAS_CACHE[id] = list.reverse(); // mais recente primeiro
+} catch(e){ VISITAS_CACHE[id] = []; }
+});
+await Promise.all(promises);
 }
 
-// Bezerras (0–5 pts)
-// Presença de bezerras indica reposição ativa e manejo reprodutivo
-if(bezerras>0&&vacas>0){
-const pctBez=bezerras/vacas;
-if(pctBez>=0.10&&pctBez<=0.30) score+=5;
-else if(bezerras>0) score+=2;
+function calcHealthScore(d, visitas){
+// visitas: array das últimas visitas (mais recente primeiro), opcional
+// Se não fornecido usa dados estáticos do cadastro como fallback
+
+const v = visitas && visitas.length ? visitas[0] : null; // visita mais recente
+const v2 = visitas && visitas.length > 1 ? visitas[1] : null; // penúltima
+
+// Decide fonte de cada campo: visita > cadastro
+const mp   = parseFloat(v?.media_prod || d.media_prod) || 0;
+const gord = parseFloat(v?.gordura    || d.gordura)    || 0;
+const prot = parseFloat(v?.proteina   || d.proteina)   || 0;
+const nul  = parseFloat(v?.nul        || d.nul)        || 0;
+const ccs  = parseFloat(v?.ccs        || d.ccs)        || 0;
+const cbt  = parseFloat(v?.cbt        || d.cbt)        || 0;
+const del  = parseFloat(v?.del        || d.del)        || 0;
+
+// ── DIMENSÃO 1: PRODUTIVIDADE (0–35 pts) ──────────────────────────────────
+let prod_pts = 0;
+
+// L/vaca/dia (0–20 pts): referências Embrapa 28L, Top100 35.4L, Premium 37L
+if(mp >= 37)       prod_pts += 20;
+else if(mp >= 35.4) prod_pts += 17;
+else if(mp >= 28)   prod_pts += 10 + Math.round((mp-28)/7.4*7);
+else if(mp > 0)     prod_pts += Math.max(2, Math.round(mp/28*10));
+
+// DEL ideal 150–180 dias (0–8 pts): fora do range = ciclos mal gerenciados
+if(del>=150 && del<=180)       prod_pts += 8;
+else if(del>=130 && del<=200)  prod_pts += 4;
+else if(del > 0)               prod_pts += 1;
+
+// Tendência de produção: compara última vs penúltima visita (0–7 pts)
+if(v && v2){
+const mp1 = parseFloat(v.media_prod)||0;
+const mp2 = parseFloat(v2.media_prod)||0;
+if(mp1>0 && mp2>0){
+const delta = (mp1-mp2)/mp2*100;
+if(delta >= 5)       prod_pts += 7;  // crescendo forte
+else if(delta >= 2)  prod_pts += 5;  // crescendo
+else if(delta >= -2) prod_pts += 3;  // estável
+else if(delta >= -5) prod_pts += 1;  // queda leve
+// queda forte: 0 pts
+}
 }
 
-// Vacas secas (0–10 pts)
-// Ideal: 15–20% do rebanho em período seco (indica manejo reprodutivo correto)
-if(vacas>0&&secas>0){
-const pctSec=secas/vacas;
-if(pctSec>=0.10&&pctSec<=0.22) score+=10;
-else if(pctSec>0&&pctSec<0.30) score+=5;
-else if(secas>0) score+=2;
+// ── DIMENSÃO 2: QUALIDADE DO LEITE (0–35 pts) ─────────────────────────────
+let qual_pts = 0;
+
+// Gordura % IN77 mínimo 3.0 (0–10 pts)
+if(gord >= 4.0)      qual_pts += 10;
+else if(gord >= 3.5) qual_pts += 8;
+else if(gord >= 3.0) qual_pts += 5;
+else if(gord > 0)    qual_pts += 2;
+
+// Proteína % IN77 mínimo 2.9 (0–8 pts)
+if(prot >= 3.3)      qual_pts += 8;
+else if(prot >= 3.0) qual_pts += 6;
+else if(prot >= 2.9) qual_pts += 4;
+else if(prot > 0)    qual_pts += 1;
+
+// NUL mg/dL ideal 12–18 (0–10 pts): reflete equilíbrio proteína-energia
+if(nul >= 12 && nul <= 18)     qual_pts += 10;
+else if(nul >= 10 && nul <= 20) qual_pts += 5;
+else if(nul > 0)                qual_pts += 2;
+
+// CCS (0–7 pts): saúde do úbere
+if(ccs > 0 && ccs < 200)       qual_pts += 7;
+else if(ccs >= 200 && ccs < 400) qual_pts += 4;
+else if(ccs >= 400 && ccs < 800) qual_pts += 1;
+
+// ── DIMENSÃO 3: MANEJO (0–30 pts) — baseado nos scores da ficha de visita ──
+let manejo_pts = 0;
+
+if(v){
+// Cada score pode ser: 'bom'=3pts, 'medio'=1pt, 'ruim'=0pts, ''=não avaliado
+const sc = (campo) => {
+const val = (v[campo]||'').toLowerCase();
+return val==='bom'?3 : val==='medio'?1 : val==='ruim'?0 : null;
+};
+
+// Nutrição (0–12 pts): silagem, mistura, consumo, sobras
+const scores_nutri = [
+sc('silagem'),    // qualidade silagem
+sc('mistura'),    // homogeneidade mistura
+sc('consumo'),    // consumo de alimentos
+sc('presecado'),  // pré-secado
+].filter(x => x !== null);
+if(scores_nutri.length){
+const avg = scores_nutri.reduce((a,b)=>a+b,0)/scores_nutri.length;
+manejo_pts += Math.round(avg/3*12);
 }
 
-return Math.min(score,100);
+// Conforto animal (0–10 pts): cama, termal, ventilação
+const scores_conf = [
+sc('cama'),       // qualidade da cama
+sc('termal'),     // conforto térmico
+sc('kps'),        // avaliação KPS/locomotória
+sc('cascos'),     // cascos
+].filter(x => x !== null);
+if(scores_conf.length){
+const avg = scores_conf.reduce((a,b)=>a+b,0)/scores_conf.length;
+manejo_pts += Math.round(avg/3*10);
+}
+
+// ECC — Escore de Condição Corporal (0–5 pts): ideal 2.75–3.25
+const ecc = parseFloat(v.ecc)||0;
+if(ecc >= 2.75 && ecc <= 3.25) manejo_pts += 5;
+else if(ecc >= 2.5 && ecc <= 3.5) manejo_pts += 3;
+else if(ecc > 0) manejo_pts += 1;
+
+// Sanidade: baixa mortalidade e descarte (0–3 pts)
+const mort = parseFloat(v.morte_vacas)||0;
+const desc = parseFloat(v.descarte)||0;
+const retenc = parseFloat(v.retencao)||0;
+const cetose = parseFloat(v.cetose)||0;
+if(mort===0 && desc<=2 && retenc<=5 && cetose<=3) manejo_pts += 3;
+else if(mort<=1 && desc<=5) manejo_pts += 1;
+}
+
+const total = Math.min(prod_pts + qual_pts + manejo_pts, 100);
+return {
+total,
+prod: Math.min(prod_pts, 35),
+qual: Math.min(qual_pts, 35),
+manejo: Math.min(manejo_pts, 30),
+temVisita: !!v,
+};
+}
+
+// Wrapper simples para compatibilidade (retorna só o número)
+function calcHealthScoreSimple(d){
+const cached = VISITAS_CACHE[d.id];
+const r = calcHealthScore(d, cached);
+return typeof r === 'object' ? r.total : r;
 }
 
 function healthGrade(s){
-if(s>=80) return {g:'A',cls:'score-A'};
-if(s>=60) return {g:'B',cls:'score-B'};
-if(s>=40) return {g:'C',cls:'score-C'};
+const n = typeof s === 'object' ? s.total : s;
+if(n>=80) return {g:'A',cls:'score-A'};
+if(n>=60) return {g:'B',cls:'score-B'};
+if(n>=40) return {g:'C',cls:'score-C'};
 return {g:'D',cls:'score-D'};
 }
 
@@ -5551,8 +5647,7 @@ toast('📄 PDF de comparação em breve!');
 // ════════════════════════════════════════════════════════════════
 let rnkGradeFilter = 'todos';
 
-function initRanking(){
-  // Popula filtros de vendedor e região
+async function initRanking(){
   const vSel = document.getElementById('rnk-vend-sel');
   const rSel = document.getElementById('rnk-reg-sel');
   if(vSel && vSel.options.length <= 1){
@@ -5563,6 +5658,12 @@ function initRanking(){
     const regs = [...new Set(ALL.filter(d=>d.situacao==='ATIVO').map(d=>d.regiao||'').filter(Boolean))].sort();
     regs.forEach(r=>{ const o=document.createElement('option'); o.value=r; o.textContent=r; rSel.appendChild(o); });
   }
+  // Mostra loading enquanto carrega visitas
+  const list = document.getElementById('rnk-list');
+  if(list) list.innerHTML = '<div style="text-align:center;padding:32px;color:var(--muted)"><div style="font-size:24px;margin-bottom:8px">⏳</div><div style="font-size:13px;font-weight:600">Carregando visitas do Firebase...</div><div style="font-size:11px;margin-top:4px">O score será calculado com base nas fichas de visita</div></div>';
+  // Carrega visitas dos ativos
+  const ids = ALL.filter(d=>d.situacao==='ATIVO').map(d=>d.id).filter(Boolean);
+  await loadVisitasParaScore(ids);
   renderRanking();
 }
 
@@ -5577,74 +5678,105 @@ function renderRanking(){
   const vendFilt = (document.getElementById('rnk-vend-sel')?.value||'').trim();
   const regFilt  = (document.getElementById('rnk-reg-sel')?.value||'').trim();
 
-  // Base: apenas ativos
   let base = ALL.filter(d=>d.situacao==='ATIVO');
   if(vendFilt) base = base.filter(d=>(d.nome_vendedor||d.vendedor||'').trim()===vendFilt);
   if(regFilt)  base = base.filter(d=>(d.regiao||'')===regFilt);
 
-  // Calcula score de cada um
-  const scored = base.map(d=>({d, score:calcHealthScore(d), grade:healthGrade(calcHealthScore(d))}));
-  scored.sort((a,b)=>b.score-a.score);
+  // Calcula score com visitas do cache
+  const scored = base.map(d=>{
+    const visitas = VISITAS_CACHE[d.id] || null;
+    const res = calcHealthScore(d, visitas);
+    const scoreObj = typeof res==='object' ? res : {total:res,prod:0,qual:0,manejo:0,temVisita:false};
+    return {d, scoreObj, grade:healthGrade(scoreObj.total)};
+  });
+  scored.sort((a,b)=>b.scoreObj.total-a.scoreObj.total);
 
-  // Contadores por grade
-  const cnt = {A:0,B:0,C:0,D:0};
+  const cnt={A:0,B:0,C:0,D:0};
   scored.forEach(({grade})=>cnt[grade.g]++);
   const setTxt=(id,v)=>{const el=document.getElementById(id);if(el)el.textContent=v;};
-  setTxt('rnk-cnt-a', cnt.A);
-  setTxt('rnk-cnt-b', cnt.B);
-  setTxt('rnk-cnt-c', cnt.C);
-  setTxt('rnk-cnt-d', cnt.D);
+  setTxt('rnk-cnt-a',cnt.A); setTxt('rnk-cnt-b',cnt.B);
+  setTxt('rnk-cnt-c',cnt.C); setTxt('rnk-cnt-d',cnt.D);
 
-  // Filtra por grade se selecionado
   let filtered = scored;
-  if(rnkGradeFilter !== 'todos') filtered = scored.filter(({grade})=>grade.g===rnkGradeFilter);
+  if(rnkGradeFilter!=='todos') filtered=scored.filter(({grade})=>grade.g===rnkGradeFilter);
 
-  const list = document.getElementById('rnk-list');
+  const list=document.getElementById('rnk-list');
   if(!list) return;
 
   if(!filtered.length){
-    list.innerHTML = '<div style="text-align:center;padding:40px;color:var(--muted)"><div style="font-size:32px;margin-bottom:8px">🏆</div><div style="font-size:14px;font-weight:700">Nenhuma fazenda nessa categoria</div></div>';
+    list.innerHTML='<div style="text-align:center;padding:40px;color:var(--muted)"><div style="font-size:32px;margin-bottom:8px">🏆</div><div style="font-size:14px;font-weight:700">Nenhuma fazenda nessa categoria</div></div>';
     return;
   }
 
-  const maxScore = scored[0]?.score || 100;
+  const gradeColor={A:'#15803d',B:'#1d4ed8',C:'#d97706',D:'#dc2626'};
+  const gradeBg={A:'#dcfce7',B:'#dbeafe',C:'#fef9c3',D:'#fee2e2'};
+  const gradeBar={A:'linear-gradient(90deg,#22c55e,#15803d)',B:'linear-gradient(90deg,#60a5fa,#1d4ed8)',C:'linear-gradient(90deg,#fbbf24,#d97706)',D:'linear-gradient(90deg,#f87171,#dc2626)'};
 
-  // Cores por grade
-  const gradeColor = {A:'#15803d', B:'#1d4ed8', C:'#d97706', D:'#dc2626'};
-  const gradeBg    = {A:'#dcfce7', B:'#dbeafe', C:'#fef9c3', D:'#fee2e2'};
-  const gradeBar   = {A:'linear-gradient(90deg,#22c55e,#15803d)', B:'linear-gradient(90deg,#60a5fa,#1d4ed8)', C:'linear-gradient(90deg,#fbbf24,#d97706)', D:'linear-gradient(90deg,#f87171,#dc2626)'};
+  // Função para mini-barra de dimensão
+  const miniBar=(val,max,col)=>`<div style="height:4px;background:#f1f5f9;border-radius:2px;overflow:hidden;margin-top:2px"><div style="height:100%;width:${Math.round(val/max*100)}%;background:${col};border-radius:2px"></div></div>`;
 
-  list.innerHTML = filtered.map(({d, score, grade}, i)=>{
-    const pos = scored.findIndex(s=>s.d===d)+1;
-    const medal = pos===1?'🥇':pos===2?'🥈':pos===3?'🥉':'';
-    const barW = Math.round(score/maxScore*100);
-    const vend = d.nome_vendedor||d.vendedor||'—';
-    const col = vc(d.produtor);
+  list.innerHTML=filtered.map(({d,scoreObj,grade})=>{
+    const pos=scored.findIndex(s=>s.d===d)+1;
+    const medal=pos===1?'🥇':pos===2?'🥈':pos===3?'🥉':'';
+    const col=vc(d.produtor);
+    const vend=d.nome_vendedor||d.vendedor||'—';
+    const {total,prod,qual,manejo,temVisita}=scoreObj;
+    const barW=Math.round(total/100*100);
 
-    // Detalhes dos campos preenchidos
-    const campos = [];
-    if(d.media_prod>0) campos.push(`${parseFloat(d.media_prod).toFixed(1)} L/vaca`);
-    if(d.gordura>0)    campos.push(`Gord. ${parseFloat(d.gordura).toFixed(2)}%`);
-    if(d.nul>0)        campos.push(`NUL ${parseFloat(d.nul).toFixed(1)}`);
-    if(d.vacas>0)      campos.push(`${d.vacas} vacas`);
+    // Fonte dos dados
+    const v=VISITAS_CACHE[d.id]?.[0];
+    const mp=parseFloat(v?.media_prod||d.media_prod)||0;
+    const gord=parseFloat(v?.gordura||d.gordura)||0;
+    const nul=parseFloat(v?.nul||d.nul)||0;
+    const ccs=parseFloat(v?.ccs||d.ccs)||0;
+
+    const ultimaVisita=v?.data?new Date(v.data).toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit',year:'2-digit'}):'';
+    const semVisita=!temVisita;
 
     return `<div class="rnk-card" onclick="openFarmModal('${d.id}','${(d.produtor||'').replace(/'/g,"\'")}')">
-      <div class="rnk-pos">${medal||'#'+pos}</div>
-      <div class="rnk-av" style="background:${col}">${ini(d.produtor)}</div>
-      <div class="rnk-info">
-        <div class="rnk-nome">${d.produtor||'—'}</div>
-        <div class="rnk-meta">👤 ${vend} &nbsp;·&nbsp; 📍 ${d.cidade||'—'}${d.regiao?' · '+d.regiao:''}</div>
-        ${campos.length?`<div style="display:flex;flex-wrap:wrap;gap:4px;margin-top:5px">${campos.map(c=>`<span style="background:#f1f5f9;color:#64748b;font-size:10px;font-weight:600;padding:2px 7px;border-radius:8px">${c}</span>`).join('')}</div>`:''}
+<div class="rnk-pos" style="font-size:${pos<=3?'16':'12'}px">${medal||'#'+pos}</div>
+<div class="rnk-av" style="background:${col}">${ini(d.produtor)}</div>
+<div class="rnk-info">
+  <div style="display:flex;align-items:center;gap:6px">
+    <div class="rnk-nome">${d.produtor||'—'}</div>
+    ${semVisita?'<span style="background:#fef9c3;color:#92400e;font-size:9px;font-weight:700;padding:1px 6px;border-radius:6px">Sem visita</span>':''}
+    ${ultimaVisita?`<span style="font-size:9px;color:var(--muted)">📅 ${ultimaVisita}</span>`:''}
+  </div>
+  <div class="rnk-meta">👤 ${vend} · 📍 ${d.cidade||'—'}${d.regiao?' · '+d.regiao:''}</div>
+  <!-- Breakdown das 3 dimensões -->
+  <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-top:8px">
+    <div>
+      <div style="display:flex;justify-content:space-between;font-size:9px;font-weight:700;color:#0891b2">
+        <span>🥛 Produtividade</span><span>${prod}/35</span>
       </div>
-      <div class="rnk-bar-wrap">
-        <div class="rnk-bar-fill" style="width:${barW}%;background:${gradeBar[grade.g]}"></div>
+      ${miniBar(prod,35,'#0891b2')}
+      ${mp>0?`<div style="font-size:9px;color:var(--muted);margin-top:1px">${mp.toFixed(1)} L/vaca</div>`:''}
+    </div>
+    <div>
+      <div style="display:flex;justify-content:space-between;font-size:9px;font-weight:700;color:#b45309">
+        <span>🧈 Qualidade</span><span>${qual}/35</span>
       </div>
-      <div class="rnk-score">
-        <div class="rnk-score-num" style="color:${gradeColor[grade.g]}">${score}</div>
-        <div class="rnk-score-lbl">/ 100</div>
+      ${miniBar(qual,35,'#b45309')}
+      ${gord>0?`<div style="font-size:9px;color:var(--muted);margin-top:1px">G:${gord.toFixed(2)}% ${nul>0?'NUL:'+nul.toFixed(1):''}</div>`:''}
+    </div>
+    <div>
+      <div style="display:flex;justify-content:space-between;font-size:9px;font-weight:700;color:#7c3aed">
+        <span>⚙️ Manejo</span><span>${manejo}/30</span>
       </div>
-      <div class="rnk-grade" style="background:${gradeBg[grade.g]};color:${gradeColor[grade.g]}">${grade.g}</div>
-    </div>`;
+      ${miniBar(manejo,30,'#7c3aed')}
+      ${semVisita?'<div style="font-size:9px;color:#94a3b8;margin-top:1px">Preencher ficha</div>':v?`<div style="font-size:9px;color:var(--muted);margin-top:1px">${[v.silagem,v.mistura,v.consumo].filter(x=>x==='bom').length}/3 ótimos</div>`:''}
+    </div>
+  </div>
+</div>
+<div class="rnk-bar-wrap" style="align-self:center">
+  <div class="rnk-bar-fill" style="width:${barW}%;background:${gradeBar[grade.g]}"></div>
+</div>
+<div class="rnk-score" style="align-self:center">
+  <div class="rnk-score-num" style="color:${gradeColor[grade.g]}">${total}</div>
+  <div class="rnk-score-lbl">/ 100</div>
+</div>
+<div class="rnk-grade" style="background:${gradeBg[grade.g]};color:${gradeColor[grade.g]};align-self:center">${grade.g}</div>
+</div>`;
   }).join('');
 }
 
