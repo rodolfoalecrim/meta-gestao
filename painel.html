@@ -2719,15 +2719,17 @@ set('ef-obs', d.obs);
 const vendSel = document.getElementById('ef-vendedor');
 if (vendSel) {
   const currentVend = (d.nome_vendedor || d.vendedor || '').toUpperCase().trim();
-  // Add option if not in list
-  const existing = [...vendSel.options].some(o => o.value === currentVend);
-  if (currentVend && !existing) {
+  // Match select option regardless of case stored in Firebase
+  const matchOpt = [...vendSel.options].find(o => o.value.toUpperCase() === currentVend);
+  if (matchOpt) {
+    vendSel.value = matchOpt.value;
+  } else if (currentVend) {
     const opt = document.createElement('option');
     opt.value = currentVend;
     opt.textContent = currentVend.charAt(0) + currentVend.slice(1).toLowerCase();
     vendSel.appendChild(opt);
+    vendSel.value = currentVend;
   }
-  vendSel.value = currentVend;
 }
 }
 async function salvarEdicaoAdmin() {
@@ -2758,8 +2760,8 @@ ccs: num('ef-ccs'), cbt: num('ef-cbt'), est: num('ef-est'), nul: num('ef-nul'),
 sistema: str('ef-sistema'), ordenha: str('ef-ordenha'), obs: str('ef-obs'),
 atualizado_em: new Date().toISOString(),
 atualizado_por: 'ADMIN',
-nome_vendedor: str('ef-vendedor') || currentFarmData?.nome_vendedor || currentFarmData?.vendedor || '',
-vendedor: str('ef-vendedor') || currentFarmData?.vendedor || '',
+nome_vendedor: (str('ef-vendedor') || currentFarmData?.nome_vendedor || currentFarmData?.vendedor || '').toUpperCase().trim(),
+vendedor: (str('ef-vendedor') || currentFarmData?.vendedor || currentFarmData?.nome_vendedor || '').toUpperCase().trim(),
 tecnico_titular: titularAtual,
 tecnico_substituto: substitutoAtual,
 };
@@ -2778,9 +2780,20 @@ currentFarmId = id;
 document.getElementById('edit-farm-id').value = id;
 const aidx = ALL.findIndex(d => d.id === oldSeedId);
 if (aidx !== -1) { ALL[aidx] = {...dados, id}; }
+else { ALL.push({...dados, id}); }
 } else {
 await db.ref('propriedades/' + id).update(dados);
+// ── CORREÇÃO: atualiza o objeto local em ALL[] imediatamente ──
+const aidx = ALL.findIndex(d => d.id === id);
+if (aidx !== -1) {
+ALL[aidx] = {...ALL[aidx], ...dados, id};
+} else {
+ALL.push({...dados, id});
 }
+}
+// Atualiza filtros e re-renderiza tudo para refletir novo vendedor/dados na tela
+applyF();
+renderAll();
 const snapshot = {
 data: new Date().toISOString(),
 vacas: dados.vacas, lactacao: dados.lactacao, secas: dados.secas || 0,
