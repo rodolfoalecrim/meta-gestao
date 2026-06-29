@@ -2389,24 +2389,35 @@ renderMapAll();
 }
 function getMapFiltered() {
 mapVendedor = document.getElementById('map-vend-sel')?.value || '';
-// Usa ALL se já carregado, senão MAP_CLIENTES como fallback
-const useAll = typeof ALL !== 'undefined' && ALL.length > 0;
-let source;
-if (useAll) {
-  // Enriquece ALL com coordenadas do MAP_COORDS quando ausentes
-  source = ALL.map(c => {
-    if (c.lat) return c;
-    const key = (c.produtor || c.nome || '').toUpperCase().trim();
-    const coords = MAP_COORDS[key];
-    return coords ? {...c, lat: coords.lat, lng: coords.lng} : c;
+// Constrói índice do ALL por nome (uppercase) para enriquecer o MAP_CLIENTES
+const allByName = {};
+if (typeof ALL !== 'undefined' && ALL.length) {
+  ALL.forEach(d => {
+    const key = (d.produtor || d.nome || '').toUpperCase().trim();
+    if (key) allByName[key] = d;
   });
-} else {
-  // Fallback: MAP_CLIENTES adaptado para formato do ALL
-  source = MAP_CLIENTES.map(c => ({
+}
+// Base: MAP_CLIENTES (sempre tem lat/lng e nome)
+// Sobrescreve situacao, vendedor e produto com dados do ALL/Firebase quando disponível
+const source = MAP_CLIENTES.map(c => {
+  const key = (c.nome || '').toUpperCase().trim();
+  const live = allByName[key];
+  return {
     ...c,
     produtor: c.nome,
-    nome_vendedor: c.vendedor || '',
-  }));
+    situacao: live ? (live.situacao || c.situacao) : c.situacao,
+    nome_vendedor: live ? (live.nome_vendedor || live.vendedor || '') : (c.vendedor || ''),
+    vendedor: live ? (live.vendedor || live.nome_vendedor || c.vendedor || '') : (c.vendedor || ''),
+    produto: live ? (live.produto || c.produto) : c.produto,
+  };
+});
+// Adiciona clientes novos do Firebase que não existem no MAP_CLIENTES
+if (typeof ALL !== 'undefined') {
+  ALL.forEach(d => {
+    const key = (d.produtor || d.nome || '').toUpperCase().trim();
+    const inBase = MAP_CLIENTES.some(c => (c.nome||'').toUpperCase().trim() === key);
+    if (!inBase && d.lat) source.push({...d, nome: d.produtor||d.nome});
+  });
 }
 return source.filter(c => {
   if (!c.lat) return false;
