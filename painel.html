@@ -1419,9 +1419,11 @@ if(val && val.produtor) fb.push({id:c.key,...val});
 });
 ALL=mergeWithSeed(fb);
 popFilters();applyF();renderAll();
-// Se o mapa estiver aberto, atualiza também
-if (typeof theMap !== 'undefined' && theMap && document.getElementById('sc-mapa')?.classList.contains('on')) {
-renderMapAll();
+// Atualiza mapa se estiver aberto (dados novos do Firebase)
+if (typeof theMap !== 'undefined' && theMap &&
+    document.getElementById('sc-mapa') &&
+    document.getElementById('sc-mapa').classList.contains('on')) {
+  renderMapAll();
 }
 console.log('Loaded:', fb.length, 'from Firebase +', (ALL.length-fb.length), 'from planilha');
 });
@@ -2332,6 +2334,11 @@ const MAP_CLIENTES = [{"nome":"ZITO LUNARDI","cidade":"CAMPO ERE -SC","situacao"
 let theMap = null, mapLayerGroup = null, mapInited = false;
 let mapFiltro = 'all', mapModo = 'city', mapVendedor = '';
 const MCOLS = {ATIVO:'#16a34a', PROSPEC:'#ca8a04', INATIVO:'#dc2626'};
+// Índice de coordenadas do MAP_CLIENTES (estático, sempre disponível)
+const MAP_COORDS = {};
+MAP_CLIENTES.forEach(c => {
+  if (c.lat && c.nome) MAP_COORDS[(c.nome||'').toUpperCase().trim()] = {lat: c.lat, lng: c.lng};
+});
 function navMapa() {
 document.querySelectorAll('.sc').forEach(s => s.classList.remove('on'));
 document.querySelectorAll('.ni').forEach(n => n.classList.remove('on'));
@@ -2382,14 +2389,31 @@ renderMapAll();
 }
 function getMapFiltered() {
 mapVendedor = document.getElementById('map-vend-sel')?.value || '';
-// Usa ALL (dados em tempo real do Firebase + SEED) em vez do MAP_CLIENTES estático
-const source = (typeof ALL !== 'undefined' && ALL.length) ? ALL : MAP_CLIENTES;
+// Usa ALL se já carregado, senão MAP_CLIENTES como fallback
+const useAll = typeof ALL !== 'undefined' && ALL.length > 0;
+let source;
+if (useAll) {
+  // Enriquece ALL com coordenadas do MAP_COORDS quando ausentes
+  source = ALL.map(c => {
+    if (c.lat) return c;
+    const key = (c.produtor || c.nome || '').toUpperCase().trim();
+    const coords = MAP_COORDS[key];
+    return coords ? {...c, lat: coords.lat, lng: coords.lng} : c;
+  });
+} else {
+  // Fallback: MAP_CLIENTES adaptado para formato do ALL
+  source = MAP_CLIENTES.map(c => ({
+    ...c,
+    produtor: c.nome,
+    nome_vendedor: c.vendedor || '',
+  }));
+}
 return source.filter(c => {
-if (!c.lat) return false;
-if (mapFiltro !== 'all' && (c.situacao||'').toLowerCase() !== mapFiltro) return false;
-const vend = (c.nome_vendedor || c.vendedor || '').toUpperCase().trim();
-if (mapVendedor && vend !== mapVendedor.toUpperCase().trim()) return false;
-return true;
+  if (!c.lat) return false;
+  if (mapFiltro !== 'all' && (c.situacao||'').toLowerCase() !== mapFiltro) return false;
+  const vend = (c.nome_vendedor || c.vendedor || '').toUpperCase().trim();
+  if (mapVendedor && vend !== mapVendedor.toUpperCase().trim()) return false;
+  return true;
 });
 }
 function renderMapAll() {
@@ -2466,7 +2490,7 @@ const total = d.at + d.pr + d.in;
 const items = d.list.slice(0, 7).map(c => {
 const col = MCOLS[c.situacao]||'#94a3b8';
 const badge = c.situacao==='ATIVO'?'✅':c.situacao==='PROSPEC'?'🎯':'❌';
-return `<div class="map-popup-cli"><span>${badge}</span><span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:11px">${c.nome}</span><span style="color:#94a3b8;white-space:nowrap;font-size:10px">${c.vacas}🐄</span></div>`;
+return `<div class="map-popup-cli"><span>${badge}</span><span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:11px">${c.produtor||c.nome}</span><span style="color:#94a3b8;white-space:nowrap;font-size:10px">${c.vacas}🐄</span></div>`;
 }).join('');
 const more = d.list.length > 7 ? `<div style="color:#94a3b8;font-size:10px;margin-top:3px">+${d.list.length-7} mais...</div>` : '';
 return `<div>
@@ -2488,14 +2512,14 @@ function buildClientPopupMap(c) {
 const color = MCOLS[c.situacao]||'#64748b';
 const badge = c.situacao==='ATIVO'?'✅ Ativo':c.situacao==='PROSPEC'?'🎯 Prospecto':'❌ Inativo';
 return `<div>
-<div class="map-popup-title">${c.nome}</div>
+<div class="map-popup-title">${c.produtor||c.nome}</div>
 <div class="map-popup-badges">
 <span class="map-popup-badge" style="background:${color}22;color:${color}">${badge}</span>
 <span class="map-popup-badge" style="background:#eff6ff;color:#1d4ed8">${c.produto}</span>
 </div>
 <div class="map-popup-rows">
 <div class="map-popup-row"><span class="map-popup-key">Cidade</span><span class="map-popup-val">${c.cidade}</span></div>
-<div class="map-popup-row"><span class="map-popup-key">Vendedor</span><span class="map-popup-val">${c.vendedor}</span></div>
+<div class="map-popup-row"><span class="map-popup-key">Vendedor</span><span class="map-popup-val">${c.nome_vendedor||c.vendedor}</span></div>
 <div class="map-popup-row"><span class="map-popup-key">Vacas</span><span class="map-popup-val">${c.vacas} 🐄</span></div>
 ${c.media_prod>0?`<div class="map-popup-row"><span class="map-popup-key">Média</span><span class="map-popup-val">${c.media_prod.toFixed(1)} L/vaca</span></div>`:''}
 ${c.prod_diaria>0?`<div class="map-popup-row"><span class="map-popup-key">Prod/dia</span><span class="map-popup-val">${c.prod_diaria.toLocaleString('pt-BR')} L</span></div>`:''}
@@ -2519,7 +2543,7 @@ const items = list.map(c => {
 const col = MCOLS[c.situacao]||'#94a3b8';
 return `<div class="map-cli-item" onclick="theMap.flyTo([${c.lat},${c.lng}],13,{animate:true})">
 <div class="map-cli-dot" style="background:${col}"></div>
-<div class="map-cli-name" title="${c.nome}">${c.nome}</div>
+<div class="map-cli-name" title="${c.produtor||c.nome}">${c.produtor||c.nome}</div>
 <div class="map-cli-vac" style="color:${col}">${c.vacas}🐄</div>
 </div>`;
 }).join('');
