@@ -307,7 +307,7 @@
       </div>
       <!-- ═══ VENDEDORES ═══ -->
       <div class="sc" id="sc-vends">
-        <div class="ph"><div><h2>Performance por Vendedor</h2><p>Vacas em lactação atendidas e produção — clique no vendedor para ver o ranking de produtores</p></div></div>
+        <div class="ph"><div><h2>Performance por Vendedor</h2><p>Total de vacas atendidas e produção — clique no vendedor para ver o ranking de produtores</p></div></div>
         <div class="vg" id="vgrid"></div>
         <div class="g3">
           <div class="cc"><div class="cc-hdr"><span class="cc-ico">🐄</span><span class="cc-title">Vacas em Lactação por Vendedor</span></div><canvas id="ch-conv" height="220"></canvas></div>
@@ -1916,20 +1916,23 @@ toast('Erro: '+e.message, true);
 }
 function renderVends(){
 const vends=[...new Set(ALL.map(d=>d.nome_vendedor||d.vendedor||''))].filter(Boolean).sort();
-// ordena por vacas em lactação (desc)
+// ordena por total de vacas (desc), lactação como desempate
 const vendsSorted=[...vends].sort((a,b)=>{
+const va=sum(ALL.filter(d=>(d.nome_vendedor||d.vendedor||'')===a&&d.situacao==='ATIVO'),'vacas');
+const vb=sum(ALL.filter(d=>(d.nome_vendedor||d.vendedor||'')===b&&d.situacao==='ATIVO'),'vacas');
+if(vb!==va) return vb-va;
 const la=sum(ALL.filter(d=>(d.nome_vendedor||d.vendedor||'')===a&&d.situacao==='ATIVO'),'lactacao');
 const lb=sum(ALL.filter(d=>(d.nome_vendedor||d.vendedor||'')===b&&d.situacao==='ATIVO'),'lactacao');
 return lb-la;
 });
 // max vacas em lactação para barra de progresso
-const maxLac=Math.max(1,...vendsSorted.map(v=>sum(ALL.filter(d=>(d.nome_vendedor||d.vendedor||'')===v&&d.situacao==='ATIVO'),'lactacao')));
+const maxLac=Math.max(1,...vendsSorted.map(v=>sum(ALL.filter(d=>(d.nome_vendedor||d.vendedor||'')===v&&d.situacao==='ATIVO'),'vacas')));
 document.getElementById('vgrid').innerHTML=vendsSorted.map(v=>{
 const rows=ALL.filter(d=>(d.nome_vendedor||d.vendedor||'')===v);
 const at=rows.filter(d=>d.situacao==='ATIVO'),pr=rows.filter(d=>d.situacao==='PROSPEC');
 const vacs=sum(at,'vacas'),prod=sum(at,'prod_diaria'),mp=avg(at,'media_prod');
 const lac=sum(at,'lactacao');
-const lacPct=Math.min(lac/maxLac*100,100);
+const lacPct=Math.min(vacs/maxLac*100,100);
 const col=vc(v);
 // cor baseada em desempenho (vacas em lactação)
 const lacColor=lacPct>=70?'#16a34a':lacPct>=35?'#d97706':'#dc2626';
@@ -1944,15 +1947,16 @@ return`<div class="vc" style="cursor:pointer" onclick="openVendRanking('${v}')" 
     <div class="vc-sub">${rows.length} propriedades · clique para ranking</div>
   </div>
   <div style="margin-left:auto;text-align:right">
-    <div class="vc-pct" style="color:${lacColor}">${lac>=1000?(lac/1000).toFixed(1)+'k':lac}</div>
-    <div class="vc-plbl">em lactação</div>
+    <div class="vc-pct" style="color:${col}">${vacs>=1000?(vacs/1000).toFixed(1)+'k':vacs}</div>
+    <div class="vc-plbl">vacas</div>
+    ${lac>0?`<div style="font-size:10px;color:#64748b;margin-top:2px;font-weight:600">🍼 ${lac>=1000?(lac/1000).toFixed(1)+'k':lac} lact.</div>`:''}
   </div>
 </div>
 <div class="vc-bar"><div class="vc-bar-f" style="width:${lacPct}%;background:${col}"></div></div>
 <div class="vc-stats">
   <div class="vc-st"><div class="vc-sv" style="color:#16a34a">${at.length}</div><div class="vc-sl">Ativos</div></div>
   <div class="vc-st"><div class="vc-sv" style="color:#d97706">${pr.length}</div><div class="vc-sl">Prospec</div></div>
-  <div class="vc-st"><div class="vc-sv" style="color:#1d4ed8">${vacs>=1000?(vacs/1000).toFixed(1)+'k':vacs}</div><div class="vc-sl">Vacas</div></div>
+  <div class="vc-st"><div class="vc-sv" style="color:#15803d">${lac>=1000?(lac/1000).toFixed(1)+'k':lac||'—'}</div><div class="vc-sl">Lact.</div></div>
   <div class="vc-st"><div class="vc-sv" style="color:#0891b2">${mp>0?mp.toFixed(1):'—'}</div><div class="vc-sl">L/vaca</div></div>
 </div>
 </div>`;
