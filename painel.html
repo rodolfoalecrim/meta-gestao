@@ -260,7 +260,7 @@ tbody td{padding:10px 14px;font-size:12px;}.badge{display:inline-flex;align-item
 </div>
 <script>
 (function(){
-  var BUILT = '2026-06-30T00:00:00';
+  var BUILT = '2026-06-30T00:30:00';
   function pad(n){return String(n).padStart(2,'0');}
   function fmt(d){
     var dias=['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'];
@@ -5152,133 +5152,133 @@ await Promise.all(promises);
 }
 
 function calcHealthScore(d, visitas){
-// visitas: array das últimas visitas (mais recente primeiro), opcional
-// Se não fornecido usa dados estáticos do cadastro como fallback
+// Visita mais recente e penúltima para tendência
+const v  = visitas && visitas.length ? visitas[0] : null;
+const v2 = visitas && visitas.length > 1 ? visitas[1] : null;
 
-const v = visitas && visitas.length ? visitas[0] : null; // visita mais recente
-const v2 = visitas && visitas.length > 1 ? visitas[1] : null; // penúltima
-
-// Decide fonte de cada campo: visita > cadastro
+// Fonte de cada campo: visita recente > cadastro
 const mp   = parseFloat(v?.media_prod || d.media_prod) || 0;
 const gord = parseFloat(v?.gordura    || d.gordura)    || 0;
 const prot = parseFloat(v?.proteina   || d.proteina)   || 0;
 const nul  = parseFloat(v?.nul        || d.nul)        || 0;
 const ccs  = parseFloat(v?.ccs        || d.ccs)        || 0;
-const cbt  = parseFloat(v?.cbt        || d.cbt)        || 0;
 const del  = parseFloat(v?.del        || d.del)        || 0;
 
-// ── DIMENSÃO 1: PRODUTIVIDADE (0–35 pts) ──────────────────────────────────
+// ═══════════════════════════════════════════════════════════════
+// DIMENSÃO 1 — PRODUTIVIDADE  (50 pts = 50% da nota total)
+// ═══════════════════════════════════════════════════════════════
 let prod_pts = 0;
 
-// L/vaca/dia (0–20 pts): referências Embrapa 28L, Top100 35.4L, Premium 37L
-if(mp >= 37)       prod_pts += 20;
-else if(mp >= 35.4) prod_pts += 17;
-else if(mp >= 28)   prod_pts += 10 + Math.round((mp-28)/7.4*7);
-else if(mp > 0)     prod_pts += Math.max(2, Math.round(mp/28*10));
+// L/vaca/dia — faixas definidas pelo usuário (0–40 pts)
+// 20–30 L: nível base | 30–40 L: bom | >40 L: ótimo | >45 L: máximo
+if      (mp >= 45)  prod_pts += 40;   // excelência absoluta
+else if (mp >= 40)  prod_pts += 32;   // acima de 40L
+else if (mp >= 30)  prod_pts += Math.round(16 + (mp-30)/10*16); // 30–40L → 16–32 pts
+else if (mp >= 20)  prod_pts += Math.round(4  + (mp-20)/10*12); // 20–30L → 4–16 pts
+else if (mp >  0)   prod_pts += 2;    // qualquer produção registrada
 
-// DEL ideal 150–180 dias (0–8 pts): fora do range = ciclos mal gerenciados
-if(del>=150 && del<=180)       prod_pts += 8;
-else if(del>=130 && del<=200)  prod_pts += 4;
-else if(del > 0)               prod_pts += 1;
-
-// Tendência de produção: compara última vs penúltima visita (0–7 pts)
+// Tendência entre visitas (0–10 pts) — evolução é tão importante quanto o valor
 if(v && v2){
-const mp1 = parseFloat(v.media_prod)||0;
-const mp2 = parseFloat(v2.media_prod)||0;
-if(mp1>0 && mp2>0){
-const delta = (mp1-mp2)/mp2*100;
-if(delta >= 5)       prod_pts += 7;  // crescendo forte
-else if(delta >= 2)  prod_pts += 5;  // crescendo
-else if(delta >= -2) prod_pts += 3;  // estável
-else if(delta >= -5) prod_pts += 1;  // queda leve
-// queda forte: 0 pts
-}
+  const mp1 = parseFloat(v.media_prod) || 0;
+  const mp2 = parseFloat(v2.media_prod) || 0;
+  if(mp1 > 0 && mp2 > 0){
+    const delta = (mp1 - mp2) / mp2 * 100;
+    if     (delta >= 5)   prod_pts += 10; // crescimento forte
+    else if(delta >= 2)   prod_pts += 7;  // crescimento
+    else if(delta >= -2)  prod_pts += 4;  // estável
+    else if(delta >= -5)  prod_pts += 1;  // queda leve
+    // queda forte: 0
+  }
 }
 
-// ── DIMENSÃO 2: QUALIDADE DO LEITE (0–35 pts) ─────────────────────────────
+prod_pts = Math.min(prod_pts, 50);
+
+// ═══════════════════════════════════════════════════════════════
+// DIMENSÃO 2 — QUALIDADE DO LEITE  (30 pts)
+// Peso maior: gordura e CCS conforme solicitado
+// ═══════════════════════════════════════════════════════════════
 let qual_pts = 0;
 
-// Gordura % IN77 mínimo 3.0 (0–10 pts)
-if(gord >= 4.0)      qual_pts += 10;
-else if(gord >= 3.5) qual_pts += 8;
-else if(gord >= 3.0) qual_pts += 5;
-else if(gord > 0)    qual_pts += 2;
+// Gordura % — maior peso da dimensão (0–12 pts)
+if      (gord >= 4.0) qual_pts += 12;
+else if (gord >= 3.7) qual_pts += 10;
+else if (gord >= 3.5) qual_pts += 8;
+else if (gord >= 3.2) qual_pts += 6;
+else if (gord >= 3.0) qual_pts += 4;
+else if (gord >  0)   qual_pts += 1;
 
-// Proteína % IN77 mínimo 2.9 (0–8 pts)
-if(prot >= 3.3)      qual_pts += 8;
-else if(prot >= 3.0) qual_pts += 6;
-else if(prot >= 2.9) qual_pts += 4;
-else if(prot > 0)    qual_pts += 1;
+// CCS cel/mL — saúde do úbere (0–10 pts)
+if      (ccs >  0 && ccs <  150) qual_pts += 10;
+else if (ccs >= 150 && ccs < 200) qual_pts += 8;
+else if (ccs >= 200 && ccs < 400) qual_pts += 5;
+else if (ccs >= 400 && ccs < 600) qual_pts += 2;
+else if (ccs >= 600)              qual_pts += 0;
 
-// NUL mg/dL ideal 12–18 (0–10 pts): reflete equilíbrio proteína-energia
-if(nul >= 12 && nul <= 18)     qual_pts += 10;
-else if(nul >= 10 && nul <= 20) qual_pts += 5;
-else if(nul > 0)                qual_pts += 2;
+// Proteína % (0–5 pts)
+if      (prot >= 3.3) qual_pts += 5;
+else if (prot >= 3.0) qual_pts += 4;
+else if (prot >= 2.9) qual_pts += 3;
+else if (prot >  0)   qual_pts += 1;
 
-// CCS (0–7 pts): saúde do úbere
-if(ccs > 0 && ccs < 200)       qual_pts += 7;
-else if(ccs >= 200 && ccs < 400) qual_pts += 4;
-else if(ccs >= 400 && ccs < 800) qual_pts += 1;
+// NUL mg/dL — equilíbrio proteína-energia (0–3 pts)
+if      (nul >= 12 && nul <= 18) qual_pts += 3;
+else if (nul >= 10 && nul <= 20) qual_pts += 1;
 
-// ── DIMENSÃO 3: MANEJO (0–30 pts) — baseado nos scores da ficha de visita ──
+qual_pts = Math.min(qual_pts, 30);
+
+// ═══════════════════════════════════════════════════════════════
+// DIMENSÃO 3 — MANEJO  (20 pts)
+// Pesos maiores: mistura, silagem, pré-secado e conforto animal
+// ═══════════════════════════════════════════════════════════════
 let manejo_pts = 0;
 
 if(v){
-// Cada score pode ser: 'bom'=3pts, 'medio'=1pt, 'ruim'=0pts, ''=não avaliado
-const sc = (campo) => {
-const val = (v[campo]||'').toLowerCase();
-return val==='bom'?3 : val==='medio'?1 : val==='ruim'?0 : null;
-};
+  // Helper: converte score bom/medio/ruim em pontos proporcionais
+  const sc = (campo, max) => {
+    const val = (v[campo] || '').toLowerCase();
+    if(val === 'bom')   return max;
+    if(val === 'medio') return Math.round(max * 0.5);
+    if(val === 'ruim')  return 0;
+    return null; // não avaliado — não penaliza
+  };
 
-// Nutrição (0–12 pts): silagem, mistura, consumo, sobras
-const scores_nutri = [
-sc('silagem'),    // qualidade silagem
-sc('mistura'),    // homogeneidade mistura
-sc('consumo'),    // consumo de alimentos
-sc('presecado'),  // pré-secado
-].filter(x => x !== null);
-if(scores_nutri.length){
-const avg = scores_nutri.reduce((a,b)=>a+b,0)/scores_nutri.length;
-manejo_pts += Math.round(avg/3*12);
+  // Qualidade da silagem (0–5 pts) — base de toda a nutrição
+  const sil = sc('silagem', 5);
+  if(sil !== null) manejo_pts += sil;
+
+  // Mistura dos alimentos (0–5 pts) — homogeneidade = aproveitamento real
+  const mis = sc('mistura', 5);
+  if(mis !== null) manejo_pts += mis;
+
+  // Pré-secado (0–4 pts)
+  const pre = sc('presecado', 4);
+  if(pre !== null) manejo_pts += pre;
+
+  // Conforto dos animais (0–4 pts) — média de cama + termal
+  const cama  = sc('cama',   4);
+  const term  = sc('termal', 4);
+  const conf_vals = [cama, term].filter(x => x !== null);
+  if(conf_vals.length) manejo_pts += Math.round(conf_vals.reduce((a,b)=>a+b,0)/conf_vals.length);
+
+  // Consumo (0–2 pts) — indicador de palatabilidade e oferta
+  const cons = sc('consumo', 2);
+  if(cons !== null) manejo_pts += cons;
 }
 
-// Conforto animal (0–10 pts): cama, termal, ventilação
-const scores_conf = [
-sc('cama'),       // qualidade da cama
-sc('termal'),     // conforto térmico
-sc('kps'),        // avaliação KPS/locomotória
-sc('cascos'),     // cascos
-].filter(x => x !== null);
-if(scores_conf.length){
-const avg = scores_conf.reduce((a,b)=>a+b,0)/scores_conf.length;
-manejo_pts += Math.round(avg/3*10);
-}
+manejo_pts = Math.min(manejo_pts, 20);
 
-// ECC — Escore de Condição Corporal (0–5 pts): ideal 2.75–3.25
-const ecc = parseFloat(v.ecc)||0;
-if(ecc >= 2.75 && ecc <= 3.25) manejo_pts += 5;
-else if(ecc >= 2.5 && ecc <= 3.5) manejo_pts += 3;
-else if(ecc > 0) manejo_pts += 1;
-
-// Sanidade: baixa mortalidade e descarte (0–3 pts)
-const mort = parseFloat(v.morte_vacas)||0;
-const desc = parseFloat(v.descarte)||0;
-const retenc = parseFloat(v.retencao)||0;
-const cetose = parseFloat(v.cetose)||0;
-if(mort===0 && desc<=2 && retenc<=5 && cetose<=3) manejo_pts += 3;
-else if(mort<=1 && desc<=5) manejo_pts += 1;
-}
-
+// ═══════════════════════════════════════════════════════════════
+// TOTAL
+// ═══════════════════════════════════════════════════════════════
 const total = Math.min(prod_pts + qual_pts + manejo_pts, 100);
 return {
-total,
-prod: Math.min(prod_pts, 35),
-qual: Math.min(qual_pts, 35),
-manejo: Math.min(manejo_pts, 30),
-temVisita: !!v,
+  total,
+  prod:   prod_pts,
+  qual:   qual_pts,
+  manejo: manejo_pts,
+  temVisita: !!v,
 };
 }
-
 // Wrapper simples para compatibilidade (retorna só o número)
 function calcHealthScoreSimple(d){
 const cached = VISITAS_CACHE[d.id];
@@ -5747,23 +5747,23 @@ function renderRanking(){
   <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-top:8px">
     <div>
       <div style="display:flex;justify-content:space-between;font-size:9px;font-weight:700;color:#0891b2">
-        <span>🥛 Produtividade</span><span>${prod}/35</span>
+        <span>🥛 Produtividade</span><span>${prod}/50</span>
       </div>
-      ${miniBar(prod,35,'#0891b2')}
+      ${miniBar(prod,50,'#0891b2')}
       ${mp>0?`<div style="font-size:9px;color:var(--muted);margin-top:1px">${mp.toFixed(1)} L/vaca</div>`:''}
     </div>
     <div>
       <div style="display:flex;justify-content:space-between;font-size:9px;font-weight:700;color:#b45309">
-        <span>🧈 Qualidade</span><span>${qual}/35</span>
+        <span>🧈 Qualidade</span><span>${qual}/30</span>
       </div>
-      ${miniBar(qual,35,'#b45309')}
+      ${miniBar(qual,30,'#b45309')}
       ${gord>0?`<div style="font-size:9px;color:var(--muted);margin-top:1px">G:${gord.toFixed(2)}% ${nul>0?'NUL:'+nul.toFixed(1):''}</div>`:''}
     </div>
     <div>
       <div style="display:flex;justify-content:space-between;font-size:9px;font-weight:700;color:#7c3aed">
-        <span>⚙️ Manejo</span><span>${manejo}/30</span>
+        <span>⚙️ Manejo</span><span>${manejo}/20</span>
       </div>
-      ${miniBar(manejo,30,'#7c3aed')}
+      ${miniBar(manejo,20,'#7c3aed')}
       ${semVisita?'<div style="font-size:9px;color:#94a3b8;margin-top:1px">Preencher ficha</div>':v?`<div style="font-size:9px;color:var(--muted);margin-top:1px">${[v.silagem,v.mistura,v.consumo].filter(x=>x==='bom').length}/3 ótimos</div>`:''}
     </div>
   </div>
