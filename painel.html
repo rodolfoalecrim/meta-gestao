@@ -130,12 +130,6 @@ tbody td{padding:10px 14px;font-size:12px;}.badge{display:inline-flex;align-item
 .score-badge{display:inline-flex;align-items:center;gap:4px;font-size:10px;font-weight:700;padding:2px 8px;border-radius:20px;}
 .score-A{background:#dcfce7;color:#15803d;}.score-B{background:#dbeafe;color:#1d4ed8;}
 .score-C{background:#fef9c3;color:#92400e;}.score-D{background:#fee2e2;color:#dc2626;}
-@keyframes countUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
-.imp-counter{animation:countUp .6s ease-out;}
-.imp-gauge-bar{height:10px;background:#f1f5f9;border-radius:5px;overflow:hidden;margin:4px 0;}
-.imp-gauge-fill{height:100%;border-radius:5px;transition:width 1.2s cubic-bezier(.4,0,.2,1);}
-.imp-gauge-row{display:flex;flex-direction:column;}
-.imp-gauge-labels{display:flex;justify-content:space-between;font-size:9px;color:var(--muted);font-weight:600;}
 .zoo-card{background:white;border:1px solid var(--border);border-radius:12px;overflow:hidden;transition:box-shadow .15s;margin-bottom:0;}
 .zoo-card:hover{box-shadow:var(--shadow-md);}
 .zoo-card-hdr{display:flex;align-items:center;gap:12px;padding:14px 16px;cursor:pointer;}
@@ -1407,97 +1401,34 @@ tbody td{padding:10px 14px;font-size:12px;}.badge{display:inline-flex;align-item
 
       <!-- ═══ IMPACTO EM NÚMEROS ═══ -->
       <div class="sc" id="sc-impacto">
-
-        <!-- HEADER VITRINE -->
-        <div style="background:linear-gradient(135deg,#052e16 0%,#15803d 55%,#22c55e 100%);border-radius:20px;padding:32px 36px;margin-bottom:20px;position:relative;overflow:hidden">
-          <div style="position:absolute;top:-40px;right:-40px;width:200px;height:200px;border-radius:50%;background:rgba(255,255,255,0.04)"></div>
-          <div style="position:absolute;bottom:-60px;right:80px;width:280px;height:280px;border-radius:50%;background:rgba(255,255,255,0.03)"></div>
-          <div style="position:relative;z-index:1">
-            <div style="display:flex;align-items:center;gap:10px;margin-bottom:20px">
-              <img src="https://i.ibb.co/placeholder/meta-logo.png" onerror="this.style.display='none'" style="height:28px">
-              <span style="color:rgba(255,255,255,0.5);font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:1px">Meta Nutrição e Saúde Animal</span>
-              <span style="margin-left:auto;background:rgba(255,255,255,0.15);color:white;font-size:10px;font-weight:700;padding:4px 12px;border-radius:20px;border:1px solid rgba(255,255,255,0.2)" id="imp-live-tag">● Dados em tempo real</span>
-            </div>
-            <div style="font-size:13px;color:rgba(255,255,255,0.6);font-weight:500;margin-bottom:6px;text-transform:uppercase;letter-spacing:.8px">Resultados comprovados no campo</div>
-            <div style="font-size:28px;font-weight:800;color:white;margin-bottom:28px;letter-spacing:-.5px">Transformando a pecuária leiteira do Sul do Brasil</div>
-            <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:0;border-top:1px solid rgba(255,255,255,0.15);padding-top:24px">
-              <div style="border-right:1px solid rgba(255,255,255,0.15);padding-right:24px">
-                <div class="imp-counter" id="imp-litros" style="font-size:44px;font-weight:900;color:white;letter-spacing:-2px;line-height:1">—</div>
-                <div style="color:rgba(255,255,255,0.7);font-size:12px;font-weight:600;margin-top:4px">Litros produzidos / dia</div>
-                <div style="color:rgba(255,255,255,0.4);font-size:10px;margin-top:2px">pelos clientes Meta ativos</div>
-              </div>
-              <div style="border-right:1px solid rgba(255,255,255,0.15);padding:0 24px">
-                <div class="imp-counter" id="imp-vacas" style="font-size:44px;font-weight:900;color:white;letter-spacing:-2px;line-height:1">—</div>
-                <div style="color:rgba(255,255,255,0.7);font-size:12px;font-weight:600;margin-top:4px">Vacas em produção</div>
-                <div style="color:rgba(255,255,255,0.4);font-size:10px;margin-top:2px">rebanho total atendido</div>
-              </div>
-              <div style="border-right:1px solid rgba(255,255,255,0.15);padding:0 24px">
-                <div class="imp-counter" id="imp-media" style="font-size:44px;font-weight:900;color:#86efac;letter-spacing:-2px;line-height:1">—</div>
-                <div style="color:rgba(255,255,255,0.7);font-size:12px;font-weight:600;margin-top:4px">L / vaca / dia — média</div>
-                <div style="color:rgba(255,255,255,0.4);font-size:10px;margin-top:2px" id="imp-ref">+32% acima da ref. Embrapa 28L</div>
-              </div>
-              <div style="padding-left:24px">
-                <div class="imp-counter" id="imp-fat" style="font-size:44px;font-weight:900;color:white;letter-spacing:-2px;line-height:1">—</div>
-                <div style="color:rgba(255,255,255,0.7);font-size:12px;font-weight:600;margin-top:4px">Milhões de L / ano</div>
-                <div style="color:rgba(255,255,255,0.4);font-size:10px;margin-top:2px">projeção da carteira ativa</div>
-              </div>
-            </div>
+        <div class="ph"><div><h2>📊 Impacto em Números</h2><p>Resultados reais da carteira Meta — dados ao vivo para apresentar a prospectos</p></div></div>
+        <div class="impact-hero" id="impact-hero">
+          <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:24px">
+            <div><div class="impact-num" id="imp-litros">—</div><div class="impact-lbl">Litros/dia produzidos</div><div style="margin-top:8px;font-size:11px;opacity:.6">pelos clientes Meta ativos</div></div>
+            <div><div class="impact-num" id="imp-vacas">—</div><div class="impact-lbl">Vacas em produção</div><div style="margin-top:8px;font-size:11px;opacity:.6">rebanho total atendido</div></div>
+            <div><div class="impact-num" id="imp-media">—</div><div class="impact-lbl">L/vaca/dia média</div><div style="margin-top:8px;font-size:11px;opacity:.6" id="imp-ref">vs. ref. Embrapa 28L</div></div>
+            <div><div class="impact-num" id="imp-fat">—</div><div class="impact-lbl">Mi L/ano faturados</div><div style="margin-top:8px;font-size:11px;opacity:.6">projeção da carteira ativa</div></div>
           </div>
         </div>
-
-        <!-- LINHA 2: 3 KPI pills + gauge produção vs Embrapa -->
-        <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1.4fr;gap:14px;margin-bottom:20px">
-          <div class="impact-card" style="display:flex;align-items:center;gap:14px;text-align:left;padding:18px 20px">
-            <div style="width:44px;height:44px;border-radius:12px;background:#f0fdf4;display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0">🏡</div>
-            <div><div class="impact-card-val" id="imp-ativos" style="color:#15803d;font-size:28px">—</div><div class="impact-card-lbl" style="text-align:left">Produtores Ativos</div></div>
-          </div>
-          <div class="impact-card" style="display:flex;align-items:center;gap:14px;text-align:left;padding:18px 20px">
-            <div style="width:44px;height:44px;border-radius:12px;background:#eff6ff;display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0">🗺️</div>
-            <div><div class="impact-card-val" id="imp-regioes" style="color:#1d4ed8;font-size:28px">—</div><div class="impact-card-lbl" style="text-align:left">Regiões Atendidas</div></div>
-          </div>
-          <div class="impact-card" style="display:flex;align-items:center;gap:14px;text-align:left;padding:18px 20px">
-            <div style="width:44px;height:44px;border-radius:12px;background:#f5f3ff;display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0">🤖</div>
-            <div><div class="impact-card-val" id="imp-robot" style="color:#7c3aed;font-size:28px">—</div><div class="impact-card-lbl" style="text-align:left">Fazendas Robotizadas</div></div>
-          </div>
-          <!-- Gauge: meta vs Embrapa -->
-          <div class="impact-card" style="padding:18px 20px">
-            <div style="font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px">📊 Produção média vs. Referências</div>
-            <div id="imp-gauge-wrap" style="display:flex;flex-direction:column;gap:8px"></div>
-          </div>
+        <div class="impact-grid">
+          <div class="impact-card"><div class="impact-card-val" id="imp-ativos" style="color:#15803d">—</div><div class="impact-card-lbl">Produtores Ativos</div></div>
+          <div class="impact-card"><div class="impact-card-val" id="imp-regioes" style="color:#1d4ed8">—</div><div class="impact-card-lbl">Regiões Atendidas</div></div>
+          <div class="impact-card"><div class="impact-card-val" id="imp-robot" style="color:#7c3aed">—</div><div class="impact-card-lbl">Fazendas Robotizadas</div></div>
         </div>
-
-        <!-- LINHA 3: Gráficos interativos lado a lado -->
-        <div style="display:grid;grid-template-columns:1.2fr 1fr;gap:14px;margin-bottom:14px">
-          <!-- Radar: carteira vs Embrapa -->
+        <div class="g2">
           <div class="cc">
-            <div class="cc-hdr"><span class="cc-ico">🎯</span><span class="cc-title">Perfil de qualidade — carteira Meta vs. referências nacionais</span></div>
-            <canvas id="ch-imp-radar" height="220"></canvas>
-          </div>
-          <!-- Donut: distribuição por região -->
-          <div class="cc">
-            <div class="cc-hdr"><span class="cc-ico">🗺️</span><span class="cc-title">Distribuição por região</span></div>
-            <canvas id="ch-imp-donut" height="220"></canvas>
-          </div>
-        </div>
-
-        <!-- LINHA 4: Top produtores + evolução mensal -->
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px">
-          <div class="cc">
-            <div class="cc-hdr"><span class="cc-ico">🏆</span><span class="cc-title">Top 10 produtores</span><span class="cc-sub" style="margin-left:auto;background:#f0fdf4;color:#15803d;padding:2px 8px;border-radius:8px;font-size:9px;font-weight:700">PROVA SOCIAL</span></div>
+            <div class="cc-hdr"><span class="cc-ico">🏆</span><span class="cc-title">Top produtores — L/vaca/dia</span><span class="cc-sub" style="margin-left:auto">prova social para prospectos</span></div>
             <div id="imp-top-prod"></div>
           </div>
           <div class="cc">
-            <div class="cc-hdr"><span class="cc-ico">📈</span><span class="cc-title">Produção média por vendedor vs. Embrapa</span></div>
-            <canvas id="ch-impacto-bar" height="220"></canvas>
+            <div class="cc-hdr"><span class="cc-ico">🗺️</span><span class="cc-title">Resultado por região</span></div>
+            <div id="imp-por-regiao"></div>
           </div>
         </div>
-
-        <!-- LINHA 5: Resultados por região (full width) -->
-        <div class="cc" style="margin-bottom:14px">
-          <div class="cc-hdr"><span class="cc-ico">🌎</span><span class="cc-title">Resultado por região — vacas atendidas e produção média</span></div>
-          <div id="imp-por-regiao" style="display:grid;grid-template-columns:repeat(2,1fr);gap:8px"></div>
+        <div class="cc" style="margin-bottom:16px">
+          <div class="cc-hdr"><span class="cc-ico">📈</span><span class="cc-title">Produção média da carteira vs. Referência Nacional (Embrapa 28 L/vaca)</span></div>
+          <canvas id="ch-impacto-bar" height="140"></canvas>
         </div>
-
       </div>
 
       <!-- ═══ CALCULADORA ═══ -->
@@ -4679,84 +4610,72 @@ async function uploadSeedToFirebase() {
 
 
 // ════════════════════════════════════════════════════════════════
-// IMPACTO EM NÚMEROS — vitrine interativa
+// IMPACTO EM NÚMEROS
 // ════════════════════════════════════════════════════════════════
 function renderImpacto(){
 const at=ALL.filter(d=>d.situacao==='ATIVO');
 const tp=sum(at,'prod_diaria'), tv=sum(at,'vacas'), mp=avg(at,'media_prod');
 const robot=at.filter(d=>d.ordenha==='ROBOTIZADA').length;
 const regioes=[...new Set(at.map(d=>d.regiao||'').filter(Boolean))].length;
-const mg=avg(at.filter(d=>d.gordura>0),'gordura');
-const mprot=avg(at.filter(d=>d.proteina>0),'proteina');
-const mcs=avg(at.filter(d=>d.ccs>0),'ccs');
-const del_m=avg(at.filter(d=>d.del>0),'del');
-const mnul=avg(at.filter(d=>d.nul>0),'nul');
-const set=(id,v)=>{const el=document.getElementById(id);if(el)el.textContent=v;};
 
-// Contadores animados
-function animCount(id,target,dec=0){
-const el=document.getElementById(id);if(!el||!target)return;
-const dur=1000,steps=40,step=dur/steps;let cur=0;
-const tick=()=>{cur+=target/steps;if(cur>=target){el.textContent=target>=1000?(target/1000).toFixed(dec)+'k':target.toFixed(dec);return;}
-el.textContent=cur>=1000?(cur/1000).toFixed(dec)+'k':Math.floor(cur);setTimeout(tick,step);};tick();
-}
-animCount('imp-litros',tp,0);
-animCount('imp-vacas',tv,1);
-animCount('imp-fat',tp*365/1e6,1);
+// Hero
+const set=(id,v)=>{const el=document.getElementById(id);if(el)el.textContent=v;};
+set('imp-litros', tp>=1000?(tp/1000).toFixed(0)+'k':tp||'—');
+set('imp-vacas', tv>=1000?(tv/1000).toFixed(1)+'k':tv||'—');
 set('imp-media', mp>0?mp.toFixed(1)+' L':'—');
+set('imp-fat', tp>0?(tp*365/1e6).toFixed(1):'—');
 set('imp-ativos', at.length);
 set('imp-regioes', regioes);
 set('imp-robot', robot);
-if(mp>0) set('imp-ref','+'+(((mp/28-1)*100).toFixed(0))+'% acima da ref. Embrapa 28L');
 
-// Gauge barras comparativas
-const gaugeEl=document.getElementById('imp-gauge-wrap');
-if(gaugeEl){
-const items=[{lbl:'Carteira Meta',v:mp,max:50,col:'#15803d'},{lbl:'Ref. Embrapa',v:28,max:50,col:'#94a3b8'},{lbl:'Premium 37L',v:37,max:50,col:'#3b82f6'}];
-gaugeEl.innerHTML=items.map(g=>`<div class="imp-gauge-row"><div class="imp-gauge-labels"><span>${g.lbl}</span><span style="font-weight:700;color:${g.col}">${g.v.toFixed(1)} L</span></div><div class="imp-gauge-bar"><div class="imp-gauge-fill" style="width:${g.v/g.max*100}%;background:${g.col}"></div></div></div>`).join('');
-}
-
-// Radar qualidade
-const nulScore=mnul>=12&&mnul<=18?100:mnul>0?60:50;
-mk('ch-imp-radar','radar',{
-labels:['Produção
-L/vaca','Gordura
-%','Proteína
-%','Saúde CCS','DEL Ideal','Balanço NUL'],
-datasets:[
-{label:'Carteira Meta',data:[Math.min(mp/45*100,100),mg>0?Math.min(mg/4.5*100,100):50,mprot>0?Math.min(mprot/3.8*100,100):50,mcs>0?Math.max(0,100-(mcs/500)*100):50,del_m>0?Math.max(0,100-Math.abs(del_m-165)/80*100):50,nulScore],
-backgroundColor:'rgba(21,128,61,0.15)',borderColor:'#15803d',borderWidth:2.5,pointBackgroundColor:'#15803d',pointRadius:5},
-{label:'Ref. Embrapa',data:[62,67,76,70,70,70],backgroundColor:'rgba(148,163,184,0.08)',borderColor:'rgba(148,163,184,0.5)',borderWidth:1.5,borderDash:[5,5],pointBackgroundColor:'#94a3b8',pointRadius:4}
-]},{...NL,scales:{r:{beginAtZero:true,max:100,ticks:{display:false},grid:{color:'rgba(0,0,0,0.05)'},pointLabels:{font:{size:10,weight:'600'},color:'#64748b'}}}});
-
-// Donut por região
-const regData={};at.forEach(d=>{const r=d.regiao||'Outras';regData[r]=(regData[r]||0)+1;});
-const regEntries=Object.entries(regData).sort((a,b)=>b[1]-a[1]);
-const dColors=['#15803d','#1d4ed8','#7c3aed','#0891b2','#d97706','#dc2626','#059669','#0f172a'];
-mk('ch-imp-donut','doughnut',{labels:regEntries.map(([r])=>r),datasets:[{data:regEntries.map(([,n])=>n),backgroundColor:dColors.slice(0,regEntries.length),borderWidth:2,borderColor:'white',hoverOffset:6}]},{...NL,cutout:'60%',plugins:{...NL.plugins,legend:{display:true,position:'right',labels:{font:{size:10},color:'#64748b',boxWidth:10,padding:8}}}});
-
-// Top 10
+// Top 10 produtores
 const top=at.filter(d=>d.media_prod>0).sort((a,b)=>b.media_prod-a.media_prod).slice(0,10);
 const maxProd=top[0]?.media_prod||1;
 const topEl=document.getElementById('imp-top-prod');
 if(topEl) topEl.innerHTML=top.map((d,i)=>{
 const pct=d.media_prod/maxProd*100;
 const medal=i===0?'🥇':i===1?'🥈':i===2?'🥉':'';
-const acima=((d.media_prod/28-1)*100).toFixed(0);
-return`<div class="rr"><div class="rr-num" style="font-size:14px">${medal||'#'+(i+1)}</div><div class="rr-av" style="background:${vc(d.produtor)}">${ini(d.produtor)}</div><div style="flex:1;min-width:0"><div class="rr-name">${d.produtor}</div><div class="rr-meta">${d.cidade||''} · ${d.nome_vendedor||d.vendedor||''}</div></div><div class="rr-bar-w"><div class="rr-bar-bg"></div><div class="rr-bar-f" style="width:${pct}%;background:linear-gradient(90deg,#15803d,#22c55e)"></div></div><div style="text-align:right;flex-shrink:0"><div class="rr-val" style="color:#15803d">${parseFloat(d.media_prod).toFixed(1)} L</div><div style="font-size:9px;color:#16a34a;font-weight:700">+${acima}% Embrapa</div></div></div>`;}).join('');
+return`<div class="rr">
+<div class="rr-num">${medal||i+1}</div>
+<div class="rr-av" style="background:${vc(d.produtor)}">${ini(d.produtor)}</div>
+<div style="flex:1"><div class="rr-name">${d.produtor}</div><div class="rr-meta">${d.cidade||''} · ${d.nome_vendedor||d.vendedor||''}</div></div>
+<div class="rr-bar-w"><div class="rr-bar-bg"></div><div class="rr-bar-f" style="width:${pct}%;background:#15803d"></div></div>
+<div class="rr-val" style="color:#15803d">${parseFloat(d.media_prod).toFixed(1)} L</div>
+</div>`;}).join('');
 
-// Gráfico barras vendedores
-const vends=[...new Set(at.map(d=>d.nome_vendedor||d.vendedor||'').filter(Boolean))].sort();
-const mediasVend=vends.map(v=>{const g=at.filter(d=>(d.nome_vendedor||d.vendedor||'')===v&&d.media_prod>0);return g.length?+(sum(g,'media_prod')/g.length).toFixed(1):0;});
-mk('ch-impacto-bar','bar',{labels:[...vends,'📊 Embrapa','⭐ Premium'],datasets:[{label:'L/vaca/dia',data:[...mediasVend,28,37],backgroundColor:[...mediasVend.map(v=>v>=37?'rgba(21,128,61,0.85)':v>=28?'rgba(37,99,235,0.75)':'rgba(217,119,6,0.75)'),'rgba(148,163,184,0.5)','rgba(59,130,246,0.5)'],borderRadius:6,borderSkipped:false}]},{...NL,scales:{x:{...SX},y:{...SY,min:0,ticks:{color:'#94a3b8'}}}});
-
-// Por região — cards
-const regFull={};at.forEach(d=>{const r=d.regiao||'Outras';if(!regFull[r])regFull[r]={n:0,prod:0,vacas:0};regFull[r].n++;regFull[r].prod+=parseFloat(d.media_prod)||0;regFull[r].vacas+=parseInt(d.vacas)||0;});
-const regList=Object.entries(regFull).sort((a,b)=>b[1].vacas-a[1].vacas);
-const maxV=regList[0]?.[1].vacas||1;
+// Por região
+const regData={};
+at.forEach(d=>{
+const r=d.regiao||'Outras';
+if(!regData[r]) regData[r]={n:0,prod:0,vacas:0};
+regData[r].n++;
+regData[r].prod+=parseFloat(d.media_prod)||0;
+regData[r].vacas+=parseInt(d.vacas)||0;
+});
+const regList=Object.entries(regData).sort((a,b)=>b[1].vacas-a[1].vacas);
+const maxVacas=regList[0]?.[1].vacas||1;
 const regEl=document.getElementById('imp-por-regiao');
-if(regEl) regEl.innerHTML=regList.map(([r,v],i)=>`<div style="background:#f8fafc;border:1px solid var(--border);border-radius:10px;padding:12px 14px"><div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px"><div style="font-size:12px;font-weight:700;color:var(--text)">${r}</div><div style="font-size:18px;font-weight:900;color:${dColors[i]||'#64748b'}">${(v.prod/v.n).toFixed(1)} <span style="font-size:10px;color:var(--muted)">L/vaca</span></div></div><div style="height:5px;background:#e2e8f0;border-radius:3px;overflow:hidden;margin-bottom:6px"><div style="height:100%;width:${v.vacas/maxV*100}%;background:${dColors[i]||'#64748b'};border-radius:3px"></div></div><div style="font-size:10px;color:var(--muted)">${v.n} produtores · ${v.vacas.toLocaleString('pt-BR')} vacas</div></div>`).join('');
-}
+if(regEl) regEl.innerHTML=regList.map(([r,v])=>`<div class="rr">
+<div style="flex:1"><div class="rr-name">${r}</div><div class="rr-meta">${v.n} produtores · ${v.vacas.toLocaleString('pt-BR')} vacas</div></div>
+<div class="rr-bar-w"><div class="rr-bar-bg"></div><div class="rr-bar-f" style="width:${v.vacas/maxVacas*100}%;background:#1d4ed8"></div></div>
+<div class="rr-val" style="color:#1d4ed8">${(v.prod/v.n).toFixed(1)} L</div>
+</div>`).join('');
+
+// Gráfico barras: media por vendedor vs Embrapa
+const vends=[...new Set(at.map(d=>d.nome_vendedor||d.vendedor||'').filter(Boolean))].sort();
+const mediasVend=vends.map(v=>{
+const g=at.filter(d=>(d.nome_vendedor||d.vendedor||'')===v&&d.media_prod>0);
+return g.length?sum(g,'media_prod')/g.length:0;
+});
+mk('ch-impacto-bar','bar',{
+labels:[...vends,'Ref. Embrapa','Ref. Premium'],
+datasets:[{
+label:'L/vaca/dia',
+data:[...mediasVend,28,37],
+backgroundColor:[...vends.map(v=>'rgba(21,128,61,0.75)'),'rgba(220,38,38,0.5)','rgba(37,99,235,0.5)'],
+borderRadius:6,borderSkipped:false
+}]
+},{...NL,scales:{x:{...SX},y:{...SY,ticks:{color:'#94a3b8'}}}});
 }
 
 // ════════════════════════════════════════════════════════════════
