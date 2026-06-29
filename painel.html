@@ -124,6 +124,27 @@ tbody td{padding:10px 14px;font-size:12px;}.badge{display:inline-flex;align-item
 .notif-pulse{animation:notifPulse 2s infinite;}
 @keyframes notifPulse{0%,100%{box-shadow:0 0 0 0 rgba(245,158,11,0.4);}50%{box-shadow:0 0 0 6px rgba(245,158,11,0);}}
 .dsh-pill{border-radius:14px;padding:14px 16px;color:white;display:flex;flex-direction:column;gap:4px;box-shadow:var(--shadow-md);}.dsh-pill-val{font-size:28px;font-weight:900;line-height:1;letter-spacing:-1px;}.dsh-pill-lbl{font-size:10px;font-weight:600;opacity:.85;letter-spacing:.3px;}
+.health-dot{width:10px;height:10px;border-radius:50%;display:inline-block;flex-shrink:0;}
+.health-green{background:#16a34a;}.health-yellow{background:#d97706;}.health-red{background:#dc2626;}.health-gray{background:#94a3b8;}
+.score-ring{position:relative;display:inline-flex;align-items:center;justify-content:center;}
+.score-badge{display:inline-flex;align-items:center;gap:4px;font-size:10px;font-weight:700;padding:2px 8px;border-radius:20px;}
+.score-A{background:#dcfce7;color:#15803d;}.score-B{background:#dbeafe;color:#1d4ed8;}
+.score-C{background:#fef9c3;color:#92400e;}.score-D{background:#fee2e2;color:#dc2626;}
+.calc-card{background:white;border:1px solid var(--border);border-radius:16px;padding:24px;box-shadow:var(--shadow);}
+.calc-result{background:linear-gradient(135deg,#052e16,#15803d);border-radius:12px;padding:20px;color:white;margin-top:16px;}
+.calc-result-val{font-size:36px;font-weight:900;letter-spacing:-1px;line-height:1;}
+.calc-result-lbl{font-size:12px;opacity:.8;margin-top:4px;}
+.impact-hero{background:linear-gradient(135deg,#052e16 0%,#15803d 60%,#22c55e 100%);border-radius:16px;padding:28px 32px;color:white;margin-bottom:20px;}
+.impact-num{font-size:52px;font-weight:900;letter-spacing:-2px;line-height:1;}
+.impact-lbl{font-size:13px;opacity:.8;margin-top:4px;font-weight:500;}
+.impact-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:20px;}
+.impact-card{background:white;border:1px solid var(--border);border-radius:14px;padding:20px;text-align:center;box-shadow:var(--shadow);}
+.impact-card-val{font-size:32px;font-weight:900;letter-spacing:-1px;color:#0f172a;}
+.impact-card-lbl{font-size:11px;color:var(--muted);font-weight:600;margin-top:4px;text-transform:uppercase;letter-spacing:.4px;}
+.meta-badge{display:inline-flex;align-items:center;gap:6px;background:#f0fdf4;border:1px solid #86efac;color:#15803d;font-size:11px;font-weight:700;padding:4px 12px;border-radius:20px;}
+.inact-alert{background:#fef2f2;border:1px solid #fca5a5;border-radius:10px;padding:10px 14px;display:flex;align-items:center;gap:10px;font-size:12px;margin-bottom:6px;}
+.goal-bar-wrap{background:#f1f5f9;border-radius:4px;height:8px;overflow:hidden;margin:6px 0;}
+.goal-bar-fill{height:100%;border-radius:4px;transition:width .8s;}
 /* ── EXCEL UPLOAD MODAL ── */
 .upload-modal-overlay {
   position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:9000;
@@ -167,7 +188,7 @@ tbody td{padding:10px 14px;font-size:12px;}.badge{display:inline-flex;align-item
 </div>
 <script>
 (function(){
-  var BUILT = '2026-06-29T18:30:00';
+  var BUILT = '2026-06-29T19:00:00';
   function pad(n){return String(n).padStart(2,'0');}
   function fmt(d){
     var dias=['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'];
@@ -256,6 +277,9 @@ tbody td{padding:10px 14px;font-size:12px;}.badge{display:inline-flex;align-item
       <div class="ni" id="ni-vends" onclick="nav('vends')"><span class="ni-i">👤</span>Vendedores</div>
       <div class="ni" id="ni-tec" onclick="nav('tec')"><span class="ni-i">👨‍🔬</span>Técnicos</div>
       <div class="ni" id="ni-mapa" onclick="navMapa()"><span class="ni-i">🗺️</span>Mapa de Clientes</div>
+      <div class="sg">FERRAMENTAS</div>
+      <div class="ni" id="ni-impacto" onclick="nav('impacto')"><span class="ni-i">📊</span>Impacto em Números</div>
+      <div class="ni" id="ni-calc" onclick="nav('calc')"><span class="ni-i">💰</span>Calculadora</div>
     </div>
     <!-- CONTENT -->
     <div class="content">
@@ -271,6 +295,11 @@ tbody td{padding:10px 14px;font-size:12px;}.badge{display:inline-flex;align-item
         <div id="dash-secondary" style="display:grid;grid-template-columns:repeat(6,1fr);gap:10px;margin-bottom:16px"></div>
         <!-- LINHA 3: produção + pipeline (substitui gauges) -->
         <div id="dash-metrics" style="display:grid;grid-template-columns:2fr 1fr 1fr 1fr;gap:14px;margin-bottom:16px"></div>
+        <!-- Alertas de inatividade de visita -->
+        <div id="dash-inact-alerts-wrap" style="margin-bottom:16px">
+          <div style="font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">⚠️ Clientes ativos sem contato há mais de 60 dias</div>
+          <div id="dash-inact-alerts"></div>
+        </div>
         <!-- canvas ocultos para compatibilidade com código legado -->
         <div style="display:none">
           <canvas id="g-conv"></canvas>
@@ -404,7 +433,7 @@ tbody td{padding:10px 14px;font-size:12px;}.badge{display:inline-flex;align-item
               <th onclick="srt('produtor')">Produtor</th><th onclick="srt('propriedade')">Propriedade</th>
               <th onclick="srt('situacao')">Situação</th><th onclick="srt('nome_vendedor')">Vendedor</th>
               <th onclick="srt('cidade')">Cidade</th><th onclick="srt('regiao')">Região</th>
-              <th onclick="srt('vacas')">Vacas</th><th onclick="srt('media_prod')">L/vaca</th>
+              <th onclick="srt('vacas')">Score</th><th onclick="srt('vacas')">Vacas</th><th onclick="srt('media_prod')">L/vaca</th>
               <th onclick="srt('prod_diaria')">L/dia</th><th onclick="srt('gordura')">Gordura</th>
               <th onclick="srt('proteina')">Proteína</th><th onclick="srt('nul')">NUL</th><th onclick="srt('del')">DEL</th>
               <th>Status</th>
@@ -529,7 +558,7 @@ tbody td{padding:10px 14px;font-size:12px;}.badge{display:inline-flex;align-item
       <!-- TAB HISTÓRICO -->
       <div id="tab-hist">
         <!-- KPIs atuais -->
-        <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin-bottom:16px" id="modal-kpis"></div>
+        <div style="display:grid;grid-template-columns:repeat(6,1fr);gap:10px;margin-bottom:16px" id="modal-kpis"></div>
         <!-- Gráficos linha do tempo -->
         <div class="hist-charts" id="hist-charts-wrap">
           <div class="hist-chart-card"><h4>🥛 Produção Diária (L/dia)</h4><canvas id="hch-prod" height="160"></canvas></div>
@@ -1321,6 +1350,103 @@ tbody td{padding:10px 14px;font-size:12px;}.badge{display:inline-flex;align-item
   </div>
 </div>
 
+
+      <!-- ═══ IMPACTO EM NÚMEROS ═══ -->
+      <div class="sc" id="sc-impacto">
+        <div class="ph"><div><h2>📊 Impacto em Números</h2><p>Resultados reais da carteira Meta — dados ao vivo para apresentar a prospectos</p></div></div>
+        <div class="impact-hero" id="impact-hero">
+          <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:24px">
+            <div><div class="impact-num" id="imp-litros">—</div><div class="impact-lbl">Litros/dia produzidos</div><div style="margin-top:8px;font-size:11px;opacity:.6">pelos clientes Meta ativos</div></div>
+            <div><div class="impact-num" id="imp-vacas">—</div><div class="impact-lbl">Vacas em produção</div><div style="margin-top:8px;font-size:11px;opacity:.6">rebanho total atendido</div></div>
+            <div><div class="impact-num" id="imp-media">—</div><div class="impact-lbl">L/vaca/dia média</div><div style="margin-top:8px;font-size:11px;opacity:.6" id="imp-ref">vs. ref. Embrapa 28L</div></div>
+            <div><div class="impact-num" id="imp-fat">—</div><div class="impact-lbl">Mi L/ano faturados</div><div style="margin-top:8px;font-size:11px;opacity:.6">projeção da carteira ativa</div></div>
+          </div>
+        </div>
+        <div class="impact-grid">
+          <div class="impact-card"><div class="impact-card-val" id="imp-ativos" style="color:#15803d">—</div><div class="impact-card-lbl">Produtores Ativos</div></div>
+          <div class="impact-card"><div class="impact-card-val" id="imp-regioes" style="color:#1d4ed8">—</div><div class="impact-card-lbl">Regiões Atendidas</div></div>
+          <div class="impact-card"><div class="impact-card-val" id="imp-robot" style="color:#7c3aed">—</div><div class="impact-card-lbl">Fazendas Robotizadas</div></div>
+        </div>
+        <div class="g2">
+          <div class="cc">
+            <div class="cc-hdr"><span class="cc-ico">🏆</span><span class="cc-title">Top produtores — L/vaca/dia</span><span class="cc-sub" style="margin-left:auto">prova social para prospectos</span></div>
+            <div id="imp-top-prod"></div>
+          </div>
+          <div class="cc">
+            <div class="cc-hdr"><span class="cc-ico">🗺️</span><span class="cc-title">Resultado por região</span></div>
+            <div id="imp-por-regiao"></div>
+          </div>
+        </div>
+        <div class="cc" style="margin-bottom:16px">
+          <div class="cc-hdr"><span class="cc-ico">📈</span><span class="cc-title">Produção média da carteira vs. Referência Nacional (Embrapa 28 L/vaca)</span></div>
+          <canvas id="ch-impacto-bar" height="140"></canvas>
+        </div>
+      </div>
+
+      <!-- ═══ CALCULADORA ═══ -->
+      <div class="sc" id="sc-calc">
+        <div class="ph"><div><h2>💰 Calculadora de Ganho Potencial</h2><p>Mostre ao prospecto quanto ele pode ganhar com a Meta</p></div></div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;max-width:900px">
+          <div class="calc-card">
+            <div style="font-size:14px;font-weight:700;color:var(--text);margin-bottom:20px">📋 Dados da fazenda do prospecto</div>
+            <div style="display:flex;flex-direction:column;gap:14px">
+              <div>
+                <label style="font-size:11px;font-weight:600;color:var(--muted);display:block;margin-bottom:6px">Número de vacas em lactação</label>
+                <input type="number" id="calc-vacas" value="100" min="1" class="edit-input" style="width:100%" oninput="calcGanho()">
+              </div>
+              <div>
+                <label style="font-size:11px;font-weight:600;color:var(--muted);display:block;margin-bottom:6px">Produção atual (L/vaca/dia)</label>
+                <input type="number" id="calc-atual" value="25" min="1" step="0.5" class="edit-input" style="width:100%" oninput="calcGanho()">
+              </div>
+              <div>
+                <label style="font-size:11px;font-weight:600;color:var(--muted);display:block;margin-bottom:6px">Região (para comparar com clientes Meta locais)</label>
+                <select id="calc-regiao" class="edit-select" style="width:100%" onchange="calcGanho()">
+                  <option value="">Todas as regiões</option>
+                </select>
+              </div>
+              <div>
+                <label style="font-size:11px;font-weight:600;color:var(--muted);display:block;margin-bottom:6px">Preço pago por litro (R$)</label>
+                <input type="number" id="calc-preco" value="2.80" min="0.5" step="0.10" class="edit-input" style="width:100%" oninput="calcGanho()">
+              </div>
+            </div>
+          </div>
+          <div>
+            <div class="calc-card" style="margin-bottom:14px">
+              <div style="font-size:13px;font-weight:600;color:var(--muted);margin-bottom:12px">📊 Benchmark — clientes Meta na região selecionada</div>
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px">
+                <div style="background:#f0fdf4;border-radius:10px;padding:12px;text-align:center">
+                  <div style="font-size:24px;font-weight:900;color:#15803d" id="calc-media-meta">—</div>
+                  <div style="font-size:10px;color:var(--muted);font-weight:600;margin-top:3px;text-transform:uppercase">Média Meta L/vaca</div>
+                </div>
+                <div style="background:#f8fafc;border-radius:10px;padding:12px;text-align:center">
+                  <div style="font-size:24px;font-weight:900;color:#0f172a" id="calc-qtd-meta">—</div>
+                  <div style="font-size:10px;color:var(--muted);font-weight:600;margin-top:3px;text-transform:uppercase">Produtores na região</div>
+                </div>
+              </div>
+              <div id="calc-barra-wrap" style="margin-bottom:4px">
+                <div style="display:flex;justify-content:space-between;font-size:10px;color:var(--muted);margin-bottom:4px"><span>Produção atual</span><span id="calc-gap-label">—</span></div>
+                <div class="goal-bar-wrap"><div class="goal-bar-fill" id="calc-barra" style="width:0%;background:#dc2626"></div></div>
+                <div style="display:flex;justify-content:space-between;font-size:10px;color:var(--muted);margin-top:2px"><span id="calc-atual-label">—</span><span id="calc-meta-label">—</span></div>
+              </div>
+            </div>
+            <div class="calc-result" id="calc-result">
+              <div style="font-size:11px;opacity:.7;margin-bottom:8px;font-weight:600;text-transform:uppercase;letter-spacing:.5px">Ganho potencial diário</div>
+              <div class="calc-result-val" id="calc-ganho-dia">R$ —</div>
+              <div class="calc-result-lbl">litros extras/dia × preço do leite</div>
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:16px">
+                <div style="background:rgba(255,255,255,.12);border-radius:8px;padding:12px">
+                  <div style="font-size:20px;font-weight:900" id="calc-ganho-mes">R$ —</div>
+                  <div style="font-size:10px;opacity:.7;margin-top:2px">por mês</div>
+                </div>
+                <div style="background:rgba(255,255,255,.12);border-radius:8px;padding:12px">
+                  <div style="font-size:20px;font-weight:900" id="calc-litros-extras">— L</div>
+                  <div style="font-size:10px;opacity:.7;margin-top:2px">litros extras/dia</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
 </div><!-- /app -->
 <!-- ═══ PAINEL DE NOTIFICAÇÕES ═══ -->
 <div id="notif-panel-overlay" class="notif-panel-overlay" style="display:none" onclick="if(event.target===this)closeNotifPanel()">
@@ -1695,7 +1821,7 @@ document.getElementById('tq').value='';
 PG=1;applyF();renderAll();
 }
 function renderAll(){
-renderKPIs();renderGauges();renderDashCharts();renderBench();renderCompare();renderQual();renderReg();renderTbl();renderVends();
+renderKPIs();renderGauges();renderDashCharts();renderBench();renderCompare();renderQual();renderReg();renderTbl();renderVends();updateHealthScores();renderInactivityAlerts();
 }
 function renderKPIs(){
 const at=FIL.filter(d=>d.situacao==='ATIVO');
@@ -2196,7 +2322,7 @@ return`<tr>
 </button>
 </div>
 ${d.tecnico_titular?`<div style="margin-top:4px"><span class="tec-tag">🔵 ${d.tecnico_titular}</span>${d.tecnico_substituto?`<span class="tec-tag" style="background:#f5f3ff;color:#6d28d9">🟣 ${d.tecnico_substituto}</span>`:''}</div>`:''}
-</td><td style="color:#94a3b8">${d.propriedade||'—'}</td><td><span class="badge ${sc}">${sl2}</span></td><td><select class="sts" style="min-width:100px;border-color:${(d.nome_vendedor||d.vendedor)?'#93c5fd':'#e2e8f0'};color:${(d.nome_vendedor||d.vendedor)?'#1d4ed8':'#94a3b8'}" onchange="mudarVendedor('${d.id}',this.value)">${getVendOptions(d.nome_vendedor||d.vendedor||'')}</select></td><td style="color:#94a3b8">${d.cidade||'—'}</td><td style="color:#94a3b8">${d.regiao||'—'}</td><td style="font-weight:800;color:${(d.vacas||0)>=200?'#15803d':''}">${d.vacas||'—'}</td><td>${d.media_prod>0?parseFloat(d.media_prod).toFixed(1)+' L':'—'}</td><td>${d.prod_diaria>0?d.prod_diaria.toLocaleString('pt-BR'):'—'}</td><td style="color:#b45309">${d.gordura>0?parseFloat(d.gordura).toFixed(2)+'%':'—'}</td><td style="color:#1d4ed8">${d.proteina>0?parseFloat(d.proteina).toFixed(2)+'%':'—'}</td><td style="color:${d.nul>0?(d.nul>=12&&d.nul<=18?'#15803d':d.nul>20?'#dc2626':'#d97706'):'#94a3b8'}">${d.nul>0?parseFloat(d.nul).toFixed(1)+' mg/dL':'—'}</td><td>${d.del>0?d.del+' d':'—'}</td><td><select class="sts" onchange="mudarSit('${d.id}',this.value)"><option value="PROSPEC" ${d.situacao==='PROSPEC'?'selected':''}>🎯 Prospecto</option><option value="ATIVO" ${d.situacao==='ATIVO'?'selected':''}>✅ Ativo</option><option value="INATIVO" ${d.situacao==='INATIVO'?'selected':''}>❌ Inativo</option></select></td></tr>`;
+</td><td style="color:#94a3b8">${d.propriedade||'—'}</td><td><span class="badge ${sc}">${sl2}</span></td><td><select class="sts" style="min-width:100px;border-color:${(d.nome_vendedor||d.vendedor)?'#93c5fd':'#e2e8f0'};color:${(d.nome_vendedor||d.vendedor)?'#1d4ed8':'#94a3b8'}" onchange="mudarVendedor('${d.id}',this.value)">${getVendOptions(d.nome_vendedor||d.vendedor||'')}</select></td><td style="color:#94a3b8">${d.cidade||'—'}</td><td style="color:#94a3b8">${d.regiao||'—'}</td><td><span class="score-badge ${healthGrade(calcHealthScore(d)).cls}">${healthGrade(calcHealthScore(d)).g} ${calcHealthScore(d)}</span></td><td style="font-weight:800;color:${(d.vacas||0)>=200?'#15803d':''}">${d.vacas||'—'}</td><td>${d.media_prod>0?parseFloat(d.media_prod).toFixed(1)+' L':'—'}</td><td>${d.prod_diaria>0?d.prod_diaria.toLocaleString('pt-BR'):'—'}</td><td style="color:#b45309">${d.gordura>0?parseFloat(d.gordura).toFixed(2)+'%':'—'}</td><td style="color:#1d4ed8">${d.proteina>0?parseFloat(d.proteina).toFixed(2)+'%':'—'}</td><td style="color:${d.nul>0?(d.nul>=12&&d.nul<=18?'#15803d':d.nul>20?'#dc2626':'#d97706'):'#94a3b8'}">${d.nul>0?parseFloat(d.nul).toFixed(1)+' mg/dL':'—'}</td><td>${d.del>0?d.del+' d':'—'}</td><td><select class="sts" onchange="mudarSit('${d.id}',this.value)"><option value="PROSPEC" ${d.situacao==='PROSPEC'?'selected':''}>🎯 Prospecto</option><option value="ATIVO" ${d.situacao==='ATIVO'?'selected':''}>✅ Ativo</option><option value="INATIVO" ${d.situacao==='INATIVO'?'selected':''}>❌ Inativo</option></select></td></tr>`;
 }).join('');
 let pag=`<span>${(PG-1)*PS+1}–${Math.min(PG*PS,total)} de ${total}</span>`;
 if(tp>1){pag+=`<button class="pb" onclick="goPg(${PG-1})" ${PG===1?'disabled':''}>‹</button>`;for(let i=1;i<=tp;i++){if(tp<=7||Math.abs(i-PG)<=2||i===1||i===tp)pag+=`<button class="pb${i===PG?' on':''}" onclick="goPg(${i})">${i}</button>`;else if(Math.abs(i-PG)===3)pag+='<span>…</span>';}pag+=`<button class="pb" onclick="goPg(${PG+1})" ${PG===tp?'disabled':''}>›</button>`;}
@@ -2307,6 +2433,13 @@ return`<div class="vc" style="cursor:pointer" onclick="openVendRanking('${v}')" 
   <div class="vc-st"><div class="vc-sv" style="color:#d97706">${pr.length}</div><div class="vc-sl">Prospec</div></div>
   <div class="vc-st"><div class="vc-sv" style="color:#15803d">${lac>=1000?(lac/1000).toFixed(1)+'k':lac||'—'}</div><div class="vc-sl">Lact.</div></div>
   <div class="vc-st"><div class="vc-sv" style="color:#0891b2">${mp>0?mp.toFixed(1):'—'}</div><div class="vc-sl">L/vaca</div></div>
+</div>
+<div style="margin-top:10px;padding-top:10px;border-top:1px solid #f1f5f9">
+  <div style="display:flex;justify-content:space-between;font-size:10px;color:var(--muted);margin-bottom:5px">
+    <span>Meta de conversão (30%)</span>
+    <span style="font-weight:700;color:${rows.length?Math.round(at.length/rows.length*100)>=30?'#16a34a':'#d97706':'var(--muted)'}">${rows.length?Math.round(at.length/rows.length*100):0}%</span>
+  </div>
+  <div class="goal-bar-wrap"><div class="goal-bar-fill" style="width:${Math.min(rows.length?at.length/rows.length*100/30*100:0,100)}%;background:${rows.length&&at.length/rows.length>=0.30?'#16a34a':'#d97706'}"></div></div>
 </div>
 </div>`;
 }).join('');
@@ -2449,8 +2582,11 @@ function nav(name){
 document.querySelectorAll('.sc').forEach(s=>s.classList.remove('on'));
 document.querySelectorAll('.ni').forEach(n=>n.classList.remove('on'));
 document.getElementById('sc-'+name).classList.add('on');
-document.getElementById('ni-'+name).classList.add('on');
+const niEl=document.getElementById('ni-'+name);
+if(niEl) niEl.classList.add('on');
 document.querySelector('.content').scrollTop=0;
+if(name==='impacto') setTimeout(renderImpacto,50);
+if(name==='calc') setTimeout(renderCalc,50);
 }
 function toast(msg,err=false){
 const t=document.getElementById('toast');t.textContent=msg;t.className='toast'+(err?' err':'');t.classList.add('on');setTimeout(()=>t.classList.remove('on'),2500);
@@ -3060,6 +3196,11 @@ ${d.nome_vendedor?`<div style="font-size:10px;opacity:.7;margin-top:2px">👤 ${
 <div style="font-size:13px;opacity:.8">🧬 NUL</div>
 <div style="font-size:28px;font-weight:900;margin-top:4px">${d.nul>0?parseFloat(d.nul).toFixed(1):'—'}</div>
 <div style="font-size:10px;opacity:.7;margin-top:2px">${d.nul>0?(d.nul>=12&&d.nul<=18?'✅ Ideal':'⚠️ Fora faixa'):'Sem dados'} mg/dL</div>
+</div>
+<div class="kpi-big" style="background:${(()=>{const s=calcHealthScore(d);const g=healthGrade(s);return s>=80?'linear-gradient(135deg,#15803d,#052e16)':s>=60?'linear-gradient(135deg,#1d4ed8,#1e3a8a)':s>=40?'linear-gradient(135deg,#d97706,#92400e)':'linear-gradient(135deg,#dc2626,#991b1b)'})()};padding:14px">
+<div style="font-size:13px;opacity:.8">⭐ Score de Saúde</div>
+<div style="font-size:28px;font-weight:900;margin-top:4px">${calcHealthScore(d)}<span style="font-size:14px;opacity:.7">/100</span></div>
+<div style="font-size:12px;font-weight:800;margin-top:2px">${healthGrade(calcHealthScore(d)).g} — ${calcHealthScore(d)>=80?'Excelente':calcHealthScore(d)>=60?'Bom':calcHealthScore(d)>=40?'Regular':'Atenção'}</div>
 </div>`;
 db.ref('historico/' + id).orderByChild('data').limitToLast(20).once('value', snap => {
 const entries = [];
@@ -4416,6 +4557,203 @@ async function uploadSeedToFirebase() {
   // This function is called manually when needed
   // The data comes from the Excel upload flow
   toast('Use o botão "📊 Importar Excel" para carregar os dados');
+}
+
+
+// ════════════════════════════════════════════════════════════════
+// IMPACTO EM NÚMEROS
+// ════════════════════════════════════════════════════════════════
+function renderImpacto(){
+const at=ALL.filter(d=>d.situacao==='ATIVO');
+const tp=sum(at,'prod_diaria'), tv=sum(at,'vacas'), mp=avg(at,'media_prod');
+const robot=at.filter(d=>d.ordenha==='ROBOTIZADA').length;
+const regioes=[...new Set(at.map(d=>d.regiao||'').filter(Boolean))].length;
+
+// Hero
+const set=(id,v)=>{const el=document.getElementById(id);if(el)el.textContent=v;};
+set('imp-litros', tp>=1000?(tp/1000).toFixed(0)+'k':tp||'—');
+set('imp-vacas', tv>=1000?(tv/1000).toFixed(1)+'k':tv||'—');
+set('imp-media', mp>0?mp.toFixed(1)+' L':'—');
+set('imp-fat', tp>0?(tp*365/1e6).toFixed(1):'—');
+set('imp-ativos', at.length);
+set('imp-regioes', regioes);
+set('imp-robot', robot);
+
+// Top 10 produtores
+const top=at.filter(d=>d.media_prod>0).sort((a,b)=>b.media_prod-a.media_prod).slice(0,10);
+const maxProd=top[0]?.media_prod||1;
+const topEl=document.getElementById('imp-top-prod');
+if(topEl) topEl.innerHTML=top.map((d,i)=>{
+const pct=d.media_prod/maxProd*100;
+const medal=i===0?'🥇':i===1?'🥈':i===2?'🥉':'';
+return`<div class="rr">
+<div class="rr-num">${medal||i+1}</div>
+<div class="rr-av" style="background:${vc(d.produtor)}">${ini(d.produtor)}</div>
+<div style="flex:1"><div class="rr-name">${d.produtor}</div><div class="rr-meta">${d.cidade||''} · ${d.nome_vendedor||d.vendedor||''}</div></div>
+<div class="rr-bar-w"><div class="rr-bar-bg"></div><div class="rr-bar-f" style="width:${pct}%;background:#15803d"></div></div>
+<div class="rr-val" style="color:#15803d">${parseFloat(d.media_prod).toFixed(1)} L</div>
+</div>`;}).join('');
+
+// Por região
+const regData={};
+at.forEach(d=>{
+const r=d.regiao||'Outras';
+if(!regData[r]) regData[r]={n:0,prod:0,vacas:0};
+regData[r].n++;
+regData[r].prod+=parseFloat(d.media_prod)||0;
+regData[r].vacas+=parseInt(d.vacas)||0;
+});
+const regList=Object.entries(regData).sort((a,b)=>b[1].vacas-a[1].vacas);
+const maxVacas=regList[0]?.[1].vacas||1;
+const regEl=document.getElementById('imp-por-regiao');
+if(regEl) regEl.innerHTML=regList.map(([r,v])=>`<div class="rr">
+<div style="flex:1"><div class="rr-name">${r}</div><div class="rr-meta">${v.n} produtores · ${v.vacas.toLocaleString('pt-BR')} vacas</div></div>
+<div class="rr-bar-w"><div class="rr-bar-bg"></div><div class="rr-bar-f" style="width:${v.vacas/maxVacas*100}%;background:#1d4ed8"></div></div>
+<div class="rr-val" style="color:#1d4ed8">${(v.prod/v.n).toFixed(1)} L</div>
+</div>`).join('');
+
+// Gráfico barras: media por vendedor vs Embrapa
+const vends=[...new Set(at.map(d=>d.nome_vendedor||d.vendedor||'').filter(Boolean))].sort();
+const mediasVend=vends.map(v=>{
+const g=at.filter(d=>(d.nome_vendedor||d.vendedor||'')===v&&d.media_prod>0);
+return g.length?sum(g,'media_prod')/g.length:0;
+});
+mk('ch-impacto-bar','bar',{
+labels:[...vends,'Ref. Embrapa','Ref. Premium'],
+datasets:[{
+label:'L/vaca/dia',
+data:[...mediasVend,28,37],
+backgroundColor:[...vends.map(v=>'rgba(21,128,61,0.75)'),'rgba(220,38,38,0.5)','rgba(37,99,235,0.5)'],
+borderRadius:6,borderSkipped:false
+}]
+},{...NL,scales:{x:{...SX},y:{...SY,ticks:{color:'#94a3b8'}}}});
+}
+
+// ════════════════════════════════════════════════════════════════
+// CALCULADORA DE GANHO POTENCIAL
+// ════════════════════════════════════════════════════════════════
+function renderCalc(){
+// Popula regiões
+const sel=document.getElementById('calc-regiao');
+if(sel && sel.options.length<=1){
+const regs=[...new Set(ALL.filter(d=>d.situacao==='ATIVO').map(d=>d.regiao||'').filter(Boolean))].sort();
+regs.forEach(r=>{const o=document.createElement('option');o.value=r;o.textContent=r;sel.appendChild(o);});
+}
+calcGanho();
+}
+
+function calcGanho(){
+const vacas=parseFloat(document.getElementById('calc-vacas')?.value)||0;
+const atual=parseFloat(document.getElementById('calc-atual')?.value)||0;
+const preco=parseFloat(document.getElementById('calc-preco')?.value)||2.80;
+const regiao=document.getElementById('calc-regiao')?.value||'';
+
+const set=(id,v)=>{const el=document.getElementById(id);if(el)el.textContent=v;};
+
+// Filtra clientes Meta ativos da região
+let base=ALL.filter(d=>d.situacao==='ATIVO'&&d.media_prod>0);
+if(regiao) base=base.filter(d=>d.regiao===regiao);
+const mediaMetaVacas = base.length ? sum(base,'media_prod')/base.length : 0;
+
+set('calc-media-meta', mediaMetaVacas>0?mediaMetaVacas.toFixed(1)+' L':'—');
+set('calc-qtd-meta', base.length);
+
+// Cálculo de ganho
+const extraPorVaca=Math.max(0, mediaMetaVacas-atual);
+const extraTotal=extraPorVaca*vacas;
+const ganhodia=extraTotal*preco;
+const ganhouses=ganhodia*30;
+
+set('calc-ganho-dia', extraTotal>0?'R$ '+ganhodia.toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2}):'Já na média Meta!');
+set('calc-ganho-mes', extraTotal>0?'R$ '+ganhouses.toLocaleString('pt-BR',{minimumFractionDigits:0,maximumFractionDigits:0}):'—');
+set('calc-litros-extras', extraTotal>0?extraTotal.toFixed(0)+' L':'0 L');
+set('calc-atual-label', atual.toFixed(1)+' L (atual)');
+set('calc-meta-label', mediaMetaVacas>0?mediaMetaVacas.toFixed(1)+' L (Meta)':'—');
+set('calc-gap-label', extraTotal>0?'+'+extraTotal.toFixed(0)+' L/dia potencial':'');
+
+const pct=mediaMetaVacas>0?Math.min(atual/mediaMetaVacas*100,100):0;
+const bar=document.getElementById('calc-barra');
+if(bar){bar.style.width=pct+'%';bar.style.background=pct>=90?'#16a34a':pct>=60?'#d97706':'#dc2626';}
+}
+
+// ════════════════════════════════════════════════════════════════
+// SCORE DE SAÚDE DO CLIENTE
+// ════════════════════════════════════════════════════════════════
+function calcHealthScore(d){
+let score=0;
+const mp=parseFloat(d.media_prod)||0;
+const gord=parseFloat(d.gordura)||0;
+const prot=parseFloat(d.proteina)||0;
+const ccs=parseFloat(d.ccs)||0;
+const cbt=parseFloat(d.cbt)||0;
+const nul=parseFloat(d.nul)||0;
+// Produção (0–40 pts)
+if(mp>=37) score+=40; else if(mp>=28) score+=20+Math.round((mp-28)/9*20); else score+=Math.max(0,Math.round(mp/28*20));
+// Gordura (0–20 pts)
+if(gord>=3.5) score+=20; else if(gord>=3.0) score+=10; else if(gord>0) score+=5;
+// Proteína (0–15 pts)
+if(prot>=3.0) score+=15; else if(prot>=2.9) score+=8; else if(prot>0) score+=3;
+// CCS (0–15 pts)
+if(ccs>0){ if(ccs<200) score+=15; else if(ccs<400) score+=8; else score+=2; }
+// NUL (0–10 pts)
+if(nul>=12&&nul<=18) score+=10; else if(nul>0) score+=4;
+return Math.min(score,100);
+}
+
+function healthGrade(s){
+if(s>=80) return {g:'A',cls:'score-A'};
+if(s>=60) return {g:'B',cls:'score-B'};
+if(s>=40) return {g:'C',cls:'score-C'};
+return {g:'D',cls:'score-D'};
+}
+
+function updateHealthScores(){
+// Adiciona coluna de score à tabela (semáforo CCS)
+// já renderizado inline via renderTbl — score é calculado on-the-fly
+}
+
+// ════════════════════════════════════════════════════════════════
+// ALERTAS DE INATIVIDADE DE VISITA
+// ════════════════════════════════════════════════════════════════
+function checkVisitInactivity(){
+// Busca último histórico de cada cliente ativo
+const at=ALL.filter(d=>d.situacao==='ATIVO');
+const cutoff=new Date();
+cutoff.setDate(cutoff.getDate()-60);
+const alerts=[];
+// Verifica atualizado_em como proxy de última visita
+at.forEach(d=>{
+const lastUpdate=d.atualizado_em?new Date(d.atualizado_em):null;
+if(!lastUpdate || lastUpdate<cutoff){
+const dias=lastUpdate?Math.floor((Date.now()-lastUpdate)/86400000):999;
+alerts.push({d,dias});
+}
+});
+alerts.sort((a,b)=>b.dias-a.dias);
+return alerts;
+}
+
+// Injeta alertas no dashboard
+function renderInactivityAlerts(){
+const alerts=checkVisitInactivity().slice(0,5);
+const el=document.getElementById('dash-inact-alerts');
+if(!el) return;
+if(!alerts.length){el.innerHTML='<div style="color:#16a34a;font-size:12px;font-weight:600;padding:8px 0">✅ Todos os clientes ativos visitados recentemente</div>';return;}
+el.innerHTML=alerts.map(({d,dias})=>`
+<div class="inact-alert">
+<div class="health-dot health-${dias>90?'red':'yellow'}"></div>
+<div style="flex:1"><span style="font-weight:700">${d.produtor}</span> <span style="color:var(--muted)">${d.cidade||''}</span></div>
+<div style="font-size:11px;font-weight:700;color:${dias>90?'#dc2626':'#d97706'}">${dias===999?'Nunca':dias+'d'} sem contato</div>
+<div style="font-size:10px;color:var(--muted);margin-left:4px">${d.nome_vendedor||d.vendedor||'—'}</div>
+</div>`).join('');
+}
+
+// ════════════════════════════════════════════════════════════════
+// META DE CONVERSÃO POR VENDEDOR
+// ════════════════════════════════════════════════════════════════
+function getVendGoal(vend){
+// Meta padrão: 30% de conversão
+return 0.30;
 }
 
 </script>
