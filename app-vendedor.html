@@ -209,6 +209,32 @@ html, body { height: 100%; overflow: hidden; background: var(--bg); color: var(-
 .sync-dot.offline { background: var(--red); }
 .sync-dot.syncing { background: var(--yellow); animation: pulse 1s infinite; }
 @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
+
+/* ═══ TELA DE VISITA ═══ */
+#screen-visita { padding-bottom: 100px; }
+.visit-section { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 16px; margin-bottom: 12px; }
+.visit-section-title { font-size: 11px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: .8px; margin-bottom: 14px; display: flex; align-items: center; gap: 6px; }
+.visit-field { margin-bottom: 14px; }
+.visit-label { font-size: 12px; font-weight: 600; color: var(--muted); margin-bottom: 6px; display: block; }
+.visit-input { width: 100%; background: var(--bg); border: 1px solid var(--border); border-radius: 10px; color: var(--text); font-size: 14px; font-family: 'Inter', sans-serif; padding: 11px 13px; outline: none; transition: border-color .15s; }
+.visit-input:focus { border-color: var(--green); }
+.visit-input[type="number"] { -moz-appearance: textfield; }
+.score-row { display: flex; gap: 6px; }
+.score-btn { flex: 1; padding: 9px 4px; border-radius: 9px; border: 1.5px solid var(--border); background: var(--bg); color: var(--muted); font-size: 12px; font-weight: 700; font-family: 'Inter', sans-serif; cursor: pointer; text-align: center; transition: all .15s; }
+.score-btn.active-bom   { background: rgba(57,186,121,.15); border-color: var(--green); color: var(--green); }
+.score-btn.active-medio { background: rgba(240,180,41,.15); border-color: var(--yellow); color: var(--yellow); }
+.score-btn.active-ruim  { background: rgba(231,76,60,.15); border-color: var(--red); color: var(--red); }
+.score-btn.active-na    { background: rgba(107,136,114,.1); border-color: var(--muted); color: var(--muted); }
+.check-item { display: flex; align-items: center; gap: 10px; padding: 10px 0; border-bottom: 1px solid var(--border); }
+.check-item:last-child { border-bottom: none; }
+.check-box { width: 22px; height: 22px; border-radius: 6px; border: 2px solid var(--border); background: var(--bg); display: flex; align-items: center; justify-content: center; cursor: pointer; flex-shrink: 0; transition: all .15s; }
+.check-box.checked { background: var(--green); border-color: var(--green); }
+.check-lbl { font-size: 13px; color: var(--text); }
+.visit-submit { width: 100%; background: linear-gradient(135deg, var(--green-dark), var(--green-mid)); color: white; border: none; border-radius: 14px; padding: 16px; font-size: 15px; font-weight: 700; font-family: 'Inter', sans-serif; cursor: pointer; margin-top: 8px; }
+.grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.clima-btn { flex:1; padding:8px 4px; border-radius:9px; border:1.5px solid var(--border); background:var(--bg); color:var(--muted); font-size:12px; font-family:'Inter',sans-serif; cursor:pointer; text-align:center; transition:all .15s; }
+.clima-btn.on { background:rgba(52,152,219,.15); border-color:#3498db; color:#3498db; }
+
 </style>
 </head>
 <body>
@@ -441,6 +467,257 @@ html, body { height: 100%; overflow: hidden; background: var(--bg); color: var(-
       <div class="detail-body" id="detail-body"></div>
     </div>
 
+
+    <!-- ═══ FICHA DE VISITA ═══ -->
+    <div class="screen" id="screen-visita" style="display:none">
+
+      <!-- Seção 1: Dados Produtivos -->
+      <div class="visit-section">
+        <div class="visit-section-title">🥛 Dados Produtivos</div>
+        <div class="grid-2">
+          <div class="visit-field">
+            <label class="visit-label">Total de Vacas</label>
+            <input class="visit-input" type="number" id="vt-vacas" placeholder="ex: 150">
+          </div>
+          <div class="visit-field">
+            <label class="visit-label">Em Lactação</label>
+            <input class="visit-input" type="number" id="vt-lactacao" placeholder="ex: 120">
+          </div>
+          <div class="visit-field">
+            <label class="visit-label">Vacas Secas</label>
+            <input class="visit-input" type="number" id="vt-secas" placeholder="ex: 20">
+          </div>
+          <div class="visit-field">
+            <label class="visit-label">Novilhas</label>
+            <input class="visit-input" type="number" id="vt-novilhas" placeholder="ex: 30">
+          </div>
+          <div class="visit-field">
+            <label class="visit-label">Bezerras</label>
+            <input class="visit-input" type="number" id="vt-bezerras" placeholder="ex: 15">
+          </div>
+          <div class="visit-field">
+            <label class="visit-label">DEL médio (dias)</label>
+            <input class="visit-input" type="number" id="vt-del" placeholder="ex: 165">
+          </div>
+          <div class="visit-field">
+            <label class="visit-label">Média L/vaca/dia</label>
+            <input class="visit-input" type="number" step="0.1" id="vt-media-prod" placeholder="ex: 38.5">
+          </div>
+          <div class="visit-field">
+            <label class="visit-label">Produção total L/dia</label>
+            <input class="visit-input" type="number" id="vt-prod-diaria" placeholder="calculado auto">
+          </div>
+        </div>
+      </div>
+
+      <!-- Seção 2: Qualidade do Leite -->
+      <div class="visit-section">
+        <div class="visit-section-title">🧈 Qualidade do Leite</div>
+        <div class="grid-2">
+          <div class="visit-field">
+            <label class="visit-label">Gordura (%)</label>
+            <input class="visit-input" type="number" step="0.01" id="vt-gordura" placeholder="ex: 3.90">
+          </div>
+          <div class="visit-field">
+            <label class="visit-label">Proteína (%)</label>
+            <input class="visit-input" type="number" step="0.01" id="vt-proteina" placeholder="ex: 3.10">
+          </div>
+          <div class="visit-field">
+            <label class="visit-label">CCS (x1000 cél/mL)</label>
+            <input class="visit-input" type="number" id="vt-ccs" placeholder="ex: 180">
+          </div>
+          <div class="visit-field">
+            <label class="visit-label">CBT (x1000 UFC/mL)</label>
+            <input class="visit-input" type="number" id="vt-cbt" placeholder="ex: 50">
+          </div>
+          <div class="visit-field">
+            <label class="visit-label">NUL (mg/dL)</label>
+            <input class="visit-input" type="number" step="0.1" id="vt-nul" placeholder="ex: 15.0">
+          </div>
+          <div class="visit-field">
+            <label class="visit-label">pH Urina</label>
+            <input class="visit-input" type="number" step="0.1" id="vt-ph-urina" placeholder="ex: 7.5">
+          </div>
+        </div>
+      </div>
+
+      <!-- Seção 3: Nutrição (Scores) -->
+      <div class="visit-section">
+        <div class="visit-section-title">🌾 Avaliação de Nutrição</div>
+
+        <div class="visit-field">
+          <label class="visit-label">Qualidade da Silagem</label>
+          <div class="score-row" id="sr-silagem">
+            <button class="score-btn" onclick="setScore('silagem','bom',this)">✅ Bom</button>
+            <button class="score-btn" onclick="setScore('silagem','medio',this)">⚠️ Médio</button>
+            <button class="score-btn" onclick="setScore('silagem','ruim',this)">❌ Ruim</button>
+            <button class="score-btn" onclick="setScore('silagem','na',this)">— N/A</button>
+          </div>
+        </div>
+
+        <div class="visit-field">
+          <label class="visit-label">Mistura dos Alimentos (TMR)</label>
+          <div class="score-row" id="sr-mistura">
+            <button class="score-btn" onclick="setScore('mistura','bom',this)">✅ Bom</button>
+            <button class="score-btn" onclick="setScore('mistura','medio',this)">⚠️ Médio</button>
+            <button class="score-btn" onclick="setScore('mistura','ruim',this)">❌ Ruim</button>
+            <button class="score-btn" onclick="setScore('mistura','na',this)">— N/A</button>
+          </div>
+        </div>
+
+        <div class="visit-field">
+          <label class="visit-label">Pré-Secado</label>
+          <div class="score-row" id="sr-presecado">
+            <button class="score-btn" onclick="setScore('presecado','bom',this)">✅ Bom</button>
+            <button class="score-btn" onclick="setScore('presecado','medio',this)">⚠️ Médio</button>
+            <button class="score-btn" onclick="setScore('presecado','ruim',this)">❌ Ruim</button>
+            <button class="score-btn" onclick="setScore('presecado','na',this)">— N/A</button>
+          </div>
+        </div>
+
+        <div class="visit-field">
+          <label class="visit-label">Consumo / Apetite</label>
+          <div class="score-row" id="sr-consumo">
+            <button class="score-btn" onclick="setScore('consumo','bom',this)">✅ Bom</button>
+            <button class="score-btn" onclick="setScore('consumo','medio',this)">⚠️ Médio</button>
+            <button class="score-btn" onclick="setScore('consumo','ruim',this)">❌ Ruim</button>
+            <button class="score-btn" onclick="setScore('consumo','na',this)">— N/A</button>
+          </div>
+        </div>
+
+        <div class="grid-2">
+          <div class="visit-field">
+            <label class="visit-label">MS Silagem (%)</label>
+            <input class="visit-input" type="number" step="0.1" id="vt-ms-silagem" placeholder="ex: 32.0">
+          </div>
+          <div class="visit-field">
+            <label class="visit-label">MS Ração (%)</label>
+            <input class="visit-input" type="number" step="0.1" id="vt-ms-racao" placeholder="ex: 48.0">
+          </div>
+          <div class="visit-field">
+            <label class="visit-label">Sobras (%)</label>
+            <input class="visit-input" type="number" step="0.1" id="vt-sobras" placeholder="ex: 5.0">
+          </div>
+          <div class="visit-field">
+            <label class="visit-label">Ruminação (%)</label>
+            <input class="visit-input" type="number" step="0.1" id="vt-ruminacao" placeholder="ex: 60">
+          </div>
+        </div>
+      </div>
+
+      <!-- Seção 4: Conforto Animal -->
+      <div class="visit-section">
+        <div class="visit-section-title">🏠 Conforto dos Animais</div>
+
+        <div class="visit-field">
+          <label class="visit-label">Qualidade da Cama</label>
+          <div class="score-row" id="sr-cama">
+            <button class="score-btn" onclick="setScore('cama','bom',this)">✅ Bom</button>
+            <button class="score-btn" onclick="setScore('cama','medio',this)">⚠️ Médio</button>
+            <button class="score-btn" onclick="setScore('cama','ruim',this)">❌ Ruim</button>
+            <button class="score-btn" onclick="setScore('cama','na',this)">— N/A</button>
+          </div>
+        </div>
+
+        <div class="visit-field">
+          <label class="visit-label">Conforto Térmico</label>
+          <div class="score-row" id="sr-termal">
+            <button class="score-btn" onclick="setScore('termal','bom',this)">✅ Bom</button>
+            <button class="score-btn" onclick="setScore('termal','medio',this)">⚠️ Médio</button>
+            <button class="score-btn" onclick="setScore('termal','ruim',this)">❌ Ruim</button>
+            <button class="score-btn" onclick="setScore('termal','na',this)">— N/A</button>
+          </div>
+        </div>
+
+        <div class="visit-field">
+          <label class="visit-label">Escore Fecal (KPS)</label>
+          <div class="score-row" id="sr-fecal">
+            <button class="score-btn" onclick="setScore('fecal','bom',this)">✅ Ideal</button>
+            <button class="score-btn" onclick="setScore('fecal','medio',this)">⚠️ Regular</button>
+            <button class="score-btn" onclick="setScore('fecal','ruim',this)">❌ Alterado</button>
+            <button class="score-btn" onclick="setScore('fecal','na',this)">— N/A</button>
+          </div>
+        </div>
+
+        <div class="visit-field">
+          <label class="visit-label">Cascos / Locomoção</label>
+          <div class="score-row" id="sr-cascos">
+            <button class="score-btn" onclick="setScore('cascos','bom',this)">✅ Bom</button>
+            <button class="score-btn" onclick="setScore('cascos','medio',this)">⚠️ Regular</button>
+            <button class="score-btn" onclick="setScore('cascos','ruim',this)">❌ Ruim</button>
+            <button class="score-btn" onclick="setScore('cascos','na',this)">— N/A</button>
+          </div>
+        </div>
+
+        <div class="grid-2">
+          <div class="visit-field">
+            <label class="visit-label">ECC médio rebanho</label>
+            <input class="visit-input" type="number" step="0.25" id="vt-ecc" placeholder="ex: 3.0">
+          </div>
+          <div class="visit-field">
+            <label class="visit-label">ECC vacas secas</label>
+            <input class="visit-input" type="number" step="0.25" id="vt-ecc-secas" placeholder="ex: 3.5">
+          </div>
+          <div class="visit-field">
+            <label class="visit-label">Temp. Máx. (°C)</label>
+            <input class="visit-input" type="number" id="vt-temp-max" placeholder="ex: 32">
+          </div>
+          <div class="visit-field">
+            <label class="visit-label">Temp. Mín. (°C)</label>
+            <input class="visit-input" type="number" id="vt-temp-min" placeholder="ex: 18">
+          </div>
+        </div>
+      </div>
+
+      <!-- Seção 5: Sanidade -->
+      <div class="visit-section">
+        <div class="visit-section-title">🏥 Sanidade do Rebanho</div>
+        <div class="grid-2">
+          <div class="visit-field">
+            <label class="visit-label">Retenção de Placenta (%)</label>
+            <input class="visit-input" type="number" step="0.1" id="vt-retencao" placeholder="ex: 3.0">
+          </div>
+          <div class="visit-field">
+            <label class="visit-label">Cetose (%)</label>
+            <input class="visit-input" type="number" step="0.1" id="vt-cetose" placeholder="ex: 2.0">
+          </div>
+          <div class="visit-field">
+            <label class="visit-label">Descarte no mês</label>
+            <input class="visit-input" type="number" id="vt-descarte" placeholder="ex: 2">
+          </div>
+          <div class="visit-field">
+            <label class="visit-label">Mortes no mês</label>
+            <input class="visit-input" type="number" id="vt-morte-vacas" placeholder="ex: 0">
+          </div>
+        </div>
+      </div>
+
+      <!-- Seção 6: Observações -->
+      <div class="visit-section">
+        <div class="visit-section-title">📝 Observações da Visita</div>
+        <div class="visit-field">
+          <label class="visit-label">✅ Pontos Positivos</label>
+          <textarea class="visit-input" id="vt-positivos" rows="2" placeholder="O que está indo bem..."></textarea>
+        </div>
+        <div class="visit-field">
+          <label class="visit-label">⚠️ Pontos de Atenção</label>
+          <textarea class="visit-input" id="vt-atencao" rows="2" placeholder="O que precisa melhorar..."></textarea>
+        </div>
+        <div class="visit-field">
+          <label class="visit-label">📋 Ações Recomendadas</label>
+          <textarea class="visit-input" id="vt-acoes" rows="2" placeholder="Próximos passos..."></textarea>
+        </div>
+        <div class="visit-field">
+          <label class="visit-label">📅 Próxima Visita</label>
+          <input class="visit-input" type="date" id="vt-proxima-data">
+        </div>
+      </div>
+
+      <button class="visit-submit" onclick="salvarVisita()">
+        💾 Salvar Ficha de Visita
+      </button>
+    </div>
+
     <!-- ═══ MEU DESEMPENHO ═══ -->
     <div class="screen" id="screen-dash">
 
@@ -591,6 +868,8 @@ const db = firebase.database();
 let usuarioAtual = null;
 let nomeVendedor = '';
 let meusClientes = [];
+let clienteAtual = null;
+const visitaScores = {};
 let filtroAtivo = '';
 let prevScreen = 'lista';
 let editandoId = null;
@@ -747,6 +1026,7 @@ function filtrarLista() {
 
 // ── DETALHE ──────────────────────────────────────────────
 function abrirDetalhe(d) {
+  clienteAtual = d;
   const cor = avatarColor(d.produtor);
   const ini = iniciais(d.produtor);
   const sitClass = d.situacao==='ATIVO'?'b-ativo':d.situacao==='INATIVO'?'b-inativo':'b-prospec';
@@ -815,7 +1095,15 @@ function abrirDetalhe(d) {
     ${d.data_visita?`<div style="font-size:11px;color:var(--muted);text-align:center;margin-bottom:12px">Última visita: ${formatDate(d.data_visita)}</div>`:''}
 
     <button class="btn-edit" onclick='editarCliente(${JSON.stringify(d)})'>✏️ Editar Propriedade</button>
-    <button class="btn-secondary" style="color:var(--red);border-color:var(--red);margin-top:8px" onclick="excluirCliente('${d.id}','${d.produtor}')">🗑️ Excluir</button>`;
+    <button class="btn-secondary" style="color:var(--red);border-color:var(--red);margin-top:8px" onclick="excluirCliente('${d.id}','${d.produtor}')">🗑️ Excluir</button>
+    <!-- Botão Ficha de Visita -->
+    <button onclick="abrirVisita()" style="width:100%;background:linear-gradient(135deg,var(--green-dark),var(--green-mid));color:white;border:none;border-radius:14px;padding:15px;font-size:15px;font-weight:700;font-family:'Inter',sans-serif;cursor:pointer;margin-top:8px;display:flex;align-items:center;justify-content:center;gap:8px">
+      📋 Preencher Ficha de Visita
+    </button>
+    <button onclick="editarCliente(clienteAtual)" style="width:100%;background:var(--surface);color:var(--muted);border:1px solid var(--border);border-radius:14px;padding:13px;font-size:14px;font-weight:600;font-family:'Inter',sans-serif;cursor:pointer;margin-top:8px">
+      ✏️ Editar Cadastro
+    </button>
+\`;
 
   showScreen('detail', d);
 }
@@ -1140,6 +1428,197 @@ function showToast(msg, err=false) {
 
 // Atalho Enter no login
 document.getElementById('l-senha').addEventListener('keydown', e => { if(e.key==='Enter') fazerLogin(); });
+
+
+// ══════════════════════════════════════════════════
+// FICHA DE VISITA
+// ══════════════════════════════════════════════════
+function abrirVisita() {
+  if(!clienteAtual) return;
+  // Pré-preenche com dados do cliente
+  const d = clienteAtual;
+  const setVal = (id, val) => { const el = document.getElementById(id); if(el && val) el.value = val; };
+  // Limpa form
+  document.querySelectorAll('#screen-visita input, #screen-visita textarea').forEach(el => { if(el.type !== 'date') el.value = ''; });
+  // Limpa scores
+  document.querySelectorAll('.score-btn').forEach(b => b.className = 'score-btn');
+  Object.keys(visitaScores).forEach(k => delete visitaScores[k]);
+  // Pré-preenche com últimos dados do cliente
+  setVal('vt-vacas', d.vacas);
+  setVal('vt-lactacao', d.lactacao);
+  setVal('vt-secas', d.secas);
+  setVal('vt-novilhas', d.novilhas);
+  setVal('vt-bezerras', d.bezerras);
+  setVal('vt-media-prod', d.media_prod);
+  setVal('vt-prod-diaria', d.prod_diaria);
+  setVal('vt-gordura', d.gordura);
+  setVal('vt-proteina', d.proteina);
+  setVal('vt-ccs', d.ccs);
+  setVal('vt-nul', d.nul);
+  // Próxima visita: 30 dias à frente
+  const prox = new Date(); prox.setDate(prox.getDate()+30);
+  document.getElementById('vt-proxima-data').value = prox.toISOString().split('T')[0];
+  // Vai para tela de visita
+  showScreen('visita');
+  document.getElementById('ttitle').textContent = (d.produtor||'').split(' ')[0];
+}
+
+function setScore(campo, valor, btn) {
+  visitaScores[campo] = valor;
+  const row = btn.parentElement;
+  row.querySelectorAll('.score-btn').forEach(b => b.className = 'score-btn');
+  btn.className = 'score-btn active-' + valor;
+}
+
+// Auto-calcula produção total
+document.addEventListener('DOMContentLoaded', () => {
+  const mediaEl = document.getElementById('vt-media-prod');
+  const vacasEl = document.getElementById('vt-vacas');
+  const totalEl = document.getElementById('vt-prod-diaria');
+  const calc = () => {
+    const m = parseFloat(mediaEl?.value)||0;
+    const v = parseFloat(vacasEl?.value)||0;
+    if(m>0 && v>0 && totalEl) totalEl.value = Math.round(m*v);
+  };
+  mediaEl?.addEventListener('input', calc);
+  vacasEl?.addEventListener('input', calc);
+});
+
+function gv(id) {
+  const el = document.getElementById(id);
+  if(!el) return null;
+  const v = el.value.trim();
+  return v === '' ? null : (el.type === 'number' ? parseFloat(v)||0 : v);
+}
+
+async function salvarVisita() {
+  if(!clienteAtual) { showToast('Nenhum cliente selecionado'); return; }
+  const user = firebase.auth().currentUser;
+  if(!user) { showToast('Faça login primeiro'); return; }
+
+  const btn = document.querySelector('.visit-submit');
+  btn.textContent = '⏳ Salvando...'; btn.disabled = true;
+
+  try {
+    const now = new Date();
+    const farmId = clienteAtual.id;
+
+    // Monta objeto da visita com todos os campos
+    const visita = {
+      // Metadados
+      data:        now.toISOString(),
+      criado_em:   now.toISOString(),
+      vendedor:    user.email,
+      farm_id:     farmId,
+      produtor:    clienteAtual.produtor,
+      // Dados produtivos
+      vacas:       gv('vt-vacas'),
+      lactacao:    gv('vt-lactacao'),
+      secas:       gv('vt-secas'),
+      novilhas:    gv('vt-novilhas'),
+      bezerras:    gv('vt-bezerras'),
+      del:         gv('vt-del'),
+      media_prod:  gv('vt-media-prod'),
+      prod_diaria: gv('vt-prod-diaria'),
+      // Qualidade do leite
+      gordura:     gv('vt-gordura'),
+      proteina:    gv('vt-proteina'),
+      ccs:         gv('vt-ccs'),
+      cbt:         gv('vt-cbt'),
+      nul:         gv('vt-nul'),
+      ph_urina:    gv('vt-ph-urina'),
+      // Scores de manejo (das fichas)
+      silagem:     visitaScores['silagem']  || null,
+      mistura:     visitaScores['mistura']  || null,
+      presecado:   visitaScores['presecado']|| null,
+      consumo:     visitaScores['consumo']  || null,
+      cama:        visitaScores['cama']     || null,
+      termal:      visitaScores['termal']   || null,
+      fecal:       visitaScores['fecal']    || null,
+      cascos:      visitaScores['cascos']   || null,
+      // Medidas nutricionais
+      ms_silagem:  gv('vt-ms-silagem'),
+      ms_racao:    gv('vt-ms-racao'),
+      sobras:      gv('vt-sobras'),
+      ruminacao:   gv('vt-ruminacao'),
+      // ECC
+      ecc:         gv('vt-ecc'),
+      ecc_secas:   gv('vt-ecc-secas'),
+      // Clima
+      temp_max:    gv('vt-temp-max'),
+      temp_min:    gv('vt-temp-min'),
+      // Sanidade
+      retencao:    gv('vt-retencao'),
+      cetose:      gv('vt-cetose'),
+      descarte:    gv('vt-descarte'),
+      morte_vacas: gv('vt-morte-vacas'),
+      // Obs
+      positivos:   gv('vt-positivos'),
+      atencao:     gv('vt-atencao'),
+      acoes:       gv('vt-acoes'),
+      proxima_data:gv('vt-proxima-data'),
+    };
+
+    // Remove campos null para não poluir o Firebase
+    Object.keys(visita).forEach(k => { if(visita[k] === null) delete visita[k]; });
+
+    // 1. Salva a visita no nó visitas/{farmId}
+    await db.ref('visitas/' + farmId).push(visita);
+
+    // 2. Atualiza dados do cliente com os novos valores produtivos
+    const update = { atualizado_em: now.toISOString(), atualizado_por: user.email };
+    if(visita.vacas)      update.vacas      = visita.vacas;
+    if(visita.lactacao)   update.lactacao   = visita.lactacao;
+    if(visita.secas)      update.secas      = visita.secas;
+    if(visita.novilhas)   update.novilhas   = visita.novilhas;
+    if(visita.bezerras)   update.bezerras   = visita.bezerras;
+    if(visita.media_prod) update.media_prod = visita.media_prod;
+    if(visita.prod_diaria)update.prod_diaria= visita.prod_diaria;
+    if(visita.gordura)    update.gordura    = visita.gordura;
+    if(visita.proteina)   update.proteina   = visita.proteina;
+    if(visita.ccs)        update.ccs        = visita.ccs;
+    if(visita.nul)        update.nul        = visita.nul;
+    if(visita.del)        update.del        = visita.del;
+
+    // Se ID numérico (importado da planilha), atualiza direto
+    if(/^\d+$/.test(farmId)) {
+      await db.ref('propriedades/' + farmId).update(update);
+    } else {
+      await db.ref('propriedades/' + farmId).update(update);
+    }
+
+    // 3. Salva no histórico
+    const histEntry = {
+      data:       now.toISOString(),
+      vacas:      visita.vacas,
+      lactacao:   visita.lactacao,
+      media_prod: visita.media_prod,
+      prod_diaria:visita.prod_diaria,
+      gordura:    visita.gordura,
+      proteina:   visita.proteina,
+      nul:        visita.nul,
+      ccs:        visita.ccs,
+      del:        visita.del,
+      ecc:        visita.ecc,
+      secas:      visita.secas,
+      novilhas:   visita.novilhas,
+    };
+    Object.keys(histEntry).forEach(k => { if(!histEntry[k] && histEntry[k]!==0) delete histEntry[k]; });
+    await db.ref('historico/' + farmId).push(histEntry);
+
+    showToast('✅ Ficha salva com sucesso!');
+    // Volta para detalhe do cliente
+    setTimeout(() => showScreen('detail'), 1200);
+
+  } catch(e) {
+    console.error('Erro ao salvar visita:', e);
+    showToast('❌ Erro ao salvar. Tente novamente.');
+  } finally {
+    btn.textContent = '💾 Salvar Ficha de Visita';
+    btn.disabled = false;
+  }
+}
+
 </script>
 </body>
 </html>
