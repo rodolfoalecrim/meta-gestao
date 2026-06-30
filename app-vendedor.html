@@ -469,7 +469,7 @@ html, body { height: 100%; overflow: hidden; background: var(--bg); color: var(-
 
 
     <!-- ═══ FICHA DE VISITA ═══ -->
-    <div class="screen" id="screen-visita" style="display:none">
+    <div class="screen" id="screen-visita">
 
       <!-- Seção 1: Dados Produtivos -->
       <div class="visit-section">
@@ -1103,7 +1103,7 @@ function abrirDetalhe(d) {
     <button onclick="editarCliente(clienteAtual)" style="width:100%;background:var(--surface);color:var(--muted);border:1px solid var(--border);border-radius:14px;padding:13px;font-size:14px;font-weight:600;font-family:'Inter',sans-serif;cursor:pointer;margin-top:8px">
       ✏️ Editar Cadastro
     </button>
-\`;
+`;
 
   showScreen('detail', d);
 }
@@ -1459,6 +1459,7 @@ function abrirVisita() {
   const prox = new Date(); prox.setDate(prox.getDate()+30);
   document.getElementById('vt-proxima-data').value = prox.toISOString().split('T')[0];
   // Vai para tela de visita
+  setupCalcProd();
   showScreen('visita');
   document.getElementById('ttitle').textContent = (d.produtor||'').split(' ')[0];
 }
@@ -1470,8 +1471,8 @@ function setScore(campo, valor, btn) {
   btn.className = 'score-btn active-' + valor;
 }
 
-// Auto-calcula produção total
-document.addEventListener('DOMContentLoaded', () => {
+// Auto-calcula produção total (via delegação no input)
+function setupCalcProd() {
   const mediaEl = document.getElementById('vt-media-prod');
   const vacasEl = document.getElementById('vt-vacas');
   const totalEl = document.getElementById('vt-prod-diaria');
@@ -1482,7 +1483,7 @@ document.addEventListener('DOMContentLoaded', () => {
   };
   mediaEl?.addEventListener('input', calc);
   vacasEl?.addEventListener('input', calc);
-});
+}
 
 function gv(id) {
   const el = document.getElementById(id);
