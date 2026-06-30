@@ -1749,6 +1749,14 @@ tbody td{padding:10px 14px;font-size:12px;}.badge{display:inline-flex;align-item
           </div>
         </div>
 
+        <!-- Gráfico histórico -->
+        <div class="dt-card" id="dt-hist-card" style="margin-bottom:16px">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+            <div class="dt-section-title" style="margin:0">📈 Evolução da Dieta — RMCA e Custo/vaca/dia ao longo do tempo</div>
+            <span style="font-size:10px;color:var(--muted)" id="dt-hist-count"></span>
+          </div>
+          <div id="dt-hist-wrap"><div style="text-align:center;padding:24px;color:var(--muted);font-size:12px">Selecione uma fazenda para ver o histórico.</div></div>
+        </div>
         <!-- Lista de lotes -->
         <div id="dt-lotes-wrap"></div>
       </div>
@@ -5925,8 +5933,10 @@ async function confirmarDelFarm() {
 // ════════════════════════════════════════════════════════
 // DIETA & CUSTOS
 // ════════════════════════════════════════════════════════
-let dietaLotes = []; // [{id, nome, vacas, prod, preco, alimentos:[{nome,kg,custo}]}]
+let dietaLotes = []; // [{id, nomeDieta, nome, del, ccs, gordura, nul, vacas, prod, preco, alimentos}]
 let dietaFarmId = null;
+let dietaHistorico = []; // [{data, custo, rmca, nomeDieta, ...}]
+let chHistDieta = null; // instância Chart.js
 
 const ALIMENTOS_PADRAO = [
   {nome:'Silagem de Milho',     kg:25,  custo:0.32},
@@ -5960,16 +5970,22 @@ function onDietaFarmChange() {
   dietaFarmId = sel.value;
   if(!dietaFarmId){ dietaLotes=[]; renderLotes(); return; }
   // Tenta carregar do Firebase
+  dietaHistorico = [];
   db.ref('dietas/'+dietaFarmId).once('value', snap=>{
     const data = snap.val();
     if(data && data.lotes){
       dietaLotes = Object.values(data.lotes);
+      dietaHistorico = data.historico ? Object.values(data.historico).sort((a,b)=>a.data>b.data?1:-1) : [];
     } else {
-      // Cria lote inicial com dados da fazenda
       const farm = ALL.find(d=>d.id===dietaFarmId)||{};
       dietaLotes = [{
         id: 'lote_'+Date.now(),
+        nomeDieta: 'Dieta Inicial',
         nome: 'Lote em Lactação',
+        del: farm.del||0,
+        ccs: farm.ccs||0,
+        gordura: farm.gordura||0,
+        nul: farm.nul||0,
         vacas: farm.lactacao||farm.vacas||0,
         prod: farm.media_prod||0,
         preco: 2.80,
@@ -5977,6 +5993,7 @@ function onDietaFarmChange() {
       }];
     }
     renderLotes();
+    renderHistDieta();
   });
 }
 
@@ -5984,7 +6001,9 @@ function addLote() {
   if(!dietaFarmId){ toast('Selecione uma fazenda primeiro'); return; }
   dietaLotes.push({
     id: 'lote_'+Date.now(),
+    nomeDieta: 'Nova Dieta',
     nome: 'Novo Lote',
+    del: 0, ccs: 0, gordura: 0, nul: 0,
     vacas: 0, prod: 0, preco: 2.80,
     alimentos: [{nome:'Silagem de Milho',kg:25,custo:0.32},{nome:'Ração Concentrada',kg:6,custo:1.80}]
   });
@@ -6097,26 +6116,47 @@ function renderLotes() {
         <button onclick="event.stopPropagation();removeLote('${lote.id}')" style="background:#fef2f2;border:1px solid #fca5a5;color:#dc2626;border-radius:7px;padding:4px 10px;font-size:11px;font-weight:700;cursor:pointer;font-family:Inter,sans-serif;margin-left:8px">Remover</button>
       </div>
       <div class="dt-lote-body" id="dt-lote-body-${lote.id}">
+        <!-- Nome da dieta -->
+        <div style="margin-bottom:14px">
+          <div style="font-size:10px;font-weight:700;color:var(--muted);margin-bottom:5px">📋 Nome da Dieta</div>
+          <input class="dt-inp" style="font-size:14px;font-weight:700" value="${lote.nomeDieta||'Dieta sem nome'}" oninput="dietaLotes.find(l=>l.id==='${lote.id}').nomeDieta=this.value" placeholder="Ex: Dieta Alta Produção Verão 2026">
+        </div>
         <!-- Parâmetros do lote -->
-        <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:10px;margin-bottom:16px">
+        <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:8px;margin-bottom:14px">
           <div>
-            <div style="font-size:10px;font-weight:700;color:var(--muted);margin-bottom:5px">Vacas no lote</div>
-            <input class="dt-inp" type="number" value="${lote.vacas||0}" oninput="dietaLotes.find(l=>l.id==='${lote.id}').vacas=parseFloat(this.value)||0;renderLotes()" placeholder="qtd vacas">
-          </div>
-          <div>
-            <div style="font-size:10px;font-weight:700;color:var(--muted);margin-bottom:5px">Produção L/vaca/dia</div>
-            <input class="dt-inp" type="number" step="0.1" value="${lote.prod||0}" oninput="dietaLotes.find(l=>l.id==='${lote.id}').prod=parseFloat(this.value)||0;renderLotes()" placeholder="L/vaca/dia">
+            <div style="font-size:10px;font-weight:700;color:var(--muted);margin-bottom:5px">🐄 Vacas no lote</div>
+            <input class="dt-inp" type="number" value="${lote.vacas||0}" oninput="dietaLotes.find(l=>l.id==='${lote.id}').vacas=parseFloat(this.value)||0;renderLotes()" placeholder="qtd">
           </div>
           <div>
-            <div style="font-size:10px;font-weight:700;color:var(--muted);margin-bottom:5px">Preço leite (R$/L)</div>
-            <input class="dt-inp" type="number" step="0.01" value="${lote.preco||2.80}" oninput="dietaLotes.find(l=>l.id==='${lote.id}').preco=parseFloat(this.value)||0;renderLotes()" placeholder="R$/litro">
+            <div style="font-size:10px;font-weight:700;color:var(--muted);margin-bottom:5px">🥛 L/vaca/dia</div>
+            <input class="dt-inp" type="number" step="0.1" value="${lote.prod||0}" oninput="dietaLotes.find(l=>l.id==='${lote.id}').prod=parseFloat(this.value)||0;renderLotes()" placeholder="L/vaca">
           </div>
-          <div style="display:flex;flex-direction:column;gap:6px">
-            <div class="dt-metric" style="background:#f0fdf4;border:1px solid #86efac">
-              <div class="dt-metric-val" style="color:#15803d;font-size:16px">R$ ${fmt2(c.custoPorVaca)}</div>
-              <div class="dt-metric-lbl">Custo/vaca/dia</div>
-            </div>
+          <div>
+            <div style="font-size:10px;font-weight:700;color:var(--muted);margin-bottom:5px">💰 Preço R$/L</div>
+            <input class="dt-inp" type="number" step="0.01" value="${lote.preco||2.80}" oninput="dietaLotes.find(l=>l.id==='${lote.id}').preco=parseFloat(this.value)||0;renderLotes()" placeholder="R$/L">
           </div>
+          <div>
+            <div style="font-size:10px;font-weight:700;color:var(--muted);margin-bottom:5px">📅 DEL (dias)</div>
+            <input class="dt-inp" type="number" value="${lote.del||0}" oninput="dietaLotes.find(l=>l.id==='${lote.id}').del=parseFloat(this.value)||0" placeholder="dias">
+          </div>
+          <div>
+            <div style="font-size:10px;font-weight:700;color:var(--muted);margin-bottom:5px">🧫 CCS (x1000)</div>
+            <input class="dt-inp" type="number" value="${lote.ccs||0}" oninput="dietaLotes.find(l=>l.id==='${lote.id}').ccs=parseFloat(this.value)||0" placeholder="cel/mL">
+          </div>
+          <div>
+            <div style="font-size:10px;font-weight:700;color:var(--muted);margin-bottom:5px">🧈 Gordura %</div>
+            <input class="dt-inp" type="number" step="0.01" value="${lote.gordura||0}" oninput="dietaLotes.find(l=>l.id==='${lote.id}').gordura=parseFloat(this.value)||0" placeholder="%">
+          </div>
+          <div>
+            <div style="font-size:10px;font-weight:700;color:var(--muted);margin-bottom:5px">🧬 NUL mg/dL</div>
+            <input class="dt-inp" type="number" step="0.1" value="${lote.nul||0}" oninput="dietaLotes.find(l=>l.id==='${lote.id}').nul=parseFloat(this.value)||0" placeholder="mg/dL">
+          </div>
+        </div>
+        <!-- Card custo/vaca/dia destacado -->
+        <div class="dt-metric" style="background:#f0fdf4;border:1px solid #86efac;margin-bottom:14px;display:flex;align-items:center;justify-content:space-between;padding:12px 16px">
+          <div><div style="font-size:11px;font-weight:700;color:var(--muted)">Custo/vaca/dia</div><div style="font-size:24px;font-weight:900;color:#15803d">R$ ${fmt2(c.custoPorVaca)}</div></div>
+          <div style="text-align:right"><div style="font-size:11px;font-weight:700;color:var(--muted)">Custo total/dia</div><div style="font-size:18px;font-weight:800;color:#0891b2">R$ ${fmt2(c.custoTotal)}</div></div>
+          <div style="text-align:right"><div style="font-size:11px;font-weight:700;color:var(--muted)">RMCA/vaca/dia</div><div style="font-size:18px;font-weight:800;color:${c.rmca>=0?'#15803d':'#dc2626'}">${c.rmca>=0?'+':''}R$ ${fmt2(c.rmcaVaca)}</div></div>
         </div>
 
         <!-- Métricas calculadas -->
@@ -6189,19 +6229,87 @@ function atualizarTotaisLote(id){
 async function salvarDietaFirebase() {
   if(!dietaFarmId){ toast('Selecione uma fazenda primeiro'); return; }
   try {
+    const now = new Date().toISOString();
     const lotesObj = {};
     dietaLotes.forEach(l=>{ lotesObj[l.id] = l; });
-    await db.ref('dietas/'+dietaFarmId).set({
-      lotes: lotesObj,
-      atualizado_em: new Date().toISOString(),
-      farm_id: dietaFarmId,
-      produtor: (ALL.find(d=>d.id===dietaFarmId)||{}).produtor||''
-    });
-    toast('✅ Dieta salva no Firebase!');
+    // Calcula totais consolidados para o histórico
+    let totalCusto=0, totalVacas=0, totalRetorno=0;
+    dietaLotes.forEach(l=>{ const c=calcLote(l); totalCusto+=c.custoTotal; totalVacas+=c.vacas; totalRetorno+=c.retornoDia; });
+    const rmcaSnapshot = totalRetorno - totalCusto;
+    const cvdSnapshot = totalVacas>0?totalCusto/totalVacas:0;
+    // Nomes das dietas para o histórico
+    const nomesDietas = dietaLotes.map(l=>l.nomeDieta||l.nome).join(' / ');
+    // Entrada de histórico
+    const histEntry = {
+      data: now,
+      custo_total: parseFloat(totalCusto.toFixed(2)),
+      cvd: parseFloat(cvdSnapshot.toFixed(2)),
+      retorno: parseFloat(totalRetorno.toFixed(2)),
+      rmca: parseFloat(rmcaSnapshot.toFixed(2)),
+      vacas: totalVacas,
+      nomes: nomesDietas,
+      lotes: JSON.parse(JSON.stringify(lotesObj)) // snapshot completo
+    };
+    // Salva lotes + novo entry no histórico
+    await db.ref('dietas/'+dietaFarmId+'/lotes').set(lotesObj);
+    await db.ref('dietas/'+dietaFarmId+'/historico').push(histEntry);
+    await db.ref('dietas/'+dietaFarmId+'/atualizado_em').set(now);
+    await db.ref('dietas/'+dietaFarmId+'/produtor').set((ALL.find(d=>d.id===dietaFarmId)||{}).produtor||'');
+    // Atualiza histórico local e gráfico
+    dietaHistorico.push(histEntry);
+    dietaHistorico.sort((a,b)=>a.data>b.data?1:-1);
+    renderHistDieta();
+    toast('✅ Dieta salva! Histórico atualizado.');
   } catch(e){
     console.error(e);
     toast('❌ Erro ao salvar. Tente novamente.');
   }
+}
+
+// ── Gráfico de histórico de dietas ───────────────────────────────────────────
+function renderHistDieta(){
+  const wrap = document.getElementById('dt-hist-wrap');
+  if(!wrap) return;
+  const cntEl=document.getElementById('dt-hist-count');
+  if(cntEl) cntEl.textContent=dietaHistorico.length+' registro'+((dietaHistorico.length!==1)?'s':'');
+  if(!dietaHistorico.length){
+    wrap.innerHTML='<div style="text-align:center;padding:24px;color:var(--muted);font-size:12px">Nenhum histórico ainda. Salve a dieta para registrar o primeiro ponto.</div>';
+    return;
+  }
+  wrap.innerHTML='<canvas id="ch-hist-dieta" height="180"></canvas>';
+  const labels = dietaHistorico.map(h=>{
+    const d=new Date(h.data);
+    return d.toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit',year:'2-digit'});
+  });
+  if(chHistDieta){ try{chHistDieta.destroy();}catch(e){} }
+  const ctx = document.getElementById('ch-hist-dieta');
+  if(!ctx) return;
+  chHistDieta = new Chart(ctx,{
+    type:'line',
+    data:{
+      labels,
+      datasets:[
+        {label:'RMCA R$/dia',data:dietaHistorico.map(h=>h.rmca),
+         borderColor:'#15803d',backgroundColor:'rgba(21,128,61,0.08)',
+         borderWidth:2.5,pointRadius:4,pointBackgroundColor:'#15803d',tension:0.4,fill:true,yAxisID:'yRmca'},
+        {label:'Custo/vaca/dia R$',data:dietaHistorico.map(h=>h.cvd),
+         borderColor:'#dc2626',backgroundColor:'rgba(220,38,38,0.06)',
+         borderWidth:2,pointRadius:4,pointBackgroundColor:'#dc2626',tension:0.4,fill:false,yAxisID:'yCvd'},
+      ]
+    },
+    options:{
+      responsive:true,maintainAspectRatio:true,
+      plugins:{
+        legend:{labels:{color:'#64748b',font:{size:10},boxWidth:10}},
+        tooltip:{callbacks:{label:ctx=>'R$ '+ctx.parsed.y.toFixed(2)}}
+      },
+      scales:{
+        x:{grid:{display:false},ticks:{color:'#94a3b8',font:{size:9}}},
+        yRmca:{position:'left',title:{display:true,text:'RMCA R$/dia',color:'#15803d',font:{size:9}},ticks:{color:'#15803d',font:{size:9},callback:v=>'R$'+v.toFixed(0)},grid:{color:'rgba(0,0,0,0.04)'}},
+        yCvd:{position:'right',title:{display:true,text:'Custo/vaca/dia',color:'#dc2626',font:{size:9}},ticks:{color:'#dc2626',font:{size:9},callback:v=>'R$'+v.toFixed(2)},grid:{display:false}}
+      }
+    }
+  });
 }
 
 </script>
