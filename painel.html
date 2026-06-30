@@ -244,6 +244,13 @@ tbody td{padding:10px 14px;font-size:12px;}.badge{display:inline-flex;align-item
 .upload-btn-cancel { flex:1;background:#f1f5f9;border:none;border-radius:10px;padding:12px;font-size:13px;font-weight:700;font-family:'Inter',sans-serif;cursor:pointer;color:#64748b; }
 .upload-btn-confirm { flex:2;background:linear-gradient(135deg,#003c09,#1a6b35);border:none;border-radius:10px;padding:12px;font-size:13px;font-weight:700;font-family:'Inter',sans-serif;cursor:pointer;color:white;display:none; }
 
+.del-btn{background:white;border:1.5px solid #fca5a5;color:#dc2626;font-size:11px;font-weight:700;font-family:Inter,sans-serif;padding:5px 12px;border-radius:8px;cursor:pointer;transition:all .15s;}
+.del-btn:hover{background:#fef2f2;border-color:#dc2626;}
+.del-confirm-overlay{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:9000;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(3px);}
+.del-confirm-box{background:white;border-radius:16px;padding:28px;max-width:380px;width:90%;text-align:center;box-shadow:0 20px 60px rgba(0,0,0,.3);}
+.del-confirm-btns{display:flex;gap:10px;margin-top:20px;}
+.del-confirm-cancel{flex:1;background:white;border:1.5px solid var(--border);color:var(--muted);font-size:13px;font-weight:700;font-family:Inter,sans-serif;padding:12px;border-radius:10px;cursor:pointer;}
+.del-confirm-ok{flex:1;background:linear-gradient(135deg,#dc2626,#991b1b);color:white;border:none;font-size:13px;font-weight:700;font-family:Inter,sans-serif;padding:12px;border-radius:10px;cursor:pointer;}
 </style>
 </head>
 <body>
@@ -686,9 +693,10 @@ tbody td{padding:10px 14px;font-size:12px;}.badge{display:inline-flex;align-item
       <div class="modal-tab on" id="mtab-hist" onclick="switchTab('hist')">📈 Histórico & Gráficos</div>
       <div class="modal-tab" id="mtab-visit" onclick="switchTab('visit')">📋 Relatório de Visita</div>
       <div class="modal-tab" id="mtab-edit" onclick="switchTab('edit')">✏️ Editar Dados</div>
-      <button onclick="gerarPDFFazenda()" style="margin-left:auto;background:linear-gradient(135deg,#dc2626,#b91c1c);color:white;border:none;border-radius:8px;padding:6px 14px;font-size:11px;font-weight:700;cursor:pointer;font-family:Inter,sans-serif;display:flex;align-items:center;gap:5px" title="Exportar PDF desta fazenda">
-        📄 Exportar PDF
-      </button>
+      <button style="margin-left:auto;display:flex;gap:6px;align-items:center">
+        <button onclick="abrirDelFarm()" class="del-btn">🗑️ Excluir</button>
+        <button onclick="gerarPDFFazenda()" style="background:linear-gradient(135deg,#dc2626,#b91c1c);color:white;border:none;border-radius:8px;padding:6px 14px;font-size:11px;font-weight:700;cursor:pointer;font-family:Inter,sans-serif" title="Exportar PDF">📄 PDF</button>
+      </div>
     </div>
     <div class="modal-body">
       <!-- TAB HISTÓRICO -->
@@ -1723,6 +1731,19 @@ tbody td{padding:10px 14px;font-size:12px;}.badge{display:inline-flex;align-item
         </div>
       </div>
 </div><!-- /app -->
+<!-- ═══ MODAL EXCLUIR FAZENDA ═══ -->
+<div id="del-farm-overlay" class="del-confirm-overlay" style="display:none" onclick="if(event.target===this)fecharDelFarm()">
+  <div class="del-confirm-box">
+    <div style="font-size:40px;margin-bottom:12px">🗑️</div>
+    <div style="font-size:16px;font-weight:800;color:#0f172a;margin-bottom:8px" id="del-farm-title">Excluir fazenda?</div>
+    <div style="font-size:13px;color:#64748b;margin-bottom:16px;line-height:1.5" id="del-farm-sub">Esta ação é permanente.</div>
+    <div style="background:#fef2f2;border:1px solid #fca5a5;border-radius:8px;padding:10px;margin-bottom:4px;font-size:12px;color:#dc2626;font-weight:600">⚠️ Esta ação não pode ser desfeita</div>
+    <div class="del-confirm-btns">
+      <button class="del-confirm-cancel" onclick="fecharDelFarm()">Cancelar</button>
+      <button class="del-confirm-ok" onclick="confirmarDelFarm()">🗑️ Excluir</button>
+    </div>
+  </div>
+</div>
 <!-- ═══ PAINEL DE NOTIFICAÇÕES ═══ -->
 <div id="notif-panel-overlay" class="notif-panel-overlay" style="display:none" onclick="if(event.target===this)closeNotifPanel()">
   <div class="notif-panel">
@@ -1928,43 +1949,36 @@ let NOTIF_ITEMS = []; // {id, data, lido}
 
 function initNotificacoes() {
   const seen = getNotifSeen();
-  let isFirst = Object.keys(seen).length === 0;
+  const isFirstTime = Object.keys(seen).length === 0;
 
-  // Ouve adições em tempo real ao nó propriedades
-  db.ref('propriedades').orderByChild('criado_em').on('child_added', snap => {
-    const d = snap.val();
-    const id = snap.key;
-    if (!d || !d.criado_em) return;
-    // Só notifica registros criados pelos vendedores (não pelo ADMIN)
-    const criadoPor = (d.criado_por || d.atualizado_por || '').toLowerCase();
-    const isAdminSelf = criadoPor === 'admin' && d.origem !== 'app_vendedor';
-    // Ignora registros da planilha (xl_) e os criados pelo próprio admin
-    if (id.startsWith('xl_')) return;
-    // Na primeira carga, marca tudo como visto silenciosamente
-    if (isFirst) { seen[id] = true; return; }
-    if (seen[id]) return; // já visto antes
-    // É novo! Adiciona à lista
-    seen[id] = true;
-    setNotifSeen(seen);
-    const read = getNotifRead();
-    NOTIF_ITEMS.unshift({id, data: d, lido: !!read[id]});
-    renderNotifList();
-    updateNotifBadge();
-    // Toast de aviso
-    const nome = d.produtor || d.nome || 'Novo cliente';
-    const vend = d.nome_vendedor || d.vendedor || '?';
-    toast(`🔔 Novo cadastro: ${nome} — ${vend}`);
-  });
-
-  // Salva o estado inicial após primeira carga completa
   db.ref('propriedades').once('value', snap => {
-    if (isFirst) {
-      snap.forEach(c => { seen[c.key] = true; });
+    snap.forEach(c => { seen[c.key] = true; });
+    setNotifSeen(seen);
+
+    db.ref('propriedades').orderByChild('criado_em').on('child_added', snap => {
+      const d = snap.val();
+      const id = snap.key;
+      if (!d || (!d.produtor && !d.nome)) return;
+      if (/^\d+$/.test(id)) return;
+      if (id.startsWith('xl_')) return;
+      if (seen[id]) return;
+      if (d.criado_em) {
+        const dias = (Date.now() - new Date(d.criado_em).getTime()) / 86400000;
+        if (dias > 7 && isFirstTime) return;
+      }
+      seen[id] = true;
       setNotifSeen(seen);
-      isFirst = false;
-    }
+      const read = getNotifRead();
+      NOTIF_ITEMS.unshift({id, data: d, lido: !!read[id]});
+      renderNotifList();
+      updateNotifBadge();
+      const nome = d.produtor || d.nome || 'Novo cliente';
+      const vend = d.nome_vendedor || d.vendedor || '?';
+      toast('🔔 Novo cadastro: ' + nome + ' — ' + vend);
+    });
   });
 }
+
 
 function renderNotifList() {
   const read = getNotifRead();
@@ -5775,6 +5789,45 @@ function renderRanking(){
 <div class="rnk-grade" style="background:${gradeBg[grade.g]};color:${gradeColor[grade.g]};align-self:center">${grade.g}</div>
 </div>`;
   }).join('');
+}
+
+
+// EXCLUSÃO DE FAZENDA
+let _delId = null, _delNome = null;
+
+function abrirDelFarm() {
+  if(!currentFarmId) return;
+  _delId = currentFarmId;
+  _delNome = (ALL.find(d=>d.id===currentFarmId)||{}).produtor || 'esta fazenda';
+  document.getElementById('del-farm-title').textContent = 'Excluir ' + _delNome + '?';
+  document.getElementById('del-farm-sub').textContent = 'Todos os dados de ' + _delNome + ' serão removidos permanentemente, incluindo histórico e visitas.';
+  document.getElementById('del-farm-overlay').style.display = 'flex';
+}
+
+function fecharDelFarm() {
+  document.getElementById('del-farm-overlay').style.display = 'none';
+  _delId = null; _delNome = null;
+}
+
+async function confirmarDelFarm() {
+  if(!_delId) return;
+  const id = _delId, nome = _delNome;
+  fecharDelFarm();
+  closeFarmModal();
+  try {
+    const updates = {};
+    updates['propriedades/' + id] = null;
+    updates['historico/' + id] = null;
+    updates['visitas/' + id] = null;
+    await db.ref().update(updates);
+    const idx = ALL.findIndex(d=>d.id===id);
+    if(idx !== -1) ALL.splice(idx, 1);
+    applyF(); renderAll();
+    toast('🗑️ ' + nome + ' excluído do sistema');
+  } catch(e) {
+    console.error(e);
+    toast('❌ Erro ao excluir. Tente novamente.');
+  }
 }
 
 </script>
