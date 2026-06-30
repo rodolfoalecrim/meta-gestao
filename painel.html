@@ -5171,9 +5171,9 @@ let prod_pts = 0;
 
 // L/vaca/dia — faixas definidas pelo usuário (0–40 pts)
 // 20–30 L: nível base | 30–40 L: bom | >40 L: ótimo | >45 L: máximo
-if      (mp >= 45)  prod_pts += 40;   // excelência absoluta
-else if (mp >= 40)  prod_pts += 32;   // acima de 40L
-else if (mp >= 30)  prod_pts += Math.round(16 + (mp-30)/10*16); // 30–40L → 16–32 pts
+if      (mp >= 42)  prod_pts += 40;   // nota máxima: acima de 42 L/vaca
+else if (mp >= 37)  prod_pts += 32;   // acima de 37L
+else if (mp >= 30)  prod_pts += Math.round(16 + (mp-30)/7*16); // 30–37L → 16–32 pts
 else if (mp >= 20)  prod_pts += Math.round(4  + (mp-20)/10*12); // 20–30L → 4–16 pts
 else if (mp >  0)   prod_pts += 2;    // qualquer produção registrada
 
