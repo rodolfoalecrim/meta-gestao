@@ -260,7 +260,7 @@ tbody td{padding:10px 14px;font-size:12px;}.badge{display:inline-flex;align-item
 </div>
 <script>
 (function(){
-  var BUILT = '2026-06-30T00:30:00';
+  var BUILT = '2026-06-30T02:00:00';
   function pad(n){return String(n).padStart(2,'0');}
   function fmt(d){
     var dias=['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'];
@@ -5169,25 +5169,23 @@ const del  = parseFloat(v?.del        || d.del)        || 0;
 // ═══════════════════════════════════════════════════════════════
 let prod_pts = 0;
 
-// L/vaca/dia — faixas definidas pelo usuário (0–40 pts)
-// 20–30 L: nível base | 30–40 L: bom | >40 L: ótimo | >45 L: máximo
-if      (mp >= 42)  prod_pts += 40;   // nota máxima: acima de 42 L/vaca
-else if (mp >= 37)  prod_pts += 32;   // acima de 37L
-else if (mp >= 30)  prod_pts += Math.round(16 + (mp-30)/7*16); // 30–37L → 16–32 pts
-else if (mp >= 20)  prod_pts += Math.round(4  + (mp-20)/10*12); // 20–30L → 4–16 pts
-else if (mp >  0)   prod_pts += 2;    // qualquer produção registrada
+// L/vaca/dia — faixas de produtividade (0–50 pts)
+// ≥42L = nota máxima; a produção alta por si só evidencia manejo excelente
+if      (mp >= 42)  prod_pts += 50;   // nota máxima — acima de 42 L/vaca
+else if (mp >= 37)  prod_pts += 40;   // excelente
+else if (mp >= 30)  prod_pts += Math.round(24 + (mp-30)/7*16); // 30–37L → 24–40 pts
+else if (mp >= 20)  prod_pts += Math.round(6  + (mp-20)/10*18); // 20–30L → 6–24 pts
+else if (mp >  0)   prod_pts += 3;    // qualquer produção registrada
 
-// Tendência entre visitas (0–10 pts) — evolução é tão importante quanto o valor
+// Tendência entre visitas (bônus sobre o cap de 50)
 if(v && v2){
   const mp1 = parseFloat(v.media_prod) || 0;
   const mp2 = parseFloat(v2.media_prod) || 0;
   if(mp1 > 0 && mp2 > 0){
     const delta = (mp1 - mp2) / mp2 * 100;
-    if     (delta >= 5)   prod_pts += 10; // crescimento forte
-    else if(delta >= 2)   prod_pts += 7;  // crescimento
-    else if(delta >= -2)  prod_pts += 4;  // estável
-    else if(delta >= -5)  prod_pts += 1;  // queda leve
-    // queda forte: 0
+    if     (delta >= 5)   prod_pts += 5;
+    else if(delta >= 2)   prod_pts += 3;
+    else if(delta >= -2)  prod_pts += 1;
   }
 }
 
@@ -5195,74 +5193,73 @@ prod_pts = Math.min(prod_pts, 50);
 
 // ═══════════════════════════════════════════════════════════════
 // DIMENSÃO 2 — QUALIDADE DO LEITE  (30 pts)
-// Peso maior: gordura e CCS conforme solicitado
+// CCS ausente = neutro (não penaliza — campo frequentemente não coletado)
+// Gordura e NUL com maior peso quando CCS não disponível
 // ═══════════════════════════════════════════════════════════════
 let qual_pts = 0;
+const temCCS = ccs > 0;
 
-// Gordura % — maior peso da dimensão (0–12 pts)
-if      (gord >= 4.0) qual_pts += 12;
-else if (gord >= 3.7) qual_pts += 10;
-else if (gord >= 3.5) qual_pts += 8;
-else if (gord >= 3.2) qual_pts += 6;
-else if (gord >= 3.0) qual_pts += 4;
+// Gordura % — indicador principal de qualidade (0–14 pts quando sem CCS, 0–12 com CCS)
+const gordMax = temCCS ? 12 : 14;
+if      (gord >= 4.0) qual_pts += gordMax;
+else if (gord >= 3.7) qual_pts += Math.round(gordMax * 0.85);
+else if (gord >= 3.5) qual_pts += Math.round(gordMax * 0.70);
+else if (gord >= 3.2) qual_pts += Math.round(gordMax * 0.50);
+else if (gord >= 3.0) qual_pts += Math.round(gordMax * 0.30);
 else if (gord >  0)   qual_pts += 1;
 
-// CCS cel/mL — saúde do úbere (0–10 pts)
-if      (ccs >  0 && ccs <  150) qual_pts += 10;
-else if (ccs >= 150 && ccs < 200) qual_pts += 8;
-else if (ccs >= 200 && ccs < 400) qual_pts += 5;
-else if (ccs >= 400 && ccs < 600) qual_pts += 2;
-else if (ccs >= 600)              qual_pts += 0;
+// CCS cel/mL — saúde do úbere (0–10 pts, só se preenchido)
+if(temCCS){
+  if      (ccs <  150) qual_pts += 10;
+  else if (ccs <  200) qual_pts += 8;
+  else if (ccs <  400) qual_pts += 5;
+  else if (ccs <  600) qual_pts += 2;
+}
 
-// Proteína % (0–5 pts)
-if      (prot >= 3.3) qual_pts += 5;
-else if (prot >= 3.0) qual_pts += 4;
-else if (prot >= 2.9) qual_pts += 3;
+// Proteína % (0–8 pts quando sem CCS, 0–5 com CCS)
+const protMax = temCCS ? 5 : 8;
+if      (prot >= 3.3) qual_pts += protMax;
+else if (prot >= 3.0) qual_pts += Math.round(protMax * 0.8);
+else if (prot >= 2.9) qual_pts += Math.round(protMax * 0.6);
 else if (prot >  0)   qual_pts += 1;
 
-// NUL mg/dL — equilíbrio proteína-energia (0–3 pts)
-if      (nul >= 12 && nul <= 18) qual_pts += 3;
-else if (nul >= 10 && nul <= 20) qual_pts += 1;
+// NUL mg/dL — equilíbrio proteína-energia (0–8 pts quando sem CCS, 0–3 com CCS)
+const nulMax = temCCS ? 3 : 8;
+if      (nul >= 12 && nul <= 18) qual_pts += nulMax;
+else if (nul >= 10 && nul <= 20) qual_pts += Math.round(nulMax * 0.5);
 
 qual_pts = Math.min(qual_pts, 30);
 
 // ═══════════════════════════════════════════════════════════════
 // DIMENSÃO 3 — MANEJO  (20 pts)
-// Pesos maiores: mistura, silagem, pré-secado e conforto animal
+// Produção ≥42L indica manejo excelente — bônus automático
+// Itens da ficha somam em cima; ausência não penaliza
 // ═══════════════════════════════════════════════════════════════
 let manejo_pts = 0;
 
+// Bônus de manejo inferido pela produção alta
+// Produzir bem é consequência direta de manejo adequado
+if      (mp >= 42) manejo_pts += 14; // manejo claramente excelente
+else if (mp >= 37) manejo_pts += 10;
+else if (mp >= 30) manejo_pts += 6;
+else if (mp >= 20) manejo_pts += 2;
+
 if(v){
-  // Helper: converte score bom/medio/ruim em pontos proporcionais
   const sc = (campo, max) => {
     const val = (v[campo] || '').toLowerCase();
     if(val === 'bom')   return max;
     if(val === 'medio') return Math.round(max * 0.5);
     if(val === 'ruim')  return 0;
-    return null; // não avaliado — não penaliza
+    return null; // não avaliado — não conta nem penaliza
   };
 
-  // Qualidade da silagem (0–5 pts) — base de toda a nutrição
-  const sil = sc('silagem', 5);
-  if(sil !== null) manejo_pts += sil;
-
-  // Mistura dos alimentos (0–5 pts) — homogeneidade = aproveitamento real
-  const mis = sc('mistura', 5);
-  if(mis !== null) manejo_pts += mis;
-
-  // Pré-secado (0–4 pts)
-  const pre = sc('presecado', 4);
-  if(pre !== null) manejo_pts += pre;
-
-  // Conforto dos animais (0–4 pts) — média de cama + termal
-  const cama  = sc('cama',   4);
-  const term  = sc('termal', 4);
-  const conf_vals = [cama, term].filter(x => x !== null);
-  if(conf_vals.length) manejo_pts += Math.round(conf_vals.reduce((a,b)=>a+b,0)/conf_vals.length);
-
-  // Consumo (0–2 pts) — indicador de palatabilidade e oferta
-  const cons = sc('consumo', 2);
-  if(cons !== null) manejo_pts += cons;
+  // Itens da ficha adicionam pontos ao bônus de produção
+  const sil = sc('silagem', 2);   if(sil !== null) manejo_pts += sil;
+  const mis = sc('mistura', 2);   if(mis !== null) manejo_pts += mis;
+  const pre = sc('presecado', 1); if(pre !== null) manejo_pts += pre;
+  const cama = sc('cama', 1);     if(cama !== null) manejo_pts += cama;
+  const term = sc('termal', 1);   if(term !== null) manejo_pts += term;
+  const cons = sc('consumo', 1);  if(cons !== null) manejo_pts += cons;
 }
 
 manejo_pts = Math.min(manejo_pts, 20);
