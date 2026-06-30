@@ -5815,18 +5815,21 @@ async function confirmarDelFarm() {
   fecharDelFarm();
   closeFarmModal();
   try {
-    const updates = {};
-    updates['propriedades/' + id] = null;
-    updates['historico/' + id] = null;
-    updates['visitas/' + id] = null;
-    await db.ref().update(updates);
+    // Remove cada nó separadamente com .remove() — método mais confiável
+    const removes = [
+      db.ref('propriedades/' + id).remove(),
+      db.ref('historico/'   + id).remove(),
+      db.ref('visitas/'     + id).remove(),
+    ];
+    await Promise.all(removes);
+    // Remove do cache local
     const idx = ALL.findIndex(d=>d.id===id);
     if(idx !== -1) ALL.splice(idx, 1);
     applyF(); renderAll();
     toast('🗑️ ' + nome + ' excluído do sistema');
   } catch(e) {
-    console.error(e);
-    toast('❌ Erro ao excluir. Tente novamente.');
+    console.error('Erro ao excluir fazenda:', e);
+    toast('❌ Erro ao excluir. Verifique as permissões do Firebase.');
   }
 }
 
