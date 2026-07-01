@@ -6979,9 +6979,7 @@ function calcRebanho(){
   const prenhez       = prenhez_bruta * sobrevParto;     // chegam ao parto = efetiva
 
   // Nascimentos fêmeas por vaca por ano (descontando perdas pós-DG)
-  const nasc_f_vaca = partosAno * prenhez * pctFemeaVacas * (1 - mortBez);
-  // Nascimentos fêmeas por novilha no ano que para
-  const nasc_f_nov  = taxaConcNov * sobrevParto * pctFemeaNovs * (1 - mortBez);
+  // nascFVaca e nascFNov calculados dentro da simulação
 
   // Impacto no IEP real: vaca que perde prenhez fica ~60d extra aberta (retorno ao cio + novo serviço)
   const diasExtrasIEP = prenhez_bruta * perdDG * 60;
@@ -7007,15 +7005,51 @@ function calcRebanho(){
       </div>`;
   }
 
-  // Frações de progressão das novilhas ao longo do ano
-  // Bezerras 0-4m → Novilhas 4-12m:  ~1/3 do ciclo anual
-  // Novilhas 4-12m → 12-24m: 12m permanência
-  // Novilhas 12-24m → vaca: quando atinge idParto (média 26m)
+  // ════════════════════════════════════════════════════════
+  // SIMULAÇÃO ANO A ANO — lógica correta por categoria
+  // ════════════════════════════════════════════════════════
 
-  // Proporção de novilhas 12-24m que param por ano = 12 / idParto
-  const fracPartoNov = Math.min(1, 12 / Math.max(idParto - 12, 6));
+  // ── Parâmetros de progressão de categoria ─────────────
+  // Bezerra (0-4m): permanece ~4 meses → 3 coortes/ano entram em Nov 4-12m
+  // Novinha 4-12m: permanece ~8 meses → por ano, 12/8 = 1.5 coortes progridem
+  // Novinha 12-24m: permanece ~12 meses → 1 coorte/ano progride para vaca
+  // Vaca: permanece até descarte ou morte (IEP = frequência de partos)
 
-  // ── Simulação ano a ano ─────────────────────────────────
+  // Fração de bez que "avança" para Nov 4-12m num ano
+  // Bezerras ficam 4 meses → em 12 meses, 12/4 = 3 coortes avançam
+  // Mas o estoque de bezerras representa uma coorte de 4 meses
+  // → por ano sai: bez * (12/4) animais, mas só temos 1x o estoque
+  // Simplificação: por ano avança a fração = meses_na_fase/12
+  // Bezerra (4m): avança 4/4=100% do estoque por "4 meses de permanência"
+  // = 1 rotação/ano → 100% sai, 100% entra
+  // Nov 4-12m (8m): 8m de permanência → ~100% sai em 12 meses (praticamente 1 rotação)
+  // Nov 12-24m (12m): 12m de permanência → 100% sai em 12 meses = 1 rotação
+
+  // CORREÇÃO: cada categoria representa o ESTOQUE MÉDIO da fase
+  // Saída anual de cada fase = estoque * (12 / duração_fase_meses)
+  const duracaoBez    = 4;   // meses que bezerra fica nessa fase
+  const duracaoNov12  = 8;   // meses na fase 4-12m
+  const duracaoNov24  = Math.max(idParto - 12, 6); // meses na fase 12-idParto
+
+  // Taxa de saída anual de cada fase (fração do estoque que avança por ano)
+  const saidaBez   = Math.min(1, 12 / duracaoBez);   // ~3.0 → limitado a 1 (sem acumulo)
+  const saidaNov12 = Math.min(1, 12 / duracaoNov12);  // ~1.5 → 1.0
+  const saidaNov24 = Math.min(1, 12 / duracaoNov24);  // depende da idParto
+
+  // Partos de vacas por ano = 12 / IEP
+  // (vaca com IEP 13 meses = 0.923 partos/ano)
+  const partosVacaAno = 12 / (iep || 13);
+
+  // Nascimentos fêmeas/ano por vaca:
+  // = partos/ano × % prenhez efetiva × % fêmeas × (1 - mort_bezerra)
+  // OBS: prenhez efetiva já inclui perda pós-DG
+  const nascFVaca = partosVacaAno * prenhez * pctFemeaVacas * (1 - mortBez);
+
+  // Partos de novilhas/ano (novilhas 12-24m que atingem a idade ao parto):
+  // = fração que sai da fase × taxa de concepção × sobrevivência prenhez × % fêmeas × (1 - mort)
+  const nascFNov  = saidaNov24 * taxaConcNov * sobrevParto * pctFemeaNovs * (1 - mortBez);
+
+  // ── Estado inicial ────────────────────────────────────
   let vacas = vacasIni;
   let nov24 = nov24Ini;
   let nov12 = nov12Ini;
@@ -7027,55 +7061,71 @@ function calcRebanho(){
 
   for(let yr = 0; yr <= rbAnos; yr++){
     const totalReb = vacas + nov24 + nov12 + bez;
-    const nascEsteAno = Math.round(vacas * nasc_f_vaca + nov24 * fracPartoNov * nasc_f_nov);
-    anos.push({ yr, vacas:Math.round(vacas), nov24:Math.round(nov24), nov12:Math.round(nov12), bez:Math.round(bez), total:Math.round(totalReb), venda:Math.round(vendaAcum), nasc:nascEsteAno });
+    // Nascimentos deste ano (para mostrar na tabela)
+    const nascEsteAno = Math.round(vacas * nascFVaca + nov24 * nascFNov);
+    anos.push({
+      yr, vacas:Math.round(vacas), nov24:Math.round(nov24),
+      nov12:Math.round(nov12), bez:Math.round(bez),
+      total:Math.round(totalReb), venda:Math.round(vendaAcum), nasc:nascEsteAno
+    });
     labels.push(yr===0?'Atual':'Ano '+yr);
     if(yr === rbAnos) break;
 
-    // ── Nascimentos fêmeas este ano ──────────────────────
-    const nascVacas = vacas * nasc_f_vaca;
-    const nascNovs  = nov24 * fracPartoNov * nasc_f_nov;
-    const nascTotal = nascVacas + nascNovs;
+    // ════════════════════════════════════════
+    // PASSO 1 — Saídas definitivas do rebanho
+    // ════════════════════════════════════════
+    const mortVacN  = vacas  * mortVac;   // mortes vacas
+    const mortN24N  = nov24  * mortNov;   // mortes nov 12-24m
+    const mortN12N  = nov12  * mortNov;   // mortes nov 4-12m
+    const mortBezN  = bez    * mortBez;   // mortes bezerras
+    const descarteN = vacas  * descarte;  // descarte vacas (voluntário+involuntário)
 
-    // ── Mortalidades ─────────────────────────────────────
-    const mortVacasN = vacas * mortVac;
-    const mortNov24N = nov24 * mortNov;
-    const mortNov12N = nov12 * mortNov;
-    const mortBezN   = bez   * mortBez;
+    // ════════════════════════════════════════
+    // PASSO 2 — Nascimentos (entradas no sistema)
+    // ════════════════════════════════════════
+    // Vacas produtivas (após retirar mortes e descartes)
+    const vacasAtivas = Math.max(0, vacas - mortVacN - descarteN);
+    const nascTotalBez = vacasAtivas * nascFVaca + Math.max(0, nov24 - mortN24N) * nascFNov;
 
-    // ── Descarte vacas ────────────────────────────────────
-    const descarteN  = vacas * descarte;
+    // ════════════════════════════════════════
+    // PASSO 3 — Progressão entre categorias
+    // ════════════════════════════════════════
+    // Bezerras sobreviventes que avançam para Nov 4-12m
+    const bezSobrev     = Math.max(0, bez - mortBezN);
+    const avancaBezNov  = bezSobrev * saidaBez; // fração que sai da fase no ano
 
-    // ── Progressão de categorias ──────────────────────────
-    // Novilhas 12-24m que parem → entram como vacas
-    const entramVacas = nov24 * fracPartoNov * (1 - mortNov);
-    // Novilhas 4-12m → 12-24m (todas as que sobrevivem)
-    const entramNov24 = nov12 * (1 - mortNov);
-    // Bezerras → 4-12m (sobreviventes ~3x ao ano → acumula 1/3 da coorte/ano)
-    const entramNov12 = bez * (1 - mortBez) * 0.85; // fator de conversão parcial
-    // Bezerras novas = nascimentos do ano
-    const novasBez = nascTotal;
+    // Nov 4-12m sobreviventes que avançam para Nov 12-24m
+    const nov12Sobrev   = Math.max(0, nov12 - mortN12N);
+    const avancaN12N24  = nov12Sobrev * saidaNov12;
 
-    // ── Novos totais ──────────────────────────────────────
-    const novasVacas = vacas - mortVacasN - descarteN + entramVacas;
-    const novasNov24 = nov24 - mortNov24N - entramVacas + entramNov24;
-    const novasNov12 = nov12 - mortNov12N - entramNov24 + entramNov12;
-    const novasBez2  = bez   - mortBezN   - entramNov12 + novasBez;
+    // Nov 12-24m sobreviventes que atingem idade ao parto → entram como vacas
+    const nov24Sobrev   = Math.max(0, nov24 - mortN24N);
+    const entramVacas   = nov24Sobrev * saidaNov24;
 
-    // ── Reposição / venda excedente ───────────────────────
-    const precisaRepor = descarteN + mortVacasN; // quantas vacas precisam ser repostas
+    // ════════════════════════════════════════
+    // PASSO 4 — Venda de excedente (se configurado)
+    // ════════════════════════════════════════
+    // Precisa repor: vacas perdidas por morte + descarte
+    const precisaRepor = mortVacN + descarteN;
     let vendaAno = 0;
+    let novPrimipNovas = entramVacas; // novilhas que entram como vacas
+
     if(rbReposicao === 'venda'){
-      // Usa novilhas 12-24m para repor, vende o excedente
-      const excedente = Math.max(0, novasNov24 - precisaRepor * 1.2);
-      vendaAno = excedente * 0.5; // vende 50% do excedente por ano
+      // Repõe as vacas perdidas com novilhas, vende o excedente
+      const excedente = Math.max(0, novPrimipNovas - precisaRepor);
+      // Vende 70% do excedente por ano (mantém margem de segurança)
+      vendaAno = excedente * 0.70;
+      novPrimipNovas = novPrimipNovas - vendaAno;
     }
     vendaAcum += vendaAno;
 
-    vacas = Math.max(0, novasVacas);
-    nov24 = Math.max(0, novasNov24);
-    nov12 = Math.max(0, novasNov12);
-    bez   = Math.max(0, novasBez2);
+    // ════════════════════════════════════════
+    // PASSO 5 — Novos estoques de cada categoria
+    // ════════════════════════════════════════
+    vacas = Math.max(0, vacasAtivas + novPrimipNovas);
+    nov24 = Math.max(0, nov24Sobrev - entramVacas + avancaN12N24);
+    nov12 = Math.max(0, nov12Sobrev - avancaN12N24 + avancaBezNov);
+    bez   = Math.max(0, bezSobrev   - avancaBezNov + nascTotalBez);
   }
 
   // ── Renderiza resultado ──────────────────────────────────
