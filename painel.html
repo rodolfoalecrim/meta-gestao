@@ -6016,7 +6016,13 @@ async function loadDietasBenchCache() {
       const cvd  = totalVacas > 0 ? totalCusto / totalVacas : 0;
       const rmca = totalRetorno - totalCusto;
       const nomes = lotes.map(l=>l.nomeDieta||l.nome||'').filter(Boolean).join(' / ');
-      _dietasBenchCache[farmId] = { cvd, rmca, totalCusto, totalRetorno, totalVacas, nomes };
+      const totalLitrosBench = lotes.reduce((s,l)=>{
+        const v=parseFloat(l.vacas)||0; const p=parseFloat(l.prod)||0;
+        return s+v*p;
+      },0);
+      const custoLitroBench = totalLitrosBench>0 ? totalCusto/totalLitrosBench : 0;
+      const margemLitroBench = totalLitrosBench>0 ? (totalRetorno-totalCusto)/totalLitrosBench : 0;
+      _dietasBenchCache[farmId] = { cvd, rmca, totalCusto, totalRetorno, totalVacas, nomes, custoLitro:custoLitroBench, margemLitro:margemLitroBench };
     });
     _dietasBenchLoaded = true;
   } catch(e) { console.warn('loadDietasBenchCache error:', e); }
@@ -6126,14 +6132,15 @@ function calcLote(lote) {
   const custoTotal = custoPorVaca * vacas;
   const retornoDia = prod * vacas * preco;
   const rmca = retornoDia - custoTotal;
-  const rmcaVaca = vacas>0 ? rmca/vacas : 0;
+  const rmcaVaca = vacas>0 ? rmca/vacas : 0;       // RMCA por animal por dia
+  const custoLitro = prod>0 ? custoPorVaca/prod : 0; // Custo do litro de leite (CVD ÷ prod)
+  const margemLitro = preco>0 ? preco - custoLitro : 0; // Margem por litro (preço - custo/L)
   const ms = lote.alimentos.reduce((sum,a)=>{
-    // Estima MS: silagem ~30%, pré-secado ~50%, concentrado ~87%
     const fator = a.nome.toLowerCase().includes('silagem')?0.30:
                   a.nome.toLowerCase().includes('pré-sec')||a.nome.toLowerCase().includes('feno')?0.50:0.87;
     return sum + (parseFloat(a.kg)||0)*fator;
   },0);
-  return {vacas,prod,preco,custoPorVaca,custoTotal,retornoDia,rmca,rmcaVaca,ms};
+  return {vacas,prod,preco,custoPorVaca,custoTotal,retornoDia,rmca,rmcaVaca,custoLitro,margemLitro,ms};
 }
 
 function fmt(v){ return 'R$ '+Math.abs(v).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2}); }
@@ -6165,13 +6172,17 @@ function renderLotes() {
   const farm = ALL.find(d=>d.id===dietaFarmId);
   const setT=(id,v)=>{const el=document.getElementById(id);if(el)el.textContent=v;};
   setT('dt-result-farm-name', farm?.produtor||'Fazenda');
+  // Custo médio do litro consolidado
+  const totalLitros = totalProd; // já calculado
+  const custoLitroGeral = totalLitros>0 ? totalCusto/totalLitros : 0;
+  const margemLitroGeral = totalLitros>0 ? (totalRetorno-totalCusto)/totalLitros : 0;
   setT('dt-total-custo', fmt(totalCusto)+'/dia');
   setT('dt-cvd', fmt(cvdGeral));
-  setT('dt-cvd-sub', totalVacas+' vacas no total');
+  setT('dt-cvd-sub', totalVacas+' vacas · Custo/L: R$'+custoLitroGeral.toFixed(2));
   setT('dt-retorno', fmt(totalRetorno)+'/dia');
-  setT('dt-retorno-sub', totalProd>0?totalProd.toFixed(0)+' L/dia vendidos':'sem produção informada');
+  setT('dt-retorno-sub', totalLitros>0?totalLitros.toFixed(0)+' L/dia · Margem/L: R$'+(margemLitroGeral>=0?'+':'')+margemLitroGeral.toFixed(2):'sem produção informada');
   const rmcaEl=document.getElementById('dt-rmca-total');
-  if(rmcaEl){ rmcaEl.textContent=(rmcaTotal>=0?'+':'')+fmt(rmcaTotal)+'/dia'; rmcaEl.style.color=rmcaTotal>=0?'#86efac':'#fca5a5'; }
+  if(rmcaEl){ rmcaEl.textContent=(rmcaTotal>=0?'+':'')+fmt(rmcaTotal)+'/dia (R$'+(totalVacas>0?(rmcaTotal/totalVacas).toFixed(2):'—')+'/animal)'; rmcaEl.style.color=rmcaTotal>=0?'#86efac':'#fca5a5'; }
 
   // Renderiza cada lote
   wrap.innerHTML = dietaLotes.map(lote=>{
@@ -6241,30 +6252,56 @@ function renderLotes() {
             <input class="dt-inp" type="number" step="0.1" value="${lote.nul||0}" oninput="dietaLotes.find(l=>l.id==='${lote.id}').nul=parseFloat(this.value)||0" placeholder="mg/dL">
           </div>
         </div>
-        <!-- Card custo/vaca/dia destacado -->
-        <div class="dt-metric" style="background:#f0fdf4;border:1px solid #86efac;margin-bottom:14px;display:flex;align-items:center;justify-content:space-between;padding:12px 16px">
-          <div><div style="font-size:11px;font-weight:700;color:var(--muted)">Custo/vaca/dia</div><div style="font-size:24px;font-weight:900;color:#15803d">R$ ${fmt2(c.custoPorVaca)}</div></div>
-          <div style="text-align:right"><div style="font-size:11px;font-weight:700;color:var(--muted)">Custo total/dia</div><div style="font-size:18px;font-weight:800;color:#0891b2">R$ ${fmt2(c.custoTotal)}</div></div>
-          <div style="text-align:right"><div style="font-size:11px;font-weight:700;color:var(--muted)">RMCA/vaca/dia</div><div style="font-size:18px;font-weight:800;color:${c.rmca>=0?'#15803d':'#dc2626'}">${c.rmca>=0?'+':''}R$ ${fmt2(c.rmcaVaca)}</div></div>
+        <!-- Card métricas principais -->
+        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:14px">
+          <div class="dt-metric" style="background:#f0fdf4;border:1px solid #86efac">
+            <div style="font-size:10px;font-weight:700;color:var(--muted);margin-bottom:3px">Custo/vaca/dia</div>
+            <div style="font-size:24px;font-weight:900;color:#15803d">R$ ${fmt2(c.custoPorVaca)}</div>
+          </div>
+          <div class="dt-metric" style="background:#fef9c3;border:1px solid #fcd34d">
+            <div style="font-size:10px;font-weight:700;color:var(--muted);margin-bottom:3px">Custo/litro de leite</div>
+            <div style="font-size:24px;font-weight:900;color:#92400e">R$ ${fmt2(c.custoLitro)}</div>
+            <div style="font-size:10px;color:#a16207;margin-top:2px">CVD ÷ ${c.prod.toFixed(1)} L/vaca</div>
+          </div>
+          <div class="dt-metric" style="background:${c.margemLitro>=0?'#f0fdf4':'#fef2f2'};border:1px solid ${c.margemLitro>=0?'#86efac':'#fca5a5'}">
+            <div style="font-size:10px;font-weight:700;color:var(--muted);margin-bottom:3px">Margem/litro</div>
+            <div style="font-size:24px;font-weight:900;color:${c.margemLitro>=0?'#15803d':'#dc2626'}">${c.margemLitro>=0?'+':''}R$ ${fmt2(c.margemLitro)}</div>
+            <div style="font-size:10px;color:var(--muted);margin-top:2px">Preço R$${fmt2(c.preco)} − Custo R$${fmt2(c.custoLitro)}</div>
+          </div>
+          <div class="dt-metric" style="background:${rmcaBg};border:1px solid ${c.rmcaVaca>=0?'#86efac':'#fca5a5'}">
+            <div style="font-size:10px;font-weight:700;color:var(--muted);margin-bottom:3px">RMCA/animal/dia</div>
+            <div style="font-size:24px;font-weight:900;color:${rmcaCol}">${c.rmcaVaca>=0?'+':''}R$ ${fmt2(c.rmcaVaca)}</div>
+            <div style="font-size:10px;color:var(--muted);margin-top:2px">Total: R$ ${fmt2(c.rmca)}/dia</div>
+          </div>
         </div>
 
         <!-- Métricas calculadas -->
-        <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-bottom:16px">
+        <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:8px;margin-bottom:16px">
           <div class="dt-metric">
-            <div class="dt-metric-val" style="color:#0891b2">R$ ${fmt2(c.custoTotal)}</div>
+            <div class="dt-metric-val" style="color:#0891b2;font-size:16px">R$ ${fmt2(c.custoTotal)}</div>
             <div class="dt-metric-lbl">Custo total/dia</div>
           </div>
           <div class="dt-metric">
-            <div class="dt-metric-val" style="color:#15803d">R$ ${fmt2(c.retornoDia)}</div>
+            <div class="dt-metric-val" style="color:#15803d;font-size:16px">R$ ${fmt2(c.retornoDia)}</div>
             <div class="dt-metric-lbl">Retorno/dia</div>
           </div>
           <div class="dt-metric" style="background:${rmcaBg};border:1px solid ${c.rmca>=0?'#86efac':'#fca5a5'}">
-            <div class="dt-metric-val" style="color:${rmcaCol}">${c.rmca>=0?'+':''}R$ ${fmt2(c.rmca)}</div>
+            <div class="dt-metric-val" style="color:${rmcaCol};font-size:16px">${c.rmca>=0?'+':''}R$ ${fmt2(c.rmca)}</div>
             <div class="dt-metric-lbl">RMCA/dia</div>
           </div>
           <div class="dt-metric" style="background:${rmcaBg}">
             <div class="dt-metric-val" style="color:${rmcaCol};font-size:16px">${c.rmca>=0?'+':''}R$ ${fmt2(c.rmcaVaca)}</div>
-            <div class="dt-metric-lbl">RMCA/vaca/dia</div>
+            <div class="dt-metric-lbl">RMCA/animal/dia</div>
+          </div>
+          <div class="dt-metric" style="background:#fef9c3;border:1px solid #fcd34d">
+            <div class="dt-metric-val" style="color:#92400e;font-size:16px">R$ ${fmt2(c.custoLitro)}</div>
+            <div class="dt-metric-lbl">Custo/litro leite</div>
+            <div style="font-size:9px;color:#a16207;margin-top:2px">CVD ÷ L/vaca</div>
+          </div>
+          <div class="dt-metric" style="background:${c.margemLitro>=0?'#f0fdf4':'#fef2f2'};border:1px solid ${c.margemLitro>=0?'#86efac':'#fca5a5'}">
+            <div class="dt-metric-val" style="color:${c.margemLitro>=0?'#15803d':'#dc2626'};font-size:16px">${c.margemLitro>=0?'+':''}R$ ${fmt2(c.margemLitro)}</div>
+            <div class="dt-metric-lbl">Margem/litro</div>
+            <div style="font-size:9px;color:var(--muted);margin-top:2px">Preço − Custo/L</div>
           </div>
           <div class="dt-metric">
             <div class="dt-metric-val" style="font-size:16px">${fmt2(c.ms)} kg</div>
