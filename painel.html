@@ -465,15 +465,34 @@ tbody td{padding:10px 14px;font-size:12px;}.badge{display:inline-flex;align-item
         <div class="ph"><div><h2>Benchmarks Técnicos</h2><p>Desempenho dos clientes ativos vs referências nacionais (Embrapa / MAPA / CNA 2024)</p></div></div>
         <div class="bm-grid" id="bm-cards"></div>
 
-        <!-- Gráficos de custo e RMCA -->
-        <div class="g2" id="bm-dieta-charts" style="display:none">
-          <div class="cc">
-            <div class="cc-hdr"><span class="cc-ico">💰</span><span class="cc-title">Custo Alimentar/vaca/dia — distribuição por fazenda</span></div>
-            <canvas id="ch-bm-cvd" height="160"></canvas>
+        <!-- Gráficos de dieta: linha de cards de destaque + 4 gráficos -->
+        <div id="bm-dieta-charts" style="display:none">
+
+          <!-- Cards de destaque: médias consolidadas -->
+          <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:16px" id="bm-dieta-kpis"></div>
+
+          <!-- Gráficos de barras: CVD e RMCA por fazenda -->
+          <div class="g2" style="margin-bottom:14px">
+            <div class="cc">
+              <div class="cc-hdr"><span class="cc-ico">💰</span><span class="cc-title">Custo/vaca/dia — por fazenda</span><span class="cc-sub" style="margin-left:auto;color:#15803d">verde ≤R$18 · laranja ≤R$25</span></div>
+              <canvas id="ch-bm-cvd" height="160"></canvas>
+            </div>
+            <div class="cc">
+              <div class="cc-hdr"><span class="cc-ico">📈</span><span class="cc-title">RMCA/dia — por fazenda</span></div>
+              <canvas id="ch-bm-rmca" height="160"></canvas>
+            </div>
           </div>
-          <div class="cc">
-            <div class="cc-hdr"><span class="cc-ico">📈</span><span class="cc-title">RMCA/dia — fazendas com dieta cadastrada</span></div>
-            <canvas id="ch-bm-rmca" height="160"></canvas>
+
+          <!-- Scatter plots: Custo/vaca × Produção e RMCA/animal × Produção -->
+          <div class="g2" style="margin-bottom:14px">
+            <div class="cc">
+              <div class="cc-hdr"><span class="cc-ico">🎯</span><span class="cc-title">Dispersão — Custo/vaca/dia × Produção L/vaca</span><span class="cc-sub" style="margin-left:auto">bolha = nº de vacas</span></div>
+              <canvas id="ch-scat-cvd" height="240"></canvas>
+            </div>
+            <div class="cc">
+              <div class="cc-hdr"><span class="cc-ico">🎯</span><span class="cc-title">Dispersão — RMCA/animal/dia × Produção L/vaca</span><span class="cc-sub" style="margin-left:auto">bolha = nº de vacas</span></div>
+              <canvas id="ch-scat-rmca" height="240"></canvas>
+            </div>
           </div>
         </div>
         <div class="g3">
@@ -2530,36 +2549,119 @@ y:{title:{display:true,text:'Média L/vaca/dia',color:'#94a3b8',font:{size:10}},
 }
 });
 
-// ── Gráficos CVD e RMCA (só se tiver dados de dieta) ───────────────────────
+// ── Gráficos e KPIs de dieta (CVD, RMCA, Custo/L, Scatter) ─────────────────
 const dietaFarms = Object.entries(_dietasBenchCache).filter(([,d])=>d.cvd>0);
 const bmDietaWrap = document.getElementById('bm-dieta-charts');
 if(dietaFarms.length > 0 && bmDietaWrap){
   bmDietaWrap.style.display = '';
-  const cvdData = dietaFarms
-    .map(([id,d])=>({label:(ALL.find(f=>f.id===id)||{}).produtor||id, cvd:d.cvd, rmca:d.rmca}))
-    .sort((a,b)=>a.cvd-b.cvd);
+
+  // Enriquece com dados do produtor
+  const enriched = dietaFarms.map(([id,d])=>{
+    const farm = ALL.find(f=>f.id===id)||{};
+    return {
+      id, label: farm.produtor||id,
+      cvd: d.cvd, rmca: d.rmca,
+      totalVacas: d.totalVacas||0,
+      custoLitro: d.custoLitro||0,
+      margemLitro: d.margemLitro||0,
+      prod: farm.media_prod||0, // produção L/vaca do cadastro
+      rmcaVaca: d.totalVacas>0 ? d.rmca/d.totalVacas : 0,
+    };
+  });
+
+  // ── Cards de destaque com médias ────────────────────────────────────────
+  const avgCvd   = enriched.reduce((s,d)=>s+d.cvd,0)/enriched.length;
+  const avgRmca  = enriched.reduce((s,d)=>s+d.rmca,0)/enriched.length;
+  const avgCustoL= enriched.filter(d=>d.custoLitro>0).reduce((s,d)=>s+d.custoLitro,0)/(enriched.filter(d=>d.custoLitro>0).length||1);
+  const avgRmcaV = enriched.reduce((s,d)=>s+d.rmcaVaca,0)/enriched.length;
+  const kpiEl = document.getElementById('bm-dieta-kpis');
+  if(kpiEl) kpiEl.innerHTML = [
+    {icon:'💰',lbl:'CVD médio',val:'R$ '+avgCvd.toFixed(2),sub:'custo/vaca/dia',col:avgCvd<=18?'#15803d':avgCvd<=25?'#d97706':'#dc2626',bg:avgCvd<=18?'#f0fdf4':avgCvd<=25?'#fffbeb':'#fef2f2'},
+    {icon:'🥛',lbl:'Custo/litro médio',val:'R$ '+avgCustoL.toFixed(3),sub:'CVD ÷ L/vaca/dia',col:'#92400e',bg:'#fef9c3'},
+    {icon:'📈',lbl:'RMCA médio/dia',val:(avgRmca>=0?'+':'')+'R$ '+Math.abs(avgRmca).toFixed(0),sub:'por fazenda/dia',col:avgRmca>=0?'#15803d':'#dc2626',bg:avgRmca>=0?'#f0fdf4':'#fef2f2'},
+    {icon:'🐄',lbl:'RMCA médio/animal',val:(avgRmcaV>=0?'+':'')+'R$ '+Math.abs(avgRmcaV).toFixed(2),sub:'por vaca por dia',col:avgRmcaV>=0?'#15803d':'#dc2626',bg:avgRmcaV>=0?'#f0fdf4':'#fef2f2'},
+  ].map(k=>`<div class="bm" style="background:${k.bg};border-color:${k.col}33">
+    <div class="bm-top"><div class="bm-icon">${k.icon}</div><div class="bm-lbl">${k.lbl}</div></div>
+    <div class="bm-val" style="color:${k.col};font-size:26px">${k.val}</div>
+    <div class="bm-ref">${k.sub} · ${enriched.length} fazenda${enriched.length!==1?'s':''} com dieta</div>
+  </div>`).join('');
+
+  // ── Barras CVD por fazenda ───────────────────────────────────────────────
+  const cvdData = [...enriched].sort((a,b)=>a.cvd-b.cvd);
   mk('ch-bm-cvd','bar',{
     labels: cvdData.map(d=>d.label.split(' ')[0]),
     datasets:[{label:'Custo/vaca/dia R$',data:cvdData.map(d=>parseFloat(d.cvd.toFixed(2))),
-      backgroundColor:cvdData.map(d=>d.cvd<=18?'rgba(21,128,61,0.75)':d.cvd<=25?'rgba(217,119,6,0.75)':'rgba(220,38,38,0.75)'),
+      backgroundColor:cvdData.map(d=>d.cvd<=18?'rgba(21,128,61,0.8)':d.cvd<=25?'rgba(217,119,6,0.8)':'rgba(220,38,38,0.8)'),
       borderRadius:5,borderSkipped:false}]
   },{...NL,plugins:{...NL.plugins,annotation:{annotations:{
     metaLine:{type:'line',yMin:18,yMax:18,borderColor:'#15803d',borderWidth:1.5,borderDash:[5,4],
-      label:{display:true,content:'Meta R$18',color:'#15803d',font:{size:8,weight:'bold'},position:'end',backgroundColor:'rgba(240,253,244,.9)',padding:{x:4,y:2},borderRadius:4}},
-    refLine:{type:'line',yMin:25,yMax:25,borderColor:'#d97706',borderWidth:1,borderDash:[4,4],
-      label:{display:true,content:'Ref R$25',color:'#d97706',font:{size:8},position:'start',backgroundColor:'rgba(255,251,235,.9)',padding:{x:4,y:2},borderRadius:4}},
-  }}},scales:{x:{...SX},y:{...SY,ticks:{color:'#94a3b8',callback:v=>'R$'+v.toFixed(0)}}}});
-  const rmcaData = dietaFarms
-    .map(([id,d])=>({label:(ALL.find(f=>f.id===id)||{}).produtor||id, rmca:d.rmca}))
-    .sort((a,b)=>b.rmca-a.rmca);
+      label:{display:true,content:'Meta R$18',color:'#15803d',font:{size:8,weight:'bold'},position:'end',backgroundColor:'rgba(240,253,244,.95)',padding:{x:5,y:3},borderRadius:4}},
+    refLine:{type:'line',yMin:25,yMax:25,borderColor:'#d97706',borderWidth:1.5,borderDash:[4,4],
+      label:{display:true,content:'Ref R$25',color:'#92400e',font:{size:8},position:'start',backgroundColor:'rgba(255,251,235,.95)',padding:{x:5,y:3},borderRadius:4}},
+  }}},scales:{x:{...SX},y:{...SY,min:0,ticks:{color:'#94a3b8',callback:v=>'R$'+v.toFixed(0)}}}});
+
+  // ── Barras RMCA por fazenda ──────────────────────────────────────────────
+  const rmcaData = [...enriched].sort((a,b)=>b.rmca-a.rmca);
   mk('ch-bm-rmca','bar',{
     labels:rmcaData.map(d=>d.label.split(' ')[0]),
     datasets:[{label:'RMCA R$/dia',data:rmcaData.map(d=>parseFloat(d.rmca.toFixed(0))),
-      backgroundColor:rmcaData.map(d=>d.rmca>=0?'rgba(21,128,61,0.75)':'rgba(220,38,38,0.75)'),
+      backgroundColor:rmcaData.map(d=>d.rmca>=0?'rgba(21,128,61,0.8)':'rgba(220,38,38,0.8)'),
       borderRadius:5,borderSkipped:false}]
   },{...NL,plugins:{...NL.plugins,annotation:{annotations:{
-    zeroLine:{type:'line',yMin:0,yMax:0,borderColor:'#64748b',borderWidth:1,borderDash:[3,3]},
-  }}},scales:{x:{...SX},y:{...SY,ticks:{color:'#94a3b8',callback:v=>'R$'+(v>=1000?(v/1000).toFixed(0)+'k':v.toFixed(0))}}}});
+    zeroLine:{type:'line',yMin:0,yMax:0,borderColor:'#64748b',borderWidth:1.5,borderDash:[3,3],
+      label:{display:true,content:'Equilíbrio',color:'#64748b',font:{size:8},position:'end',backgroundColor:'rgba(248,250,252,.95)',padding:{x:4,y:2},borderRadius:4}},
+  }}},scales:{x:{...SX},y:{...SY,ticks:{color:'#94a3b8',callback:v=>'R$'+(v>=1000?(v/1000).toFixed(1)+'k':v.toFixed(0))}}}});
+
+  // ── Scatter: Custo/vaca/dia × Produção L/vaca ────────────────────────────
+  const scCvd = enriched.filter(d=>d.prod>0&&d.cvd>0).map(d=>({
+    x: d.prod, y: d.cvd, label: d.label, vacas: d.totalVacas||50,
+    custoL: d.custoLitro,
+  }));
+  mk('ch-scat-cvd','scatter',{datasets:[{
+    label:'Fazendas',
+    data: scCvd,
+    backgroundColor: scCvd.map(p=>p.y<=18?'rgba(21,128,61,0.75)':p.y<=25?'rgba(217,119,6,0.75)':'rgba(220,38,38,0.75)'),
+    pointRadius: scCvd.map(p=>Math.max(5,Math.min(16,Math.sqrt(p.vacas)*0.65))),
+    pointHoverRadius:12,borderColor:'rgba(255,255,255,0.7)',borderWidth:1.5,
+  }]},{
+    plugins:{legend:{display:false},
+      tooltip:{callbacks:{label:c=>`${c.raw.label} — Prod: ${c.raw.x.toFixed(1)}L | CVD: R$${c.raw.y.toFixed(2)} | Custo/L: R$${c.raw.custoL.toFixed(3)}`}},
+      annotation:{annotations:{
+        metaCvd:{type:'line',yMin:18,yMax:18,borderColor:'#15803d',borderWidth:1.5,borderDash:[5,4],
+          label:{display:true,content:'Meta CVD R$18',color:'#15803d',font:{size:8,weight:'bold'},position:'end',backgroundColor:'rgba(240,253,244,.9)',padding:{x:4,y:2},borderRadius:4}},
+        refCvd:{type:'line',yMin:25,yMax:25,borderColor:'#d97706',borderWidth:1,borderDash:[4,4],
+          label:{display:true,content:'Ref R$25',color:'#92400e',font:{size:8},position:'start',backgroundColor:'rgba(255,251,235,.9)',padding:{x:4,y:2},borderRadius:4}},
+      }},
+    },
+    scales:{
+      x:{title:{display:true,text:'Produção L/vaca/dia',color:'#94a3b8',font:{size:10}},...SY,ticks:{color:'#94a3b8'}},
+      y:{title:{display:true,text:'Custo/vaca/dia R$',color:'#94a3b8',font:{size:10}},...SY,ticks:{color:'#94a3b8',callback:v=>'R$'+v.toFixed(0)}},
+    },
+  });
+
+  // ── Scatter: RMCA/animal × Produção L/vaca ───────────────────────────────
+  const scRmca = enriched.filter(d=>d.prod>0).map(d=>({
+    x: d.prod, y: d.rmcaVaca, label: d.label, vacas: d.totalVacas||50,
+  }));
+  mk('ch-scat-rmca','scatter',{datasets:[{
+    label:'Fazendas',
+    data: scRmca,
+    backgroundColor: scRmca.map(p=>p.y>=0?'rgba(21,128,61,0.75)':'rgba(220,38,38,0.75)'),
+    pointRadius: scRmca.map(p=>Math.max(5,Math.min(16,Math.sqrt(p.vacas)*0.65))),
+    pointHoverRadius:12,borderColor:'rgba(255,255,255,0.7)',borderWidth:1.5,
+  }]},{
+    plugins:{legend:{display:false},
+      tooltip:{callbacks:{label:c=>`${c.raw.label} — Prod: ${c.raw.x.toFixed(1)}L | RMCA/animal: R$${c.raw.y.toFixed(2)}`}},
+      annotation:{annotations:{
+        zeroRmca:{type:'line',yMin:0,yMax:0,borderColor:'#64748b',borderWidth:1.5,borderDash:[4,4],
+          label:{display:true,content:'Equilíbrio',color:'#64748b',font:{size:8},position:'end',backgroundColor:'rgba(248,250,252,.9)',padding:{x:4,y:2},borderRadius:4}},
+      }},
+    },
+    scales:{
+      x:{title:{display:true,text:'Produção L/vaca/dia',color:'#94a3b8',font:{size:10}},...SY,ticks:{color:'#94a3b8'}},
+      y:{title:{display:true,text:'RMCA/animal/dia R$',color:'#94a3b8',font:{size:10}},...SY,ticks:{color:'#94a3b8',callback:v=>'R$'+v.toFixed(0)}},
+    },
+  });
 }
 
 // ── SCATTER 2: Gordura × Produção Média ───────────────────────────────────
