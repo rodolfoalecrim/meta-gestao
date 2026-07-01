@@ -464,6 +464,18 @@ tbody td{padding:10px 14px;font-size:12px;}.badge{display:inline-flex;align-item
       <div class="sc" id="sc-bench">
         <div class="ph"><div><h2>Benchmarks Técnicos</h2><p>Desempenho dos clientes ativos vs referências nacionais (Embrapa / MAPA / CNA 2024)</p></div></div>
         <div class="bm-grid" id="bm-cards"></div>
+
+        <!-- Gráficos de custo e RMCA -->
+        <div class="g2" id="bm-dieta-charts" style="display:none">
+          <div class="cc">
+            <div class="cc-hdr"><span class="cc-ico">💰</span><span class="cc-title">Custo Alimentar/vaca/dia — distribuição por fazenda</span></div>
+            <canvas id="ch-bm-cvd" height="160"></canvas>
+          </div>
+          <div class="cc">
+            <div class="cc-hdr"><span class="cc-ico">📈</span><span class="cc-title">RMCA/dia — fazendas com dieta cadastrada</span></div>
+            <canvas id="ch-bm-rmca" height="160"></canvas>
+          </div>
+        </div>
         <div class="g3">
           <div class="cc"><div class="cc-hdr"><span class="cc-ico">📊</span><span class="cc-title">Distribuição — Média L/vaca/dia</span></div><canvas id="ch-hm" height="220"></canvas></div>
           <div class="cc"><div class="cc-hdr"><span class="cc-ico">🐄</span><span class="cc-title">Distribuição — Tamanho do Rebanho</span></div><canvas id="ch-hv" height="220"></canvas></div>
@@ -2429,6 +2441,10 @@ document.getElementById('rk-main').innerHTML=top.map((d,i)=>`
 </div>`).join('');
 }
 function renderBench(){
+// Carrega dietas em background e re-renderiza quando pronto
+if(!_dietasBenchLoaded){
+  loadDietasBenchCache().then(()=>renderBench());
+}
 const at=FIL.filter(d=>d.situacao==='ATIVO');
 const refs=[
 {key:'media_prod',l:'Média L/vaca/dia',u:'L',ref:28,meta:37,icon:'🥛',desc:'Embrapa: 28L | Top 100 MilkPoint 2026: 35.4L | Premium: 37L',dec:1},
@@ -2441,6 +2457,11 @@ const refs=[
 {key:'novilhas',l:'Novilhas / Rebanho',u:'%',ref:15,meta:25,icon:'🐮',desc:'Índice de reposição: ideal 20–30% das vacas | Garante renovação genética',dec:0,pctOf:'vacas',idealRange:true,idealMin:15,idealMax:35},
 {key:'secas',l:'Vacas Secas / Rebanho',u:'%',ref:12,meta:18,icon:'🌙',desc:'Período seco: ideal 15–20% do rebanho | Indica manejo reprodutivo correto',dec:0,pctOf:'vacas',idealRange:true,idealMin:10,idealMax:22},
 {key:'bezerras',l:'Bezerras / Rebanho',u:'%',ref:10,meta:20,icon:'🍼',desc:'Índice de natalidade: presença indica reposição ativa e bom manejo',dec:0,pctOf:'vacas',idealRange:true,idealMin:8,idealMax:30},
+// Benchmarks de custo alimentar — via cache de dietas
+{key:'_cvd',l:'Custo Alim./vaca/dia',u:' R$',ref:25,meta:18,icon:'💰',desc:'Custo alimentar médio por vaca por dia — baseado nas dietas cadastradas',dec:2,lowerIsBetter:true,
+ fn:()=>{const vals=Object.values(_dietasBenchCache).filter(d=>d.cvd>0).map(d=>d.cvd);return vals.length?vals.reduce((a,b)=>a+b,0)/vals.length:0;}},
+{key:'_rmca',l:'RMCA Médio/dia',u:' R$',ref:0,meta:5000,icon:'📈',desc:'Retorno Menos Custo Alimentar médio das fazendas com dieta cadastrada',dec:0,
+ fn:()=>{const vals=Object.values(_dietasBenchCache).filter(d=>d.rmca>0).map(d=>d.rmca);return vals.length?vals.reduce((a,b)=>a+b,0)/vals.length:0;}},
 ];
 document.getElementById('bm-cards').innerHTML=refs.map(r=>{
 const val=r.fn?r.fn(at):r.pctOf?(()=>{
@@ -2455,12 +2476,16 @@ if(r.idealRange){
   cls=ok?'bm-ok':close?'bm-warn':'bm-bad';
   col=ok?'#16a34a':close?'#d97706':'#dc2626';
   status=ok?'✅':close?'⚠️':'❌';
+} else if(r.lowerIsBetter) {
+  cls=val<=r.meta?'bm-ok':val<=r.ref?'bm-warn':'bm-bad';
+  col=val<=r.meta?'#16a34a':val<=r.ref?'#d97706':'#dc2626';
+  status=val<=r.meta?'✅':val<=r.ref?'⚠️':'❌';
 } else {
   cls=val>=r.meta?'bm-ok':val>=r.ref?'bm-warn':'bm-bad';
   col=val>=r.meta?'#16a34a':val>=r.ref?'#d97706':'#dc2626';
   status=val>=r.meta?'✅':val>=r.ref?'⚠️':'❌';
 }
-const fv=val>0?(r.u==='%'?(r.pctOf?val.toFixed(r.dec)+'%':val.toFixed(r.dec)+'%'):r.u===' mg/dL'?val.toFixed(r.dec)+r.u:val>=1000?(val/1000).toFixed(1)+'k '+r.u:val.toFixed(r.dec)+' '+r.u):'Sem dados';
+const fv=val>0?(r.u==='%'?(r.pctOf?val.toFixed(r.dec)+'%':val.toFixed(r.dec)+'%'):r.u===' mg/dL'?val.toFixed(r.dec)+r.u:r.u===' R$'?'R$ '+(val>=1000?(val/1000).toFixed(1)+'k':val.toFixed(r.dec)):val>=1000?(val/1000).toFixed(1)+'k '+r.u:val.toFixed(r.dec)+' '+r.u):'Sem dados';
 const scale=r.idealRange?`<span>0</span><span>Min: ${r.idealMin}${r.u}</span><span>Max: ${r.idealMax}${r.u}</span>`:`<span>0</span><span>Ref: ${r.ref}${r.u}</span><span>Meta: ${r.meta}${r.u}</span>`;
 return `<div class="bm">
 <div class="bm-top"><div class="bm-icon">${r.icon}</div><div class="bm-lbl">${r.l}</div><div style="margin-left:auto;font-size:18px">${status}</div></div>
@@ -2504,6 +2529,38 @@ x:{title:{display:true,text:'DEL — Dias em Lactação',color:'#94a3b8',font:{s
 y:{title:{display:true,text:'Média L/vaca/dia',color:'#94a3b8',font:{size:10}},...SY,ticks:{color:'#94a3b8'}},
 }
 });
+
+// ── Gráficos CVD e RMCA (só se tiver dados de dieta) ───────────────────────
+const dietaFarms = Object.entries(_dietasBenchCache).filter(([,d])=>d.cvd>0);
+const bmDietaWrap = document.getElementById('bm-dieta-charts');
+if(dietaFarms.length > 0 && bmDietaWrap){
+  bmDietaWrap.style.display = '';
+  const cvdData = dietaFarms
+    .map(([id,d])=>({label:(ALL.find(f=>f.id===id)||{}).produtor||id, cvd:d.cvd, rmca:d.rmca}))
+    .sort((a,b)=>a.cvd-b.cvd);
+  mk('ch-bm-cvd','bar',{
+    labels: cvdData.map(d=>d.label.split(' ')[0]),
+    datasets:[{label:'Custo/vaca/dia R$',data:cvdData.map(d=>parseFloat(d.cvd.toFixed(2))),
+      backgroundColor:cvdData.map(d=>d.cvd<=18?'rgba(21,128,61,0.75)':d.cvd<=25?'rgba(217,119,6,0.75)':'rgba(220,38,38,0.75)'),
+      borderRadius:5,borderSkipped:false}]
+  },{...NL,plugins:{...NL.plugins,annotation:{annotations:{
+    metaLine:{type:'line',yMin:18,yMax:18,borderColor:'#15803d',borderWidth:1.5,borderDash:[5,4],
+      label:{display:true,content:'Meta R$18',color:'#15803d',font:{size:8,weight:'bold'},position:'end',backgroundColor:'rgba(240,253,244,.9)',padding:{x:4,y:2},borderRadius:4}},
+    refLine:{type:'line',yMin:25,yMax:25,borderColor:'#d97706',borderWidth:1,borderDash:[4,4],
+      label:{display:true,content:'Ref R$25',color:'#d97706',font:{size:8},position:'start',backgroundColor:'rgba(255,251,235,.9)',padding:{x:4,y:2},borderRadius:4}},
+  }}},scales:{x:{...SX},y:{...SY,ticks:{color:'#94a3b8',callback:v=>'R$'+v.toFixed(0)}}}});
+  const rmcaData = dietaFarms
+    .map(([id,d])=>({label:(ALL.find(f=>f.id===id)||{}).produtor||id, rmca:d.rmca}))
+    .sort((a,b)=>b.rmca-a.rmca);
+  mk('ch-bm-rmca','bar',{
+    labels:rmcaData.map(d=>d.label.split(' ')[0]),
+    datasets:[{label:'RMCA R$/dia',data:rmcaData.map(d=>parseFloat(d.rmca.toFixed(0))),
+      backgroundColor:rmcaData.map(d=>d.rmca>=0?'rgba(21,128,61,0.75)':'rgba(220,38,38,0.75)'),
+      borderRadius:5,borderSkipped:false}]
+  },{...NL,plugins:{...NL.plugins,annotation:{annotations:{
+    zeroLine:{type:'line',yMin:0,yMax:0,borderColor:'#64748b',borderWidth:1,borderDash:[3,3]},
+  }}},scales:{x:{...SX},y:{...SY,ticks:{color:'#94a3b8',callback:v=>'R$'+(v>=1000?(v/1000).toFixed(0)+'k':v.toFixed(0))}}}});
+}
 
 // ── SCATTER 2: Gordura × Produção Média ───────────────────────────────────
 const scGord=at.filter(d=>d.gordura>0&&d.media_prod>0).map(d=>({x:parseFloat(d.media_prod),y:parseFloat(d.gordura),label:d.produtor||'?',vacas:d.vacas||0}));
@@ -5933,6 +5990,38 @@ async function confirmarDelFarm() {
 // ════════════════════════════════════════════════════════
 // DIETA & CUSTOS
 // ════════════════════════════════════════════════════════
+// Cache de dietas para benchmarks (carregado ao renderBench)
+let _dietasBenchCache = {}; // {farmId: {cvd, rmca, nomeDieta}}
+let _dietasBenchLoaded = false;
+
+async function loadDietasBenchCache() {
+  if(_dietasBenchLoaded) return;
+  try {
+    const snap = await db.ref('dietas').once('value');
+    const data = snap.val() || {};
+    Object.keys(data).forEach(farmId => {
+      const d = data[farmId];
+      if(!d || !d.lotes) return;
+      const lotes = Object.values(d.lotes);
+      let totalCusto=0, totalVacas=0, totalRetorno=0;
+      lotes.forEach(l => {
+        const vacas = parseFloat(l.vacas)||0;
+        const prod  = parseFloat(l.prod)||0;
+        const preco = parseFloat(l.preco)||0;
+        const custoPorVaca = (l.alimentos||[]).reduce((s,a)=>(s+(parseFloat(a.kg)||0)*(parseFloat(a.custo)||0)),0);
+        totalCusto   += custoPorVaca * vacas;
+        totalVacas   += vacas;
+        totalRetorno += prod * vacas * preco;
+      });
+      const cvd  = totalVacas > 0 ? totalCusto / totalVacas : 0;
+      const rmca = totalRetorno - totalCusto;
+      const nomes = lotes.map(l=>l.nomeDieta||l.nome||'').filter(Boolean).join(' / ');
+      _dietasBenchCache[farmId] = { cvd, rmca, totalCusto, totalRetorno, totalVacas, nomes };
+    });
+    _dietasBenchLoaded = true;
+  } catch(e) { console.warn('loadDietasBenchCache error:', e); }
+}
+
 let dietaLotes = []; // [{id, nomeDieta, nome, del, ccs, gordura, nul, vacas, prod, preco, alimentos}]
 let dietaFarmId = null;
 let dietaHistorico = []; // [{data, custo, rmca, nomeDieta, ...}]
@@ -6259,6 +6348,7 @@ async function salvarDietaFirebase() {
     dietaHistorico.push(histEntry);
     dietaHistorico.sort((a,b)=>a.data>b.data?1:-1);
     renderHistDieta();
+    _dietasBenchLoaded = false; // invalida cache para próximo renderBench
     toast('✅ Dieta salva! Histórico atualizado.');
   } catch(e){
     console.error(e);
