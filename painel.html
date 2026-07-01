@@ -2460,12 +2460,12 @@ document.getElementById('rk-main').innerHTML=top.map((d,i)=>`
 </div>`).join('');
 }
 function renderBench(){
-// Sempre recarrega dietas do Firebase (dados podem ter mudado)
+// Se cache não carregado, aguarda e re-renderiza TUDO (incluindo cards CVD/RMCA)
 if(!_dietasBenchLoaded){
   loadDietasBenchCache().then(()=>{
-    // Re-renderiza só os elementos de dieta, sem recriar os cards de produção
-    renderDietaBenchSection();
+    renderBench(); // re-executa do início com cache pronto
   });
+  return; // interrompe renderização atual — sairá "Sem dados" temporariamente
 }
 const at=FIL.filter(d=>d.situacao==='ATIVO');
 const refs=[
@@ -3142,7 +3142,13 @@ document.getElementById('sc-'+name).classList.add('on');
 const niEl=document.getElementById('ni-'+name);
 if(niEl) niEl.classList.add('on');
 document.querySelector('.content').scrollTop=0;
-if(name==='bench'){_dietasBenchLoaded=false;}
+if(name==='bench'){
+  _dietasBenchLoaded=false;
+  // Mostra loading enquanto carrega
+  const bCards=document.getElementById('bm-cards');
+  if(bCards) bCards.innerHTML='<div style="grid-column:1/-1;text-align:center;padding:24px;color:var(--muted)"><div style="font-size:20px;margin-bottom:6px">⏳</div><div style="font-size:12px;font-weight:600">Carregando dados de dietas...</div></div>';
+  setTimeout(renderBench,50);
+}
 if(name==='ranking'){initRanking();}
 if(name==='dieta'){initDieta();}
 if(name==='comparador'){initComparador();}
