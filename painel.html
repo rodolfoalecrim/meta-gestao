@@ -2460,9 +2460,12 @@ document.getElementById('rk-main').innerHTML=top.map((d,i)=>`
 </div>`).join('');
 }
 function renderBench(){
-// Carrega dietas em background e re-renderiza quando pronto
+// Sempre recarrega dietas do Firebase (dados podem ter mudado)
 if(!_dietasBenchLoaded){
-  loadDietasBenchCache().then(()=>renderBench());
+  loadDietasBenchCache().then(()=>{
+    // Re-renderiza só os elementos de dieta, sem recriar os cards de produção
+    renderDietaBenchSection();
+  });
 }
 const at=FIL.filter(d=>d.situacao==='ATIVO');
 const refs=[
@@ -2550,7 +2553,11 @@ y:{title:{display:true,text:'Média L/vaca/dia',color:'#94a3b8',font:{size:10}},
 });
 
 // ── Gráficos e KPIs de dieta (CVD, RMCA, Custo/L, Scatter) ─────────────────
-const dietaFarms = Object.entries(_dietasBenchCache).filter(([,d])=>d.cvd>0);
+renderDietaBenchSection();
+}
+
+function renderDietaBenchSection(){
+const dietaFarms = Object.entries(_dietasBenchCache).filter(([,d])=>d.cvd>0&&d.totalVacas>0);
 const bmDietaWrap = document.getElementById('bm-dieta-charts');
 if(dietaFarms.length > 0 && bmDietaWrap){
   bmDietaWrap.style.display = '';
@@ -3135,6 +3142,7 @@ document.getElementById('sc-'+name).classList.add('on');
 const niEl=document.getElementById('ni-'+name);
 if(niEl) niEl.classList.add('on');
 document.querySelector('.content').scrollTop=0;
+if(name==='bench'){_dietasBenchLoaded=false;}
 if(name==='ranking'){initRanking();}
 if(name==='dieta'){initDieta();}
 if(name==='comparador'){initComparador();}
@@ -3707,6 +3715,7 @@ document.body.style.overflow = '';
 Object.values(histCharts).forEach(c => { if(c) c.destroy(); });
 histCharts = {};
 }
+function closeFarmModal(){ closeModal(); }
 function switchTab(tab) {
 ['hist','visit','edit'].forEach(t => {
 const el = document.getElementById('tab-' + t);
@@ -6068,7 +6077,7 @@ async function confirmarDelFarm() {
   if(!_delId) return;
   const id = _delId, nome = _delNome;
   fecharDelFarm();
-  closeFarmModal();
+  closeModal(); // função correta para fechar o modal da fazenda
   try {
     // Remove cada nó separadamente com .remove() — método mais confiável
     const removes = [
@@ -6097,14 +6106,17 @@ let _dietasBenchCache = {}; // {farmId: {cvd, rmca, nomeDieta}}
 let _dietasBenchLoaded = false;
 
 async function loadDietasBenchCache() {
-  if(_dietasBenchLoaded) return;
+  // Sempre recarrega do Firebase para garantir dados frescos
+  _dietasBenchCache = {};
   try {
     const snap = await db.ref('dietas').once('value');
     const data = snap.val() || {};
+    let count = 0;
     Object.keys(data).forEach(farmId => {
       const d = data[farmId];
       if(!d || !d.lotes) return;
       const lotes = Object.values(d.lotes);
+      if(!lotes.length) return;
       let totalCusto=0, totalVacas=0, totalRetorno=0;
       lotes.forEach(l => {
         const vacas = parseFloat(l.vacas)||0;
@@ -6115,6 +6127,7 @@ async function loadDietasBenchCache() {
         totalVacas   += vacas;
         totalRetorno += prod * vacas * preco;
       });
+      if(totalVacas === 0) return; // ignora lotes sem vacas
       const cvd  = totalVacas > 0 ? totalCusto / totalVacas : 0;
       const rmca = totalRetorno - totalCusto;
       const nomes = lotes.map(l=>l.nomeDieta||l.nome||'').filter(Boolean).join(' / ');
@@ -6122,12 +6135,20 @@ async function loadDietasBenchCache() {
         const v=parseFloat(l.vacas)||0; const p=parseFloat(l.prod)||0;
         return s+v*p;
       },0);
-      const custoLitroBench = totalLitrosBench>0 ? totalCusto/totalLitrosBench : 0;
+      const custoLitroBench  = totalLitrosBench>0 ? totalCusto/totalLitrosBench : 0;
       const margemLitroBench = totalLitrosBench>0 ? (totalRetorno-totalCusto)/totalLitrosBench : 0;
-      _dietasBenchCache[farmId] = { cvd, rmca, totalCusto, totalRetorno, totalVacas, nomes, custoLitro:custoLitroBench, margemLitro:margemLitroBench };
+      _dietasBenchCache[farmId] = {
+        cvd, rmca, totalCusto, totalRetorno, totalVacas, nomes,
+        custoLitro: custoLitroBench, margemLitro: margemLitroBench
+      };
+      count++;
     });
     _dietasBenchLoaded = true;
-  } catch(e) { console.warn('loadDietasBenchCache error:', e); }
+    console.log('loadDietasBenchCache: '+count+' fazendas com dieta carregadas');
+  } catch(e) {
+    console.warn('loadDietasBenchCache error:', e);
+    _dietasBenchLoaded = false; // permite retry
+  }
 }
 
 let dietaLotes = []; // [{id, nomeDieta, nome, del, ccs, gordura, nul, vacas, prod, preco, alimentos}]
@@ -6487,8 +6508,12 @@ async function salvarDietaFirebase() {
     dietaHistorico.push(histEntry);
     dietaHistorico.sort((a,b)=>a.data>b.data?1:-1);
     renderHistDieta();
-    _dietasBenchLoaded = false; // invalida cache para próximo renderBench
-    toast('✅ Dieta salva! Histórico atualizado.');
+    // Recarrega cache e atualiza benchmarks se estiver aberto
+    _dietasBenchLoaded = false;
+    loadDietasBenchCache().then(()=>{
+      if(document.getElementById('sc-bench')?.classList.contains('on')) renderDietaBenchSection();
+    });
+    toast('✅ Dieta salva! Benchmarks atualizados.');
   } catch(e){
     console.error(e);
     toast('❌ Erro ao salvar. Tente novamente.');
