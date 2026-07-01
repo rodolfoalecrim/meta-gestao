@@ -210,6 +210,36 @@ tbody td{padding:10px 14px;font-size:12px;}.badge{display:inline-flex;align-item
 .dt-tabs{display:flex;gap:6px;margin-bottom:16px;flex-wrap:wrap;}
 .dt-tab-btn{background:white;border:1.5px solid var(--border);color:var(--muted);font-size:11px;font-weight:600;font-family:Inter,sans-serif;padding:7px 16px;border-radius:20px;cursor:pointer;transition:all .15s;}
 .dt-tab-btn.on{background:#15803d;border-color:#15803d;color:white;}
+
+.rb-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px;}
+.rb-card{background:white;border:1px solid var(--border);border-radius:14px;padding:18px 20px;box-shadow:var(--shadow);}
+.rb-section-title{font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;margin-bottom:14px;display:flex;align-items:center;gap:6px;}
+.rb-field{margin-bottom:12px;}
+.rb-label{font-size:12px;font-weight:600;color:var(--muted);display:flex;align-items:center;justify-content:space-between;margin-bottom:5px;}
+.rb-label-hint{font-size:10px;color:var(--dim);font-weight:400;}
+.rb-input{width:100%;background:#f8fafc;border:1.5px solid var(--border);border-radius:9px;color:var(--text);font-size:14px;font-family:Inter,sans-serif;padding:9px 12px;outline:none;transition:all .15s;}
+.rb-input:focus{border-color:#15803d;background:white;box-shadow:0 0 0 3px rgba(21,128,61,.08);}
+.rb-toggle{display:flex;gap:6px;}
+.rb-tog-btn{flex:1;padding:8px 6px;border-radius:8px;border:1.5px solid var(--border);background:#f8fafc;color:var(--muted);font-size:12px;font-weight:700;font-family:Inter,sans-serif;cursor:pointer;transition:all .15s;text-align:center;}
+.rb-tog-btn.on{background:#15803d;border-color:#15803d;color:white;}
+.rb-result-hero{background:linear-gradient(135deg,#052e16,#15803d);border-radius:16px;padding:24px;color:white;margin-bottom:16px;}
+.rb-result-title{font-size:12px;opacity:.7;font-weight:600;text-transform:uppercase;letter-spacing:.6px;margin-bottom:16px;}
+.rb-result-nums{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;}
+.rb-result-num{text-align:center;}
+.rb-result-val{font-size:30px;font-weight:900;letter-spacing:-1px;line-height:1;}
+.rb-result-lbl{font-size:10px;opacity:.7;font-weight:600;margin-top:4px;}
+.rb-result-delta{font-size:11px;font-weight:700;margin-top:3px;}
+.rb-year-table{width:100%;border-collapse:collapse;font-size:12px;}
+.rb-year-table thead th{background:#f8fafc;padding:9px 12px;text-align:center;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);border-bottom:1px solid var(--border);}
+.rb-year-table thead th:first-child{text-align:left;}
+.rb-year-table tbody tr{border-bottom:1px solid #f8fafc;}
+.rb-year-table tbody tr:hover{background:#f8fafc;}
+.rb-year-table tbody td{padding:9px 12px;text-align:center;}
+.rb-year-table tbody td:first-child{text-align:left;font-weight:700;}
+.rb-tag{display:inline-block;font-size:9px;font-weight:700;padding:2px 7px;border-radius:20px;margin-left:6px;}
+.rb-run-btn{background:linear-gradient(135deg,#15803d,#052e16);color:white;border:none;border-radius:12px;padding:13px 28px;font-size:14px;font-weight:700;font-family:Inter,sans-serif;cursor:pointer;width:100%;margin-top:4px;letter-spacing:-.1px;}
+.rb-run-btn:hover{opacity:.92;}
+.rb-alert{background:#fef9c3;border:1px solid #fcd34d;border-radius:10px;padding:10px 14px;font-size:11px;color:#92400e;font-weight:600;margin-bottom:12px;display:flex;gap:8px;align-items:flex-start;}
 .zoo-card{background:white;border:1px solid var(--border);border-radius:12px;overflow:hidden;transition:box-shadow .15s;margin-bottom:0;}
 .zoo-card:hover{box-shadow:var(--shadow-md);}
 .zoo-card-hdr{display:flex;align-items:center;gap:12px;padding:14px 16px;cursor:pointer;}
@@ -397,6 +427,7 @@ tbody td{padding:10px 14px;font-size:12px;}.badge{display:inline-flex;align-item
       <div class="ni" id="ni-impacto" onclick="nav('impacto')"><span class="ni-i">📊</span>Impacto em Números</div>
       <div class="ni" id="ni-dieta" onclick="nav('dieta')"><span class="ni-i">🌽</span>Dieta & Custos</div>
       <div class="ni" id="ni-comparador" onclick="nav('comparador')"><span class="ni-i">⚡</span>Comparar Fazendas</div>
+      <div class="ni" id="ni-rebanho" onclick="nav('rebanho')"><span class="ni-i">📈</span>Crescimento Rebanho</div>
       <div class="ni" id="ni-calc" onclick="nav('calc')"><span class="ni-i">💰</span>Calculadora</div>
     </div>
     <!-- CONTENT -->
@@ -1792,6 +1823,163 @@ tbody td{padding:10px 14px;font-size:12px;}.badge{display:inline-flex;align-item
         <div id="dt-lotes-wrap"></div>
       </div>
 
+
+      <!-- ═══ CRESCIMENTO DE REBANHO ═══ -->
+      <div class="sc" id="sc-rebanho">
+        <div class="ph">
+          <div><h2>📈 Calculadora de Crescimento de Rebanho</h2><p>Projeção do crescimento do rebanho para os próximos anos com base nos parâmetros produtivos e reprodutivos</p></div>
+          <button class="rb-run-btn" style="width:auto;padding:9px 24px;font-size:13px" onclick="calcRebanho()">▶ Calcular Projeção</button>
+        </div>
+
+        <div class="rb-grid">
+          <!-- Coluna esquerda: rebanho atual -->
+          <div>
+            <div class="rb-card" style="margin-bottom:12px">
+              <div class="rb-section-title">🐄 Rebanho Atual</div>
+              <div class="rb-field">
+                <div class="rb-label">Vacas adultas em lactação / secas<span class="rb-label-hint">cabeças</span></div>
+                <input class="rb-input" type="number" id="rb-vacas" value="100" min="1" oninput="calcRebanho()">
+              </div>
+              <div class="rb-field">
+                <div class="rb-label">Novilhas 12–24 meses<span class="rb-label-hint">cabeças</span></div>
+                <input class="rb-input" type="number" id="rb-nov24" value="25" min="0" oninput="calcRebanho()">
+              </div>
+              <div class="rb-field">
+                <div class="rb-label">Novilhas 4–12 meses<span class="rb-label-hint">cabeças</span></div>
+                <input class="rb-input" type="number" id="rb-nov12" value="20" min="0" oninput="calcRebanho()">
+              </div>
+              <div class="rb-field">
+                <div class="rb-label">Bezerras 0–4 meses<span class="rb-label-hint">cabeças</span></div>
+                <input class="rb-input" type="number" id="rb-bez" value="15" min="0" oninput="calcRebanho()">
+              </div>
+            </div>
+
+            <div class="rb-card">
+              <div class="rb-section-title">⚙️ Parâmetros Reprodutivos</div>
+              <div class="rb-field">
+                <div class="rb-label">Sêmen sexado?<span class="rb-label-hint">afeta % fêmeas nascidas</span></div>
+                <div class="rb-toggle">
+                  <button class="rb-tog-btn on" id="rb-sex-nao" onclick="setSexado(false)">Convencional<br><span style="font-size:10px;opacity:.8">~50% fêmeas</span></button>
+                  <button class="rb-tog-btn" id="rb-sex-sim" onclick="setSexado(true)">Sexado<br><span style="font-size:10px;opacity:.8">~90% fêmeas</span></button>
+                </div>
+              </div>
+              <div class="rb-field">
+                <div class="rb-label">Taxa de concepção vacas (%)<span class="rb-label-hint">% prenha por IA/TE</span></div>
+                <input class="rb-input" type="number" id="rb-concep" value="55" min="1" max="100" oninput="calcRebanho()">
+              </div>
+              <div class="rb-field">
+                <div class="rb-label">Taxa de serviço (%)<span class="rb-label-hint">% inseminadas no cio</span></div>
+                <input class="rb-input" type="number" id="rb-serv" value="80" min="1" max="100" oninput="calcRebanho()">
+              </div>
+              <div class="rb-field">
+                <div class="rb-label">Concepção novilhas (%)<span class="rb-label-hint">geralmente maior que vacas</span></div>
+                <input class="rb-input" type="number" id="rb-concep-nov" value="65" min="1" max="100" oninput="calcRebanho()">
+              </div>
+              <div class="rb-field">
+                <div class="rb-label">Idade ao primeiro parto<span class="rb-label-hint">meses</span></div>
+                <input class="rb-input" type="number" id="rb-idparto" value="26" min="18" max="36" oninput="calcRebanho()">
+              </div>
+              <div class="rb-field">
+                <div class="rb-label">Intervalo entre partos<span class="rb-label-hint">meses</span></div>
+                <input class="rb-input" type="number" id="rb-iep" value="13" min="10" max="18" oninput="calcRebanho()">
+              </div>
+            </div>
+          </div>
+
+          <!-- Coluna direita: parâmetros de mortalidade e descarte -->
+          <div>
+            <div class="rb-card" style="margin-bottom:12px">
+              <div class="rb-section-title">💀 Mortalidade por Categoria</div>
+              <div class="rb-field">
+                <div class="rb-label">Mortalidade bezerras (%)<span class="rb-label-hint">0–4 meses</span></div>
+                <input class="rb-input" type="number" id="rb-mort-bez" value="5" min="0" max="50" oninput="calcRebanho()">
+              </div>
+              <div class="rb-field">
+                <div class="rb-label">Mortalidade novilhas (%)<span class="rb-label-hint">4–24 meses</span></div>
+                <input class="rb-input" type="number" id="rb-mort-nov" value="2" min="0" max="30" oninput="calcRebanho()">
+              </div>
+              <div class="rb-field">
+                <div class="rb-label">Mortalidade vacas adultas (%)<span class="rb-label-hint">por ano</span></div>
+                <input class="rb-input" type="number" id="rb-mort-vac" value="2" min="0" max="20" oninput="calcRebanho()">
+              </div>
+              <div class="rb-field" style="margin-top:16px;padding-top:16px;border-top:1px solid var(--border)">
+                <div class="rb-section-title" style="margin-bottom:10px">✂️ Descarte</div>
+                <div class="rb-label">Taxa de descarte vacas (%/ano)<span class="rb-label-hint">descarte voluntário + involuntário</span></div>
+                <input class="rb-input" type="number" id="rb-descarte" value="20" min="0" max="50" oninput="calcRebanho()">
+              </div>
+            </div>
+
+            <div class="rb-card">
+              <div class="rb-section-title">📅 Configuração da Projeção</div>
+              <div class="rb-field">
+                <div class="rb-label">Horizonte de projeção<span class="rb-label-hint">anos</span></div>
+                <div class="rb-toggle" style="gap:6px">
+                  <button class="rb-tog-btn on" id="rb-yr-3" onclick="setAnos(3,this)">3 anos</button>
+                  <button class="rb-tog-btn" id="rb-yr-5" onclick="setAnos(5,this)">5 anos</button>
+                  <button class="rb-tog-btn" id="rb-yr-10" onclick="setAnos(10,this)">10 anos</button>
+                </div>
+              </div>
+              <div class="rb-field" style="margin-top:12px">
+                <div class="rb-label">Estratégia de reposição<span class="rb-label-hint">destino das fêmeas excedentes</span></div>
+                <div class="rb-toggle">
+                  <button class="rb-tog-btn on" id="rb-rep-interna" onclick="setReposicao('interna',this)">Reposição interna</button>
+                  <button class="rb-tog-btn" id="rb-rep-venda" onclick="setReposicao('venda',this)">Vende excedente</button>
+                </div>
+              </div>
+              <div class="rb-field" style="margin-top:12px">
+                <div class="rb-label">Gestação + Período seco<span class="rb-label-hint">meses totais</span></div>
+                <input class="rb-input" type="number" id="rb-gestacao" value="12" min="9" max="15" oninput="calcRebanho()">
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Resultado -->
+        <div id="rb-result-wrap" style="display:none">
+          <div id="rb-alerts"></div>
+
+          <div class="rb-result-hero">
+            <div class="rb-result-title">Rebanho projetado — ao final do período</div>
+            <div class="rb-result-nums">
+              <div class="rb-result-num">
+                <div class="rb-result-val" id="rb-r-vacas">—</div>
+                <div class="rb-result-lbl">Vacas adultas</div>
+                <div class="rb-result-delta" id="rb-r-vacas-d"></div>
+              </div>
+              <div class="rb-result-num">
+                <div class="rb-result-val" id="rb-r-nov">—</div>
+                <div class="rb-result-lbl">Novilhas</div>
+                <div class="rb-result-delta" id="rb-r-nov-d"></div>
+              </div>
+              <div class="rb-result-num">
+                <div class="rb-result-val" id="rb-r-total">—</div>
+                <div class="rb-result-lbl">Total rebanho</div>
+                <div class="rb-result-delta" id="rb-r-total-d"></div>
+              </div>
+              <div class="rb-result-num">
+                <div class="rb-result-val" id="rb-r-venda">—</div>
+                <div class="rb-result-lbl">Fêmeas vendidas</div>
+                <div class="rb-result-delta" id="rb-r-venda-d"></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Gráfico -->
+          <div class="cc" style="margin-bottom:16px">
+            <div class="cc-hdr"><span class="cc-ico">📊</span><span class="cc-title">Evolução do rebanho por categoria</span></div>
+            <canvas id="ch-rebanho-proj" height="200"></canvas>
+          </div>
+
+          <!-- Tabela anual -->
+          <div class="cc" style="margin-bottom:16px">
+            <div class="cc-hdr"><span class="cc-ico">📅</span><span class="cc-title">Projeção anual detalhada</span></div>
+            <div style="overflow-x:auto">
+              <table class="rb-year-table" id="rb-year-table"></table>
+            </div>
+          </div>
+        </div>
+      </div>
+
       <!-- ═══ CALCULADORA ═══ -->
       <div class="sc" id="sc-calc">
         <div class="ph"><div><h2>💰 Calculadora de Ganho Potencial</h2><p>Mostre ao prospecto quanto ele pode ganhar com a Meta</p></div></div>
@@ -3150,6 +3338,7 @@ if(name==='bench'){
   setTimeout(renderBench,50);
 }
 if(name==='ranking'){initRanking();}
+if(name==='rebanho'){setTimeout(calcRebanho,50);}
 if(name==='dieta'){initDieta();}
 if(name==='comparador'){initComparador();}
 if(name==='compare'){renderCompare();}
@@ -6573,6 +6762,216 @@ function renderHistDieta(){
       }
     }
   });
+}
+
+
+// ════════════════════════════════════════════════════════
+// CALCULADORA DE CRESCIMENTO DE REBANHO
+// ════════════════════════════════════════════════════════
+let rbSexado = false;
+let rbAnos = 3;
+let rbReposicao = 'interna';
+let chRebanhoProjChart = null;
+
+function setSexado(v){
+  rbSexado = v;
+  document.getElementById('rb-sex-nao').className = 'rb-tog-btn'+(v?'':' on');
+  document.getElementById('rb-sex-sim').className = 'rb-tog-btn'+(v?' on':'');
+  calcRebanho();
+}
+function setAnos(n,btn){
+  rbAnos = n;
+  ['rb-yr-3','rb-yr-5','rb-yr-10'].forEach(id=>document.getElementById(id).className='rb-tog-btn');
+  btn.className='rb-tog-btn on';
+  calcRebanho();
+}
+function setReposicao(v,btn){
+  rbReposicao=v;
+  ['rb-rep-interna','rb-rep-venda'].forEach(id=>document.getElementById(id).className='rb-tog-btn');
+  btn.className='rb-tog-btn on';
+  calcRebanho();
+}
+
+function gn(id){ return parseFloat(document.getElementById(id)?.value)||0; }
+
+function calcRebanho(){
+  // ── Parâmetros de entrada ───────────────────────────────
+  const vacasIni   = gn('rb-vacas');
+  const nov24Ini   = gn('rb-nov24');
+  const nov12Ini   = gn('rb-nov12');
+  const bezIni     = gn('rb-bez');
+  const pctFemea   = rbSexado ? 0.90 : 0.50;
+  const taxaConcep = gn('rb-concep') / 100;
+  const taxaServ   = gn('rb-serv')   / 100;
+  const taxaConcNov= gn('rb-concep-nov') / 100;
+  const idParto    = gn('rb-idparto');   // meses
+  const iep        = gn('rb-iep');       // meses
+  const gestacao   = gn('rb-gestacao');  // meses gestação + seco
+  const mortBez    = gn('rb-mort-bez')  / 100;
+  const mortNov    = gn('rb-mort-nov')  / 100;
+  const mortVac    = gn('rb-mort-vac')  / 100;
+  const descarte   = gn('rb-descarte') / 100;
+
+  // ── Taxas anuais derivadas ──────────────────────────────
+  // Partos/vaca/ano = 12 / IEP
+  const partosAno   = 12 / (iep || 13);
+  // Taxa de prenhez anual = concepção × serviço
+  const prenhez     = taxaConcep * taxaServ;
+  // Nascimentos fêmeas por vaca por ano
+  const nasc_f_vaca = partosAno * pctFemea * (1 - mortBez);
+  // Nascimentos fêmeas por novilha no ano que para
+  const nasc_f_nov  = taxaConcNov * pctFemea * (1 - mortBez);
+
+  // Frações de progressão das novilhas ao longo do ano
+  // Bezerras 0-4m → Novilhas 4-12m:  ~1/3 do ciclo anual
+  // Novilhas 4-12m → 12-24m: 12m permanência
+  // Novilhas 12-24m → vaca: quando atinge idParto (média 26m)
+
+  // Proporção de novilhas 12-24m que param por ano = 12 / idParto
+  const fracPartoNov = Math.min(1, 12 / Math.max(idParto - 12, 6));
+
+  // ── Simulação ano a ano ─────────────────────────────────
+  let vacas = vacasIni;
+  let nov24 = nov24Ini;
+  let nov12 = nov12Ini;
+  let bez   = bezIni;
+  let vendaAcum = 0;
+
+  const anos  = [];
+  const labels= [];
+
+  for(let yr = 0; yr <= rbAnos; yr++){
+    const totalReb = vacas + nov24 + nov12 + bez;
+    anos.push({ yr, vacas:Math.round(vacas), nov24:Math.round(nov24), nov12:Math.round(nov12), bez:Math.round(bez), total:Math.round(totalReb), venda:Math.round(vendaAcum) });
+    labels.push(yr===0?'Atual':'Ano '+yr);
+    if(yr === rbAnos) break;
+
+    // ── Nascimentos fêmeas este ano ──────────────────────
+    const nascVacas = vacas * nasc_f_vaca;
+    const nascNovs  = nov24 * fracPartoNov * nasc_f_nov;
+    const nascTotal = nascVacas + nascNovs;
+
+    // ── Mortalidades ─────────────────────────────────────
+    const mortVacasN = vacas * mortVac;
+    const mortNov24N = nov24 * mortNov;
+    const mortNov12N = nov12 * mortNov;
+    const mortBezN   = bez   * mortBez;
+
+    // ── Descarte vacas ────────────────────────────────────
+    const descarteN  = vacas * descarte;
+
+    // ── Progressão de categorias ──────────────────────────
+    // Novilhas 12-24m que parem → entram como vacas
+    const entramVacas = nov24 * fracPartoNov * (1 - mortNov);
+    // Novilhas 4-12m → 12-24m (todas as que sobrevivem)
+    const entramNov24 = nov12 * (1 - mortNov);
+    // Bezerras → 4-12m (sobreviventes ~3x ao ano → acumula 1/3 da coorte/ano)
+    const entramNov12 = bez * (1 - mortBez) * 0.85; // fator de conversão parcial
+    // Bezerras novas = nascimentos do ano
+    const novasBez = nascTotal;
+
+    // ── Novos totais ──────────────────────────────────────
+    const novasVacas = vacas - mortVacasN - descarteN + entramVacas;
+    const novasNov24 = nov24 - mortNov24N - entramVacas + entramNov24;
+    const novasNov12 = nov12 - mortNov12N - entramNov24 + entramNov12;
+    const novasBez2  = bez   - mortBezN   - entramNov12 + novasBez;
+
+    // ── Reposição / venda excedente ───────────────────────
+    const precisaRepor = descarteN + mortVacasN; // quantas vacas precisam ser repostas
+    let vendaAno = 0;
+    if(rbReposicao === 'venda'){
+      // Usa novilhas 12-24m para repor, vende o excedente
+      const excedente = Math.max(0, novasNov24 - precisaRepor * 1.2);
+      vendaAno = excedente * 0.5; // vende 50% do excedente por ano
+    }
+    vendaAcum += vendaAno;
+
+    vacas = Math.max(0, novasVacas);
+    nov24 = Math.max(0, novasNov24);
+    nov12 = Math.max(0, novasNov12);
+    bez   = Math.max(0, novasBez2);
+  }
+
+  // ── Renderiza resultado ──────────────────────────────────
+  document.getElementById('rb-result-wrap').style.display='block';
+
+  const ini = anos[0], fim = anos[anos.length-1];
+  const delta=(v,i)=>{const d=v-i;return(d>=0?'<span style="color:#86efac">▲ ':'<span style="color:#fca5a5">▼ ')+Math.abs(Math.round(d))+'</span>';};
+
+  const s=(id,v)=>{const el=document.getElementById(id);if(el)el.innerHTML=v;};
+  s('rb-r-vacas',   fim.vacas);
+  s('rb-r-vacas-d', delta(fim.vacas, ini.vacas));
+  s('rb-r-nov',     fim.nov24+fim.nov12);
+  s('rb-r-nov-d',   delta(fim.nov24+fim.nov12, ini.nov24+ini.nov12));
+  s('rb-r-total',   fim.total);
+  s('rb-r-total-d', delta(fim.total, ini.total));
+  s('rb-r-venda',   fim.venda);
+  s('rb-r-venda-d', '<span style="opacity:.7;font-size:10px">fêmeas excedentes</span>');
+
+  // ── Alertas ───────────────────────────────────────────────
+  const alertas = [];
+  if(prenhez < 0.40) alertas.push('⚠️ Taxa de prenhez baixa ('+( prenhez*100).toFixed(0)+'%) — concepção × serviço. Considere melhorar o manejo reprodutivo.');
+  if(descarte > 0.30) alertas.push('⚠️ Descarte alto ('+( descarte*100).toFixed(0)+'%/ano) reduz o crescimento do rebanho significativamente.');
+  if(idParto > 28) alertas.push('⚠️ Idade ao parto elevada ('+idParto+' meses) compromete a eficiência do sistema. Meta: ≤ 24 meses.');
+  if(iep > 14) alertas.push('⚠️ IEP alto ('+iep+' meses). Cada mês a mais = 1 parto a menos na vida produtiva da vaca.');
+  if(rbSexado && taxaConcep < 0.50) alertas.push('⚠️ Sêmen sexado com taxa de concepção baixa ('+( taxaConcep*100).toFixed(0)+'%) pode não compensar o custo. Revise o protocolo.');
+  const alertEl=document.getElementById('rb-alerts');
+  if(alertEl) alertEl.innerHTML=alertas.map(a=>`<div class="rb-alert">⚠️ <span>${a.replace('⚠️ ','')}</span></div>`).join('');
+
+  // ── Gráfico ───────────────────────────────────────────────
+  if(chRebanhoProjChart){ try{chRebanhoProjChart.destroy();}catch(e){} }
+  const ctx=document.getElementById('ch-rebanho-proj');
+  if(ctx){
+    chRebanhoProjChart=new Chart(ctx,{
+      type:'bar',
+      data:{
+        labels,
+        datasets:[
+          {label:'Vacas adultas',data:anos.map(a=>a.vacas),backgroundColor:'rgba(21,128,61,0.85)',borderRadius:4,stack:'s'},
+          {label:'Novilhas 12–24m',data:anos.map(a=>a.nov24),backgroundColor:'rgba(37,99,235,0.75)',borderRadius:4,stack:'s'},
+          {label:'Novilhas 4–12m',data:anos.map(a=>a.nov12),backgroundColor:'rgba(8,145,178,0.65)',borderRadius:4,stack:'s'},
+          {label:'Bezerras',data:anos.map(a=>a.bez),backgroundColor:'rgba(124,58,237,0.55)',borderRadius:4,stack:'s'},
+        ]
+      },
+      options:{
+        responsive:true,maintainAspectRatio:true,
+        plugins:{legend:{labels:{color:'#64748b',font:{size:10},boxWidth:10}}},
+        scales:{
+          x:{stacked:true,grid:{display:false},ticks:{color:'#94a3b8',font:{size:10}}},
+          y:{stacked:true,grid:{color:'rgba(0,0,0,0.04)'},ticks:{color:'#94a3b8',font:{size:10}}}
+        }
+      }
+    });
+  }
+
+  // ── Tabela anual ──────────────────────────────────────────
+  const tbl=document.getElementById('rb-year-table');
+  if(tbl){
+    const crescTot=((fim.total/ini.total-1)*100).toFixed(1);
+    tbl.innerHTML=`<thead><tr>
+      <th>Período</th><th>Vacas</th><th>Nov 12-24m</th><th>Nov 4-12m</th><th>Bezerras</th><th>Total</th><th>Δ Total</th><th>Fêmeas Vendidas</th>
+    </tr></thead><tbody>`+anos.map((a,i)=>{
+      const prev=i>0?anos[i-1]:null;
+      const dT=prev?a.total-prev.total:0;
+      const dPct=prev&&prev.total>0?((a.total/prev.total-1)*100).toFixed(1):null;
+      const dCol=dT>0?'#16a34a':dT<0?'#dc2626':'#64748b';
+      return`<tr style="${i===0?'background:#f8fafc;font-weight:700':i===anos.length-1?'background:#f0fdf4':''}">
+        <td>${a.yr===0?'Inicial':'Ano '+a.yr}</td>
+        <td>${a.vacas.toLocaleString('pt-BR')}</td>
+        <td>${a.nov24.toLocaleString('pt-BR')}</td>
+        <td>${a.nov12.toLocaleString('pt-BR')}</td>
+        <td>${a.bez.toLocaleString('pt-BR')}</td>
+        <td style="font-weight:800">${a.total.toLocaleString('pt-BR')}</td>
+        <td style="color:${dCol};font-weight:700">${dT>0?'+':''}${dT!==0?dT.toLocaleString('pt-BR')+(dPct?' ('+dPct+'%)':''):'—'}</td>
+        <td style="color:#1d4ed8;font-weight:700">${a.venda>0?'+'+a.venda.toLocaleString('pt-BR'):'—'}</td>
+      </tr>`;
+    }).join('')+`</tbody><tfoot><tr style="background:#f0fdf4;font-weight:800">
+      <td colspan="5" style="padding:10px 12px;color:#15803d">Crescimento total do período</td>
+      <td style="padding:10px 12px;color:#15803d">${fim.total.toLocaleString('pt-BR')}</td>
+      <td style="padding:10px 12px;color:#15803d">${crescTot > 0 ? '+' : ''}${crescTot}%</td>
+      <td style="padding:10px 12px;color:#1d4ed8">${fim.venda>0?'+'+fim.venda.toLocaleString('pt-BR'):'—'}</td>
+    </tr></tfoot>`;
+  }
 }
 
 </script>
