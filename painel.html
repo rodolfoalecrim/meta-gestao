@@ -1831,6 +1831,20 @@ tbody td{padding:10px 14px;font-size:12px;}.badge{display:inline-flex;align-item
           <button class="rb-run-btn" style="width:auto;padding:9px 24px;font-size:13px" onclick="calcRebanho()">▶ Calcular Projeção</button>
         </div>
 
+        <!-- Seletor de fazenda -->
+        <div class="rb-card" style="margin-bottom:16px;padding:14px 20px">
+          <div style="display:flex;align-items:center;gap:16px;flex-wrap:wrap">
+            <div style="font-size:11px;font-weight:700;color:var(--muted);white-space:nowrap">🏡 Carregar dados de fazenda</div>
+            <select id="rb-farm-sel" class="fsel" style="flex:1;min-width:220px" onchange="rbCarregarFazenda()">
+              <option value="">— Selecionar produtor (opcional) —</option>
+            </select>
+            <button onclick="rbLimparFazenda()" style="background:white;border:1px solid var(--border);color:var(--muted);font-size:11px;font-weight:600;font-family:Inter,sans-serif;padding:7px 14px;border-radius:8px;cursor:pointer;white-space:nowrap">✕ Limpar</button>
+          </div>
+          <div id="rb-farm-info" style="display:none;margin-top:10px;padding-top:10px;border-top:1px solid var(--border)">
+            <!-- info da fazenda carregada -->
+          </div>
+        </div>
+
         <div class="rb-grid">
           <!-- Coluna esquerda: rebanho atual -->
           <div>
@@ -3338,7 +3352,7 @@ if(name==='bench'){
   setTimeout(renderBench,50);
 }
 if(name==='ranking'){initRanking();}
-if(name==='rebanho'){setTimeout(calcRebanho,50);}
+if(name==='rebanho'){initRebanho();setTimeout(calcRebanho,50);}
 if(name==='dieta'){initDieta();}
 if(name==='comparador'){initComparador();}
 if(name==='compare'){renderCompare();}
@@ -6769,6 +6783,103 @@ function renderHistDieta(){
 // CALCULADORA DE CRESCIMENTO DE REBANHO
 // ════════════════════════════════════════════════════════
 let rbSexado = false;
+
+function initRebanho(){
+  const sel = document.getElementById('rb-farm-sel');
+  if(!sel || sel.options.length > 1) return;
+  const farms = [...ALL]
+    .filter(d => d.situacao === 'ATIVO' && (d.vacas > 0 || d.novilhas > 0))
+    .sort((a,b) => (a.produtor||'').localeCompare(b.produtor||''));
+  farms.forEach(d => {
+    const o = document.createElement('option');
+    o.value = d.id;
+    const info = [];
+    if(d.vacas > 0) info.push(d.vacas + ' vacas');
+    if(d.media_prod > 0) info.push(d.media_prod.toFixed(1) + ' L/vaca');
+    o.textContent = (d.produtor || '?') + (info.length ? ' — ' + info.join(' · ') : '');
+    sel.appendChild(o);
+  });
+}
+
+function rbCarregarFazenda(){
+  const sel = document.getElementById('rb-farm-sel');
+  const id = sel?.value;
+  if(!id){ rbLimparFazenda(); return; }
+
+  const d = ALL.find(f => f.id === id);
+  if(!d) return;
+
+  // Preenche rebanho com dados do cadastro
+  const setV = (elId, val) => {
+    const el = document.getElementById(elId);
+    if(el && val > 0) el.value = val;
+  };
+
+  setV('rb-vacas', d.vacas || d.lactacao || 0);
+  setV('rb-nov24', d.novilhas || 0);
+  setV('rb-nov12', Math.round((d.novilhas || 0) * 0.8)); // estimativa
+  setV('rb-bez',   Math.round((d.vacas || 0) * 0.12));   // estimativa ~12% das vacas
+
+  // Parâmetros zootécnicos se disponíveis
+  if(d.del > 0) {
+    // IEP estimado pelo DEL: se DEL médio > 150, IEP provavelmente > 13
+    const iepEst = d.del > 180 ? 15 : d.del > 150 ? 13 : 12;
+    document.getElementById('rb-iep').value = iepEst;
+  }
+
+  // Mostra card informativo da fazenda
+  const info = document.getElementById('rb-farm-info');
+  if(info){
+    const campos = [
+      d.cidade ? '📍 ' + d.cidade : null,
+      d.vacas > 0 ? '🐄 ' + d.vacas + ' vacas' : null,
+      d.novilhas > 0 ? '🐄 ' + d.novilhas + ' novilhas' : null,
+      d.media_prod > 0 ? '🥛 ' + parseFloat(d.media_prod).toFixed(1) + ' L/vaca/dia' : null,
+      d.gordura > 0 ? '🧈 G: ' + parseFloat(d.gordura).toFixed(2) + '%' : null,
+      d.ccs > 0 ? '🔬 CCS: ' + d.ccs + 'k' : null,
+      d.del > 0 ? '📅 DEL: ' + d.del + ' dias' : null,
+      d.nome_vendedor || d.vendedor ? '👤 ' + (d.nome_vendedor || d.vendedor) : null,
+    ].filter(Boolean);
+
+    info.style.display = 'block';
+    info.innerHTML = `
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
+        <div style="width:36px;height:36px;border-radius:10px;background:${vc(d.produtor)};display:flex;align-items:center;justify-content:center;color:white;font-size:13px;font-weight:800;flex-shrink:0">${ini(d.produtor)}</div>
+        <div>
+          <div style="font-size:13px;font-weight:800">${d.produtor}</div>
+          <div style="font-size:11px;color:var(--muted);margin-top:1px">${d.situacao||''} · ${d.produto||''}</div>
+        </div>
+        <span style="margin-left:auto;font-size:10px;background:#dbeafe;color:#1d4ed8;font-weight:700;padding:3px 9px;border-radius:20px">Dados carregados ✓</span>
+      </div>
+      <div style="display:flex;flex-wrap:wrap;gap:6px">
+        ${campos.map(c => `<span style="background:#f1f5f9;color:#475569;font-size:11px;font-weight:600;padding:3px 9px;border-radius:8px">${c}</span>`).join('')}
+      </div>
+      ${(!d.novilhas && !d.bezerras) ? '<div style="margin-top:8px;font-size:11px;color:#d97706;font-weight:600">⚠️ Novilhas e bezerras não cadastradas — valores estimados automaticamente</div>' : ''}
+    `;
+  }
+
+  // Recalcula
+  calcRebanho();
+}
+
+function rbLimparFazenda(){
+  const sel = document.getElementById('rb-farm-sel');
+  if(sel) sel.value = '';
+  const info = document.getElementById('rb-farm-info');
+  if(info){ info.style.display = 'none'; info.innerHTML = ''; }
+  // Restaura defaults
+  const defaults = {
+    'rb-vacas':100,'rb-nov24':25,'rb-nov12':20,'rb-bez':15,
+    'rb-concep':55,'rb-serv':80,'rb-concep-nov':65,
+    'rb-idparto':26,'rb-iep':13,'rb-gestacao':12,
+    'rb-mort-bez':5,'rb-mort-nov':2,'rb-mort-vac':2,'rb-descarte':20
+  };
+  Object.entries(defaults).forEach(([id,v])=>{
+    const el=document.getElementById(id);
+    if(el) el.value=v;
+  });
+  calcRebanho();
+}
 let rbAnos = 3;
 let rbReposicao = 'interna';
 let chRebanhoProjChart = null;
