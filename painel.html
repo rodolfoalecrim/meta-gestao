@@ -1871,11 +1871,18 @@ tbody td{padding:10px 14px;font-size:12px;}.badge{display:inline-flex;align-item
             <div class="rb-card">
               <div class="rb-section-title">⚙️ Parâmetros Reprodutivos</div>
               <div class="rb-field">
-                <div class="rb-label">Sêmen sexado?<span class="rb-label-hint">afeta % fêmeas nascidas</span></div>
-                <div class="rb-toggle">
-                  <button class="rb-tog-btn on" id="rb-sex-nao" onclick="setSexado(false)">Convencional<br><span style="font-size:10px;opacity:.8">~50% fêmeas</span></button>
-                  <button class="rb-tog-btn" id="rb-sex-sim" onclick="setSexado(true)">Sexado<br><span style="font-size:10px;opacity:.8">~90% fêmeas</span></button>
+                <div class="rb-label">Uso de sêmen sexado<span class="rb-label-hint">afeta % fêmeas nascidas</span></div>
+                <div class="rb-toggle" style="flex-direction:column;gap:6px">
+                  <div style="display:flex;gap:6px">
+                    <button class="rb-tog-btn on" id="rb-sex-nao" onclick="setSexado('nao')" style="flex:1">Convencional<br><span style="font-size:10px;opacity:.8">~50% fêmeas</span></button>
+                    <button class="rb-tog-btn" id="rb-sex-todos" onclick="setSexado('todos')" style="flex:1">Sexado todos<br><span style="font-size:10px;opacity:.8">~90% fêmeas</span></button>
+                  </div>
+                  <button class="rb-tog-btn" id="rb-sex-nov" onclick="setSexado('nov')" style="width:100%;background:#eff6ff;border-color:#3b82f6;color:#1d4ed8">
+                    🎯 Sexado só nas novilhas<br>
+                    <span style="font-size:10px;opacity:.8">Novilhas: ~90% fêmeas · Vacas: ~50% fêmeas</span>
+                  </button>
                 </div>
+                <div id="rb-sex-info" style="margin-top:6px;font-size:10px;color:var(--muted);background:#f8fafc;border-radius:8px;padding:7px 10px;line-height:1.5"></div>
               </div>
               <div class="rb-field">
                 <div class="rb-label">Taxa de concepção vacas (%)<span class="rb-label-hint">% prenha por IA/TE</span></div>
@@ -1896,6 +1903,19 @@ tbody td{padding:10px 14px;font-size:12px;}.badge{display:inline-flex;align-item
               <div class="rb-field">
                 <div class="rb-label">Intervalo entre partos<span class="rb-label-hint">meses</span></div>
                 <input class="rb-input" type="number" id="rb-iep" value="13" min="10" max="18" oninput="calcRebanho()">
+              </div>
+              <!-- Perda de prenhez -->
+              <div style="margin-top:14px;padding-top:14px;border-top:1px solid var(--border)">
+                <div class="rb-section-title" style="margin-bottom:10px;color:#dc2626">⚠️ Perda de Prenhez Pós-DG</div>
+                <div style="background:#fef2f2;border:1px solid #fca5a5;border-radius:10px;padding:10px 12px;font-size:11px;color:#991b1b;margin-bottom:12px;line-height:1.5">
+                  Absorções + abortos após DG positivo até o parto. Vacas que concebem mas não chegam a parir.
+                </div>
+                <div class="rb-field">
+                  <div class="rb-label">Perda de prenhez pós-DG (%)<span class="rb-label-hint">absorções + abortos até o parto</span></div>
+                  <input class="rb-input" type="number" id="rb-perd-dg" value="12" min="0" max="60" oninput="calcRebanho()" style="border-color:#fca5a5">
+                </div>
+                <div id="rb-perd-resultado" style="background:#f8fafc;border-radius:10px;padding:10px 12px;font-size:11px;color:var(--muted);margin-top:4px">
+                </div>
               </div>
             </div>
           </div>
@@ -6782,7 +6802,7 @@ function renderHistDieta(){
 // ════════════════════════════════════════════════════════
 // CALCULADORA DE CRESCIMENTO DE REBANHO
 // ════════════════════════════════════════════════════════
-let rbSexado = false;
+let rbSexado = 'nao'; // 'nao' | 'todos' | 'nov'
 
 function initRebanho(){
   const sel = document.getElementById('rb-farm-sel');
@@ -6867,10 +6887,13 @@ function rbLimparFazenda(){
   if(sel) sel.value = '';
   const info = document.getElementById('rb-farm-info');
   if(info){ info.style.display = 'none'; info.innerHTML = ''; }
+  // Restaura sêmen para convencional
+  setSexado('nao');
   // Restaura defaults
   const defaults = {
     'rb-vacas':100,'rb-nov24':25,'rb-nov12':20,'rb-bez':15,
     'rb-concep':55,'rb-serv':80,'rb-concep-nov':65,
+    'rb-perd-dg':12,
     'rb-idparto':26,'rb-iep':13,'rb-gestacao':12,
     'rb-mort-bez':5,'rb-mort-nov':2,'rb-mort-vac':2,'rb-descarte':20
   };
@@ -6886,8 +6909,21 @@ let chRebanhoProjChart = null;
 
 function setSexado(v){
   rbSexado = v;
-  document.getElementById('rb-sex-nao').className = 'rb-tog-btn'+(v?'':' on');
-  document.getElementById('rb-sex-sim').className = 'rb-tog-btn'+(v?' on':'');
+  const ids = ['rb-sex-nao','rb-sex-todos','rb-sex-nov'];
+  ids.forEach(id=>{
+    const el=document.getElementById(id);
+    if(!el) return;
+    // reseta estilo
+    el.classList.remove('on');
+    if(id==='rb-sex-nov') { el.style.background='#f8fafc'; el.style.borderColor='var(--border)'; el.style.color='var(--muted)'; }
+  });
+  if(v==='nao')   { document.getElementById('rb-sex-nao').classList.add('on'); }
+  if(v==='todos') { document.getElementById('rb-sex-todos').classList.add('on'); }
+  if(v==='nov')   {
+    const btn=document.getElementById('rb-sex-nov');
+    btn.style.background='#eff6ff'; btn.style.borderColor='#3b82f6'; btn.style.color='#1d4ed8';
+    btn.classList.add('on');
+  }
   calcRebanho();
 }
 function setAnos(n,btn){
@@ -6911,7 +6947,17 @@ function calcRebanho(){
   const nov24Ini   = gn('rb-nov24');
   const nov12Ini   = gn('rb-nov12');
   const bezIni     = gn('rb-bez');
-  const pctFemea   = rbSexado ? 0.90 : 0.50;
+  // % fêmeas nascidas por categoria conforme estratégia de sêmen
+  const pctFemeaVacas = (rbSexado==='todos') ? 0.90 : 0.50;          // vacas
+  const pctFemeaNovs  = (rbSexado==='nov'||rbSexado==='todos') ? 0.90 : 0.50; // novilhas
+
+  // Info box em tempo real
+  const sexInfoEl = document.getElementById('rb-sex-info');
+  if(sexInfoEl){
+    if(rbSexado==='nao')   sexInfoEl.textContent = 'Convencional: ~50% de fêmeas nascidas em todos os animais.';
+    if(rbSexado==='todos') sexInfoEl.textContent = 'Sexado total: ~90% fêmeas em vacas e novilhas. Maior produção de reposição.';
+    if(rbSexado==='nov')   sexInfoEl.textContent = '🎯 Protocolo recomendado: Novilhas com sexado (90% fêmeas) para maximizar reposição de qualidade. Vacas com convencional (50% fêmeas) — menor custo e maior taxa de concepção.';
+  }
   const taxaConcep = gn('rb-concep') / 100;
   const taxaServ   = gn('rb-serv')   / 100;
   const taxaConcNov= gn('rb-concep-nov') / 100;
@@ -6923,15 +6969,43 @@ function calcRebanho(){
   const mortVac    = gn('rb-mort-vac')  / 100;
   const descarte   = gn('rb-descarte') / 100;
 
-  // ── Taxas anuais derivadas ──────────────────────────────
-  // Partos/vaca/ano = 12 / IEP
-  const partosAno   = 12 / (iep || 13);
-  // Taxa de prenhez anual = concepção × serviço
-  const prenhez     = taxaConcep * taxaServ;
-  // Nascimentos fêmeas por vaca por ano
-  const nasc_f_vaca = partosAno * pctFemea * (1 - mortBez);
+  // ── Perda de prenhez pós-DG (absorções + abortos) ──────────
+  const perdDG = gn('rb-perd-dg') / 100; // perda após DG positivo até o parto
+  const sobrevParto = 1 - perdDG;
+
+  // ── Taxas anuais derivadas ────────────────────────────────
+  const partosAno     = 12 / (iep || 13);
+  const prenhez_bruta = taxaConcep * taxaServ;           // concebem = bruta
+  const prenhez       = prenhez_bruta * sobrevParto;     // chegam ao parto = efetiva
+
+  // Nascimentos fêmeas por vaca por ano (descontando perdas pós-DG)
+  const nasc_f_vaca = partosAno * prenhez * pctFemeaVacas * (1 - mortBez);
   // Nascimentos fêmeas por novilha no ano que para
-  const nasc_f_nov  = taxaConcNov * pctFemea * (1 - mortBez);
+  const nasc_f_nov  = taxaConcNov * sobrevParto * pctFemeaNovs * (1 - mortBez);
+
+  // Impacto no IEP real: vaca que perde prenhez fica ~60d extra aberta (retorno ao cio + novo serviço)
+  const diasExtrasIEP = prenhez_bruta * perdDG * 60;
+  const iepReal = iep + diasExtrasIEP / 30;
+
+  // Card de resultado
+  const prdEl = document.getElementById('rb-perd-resultado');
+  if(prdEl){
+    const prenBruta = Math.round(prenhez_bruta * 100);
+    const prenEfet  = Math.round(prenhez * 100);
+    const perdas    = prenBruta - prenEfet;
+    const col = perdDG > 0.15 ? '#dc2626' : perdDG > 0.08 ? '#d97706' : '#15803d';
+    prdEl.innerHTML = `
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;text-align:center;margin-bottom:8px">
+        <div><div style="font-size:16px;font-weight:900;color:#64748b">${prenBruta}%</div><div style="font-size:9px;color:var(--muted)">Concebem (bruta)</div></div>
+        <div><div style="font-size:16px;font-weight:900;color:${col}">${(perdDG*100).toFixed(0)}%</div><div style="font-size:9px;color:var(--muted)">Perdem pós-DG</div></div>
+        <div><div style="font-size:16px;font-weight:900;color:#15803d">${prenEfet}%</div><div style="font-size:9px;color:var(--muted)">Chegam ao parto</div></div>
+      </div>
+      <div style="padding-top:8px;border-top:1px solid var(--border);font-size:10px;color:${col};font-weight:700">
+        ${perdas > 0
+          ? `A cada 100 DGs positivos → ${perdas} não chegam ao parto · IEP real estimado: ${iepReal.toFixed(1)} meses`
+          : '✅ Sem perdas pós-DG cadastradas'}
+      </div>`;
+  }
 
   // Frações de progressão das novilhas ao longo do ano
   // Bezerras 0-4m → Novilhas 4-12m:  ~1/3 do ciclo anual
@@ -6953,7 +7027,8 @@ function calcRebanho(){
 
   for(let yr = 0; yr <= rbAnos; yr++){
     const totalReb = vacas + nov24 + nov12 + bez;
-    anos.push({ yr, vacas:Math.round(vacas), nov24:Math.round(nov24), nov12:Math.round(nov12), bez:Math.round(bez), total:Math.round(totalReb), venda:Math.round(vendaAcum) });
+    const nascEsteAno = Math.round(vacas * nasc_f_vaca + nov24 * fracPartoNov * nasc_f_nov);
+    anos.push({ yr, vacas:Math.round(vacas), nov24:Math.round(nov24), nov12:Math.round(nov12), bez:Math.round(bez), total:Math.round(totalReb), venda:Math.round(vendaAcum), nasc:nascEsteAno });
     labels.push(yr===0?'Atual':'Ano '+yr);
     if(yr === rbAnos) break;
 
@@ -7021,11 +7096,15 @@ function calcRebanho(){
 
   // ── Alertas ───────────────────────────────────────────────
   const alertas = [];
-  if(prenhez < 0.40) alertas.push('⚠️ Taxa de prenhez baixa ('+( prenhez*100).toFixed(0)+'%) — concepção × serviço. Considere melhorar o manejo reprodutivo.');
+  if(prenhez_bruta < 0.40) alertas.push('⚠️ Taxa de prenhez bruta baixa ('+(prenhez_bruta*100).toFixed(0)+'%) — revise o protocolo reprodutivo e detecção de cio.');
+  if(perdDG > 0.15) alertas.push('🔴 Perda pós-DG crítica ('+(perdDG*100).toFixed(0)+'%) — investigue BVD, Neospora, estresse calórico, micotoxinas ou deficiência mineral. Meta: <8%.');
+  else if(perdDG > 0.08) alertas.push('⚠️ Perda pós-DG elevada ('+(perdDG*100).toFixed(0)+'%) — acima do aceitável. Meta: <8%. Avalie sanidade e nutrição no período de gestação.');
+  if(prenhez < 0.35) alertas.push('⚠️ Prenhez efetiva ('+(prenhez*100).toFixed(0)+'%) muito baixa após perdas — impacto severo no crescimento do rebanho.');
   if(descarte > 0.30) alertas.push('⚠️ Descarte alto ('+( descarte*100).toFixed(0)+'%/ano) reduz o crescimento do rebanho significativamente.');
   if(idParto > 28) alertas.push('⚠️ Idade ao parto elevada ('+idParto+' meses) compromete a eficiência do sistema. Meta: ≤ 24 meses.');
   if(iep > 14) alertas.push('⚠️ IEP alto ('+iep+' meses). Cada mês a mais = 1 parto a menos na vida produtiva da vaca.');
-  if(rbSexado && taxaConcep < 0.50) alertas.push('⚠️ Sêmen sexado com taxa de concepção baixa ('+( taxaConcep*100).toFixed(0)+'%) pode não compensar o custo. Revise o protocolo.');
+  if(rbSexado!=='nao' && taxaConcep < 0.50) alertas.push('⚠️ Sêmen sexado com taxa de concepção baixa ('+(taxaConcep*100).toFixed(0)+'%) pode não compensar o custo adicional. Revise o protocolo de IATF.');
+  if(rbSexado==='nov') alertas.push('✅ Protocolo sexado em novilhas: estratégia eficiente — maior qualidade genética na reposição com menor custo vs. sexado total.');
   const alertEl=document.getElementById('rb-alerts');
   if(alertEl) alertEl.innerHTML=alertas.map(a=>`<div class="rb-alert">⚠️ <span>${a.replace('⚠️ ','')}</span></div>`).join('');
 
@@ -7060,7 +7139,7 @@ function calcRebanho(){
   if(tbl){
     const crescTot=((fim.total/ini.total-1)*100).toFixed(1);
     tbl.innerHTML=`<thead><tr>
-      <th>Período</th><th>Vacas</th><th>Nov 12-24m</th><th>Nov 4-12m</th><th>Bezerras</th><th>Total</th><th>Δ Total</th><th>Fêmeas Vendidas</th>
+      <th>Período</th><th>Vacas</th><th>Nov 12-24m</th><th>Nov 4-12m</th><th>Bezerras</th><th>Total</th><th>Δ Total</th><th>Nascimentos/ano</th><th>Fêmeas Vendidas</th>
     </tr></thead><tbody>`+anos.map((a,i)=>{
       const prev=i>0?anos[i-1]:null;
       const dT=prev?a.total-prev.total:0;
@@ -7074,12 +7153,14 @@ function calcRebanho(){
         <td>${a.bez.toLocaleString('pt-BR')}</td>
         <td style="font-weight:800">${a.total.toLocaleString('pt-BR')}</td>
         <td style="color:${dCol};font-weight:700">${dT>0?'+':''}${dT!==0?dT.toLocaleString('pt-BR')+(dPct?' ('+dPct+'%)':''):'—'}</td>
+        <td style="color:#7c3aed;font-weight:700">${a.yr>0&&a.nasc>0?a.nasc.toLocaleString('pt-BR'):'—'}</td>
         <td style="color:#1d4ed8;font-weight:700">${a.venda>0?'+'+a.venda.toLocaleString('pt-BR'):'—'}</td>
       </tr>`;
     }).join('')+`</tbody><tfoot><tr style="background:#f0fdf4;font-weight:800">
       <td colspan="5" style="padding:10px 12px;color:#15803d">Crescimento total do período</td>
       <td style="padding:10px 12px;color:#15803d">${fim.total.toLocaleString('pt-BR')}</td>
       <td style="padding:10px 12px;color:#15803d">${crescTot > 0 ? '+' : ''}${crescTot}%</td>
+      <td style="padding:10px 12px;color:#7c3aed">${anos.filter(a=>a.yr>0).reduce((s,a)=>s+a.nasc,0).toLocaleString('pt-BR')} total</td>
       <td style="padding:10px 12px;color:#1d4ed8">${fim.venda>0?'+'+fim.venda.toLocaleString('pt-BR'):'—'}</td>
     </tr></tfoot>`;
   }
