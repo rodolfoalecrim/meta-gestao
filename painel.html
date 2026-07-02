@@ -6788,7 +6788,12 @@ function toggleLote(id){
 }
 
 function atualizarTotaisLote(id){
-  // Atualiza APENAS textContent/style — nunca innerHTML — para não perder foco
+  // Salva foco e scroll antes de qualquer atualização
+  const focused = document.activeElement;
+  const scrollY = window.scrollY;
+  const selStart = focused?.selectionStart;
+  const selEnd   = focused?.selectionEnd;
+
   const lote = dietaLotes.find(l=>l.id===id);
   if(!lote) return;
   const c = calcLote(lote);
@@ -6834,6 +6839,19 @@ function atualizarTotaisLote(id){
 
   // Hero consolidado no topo (sem recriar DOM)
   atualizarHeroConsolidado();
+
+  // Restaura foco e scroll após atualização
+  requestAnimationFrame(() => {
+    if(focused && focused !== document.activeElement) {
+      focused.focus();
+      if(selStart !== undefined) {
+        try { focused.setSelectionRange(selStart, selEnd); } catch(e){}
+      }
+    }
+    if(Math.abs(window.scrollY - scrollY) > 5) {
+      window.scrollTo({top: scrollY, behavior: 'instant'});
+    }
+  });
 }
 
 function atualizarHeroConsolidado(){
