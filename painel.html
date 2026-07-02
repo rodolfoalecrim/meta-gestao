@@ -7091,29 +7091,11 @@ function calcRebanho(){
   // Por novilha 12-24m que atinge o parto: (1/duração fase) × conc × sobrev × %fêmeas
   const nascFNovMes  = (1 / duracaoN24) * taxaConcNov * sobrevParto * pctFemeaNovs * (1 - mortBez);
 
-  // ── Calcula o fluxo mensal de equilíbrio para inicializar as filas ──────────
-  // O fluxo mensal de bezerras fêmeas gerado pelo plantel inicial de vacas:
-  const nascFVacaMesEq = (1/iep) * prenhez * pctFemeaVacas * (1 - mortBez);
-  // Fluxo mensal gerado pelas novilhas 12-24m no equilíbrio:
-  // (usamos o fluxo de vacas como aproximação do estado estacionário)
-  const fluxoMensal = vacasIni * nascFVacaMesEq;
-
-  // Estoque de equilíbrio de cada fase = fluxo × duração na fase
-  // Isso representa quantos animais deveria ter dado o fluxo de nascimentos
-  const bezEq  = fluxoMensal * duracaoBez;   // bezerras: 4 meses
-  const n12Eq  = fluxoMensal * duracaoN12;   // nov 4-12m: 8 meses
-  const n24Eq  = fluxoMensal * duracaoN24;   // nov 12-24m: até parto
-
-  // Usa o MÁXIMO entre o estoque informado e o de equilíbrio
-  // Se o produtor tem mais animais que o equilíbrio → usa o dele (excedente real)
-  // Se tem menos → usa o dele também (déficit real)
-  // Em ambos os casos, a fila começa com distribuição uniforme do valor informado
+  // Inicializa filas com distribuição uniforme do estoque informado pelo usuário
+  // Respeita os valores reais de cada categoria — não tenta "corrigir" para equilíbrio
   const qBez = Array(duracaoBez).fill(bezIni  / duracaoBez);
   const qN12 = Array(duracaoN12).fill(nov12Ini / duracaoN12);
   const qN24 = Array(duracaoN24).fill(nov24Ini / duracaoN24);
-
-  // Informação útil para debug (pode ser logada)
-  // console.log('Eq bez:', bezEq.toFixed(1), 'n12:', n12Eq.toFixed(1), 'n24:', n24Eq.toFixed(1));
 
   let vacas     = vacasIni;
   let vendaAcum   = 0;
@@ -7122,22 +7104,6 @@ function calcRebanho(){
   let custoReposAcum = 0; // custo de compra de reposição (quando pipeline não supre)
   let nascAno   = 0;
   let receitaDescAno = 0;
-
-  // ── PRÉ-AQUECIMENTO: roda 24 meses sem gravar para estabilizar as filas ──────
-  // Isso evita que o estoque inicial "incorreto" cause queda artificial no Ano 1.
-  // O sistema parte do estoque real informado e o ajusta naturalmente antes de medir.
-  for(let pre=0; pre < 24; pre++){
-    const mv2=vacas*mortVacMes, dc2=vacas*(descarte/12), va2=Math.max(0,vacas-mv2-dc2);
-    for(let i=0;i<qBez.length;i++) qBez[i]*=(1-mortBezMes);
-    for(let i=0;i<qN12.length;i++) qN12[i]*=(1-mortNovMes);
-    for(let i=0;i<qN24.length;i++) qN24[i]*=(1-mortNovMes);
-    const n2t2=qN24.reduce((a,b)=>a+b,0);
-    const nb2=va2*nascFVacaMes+n2t2*nascFNovMes;
-    const sb2=qBez.shift()||0; qBez.push(nb2);
-    const sn2a=qN12.shift()||0; qN12.push(sb2);
-    const sn2b=qN24.shift()||0; qN24.push(sn2a);
-    vacas=Math.max(0,va2+sn2b);
-  }
 
   const snapshots = [];
   snapshots.push({
