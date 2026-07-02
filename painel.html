@@ -7006,50 +7006,32 @@ function calcRebanho(){
   }
 
   // ════════════════════════════════════════════════════════
-  // SIMULAÇÃO ANO A ANO — lógica correta por categoria
+  // SIMULAÇÃO MENSAL — precisão real por fase de vida
+  // Cada animal progride mês a mês entre as categorias:
+  // Bezerra (0-4m) → Nov 4-12m (8m) → Nov 12-idParto → Vaca
   // ════════════════════════════════════════════════════════
 
-  // ── Parâmetros de progressão de categoria ─────────────
-  // Bezerra (0-4m): permanece ~4 meses → 3 coortes/ano entram em Nov 4-12m
-  // Novinha 4-12m: permanece ~8 meses → por ano, 12/8 = 1.5 coortes progridem
-  // Novinha 12-24m: permanece ~12 meses → 1 coorte/ano progride para vaca
-  // Vaca: permanece até descarte ou morte (IEP = frequência de partos)
+  // Taxa MENSAL de nascimentos de fêmeas por vaca:
+  // = (1/IEP) × prenhez_efetiva × %fêmeas × (1-mort_bez)
+  const nascFVacaMes = (1/iep) * prenhez * pctFemeaVacas * (1 - mortBez);
 
-  // Fração de bez que "avança" para Nov 4-12m num ano
-  // Bezerras ficam 4 meses → em 12 meses, 12/4 = 3 coortes avançam
-  // Mas o estoque de bezerras representa uma coorte de 4 meses
-  // → por ano sai: bez * (12/4) animais, mas só temos 1x o estoque
-  // Simplificação: por ano avança a fração = meses_na_fase/12
-  // Bezerra (4m): avança 4/4=100% do estoque por "4 meses de permanência"
-  // = 1 rotação/ano → 100% sai, 100% entra
-  // Nov 4-12m (8m): 8m de permanência → ~100% sai em 12 meses (praticamente 1 rotação)
-  // Nov 12-24m (12m): 12m de permanência → 100% sai em 12 meses = 1 rotação
+  // Taxa MENSAL de parto de novilhas prontas (idade ao parto atingida):
+  // Fração mensal de novilhas 12-idParto que parem = 1/duracaoNov24
+  const duracaoNov24 = Math.max(idParto - 12, 6);
+  const nascFNovMes  = (1/duracaoNov24) * taxaConcNov * sobrevParto * pctFemeaNovs * (1 - mortBez);
 
-  // CORREÇÃO: cada categoria representa o ESTOQUE MÉDIO da fase
-  // Saída anual de cada fase = estoque * (12 / duração_fase_meses)
-  const duracaoBez    = 4;   // meses que bezerra fica nessa fase
-  const duracaoNov12  = 8;   // meses na fase 4-12m
-  const duracaoNov24  = Math.max(idParto - 12, 6); // meses na fase 12-idParto
+  // Mortalidade MENSAL (taxa anual / 12)
+  const mortVacMes = mortVac  / 12;
+  const mortNovMes = mortNov  / 12;
+  const mortBezMes = mortBez  / 12;
+  const descMes    = descarte / 12;
 
-  // Taxa de saída anual de cada fase (fração do estoque que avança por ano)
-  const saidaBez   = Math.min(1, 12 / duracaoBez);   // ~3.0 → limitado a 1 (sem acumulo)
-  const saidaNov12 = Math.min(1, 12 / duracaoNov12);  // ~1.5 → 1.0
-  const saidaNov24 = Math.min(1, 12 / duracaoNov24);  // depende da idParto
+  // Taxa mensal de progressão entre fases = 1 / duração_meses
+  const saidaBezMes  = 1 / 4;              // bezerras: saem em 4 meses
+  const saidaN12Mes  = 1 / 8;              // nov 4-12m: saem em 8 meses
+  const saidaN24Mes  = 1 / duracaoNov24;   // nov 12-idParto: saem quando atingem idade
 
-  // Partos de vacas por ano = 12 / IEP
-  // (vaca com IEP 13 meses = 0.923 partos/ano)
-  const partosVacaAno = 12 / (iep || 13);
-
-  // Nascimentos fêmeas/ano por vaca:
-  // = partos/ano × % prenhez efetiva × % fêmeas × (1 - mort_bezerra)
-  // OBS: prenhez efetiva já inclui perda pós-DG
-  const nascFVaca = partosVacaAno * prenhez * pctFemeaVacas * (1 - mortBez);
-
-  // Partos de novilhas/ano (novilhas 12-24m que atingem a idade ao parto):
-  // = fração que sai da fase × taxa de concepção × sobrevivência prenhez × % fêmeas × (1 - mort)
-  const nascFNov  = saidaNov24 * taxaConcNov * sobrevParto * pctFemeaNovs * (1 - mortBez);
-
-  // ── Estado inicial ────────────────────────────────────
+  // Estado inicial
   let vacas = vacasIni;
   let nov24 = nov24Ini;
   let nov12 = nov12Ini;
@@ -7057,75 +7039,82 @@ function calcRebanho(){
   let vendaAcum = 0;
 
   const anos  = [];
-  const labels= [];
+  const labels = [];
+  const snapshots = []; // captura estado a cada 12 meses
 
-  for(let yr = 0; yr <= rbAnos; yr++){
-    const totalReb = vacas + nov24 + nov12 + bez;
-    // Nascimentos deste ano (para mostrar na tabela)
-    const nascEsteAno = Math.round(vacas * nascFVaca + nov24 * nascFNov);
-    anos.push({
-      yr, vacas:Math.round(vacas), nov24:Math.round(nov24),
-      nov12:Math.round(nov12), bez:Math.round(bez),
-      total:Math.round(totalReb), venda:Math.round(vendaAcum), nasc:nascEsteAno
-    });
-    labels.push(yr===0?'Atual':'Ano '+yr);
-    if(yr === rbAnos) break;
+  // Snapshot inicial
+  snapshots.push({ vacas, nov24, nov12, bez, venda: 0 });
 
-    // ════════════════════════════════════════
-    // PASSO 1 — Saídas definitivas do rebanho
-    // ════════════════════════════════════════
-    const mortVacN  = vacas  * mortVac;   // mortes vacas
-    const mortN24N  = nov24  * mortNov;   // mortes nov 12-24m
-    const mortN12N  = nov12  * mortNov;   // mortes nov 4-12m
-    const mortBezN  = bez    * mortBez;   // mortes bezerras
-    const descarteN = vacas  * descarte;  // descarte vacas (voluntário+involuntário)
+  // Simula mês a mês
+  const totalMeses = rbAnos * 12;
+  let nascAno = 0;
 
-    // ════════════════════════════════════════
-    // PASSO 2 — Nascimentos (entradas no sistema)
-    // ════════════════════════════════════════
-    // Vacas produtivas (após retirar mortes e descartes)
-    const vacasAtivas = Math.max(0, vacas - mortVacN - descarteN);
-    const nascTotalBez = vacasAtivas * nascFVaca + Math.max(0, nov24 - mortN24N) * nascFNov;
+  for(let mes = 1; mes <= totalMeses; mes++){
 
-    // ════════════════════════════════════════
-    // PASSO 3 — Progressão entre categorias
-    // ════════════════════════════════════════
-    // Bezerras sobreviventes que avançam para Nov 4-12m
-    const bezSobrev     = Math.max(0, bez - mortBezN);
-    const avancaBezNov  = bezSobrev * saidaBez; // fração que sai da fase no ano
+    // ── Saídas definitivas ──────────────────────────────
+    const mortV  = vacas * mortVacMes;
+    const mortN24 = nov24 * mortNovMes;
+    const mortN12 = nov12 * mortNovMes;
+    const mortB  = bez   * mortBezMes;
+    const desc   = vacas * descMes;
 
-    // Nov 4-12m sobreviventes que avançam para Nov 12-24m
-    const nov12Sobrev   = Math.max(0, nov12 - mortN12N);
-    const avancaN12N24  = nov12Sobrev * saidaNov12;
+    // ── Vacas produtivas neste mês ───────────────────────
+    const vacasAtivas = Math.max(0, vacas - mortV - desc);
 
-    // Nov 12-24m sobreviventes que atingem idade ao parto → entram como vacas
-    const nov24Sobrev   = Math.max(0, nov24 - mortN24N);
-    const entramVacas   = nov24Sobrev * saidaNov24;
+    // ── Nascimentos fêmeas este mês ──────────────────────
+    const nascBezMes = vacasAtivas * nascFVacaMes
+                     + Math.max(0, nov24 - mortN24) * nascFNovMes;
+    nascAno += nascBezMes;
 
-    // ════════════════════════════════════════
-    // PASSO 4 — Venda de excedente (se configurado)
-    // ════════════════════════════════════════
-    // Precisa repor: vacas perdidas por morte + descarte
-    const precisaRepor = mortVacN + descarteN;
-    let vendaAno = 0;
-    let novPrimipNovas = entramVacas; // novilhas que entram como vacas
+    // ── Progressão entre categorias ──────────────────────
+    const bezSobrev  = Math.max(0, bez  - mortB);
+    const n12Sobrev  = Math.max(0, nov12 - mortN12);
+    const n24Sobrev  = Math.max(0, nov24 - mortN24);
 
+    // Animais que avançam de fase neste mês
+    const bezParaN12 = bezSobrev  * saidaBezMes;
+    const n12ParaN24 = n12Sobrev  * saidaN12Mes;
+    const n24ParaVac = n24Sobrev  * saidaN24Mes;
+
+    // ── Venda de excedente ────────────────────────────────
+    const precisaRepor = mortV + desc;
+    let entramVac = n24ParaVac;
+    let vendaMes  = 0;
     if(rbReposicao === 'venda'){
-      // Repõe as vacas perdidas com novilhas, vende o excedente
-      const excedente = Math.max(0, novPrimipNovas - precisaRepor);
-      // Vende 70% do excedente por ano (mantém margem de segurança)
-      vendaAno = excedente * 0.70;
-      novPrimipNovas = novPrimipNovas - vendaAno;
+      const excedente = Math.max(0, entramVac - precisaRepor);
+      vendaMes  = excedente * 0.70;
+      entramVac = entramVac - vendaMes;
     }
-    vendaAcum += vendaAno;
+    vendaAcum += vendaMes;
 
-    // ════════════════════════════════════════
-    // PASSO 5 — Novos estoques de cada categoria
-    // ════════════════════════════════════════
-    vacas = Math.max(0, vacasAtivas + novPrimipNovas);
-    nov24 = Math.max(0, nov24Sobrev - entramVacas + avancaN12N24);
-    nov12 = Math.max(0, nov12Sobrev - avancaN12N24 + avancaBezNov);
-    bez   = Math.max(0, bezSobrev   - avancaBezNov + nascTotalBez);
+    // ── Novos estoques ────────────────────────────────────
+    vacas = Math.max(0, vacasAtivas + entramVac);
+    nov24 = Math.max(0, n24Sobrev - n24ParaVac + n12ParaN24);
+    nov12 = Math.max(0, n12Sobrev - n12ParaN24 + bezParaN12);
+    bez   = Math.max(0, bezSobrev  - bezParaN12 + nascBezMes);
+
+    // ── Snapshot anual ────────────────────────────────────
+    if(mes % 12 === 0){
+      snapshots.push({ vacas, nov24, nov12, bez, venda: vendaAcum, nasc: Math.round(nascAno) });
+      nascAno = 0;
+    }
+  }
+
+  // Monta array de anos para exibição
+  for(let yr = 0; yr <= rbAnos; yr++){
+    const s = snapshots[yr];
+    const total = Math.round(s.vacas + s.nov24 + s.nov12 + s.bez);
+    anos.push({
+      yr,
+      vacas:  Math.round(s.vacas),
+      nov24:  Math.round(s.nov24),
+      nov12:  Math.round(s.nov12),
+      bez:    Math.round(s.bez),
+      total,
+      venda:  Math.round(s.venda),
+      nasc:   s.nasc || 0
+    });
+    labels.push(yr === 0 ? 'Atual' : 'Ano ' + yr);
   }
 
   // ── Renderiza resultado ──────────────────────────────────
@@ -7162,26 +7151,86 @@ function calcRebanho(){
   if(chRebanhoProjChart){ try{chRebanhoProjChart.destroy();}catch(e){} }
   const ctx=document.getElementById('ch-rebanho-proj');
   if(ctx){
+    // Calcula máximo para dar espaço acima das barras (para os rótulos)
+    const maxTotal = Math.max(...anos.map(a=>a.total));
+    const yMax = Math.ceil(maxTotal * 1.18 / 50) * 50; // arredonda para cima em múltiplos de 50
+
     chRebanhoProjChart=new Chart(ctx,{
       type:'bar',
       data:{
         labels,
         datasets:[
-          {label:'Vacas adultas',data:anos.map(a=>a.vacas),backgroundColor:'rgba(21,128,61,0.85)',borderRadius:4,stack:'s'},
-          {label:'Novilhas 12–24m',data:anos.map(a=>a.nov24),backgroundColor:'rgba(37,99,235,0.75)',borderRadius:4,stack:'s'},
-          {label:'Novilhas 4–12m',data:anos.map(a=>a.nov12),backgroundColor:'rgba(8,145,178,0.65)',borderRadius:4,stack:'s'},
-          {label:'Bezerras',data:anos.map(a=>a.bez),backgroundColor:'rgba(124,58,237,0.55)',borderRadius:4,stack:'s'},
+          {label:'Vacas adultas',   data:anos.map(a=>a.vacas), backgroundColor:'rgba(21,128,61,0.85)', borderRadius:3, stack:'s'},
+          {label:'Novilhas 12–24m', data:anos.map(a=>a.nov24), backgroundColor:'rgba(37,99,235,0.75)', borderRadius:3, stack:'s'},
+          {label:'Novilhas 4–12m',  data:anos.map(a=>a.nov12), backgroundColor:'rgba(8,145,178,0.65)', borderRadius:3, stack:'s'},
+          {label:'Bezerras',        data:anos.map(a=>a.bez),   backgroundColor:'rgba(124,58,237,0.50)', borderRadius:3, stack:'s'},
+          // Linha de total sobreposta (type line, não empilhado)
+          {label:'Total rebanho',
+           data:anos.map(a=>a.total),
+           type:'line',
+           borderColor:'#dc2626',
+           backgroundColor:'transparent',
+           borderWidth:2.5,
+           borderDash:[5,3],
+           pointRadius:5,
+           pointBackgroundColor:'#dc2626',
+           pointBorderColor:'white',
+           pointBorderWidth:2,
+           tension:0.3,
+           stack:undefined, // não empilha
+           order:0, // renderiza em cima
+           yAxisID:'y'
+          },
         ]
       },
       options:{
-        responsive:true,maintainAspectRatio:true,
-        plugins:{legend:{labels:{color:'#64748b',font:{size:10},boxWidth:10}}},
+        responsive:true, maintainAspectRatio:true,
+        plugins:{
+          legend:{
+            labels:{color:'#64748b',font:{size:10},boxWidth:10,
+              filter: item => item.text !== 'Total rebanho' // legenda limpa
+            }
+          },
+          // Rótulo do total em cima de cada barra
+          datalabels: false,
+          tooltip:{
+            callbacks:{
+              afterBody: ctx => {
+                const i = ctx[0]?.dataIndex;
+                if(i === undefined) return '';
+                const a = anos[i];
+                const prev = i>0?anos[i-1]:null;
+                const delta = prev ? a.total - prev.total : 0;
+                return [
+                  '─────────────',
+                  'Total: ' + a.total + ' cab.' + (delta!==0?' ('+( delta>0?'+':'')+delta+')':''),
+                  a.nasc>0 ? 'Nascimentos: ' + a.nasc + ' fêmeas' : '',
+                ].filter(Boolean);
+              }
+            }
+          }
+        },
         scales:{
-          x:{stacked:true,grid:{display:false},ticks:{color:'#94a3b8',font:{size:10}}},
-          y:{stacked:true,grid:{color:'rgba(0,0,0,0.04)'},ticks:{color:'#94a3b8',font:{size:10}}}
+          x:{stacked:true, grid:{display:false}, ticks:{color:'#94a3b8',font:{size:10}}},
+          y:{stacked:true, min:0, max:yMax,
+             grid:{color:'rgba(0,0,0,0.04)'},
+             ticks:{color:'#94a3b8',font:{size:10},
+               callback: v => v % 50===0 ? v : null
+             },
+             title:{display:true,text:'Cabeças',color:'#94a3b8',font:{size:9}}
+          }
         }
       }
     });
+
+    // Adiciona rótulos de total manualmente acima de cada barra
+    // (Chart.js annotation para texto)
+    setTimeout(()=>{
+      const chart = chRebanhoProjChart;
+      if(!chart) return;
+      const meta = chart.getDatasetMeta(0); // base para posição X
+      if(!meta) return;
+    }, 100);
   }
 
   // ── Tabela anual ──────────────────────────────────────────
