@@ -7144,26 +7144,27 @@ function calcRebanho(){
   const precoNovVenda = gn('rb-preco-nov')     || 6000;
   const custoRepos    = gn('rb-custo-repos')   || 7000;
 
-  // Atualiza display do IEP calculado
-  const iepEl = document.getElementById('rb-iep-calc');
-  if(iepEl) {
-    const pC = taxaConcep * taxaServ;
-    const ciclos = pC > 0 ? 1/pC : 10;
-    const iepEstDias = 60 + (ciclos-1)*21 + 280 + (pC * perdDG * 60);
-    const iepEst = Math.max(11, Math.min(24, iepEstDias/30.44));
-    const col = iepEst <= 12 ? '#15803d' : iepEst <= 14 ? '#d97706' : '#dc2626';
-    iepEl.textContent = iepEst.toFixed(1) + ' meses (calculado)';
-    iepEl.style.color = col;
-    iepEl.style.borderColor = col + '66';
-    iepEl.style.background = col === '#15803d' ? '#f0fdf4' : col === '#d97706' ? '#fffbeb' : '#fef2f2';
-  }
   // Atualiza display do total de descarte
   const dtEl = document.getElementById('rb-desc-total');
   if(dtEl) dtEl.textContent = (descarte*100).toFixed(0)+'%';
 
-  // ── Perda de prenhez pós-DG (absorções + abortos) ──────────
+  // ── Perda de prenhez pós-DG (declarada antes do display do IEP) ────────────
   const perdDG      = gn('rb-perd-dg') / 100;
   const sobrevParto = 1 - perdDG;
+
+  // Atualiza display do IEP calculado (perdDG já disponível)
+  const iepEl = document.getElementById('rb-iep-calc');
+  if(iepEl) {
+    const pC2 = taxaConcep * taxaServ;
+    const ciclos2 = pC2 > 0 ? 1/pC2 : 10;
+    const iepEstDias2 = 60 + (ciclos2-1)*21 + 280 + (pC2 * perdDG * 60);
+    const iepEst2 = Math.max(11, Math.min(24, iepEstDias2/30.44));
+    const col2 = iepEst2 <= 12 ? '#15803d' : iepEst2 <= 14 ? '#d97706' : '#dc2626';
+    iepEl.textContent = iepEst2.toFixed(1) + ' meses (calculado)';
+    iepEl.style.color = col2;
+    iepEl.style.borderColor = col2 + '66';
+    iepEl.style.background = col2 === '#15803d' ? '#f0fdf4' : col2 === '#d97706' ? '#fffbeb' : '#fef2f2';
+  }
 
   // ════════════════════════════════════════════════════════
   // IEP DERIVADO DE CONCEPÇÃO E SERVIÇO — lógica correta
