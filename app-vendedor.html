@@ -787,6 +787,98 @@ auth.onAuthStateChanged(user => {
   }
 });
 
+
+// ══════════════════════════════════════════
+// INICIALIZAÇÃO E FILTRO
+// ══════════════════════════════════════════
+function iniciarApp() {
+  document.getElementById('c-data-visita') && (document.getElementById('c-data-visita').value = new Date().toISOString().split('T')[0]);
+
+  // Mapa email → nomes salvos no Firebase
+  const VENDEDOR_MAP = {
+    'vetsinvesting@gmail.com':      ['PAULO','PAULO VETS','VETSINVESTING'],
+    'jozielsantossoares@gmail.com': ['JOZIEL','JOZIEL SANTOS','JOZIELSANTOSSOARES'],
+    'vetdalmolin@gmail.com':        ['MAICON','MAICON DALMOLIN','VETDALMOLIN'],
+    'arthursoaresaa@gmail.com':     ['ARTHUR','ARTHUR SOARES','ARTHURSOARESAA'],
+    'lucasbianchi214@gmail.com':    ['LUCAS','LUCAS BIANCHI','LUCASBIANCHI214'],
+    'jrlucasramos2@gmail.com':      ['JOSÉ LUCAS','JOSE LUCAS','JRLUCASRAMOS2'],
+    'mullerjulio02@gmail.com':      ['JULIO','JULIO MULLER','MULLERJULIO02'],
+    'vagner7leguas@gmail.com':      ['VAGNER','VAGNER7LEGUAS','VAGNER LEGUAS','VAGNER 7 LEGUAS'],
+  };
+
+  const emailLogin   = (usuarioAtual.email || '').toLowerCase().trim();
+  const nomesValidos = (VENDEDOR_MAP[emailLogin] || []).concat([
+    emailLogin.split('@')[0].toUpperCase(),
+    nomeVendedor.toUpperCase(),
+    emailLogin,
+  ]);
+
+  console.log('[iniciarApp] email:', emailLogin, '| nomes válidos:', nomesValidos);
+
+  db.ref('propriedades').on('value', snap => {
+    todosClientes = {};
+    meusClientes  = [];
+    snap.forEach(child => {
+      const d = { id: child.key, ...child.val() };
+      todosClientes[child.key] = d;
+      const vNome  = (d.nome_vendedor || d.vendedor || '').toUpperCase().trim();
+      const vEmail = (d.vendedor || '').toLowerCase().trim();
+      const match  = nomesValidos.some(n => vNome === n.toUpperCase() || vEmail === n.toLowerCase());
+      if (match) meusClientes.push(d);
+    });
+    meusClientes.sort((a,b) => (b.vacas||0)-(a.vacas||0));
+    console.log('[iniciarApp] clientes encontrados:', meusClientes.length);
+    filtrarLista();
+    renderDash();
+    if(document.getElementById('screen-bench')?.classList.contains('active')) renderBenchApp();
+  });
+}
+
+function filtrarLista() {
+  const q   = (document.getElementById('search-q')?.value || '').toLowerCase();
+  const chip = document.querySelector('.chip.active')?.dataset.sit || 'todos';
+  let rows = meusClientes;
+  if(chip !== 'todos') rows = rows.filter(d => (d.situacao||'').toUpperCase() === chip.toUpperCase());
+  if(q) rows = rows.filter(d =>
+    (d.produtor||'').toLowerCase().includes(q) ||
+    (d.propriedade||'').toLowerCase().includes(q) ||
+    (d.cidade||'').toLowerCase().includes(q)
+  );
+  const lista = document.getElementById('lista-cards');
+  const count = document.getElementById('lista-count');
+  if(count) count.textContent = rows.length + ' propriedade' + (rows.length!==1?'s':'');
+  if(!lista) return;
+  if(!rows.length) {
+    lista.innerHTML = '<div style="text-align:center;padding:48px 20px;color:var(--muted)"><div style="font-size:40px;margin-bottom:12px">🏡</div><div style="font-size:15px;font-weight:700;color:var(--text)">Nenhuma propriedade encontrada</div></div>';
+    return;
+  }
+  lista.innerHTML = rows.map(function(d) {
+    var cor = avatarColor(d.produtor);
+    var ini2 = iniciais(d.produtor);
+    var sit  = d.situacao || 'ATIVO';
+    var sitCol = sit==='ATIVO'?'#15803d':sit==='PROSPECTO'?'#d97706':'#dc2626';
+    var sitBg  = sit==='ATIVO'?'#f0fdf4':sit==='PROSPECTO'?'#fffbeb':'#fef2f2';
+    var prod = parseFloat(d.media_prod)||0;
+    var prodCol = prod>=37?'#15803d':prod>=28?'#d97706':'#dc2626';
+    return '<div class="card" style="margin-bottom:10px;background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:14px;display:flex;align-items:center;gap:12px;cursor:pointer;box-shadow:0 1px 4px rgba(0,0,0,.07)" data-id="'+d.id+'">'
+      +'<div style="width:42px;height:42px;border-radius:12px;background:'+cor+';display:flex;align-items:center;justify-content:center;color:white;font-size:14px;font-weight:800;flex-shrink:0">'+ini2+'</div>'
+      +'<div style="flex:1;min-width:0">'
+      +'<div style="font-size:14px;font-weight:700;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+(d.produtor||'—')+'</div>'
+      +'<div style="font-size:11px;color:var(--muted);margin-top:2px">'+(d.cidade||'')+' · '+(d.vacas||0)+' vacas</div>'
+      +'</div>'
+      +'<div style="text-align:right;flex-shrink:0">'
+      +'<div style="font-size:13px;font-weight:800;color:'+prodCol+'">'+(prod>0?prod.toFixed(1)+' L':'—')+'</div>'
+      +'<span style="font-size:10px;font-weight:700;padding:2px 8px;border-radius:20px;background:'+sitBg+';color:'+sitCol+'">'+sit+'</span>'
+      +'</div></div>';
+  }).join('');
+  // Atribui evento de clique
+  lista.querySelectorAll('[data-id]').forEach(el => {
+    const id = el.getAttribute('data-id');
+    const cli = rows.find(d => d.id===id);
+    if(cli) el.onclick = () => abrirDetalhe(cli);
+  });
+}
+
 function fazerLogin() {
   const email = document.getElementById('l-email').value.trim();
   const senha = document.getElementById('l-senha').value;
@@ -1408,6 +1500,79 @@ function carregarDieta(farmId) {
 }
 
 
+function renderDash() {
+  if(meusClientes.length === 0) {
+    const sub = document.getElementById('dash-subtitle');
+    if(sub) sub.textContent = 'Aguardando dados...';
+  }
+  const clientes = meusClientes;
+  const ativos   = clientes.filter(function(c){return c.situacao==='ATIVO';});
+  const inativos = clientes.filter(function(c){return c.situacao==='INATIVO';});
+  const prospec  = clientes.filter(function(c){return c.situacao==='PROSPECTO';});
+
+  function ss(id,v){var el=document.getElementById(id);if(el)el.textContent=v;}
+
+  ss('d-ativos',  ativos.length||'—');
+  ss('d-ativos-pct', clientes.length>0?Math.round(ativos.length/clientes.length*100)+'% do total':'—');
+  ss('d-prospec', prospec.length||'—');
+  ss('d-inativos',inativos.length||'—');
+
+  var somaNvacas = ativos.reduce(function(s,c){return s+(parseFloat(c.vacas)||0);},0);
+  var somaLac    = ativos.reduce(function(s,c){return s+(parseFloat(c.lactacao)||parseFloat(c.vacas)||0);},0);
+  var somaProd   = ativos.reduce(function(s,c){return s+(parseFloat(c.media_prod)||0)*(parseFloat(c.vacas)||0);},0);
+  var mediaProd  = somaLac>0 ? somaProd/somaLac : 0;
+
+  ss('d-vacas', somaNvacas>0?somaNvacas.toLocaleString('pt-BR'):'—');
+  ss('d-rebanho-medio','média: '+(ativos.length>0?Math.round(somaNvacas/ativos.length):0)+' vacas');
+  ss('d-inativos-vacas', inativos.reduce(function(s,c){return s+(parseFloat(c.vacas)||0);},0)+' vacas perdidas');
+  ss('d-prod-total', somaProd>0?Math.round(somaProd).toLocaleString('pt-BR'):'—');
+  ss('d-media-prod', mediaProd>0?mediaProd.toFixed(1)+' L':'—');
+
+  var comDel  = ativos.filter(function(c){return parseFloat(c.del)>0;});
+  var mediaDel = comDel.length>0?comDel.reduce(function(s,c){return s+(parseFloat(c.del)||0);},0)/comDel.length:0;
+  ss('d-del-medio', mediaDel>0?mediaDel.toFixed(0)+' d':'—');
+
+  var comGord = ativos.filter(function(c){return parseFloat(c.gordura)>0;});
+  ss('d-gordura', comGord.length>0?(comGord.reduce(function(s,c){return s+(parseFloat(c.gordura)||0);},0)/comGord.length).toFixed(2)+'%':'—');
+
+  var comProt = ativos.filter(function(c){return parseFloat(c.proteina)>0;});
+  ss('d-proteina', comProt.length>0?(comProt.reduce(function(s,c){return s+(parseFloat(c.proteina)||0);},0)/comProt.length).toFixed(2)+'%':'—');
+
+  var comCCS = ativos.filter(function(c){return parseFloat(c.ccs)>0;});
+  ss('d-ccs', comCCS.length>0?Math.round(comCCS.reduce(function(s,c){return s+(parseFloat(c.ccs)||0);},0)/comCCS.length):'—');
+
+  var sub = document.getElementById('dash-subtitle');
+  if(sub) sub.textContent = ativos.length+' clientes ativos · '+new Date().toLocaleDateString('pt-BR');
+
+  // Lista de clientes ativos
+  var lista = document.getElementById('dash-lista-clientes');
+  var cnt   = document.getElementById('dash-lista-count');
+  if(cnt) cnt.textContent = ativos.length+' produtor'+(ativos.length!==1?'es':'');
+  if(lista){
+    if(!ativos.length){
+      lista.innerHTML='<div style="text-align:center;padding:24px;color:var(--muted);font-size:12px">Nenhum cliente ativo</div>';
+    } else {
+      var sorted=[].concat(ativos).sort(function(a,b){return (parseFloat(b.media_prod)||0)-(parseFloat(a.media_prod)||0);});
+      lista.innerHTML=sorted.map(function(c){
+        var cor=avatarColor(c.produtor), ini2=iniciais(c.produtor);
+        var prod=parseFloat(c.media_prod)||0;
+        var prodCol=prod>=37?'#15803d':prod>=28?'#d97706':'#dc2626';
+        return '<div style="display:flex;align-items:center;gap:10px;padding:10px 14px;border-bottom:1px solid var(--border);cursor:pointer" data-id="'+c.id+'">'
+          +'<div style="width:34px;height:34px;border-radius:10px;background:'+cor+';display:flex;align-items:center;justify-content:center;color:white;font-size:12px;font-weight:800;flex-shrink:0">'+ini2+'</div>'
+          +'<div style="flex:1;min-width:0"><div style="font-size:13px;font-weight:700;color:var(--text)">'+(c.produtor||'—')+'</div>'
+          +'<div style="font-size:10px;color:var(--muted)">'+(c.cidade||'')+' · '+(c.vacas||0)+' vacas</div></div>'
+          +'<div style="text-align:right"><div style="font-size:14px;font-weight:800;color:'+prodCol+'">'+(prod>0?prod.toFixed(1)+' L':'—')+'</div>'
+          +'<div style="font-size:9px;color:var(--muted)">L/vaca/dia</div></div></div>';
+      }).join('');
+      lista.querySelectorAll('[data-id]').forEach(function(el){
+        var id=el.getAttribute('data-id'), cli=ativos.find(function(c){return c.id===id;});
+        if(cli) el.onclick=function(){abrirDetalhe(cli);};
+      });
+    }
+  }
+}
+
+
 // ══════════════════════════════════════════
 // BENCHMARKS DO VENDEDOR
 // ══════════════════════════════════════════
@@ -1429,587 +1594,6 @@ function iniciais(nome) {
 }
 
 // ── AUTH ────────────────────────────────────────────────
-auth.onAuthStateChanged(user => {
-  document.getElementById('loading-screen').style.display = 'none';
-  if (user) {
-    usuarioAtual = user;
-    // Usa nome amigável baseado no email
-    const NOME_AMIGAVEL = {
-      'vetsinvesting@gmail.com':   'Paulo',
-      'jozielsantossoares@gmail.com': 'Joziel',
-      'vetdalmolin@gmail.com':     'Maicon',
-      'arthursoaresaa@gmail.com':  'Arthur',
-      'lucasbianchi214@gmail.com': 'Lucas',
-      'jrlucasramos2@gmail.com':   'José Lucas',
-      'mullerjulio02@gmail.com':   'Julio',
-      'vagner7leguas@gmail.com':   'Vagner',
-    };
-    nomeVendedor = NOME_AMIGAVEL[user.email.toLowerCase()] || user.email.split('@')[0].toUpperCase();
-    document.getElementById('tvendedor').textContent = nomeVendedor;
-    document.getElementById('app').style.display = 'flex';
-    document.getElementById('login-screen').style.display = 'none';
-    iniciarApp();
-  } else {
-    document.getElementById('login-screen').style.display = 'flex';
-    document.getElementById('app').style.display = 'none';
-  }
-});
-
-function fazerLogin() {
-  const email = document.getElementById('l-email').value.trim();
-  const senha = document.getElementById('l-senha').value;
-  const errEl = document.getElementById('login-error');
-  errEl.textContent = 'Entrando...';
-  if (!email || !senha) { errEl.textContent = 'Preencha e-mail e senha.'; return; }
-  auth.signInWithEmailAndPassword(email, senha)
-    .then(() => { errEl.textContent = 'Aguarde...'; })
-    .catch(err => {
-      console.error('Firebase error:', err.code, err.message);
-      const msgs = {
-        'auth/invalid-credential': 'Senha incorreta ou usuário não existe.',
-        'auth/user-not-found': 'Usuário não encontrado.',
-        'auth/wrong-password': 'Senha incorreta.',
-        'auth/too-many-requests': 'Muitas tentativas. Aguarde alguns minutos.',
-        'auth/network-request-failed': 'Sem conexão. Verifique a internet.',
-        'auth/api-key-not-valid': 'Erro de configuração. Contate o suporte.',
-      };
-      errEl.textContent = msgs[err.code] || ('Erro: ' + err.code);
-    });
-}
-
-function fazerLogout() {
-  if (confirm('Sair do sistema?')) auth.signOut();
-}
-
-// ── ONLINE/OFFLINE ───────────────────────────────────────
-const connRef = db.ref('.info/connected');
-connRef.on('value', snap => {
-  const dot = document.getElementById('sync-dot');
-  if (snap.val()) { dot.className = 'sync-dot'; dot.title = 'Online'; }
-  else { dot.className = 'sync-dot offline'; dot.title = 'Offline'; }
-});
-
-// ── INIT ─────────────────────────────────────────────────
-function iniciarApp() {
-  // Data padrão de hoje no campo de visita
-  document.getElementById('c-data-visita').value = new Date().toISOString().split('T')[0];
-
-  // Mapa email → nomes possíveis no campo vendedor do painel
-  const VENDEDOR_MAP = {
-    'vetsinvesting@gmail.com':   ['PAULO','PAULO VETS','VETSINVESTING'],
-    'jozielsantossoares@gmail.com': ['JOZIEL','JOZIEL SANTOS','JOZIELSANTOSSOARES'],
-    'vetdalmolin@gmail.com':     ['MAICON','MAICON DALMOLIN','VETDALMOLIN'],
-    'arthursoaresaa@gmail.com':  ['ARTHUR','ARTHUR SOARES','ARTHURSOARESAA'],
-    'lucasbianchi214@gmail.com': ['LUCAS','LUCAS BIANCHI','LUCASBIANCHI214'],
-    'jrlucasramos2@gmail.com':   ['JOSÉ LUCAS','JOSE LUCAS','JRLUCASRAMOS2'],
-    'mullerjulio02@gmail.com':   ['JULIO','JULIO MULLER','MULLERJULIO02'],
-    'vagner7leguas@gmail.com':   ['VAGNER','VAGNER7LEGUAS','VAGNER LEGUAS'],
-  };
-
-  const emailLogin = (usuarioAtual.email || '').toLowerCase().trim();
-  const nomesValidos = (VENDEDOR_MAP[emailLogin] || []).map(n => n.toUpperCase().trim());
-  // Adiciona prefixo do email como fallback
-  const prefixo = emailLogin.split('@')[0].toUpperCase().trim();
-  if (!nomesValidos.includes(prefixo)) nomesValidos.push(prefixo);
-  nomesValidos.push(emailLogin); // também tenta o email direto
-
-  console.log('Vendedor logado:', emailLogin, '→ nomes:', nomesValidos);
-
-  db.ref('propriedades').on('value', snap => {
-    todosClientes = {};
-    meusClientes = [];
-    snap.forEach(child => {
-      const d = { id: child.key, ...child.val() };
-      todosClientes[child.key] = d;
-      const vNome  = (d.nome_vendedor || d.vendedor || '').toUpperCase().trim();
-      const vEmail = (d.vendedor || '').toLowerCase().trim();
-      const match = nomesValidos.some(n => vNome === n || vEmail === n.toLowerCase());
-      if (match) meusClientes.push(d);
-    });
-    meusClientes.sort((a,b) => (b.vacas||0) - (a.vacas||0));
-    filtrarLista();
-    renderDash();
-    // Atualiza benchmarks se estiver na tela
-    if(document.getElementById('screen-bench')?.classList.contains('active')) renderBenchApp();
-  });
-}
-
-// ── SCREENS ──────────────────────────────────────────────
-function showScreen(name, data=null) {
-  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
-  document.getElementById('screen-' + name).classList.add('active');
-  const nb = document.getElementById('nav-' + name);
-  if (nb) nb.classList.add('active');
-
-  const backBtn = document.getElementById('back-btn');
-  const tlogo = document.getElementById('tlogo');
-  if (name === 'detail') {
-    backBtn.style.display = 'block'; tlogo.style.visibility='hidden';
-    document.getElementById('ttitle').textContent = '';
-  } else {
-    backBtn.style.display = 'none'; tlogo.style.visibility='visible';
-    const titles = { lista:'Propriedades', cad: editandoId?'Editar':'Cadastrar', dash:'Meu Resultado' };
-    document.getElementById('ttitle').textContent = titles[name] || 'LeitePRO';
-  }
-  prevScreen = name === 'detail' ? prevScreen : name;
-  document.getElementById('content').scrollTop = 0;
-}
-
-function goBack() { showScreen(prevScreen || 'lista'); }
-
-// ── LISTA ────────────────────────────────────────────────
-function setChip(el, filtro) {
-  document.querySelectorAll('.chip').forEach(c => c.classList.remove('active'));
-  el.classList.add('active');
-  filtroAtivo = filtro;
-  filtrarLista();
-}
-
-function filtrarLista() {
-  const q = (document.getElementById('search-q').value || '').toLowerCase();
-  let rows = meusClientes;
-  if (filtroAtivo) rows = rows.filter(d => d.situacao === filtroAtivo);
-  if (q) rows = rows.filter(d =>
-    (d.produtor||'').toLowerCase().includes(q) ||
-    (d.propriedade||'').toLowerCase().includes(q) ||
-    (d.cidade||'').toLowerCase().includes(q)
-  );
-  document.getElementById('lista-count').textContent = rows.length + ' registro' + (rows.length!==1?'s':'');
-
-  if (rows.length === 0) {
-    document.getElementById('lista-clientes').innerHTML = `<div class="empty"><div class="emoji">🔍</div><p>Nenhuma propriedade encontrada.</p></div>`;
-    return;
-  }
-
-  document.getElementById('lista-clientes').innerHTML = rows.map(d => {
-    const cor = avatarColor(d.produtor);
-    const ini = iniciais(d.produtor);
-    const sitClass = d.situacao==='ATIVO'?'b-ativo':d.situacao==='INATIVO'?'b-inativo':'b-prospec';
-    const sitLabel = d.situacao==='ATIVO'?'✅ Ativo':d.situacao==='INATIVO'?'❌ Inativo':'🎯 Prospecto';
-    return `<div class="client-card" onclick='abrirDetalhe(${JSON.stringify(d)})'>
-      <div class="client-avatar" style="background:${cor}">${ini}</div>
-      <div class="client-info">
-        <div class="client-name">${d.produtor||'—'}</div>
-        <div class="client-meta">${d.propriedade||''} ${d.propriedade&&d.cidade?'·':''} ${d.cidade||''}</div>
-        <span class="badge ${sitClass}">${sitLabel}</span>
-        ${d.produto?`<span class="badge" style="background:rgba(52,152,219,.12);color:#3498db">${d.produto}</span>`:''}
-      </div>
-      <div class="client-right">
-        <div class="client-vacas">${d.vacas||'—'}</div>
-        <div class="client-vacas-lbl">vacas</div>
-        ${d.prod_diaria>0?`<div style="font-size:11px;color:var(--muted);margin-top:4px">${(d.prod_diaria/1000).toFixed(1)}k L/dia</div>`:''}
-      </div>
-    </div>`;
-  }).join('');
-}
-
-// ── DETALHE ──────────────────────────────────────────────
-function abrirDetalhe(d) {
-  clienteAtual = d;
-  const cor = avatarColor(d.produtor);
-  const ini = iniciais(d.produtor);
-  const sitClass = d.situacao==='ATIVO'?'b-ativo':d.situacao==='INATIVO'?'b-inativo':'b-prospec';
-  const sitLabel = d.situacao==='ATIVO'?'✅ Ativo':d.situacao==='INATIVO'?'❌ Inativo':'🎯 Prospecto';
-
-  document.getElementById('ttitle').textContent = (d.produtor||'').split(' ')[0];
-
-  document.getElementById('detail-hero').innerHTML = `
-    <div class="detail-avatar" style="background:${cor}">${ini}</div>
-    <div class="detail-name">${d.produtor||'—'}</div>
-    <div class="detail-sub">${d.propriedade||''} ${d.cidade?' · '+d.cidade:''} ${d.estado?' · '+d.estado:''}</div>
-    <div style="margin-top:10px">
-      <span class="badge ${sitClass}">${sitLabel}</span>
-      ${d.produto?`<span class="badge" style="background:rgba(52,152,219,.12);color:#3498db">${d.produto}</span>`:''}
-      ${d.ordenha==='ROBOTIZADA'?`<span class="badge" style="background:rgba(240,180,41,.12);color:var(--yellow)">🤖 Robotizada</span>`:''}
-    </div>`;
-
-  const fmt = v => v>0?v:'—';
-  const fmtPct = v => v>0?`${parseFloat(v).toFixed(2)}%`:'—';
-
-  document.getElementById('detail-body').innerHTML = `
-    <div class="stat-grid" style="grid-template-columns:repeat(3,1fr)">
-      <div class="stat-box">
-        <div class="val" style="color:var(--blue)">${d.vacas||'—'}</div>
-        <div class="lbl">Total Vacas</div>
-      </div>
-      <div class="stat-box">
-        <div class="val" style="color:var(--green)">${d.lactacao>0?d.lactacao:'—'}</div>
-        <div class="lbl">Em Lactação</div>
-      </div>
-      <div class="stat-box">
-        <div class="val" style="color:#3498db">${d.secas>0?d.secas:'—'}</div>
-        <div class="lbl">Secas</div>
-      </div>
-      <div class="stat-box">
-        <div class="val" style="color:#e67e22">${d.novilhas>0?d.novilhas:'—'}</div>
-        <div class="lbl">Novilhas</div>
-      </div>
-      <div class="stat-box">
-        <div class="val" style="color:#9b59b6">${d.bezerras>0?d.bezerras:'—'}</div>
-        <div class="lbl">Bezerras</div>
-      </div>
-      <div class="stat-box">
-        <div class="val" style="color:var(--green)">${d.media_prod>0?parseFloat(d.media_prod).toFixed(1)+' L':'—'}</div>
-        <div class="lbl">Média/vaca</div>
-      </div>
-    </div>
-
-    <div class="info-list">
-      ${d.lactacao>0?`<div class="info-row"><span class="info-icon">🐄</span><div class="info-txt"><div class="info-key">Vacas em Lactação</div></div><div class="info-val-right">${d.lactacao}</div></div>`:''}
-      ${d.novilhas>0?`<div class="info-row"><span class="info-icon">🐮</span><div class="info-txt"><div class="info-key">Novilhas</div></div><div class="info-val-right">${d.novilhas}</div></div>`:''}
-      <div class="info-row"><span class="info-icon">🏗️</span><div class="info-txt"><div class="info-key">Sistema</div></div><div class="info-val-right">${d.sistema||'—'}</div></div>
-      <div class="info-row"><span class="info-icon">📍</span><div class="info-txt"><div class="info-key">Localização</div></div><div class="info-val-right">${d.cidade||'—'} · ${d.regiao||''}</div></div>
-    </div>
-
-    ${(d.gordura||d.proteina||d.ccs)?`
-    <div class="info-list" style="margin-bottom:14px">
-      <div class="info-row"><span class="info-icon">🥛</span><div class="info-txt"><div class="info-key">Gordura</div></div><div class="info-val-right" style="color:var(--yellow)">${fmtPct(d.gordura)}</div></div>
-      <div class="info-row"><span class="info-icon">🧪</span><div class="info-txt"><div class="info-key">Proteína</div></div><div class="info-val-right" style="color:var(--blue)">${fmtPct(d.proteina)}</div></div>
-      ${d.ccs?`<div class="info-row"><span class="info-icon">🔬</span><div class="info-txt"><div class="info-key">CCS (x1000)</div></div><div class="info-val-right">${d.ccs}</div></div>`:''}
-      ${d.cbt?`<div class="info-row"><span class="info-icon">🦠</span><div class="info-txt"><div class="info-key">CBT (x1000)</div></div><div class="info-val-right">${d.cbt}</div></div>`:''}
-      ${d.est?`<div class="info-row"><span class="info-icon">📊</span><div class="info-txt"><div class="info-key">Extrato Seco</div></div><div class="info-val-right">${fmtPct(d.est)}</div></div>`:''}
-    </div>`:''}
-
-    ${d.obs?`<div class="info-list" style="margin-bottom:14px"><div class="info-row"><span class="info-icon">📝</span><div class="info-txt"><div class="info-key">Observações</div><div class="info-val">${d.obs}</div></div></div></div>`:''}
-    ${d.data_visita?`<div style="font-size:11px;color:var(--muted);text-align:center;margin-bottom:12px">Última visita: ${formatDate(d.data_visita)}</div>`:''}
-
-    <button class="btn-edit" onclick='editarCliente(${JSON.stringify(d)})'>✏️ Editar Propriedade</button>
-    <button class="btn-secondary" style="color:var(--red);border-color:var(--red);margin-top:8px" onclick="excluirCliente('${d.id}','${d.produtor}')">🗑️ Excluir</button>`;
-
-  // Adiciona botões no detail-body
-  const detailBody = document.getElementById('detail-body');
-  if(detailBody) {
-    const btnVisita = document.createElement('button');
-    btnVisita.innerHTML = '📋 Preencher Ficha de Visita';
-    btnVisita.style.cssText = 'width:100%;background:linear-gradient(135deg,#003c09,#1a6b35);color:white;border:none;border-radius:14px;padding:15px;font-size:15px;font-weight:700;font-family:Inter,sans-serif;cursor:pointer;margin-top:16px;display:block';
-    btnVisita.onclick = abrirVisita;
-    detailBody.appendChild(btnVisita);
-
-    const btnDieta = document.createElement('button');
-    btnDieta.innerHTML = '🌽 Ver Dieta & Custos';
-    btnDieta.style.cssText = 'width:100%;background:linear-gradient(135deg,#d97706,#92400e);color:white;border:none;border-radius:14px;padding:15px;font-size:15px;font-weight:700;font-family:Inter,sans-serif;cursor:pointer;margin-top:10px;display:block';
-    btnDieta.onclick = abrirDieta;
-    detailBody.appendChild(btnDieta);
-  }
-  showScreen('detail', d);
-}
-
-function formatDate(s) {
-  if (!s) return '—';
-  const [y,m,d] = s.split('-');
-  return `${d}/${m}/${y}`;
-}
-
-// ── CADASTRO ─────────────────────────────────────────────
-function novoCliente() {
-  editandoId = null;
-  document.getElementById('cad-titulo').textContent = 'Nova Propriedade';
-  document.getElementById('btn-salvar').textContent = '💾 Salvar Propriedade';
-  document.getElementById('edit-id').value = '';
-  limparForm();
-  showScreen('cad');
-}
-
-function limparForm() {
-  ['c-produtor','c-propriedade','c-cidade','c-vacas','c-lactacao','c-secas','c-novilhas','c-bezerras',
-   'c-media-prod','c-prod-dia','c-del','c-gordura','c-proteina','c-ccs','c-cbt','c-est','c-obs'].forEach(id => {
-    const el = document.getElementById(id);
-    if (el) el.value = '';
-  });
-  document.getElementById('c-situacao').value = 'PROSPEC';
-  document.getElementById('c-produto').value = 'ULTRAMAX';
-  document.getElementById('c-estado').value = 'PR';
-  document.getElementById('c-regiao').value = 'SUDOESTE PARANÁ';
-  document.getElementById('c-sistema').value = 'FREE STALL';
-  document.getElementById('c-ordenha').value = 'CONVENCIONAL';
-  document.getElementById('c-data-visita').value = new Date().toISOString().split('T')[0];
-}
-
-function editarCliente(d) {
-  editandoId = d.id;
-  document.getElementById('cad-titulo').textContent = 'Editar Propriedade';
-  document.getElementById('btn-salvar').textContent = '💾 Atualizar';
-  document.getElementById('edit-id').value = d.id;
-
-  const set = (id, val) => { const el = document.getElementById(id); if(el && val!==undefined && val!==null) el.value = val; };
-  set('c-produtor', d.produtor);
-  set('c-propriedade', d.propriedade);
-  set('c-cidade', d.cidade);
-  set('c-situacao', d.situacao);
-  set('c-produto', d.produto);
-  set('c-estado', d.estado);
-  set('c-regiao', d.regiao);
-  set('c-vacas', d.vacas);
-  set('c-lactacao', d.lactacao);
-  set('c-secas', d.secas);
-  set('c-novilhas', d.novilhas);
-  set('c-bezerras', d.bezerras);
-  set('c-media-prod', d.media_prod);
-  set('c-prod-dia', d.prod_diaria);
-  set('c-del', d.del);
-  set('c-sistema', d.sistema);
-  set('c-ordenha', d.ordenha);
-  set('c-gordura', d.gordura);
-  set('c-proteina', d.proteina);
-  set('c-ccs', d.ccs);
-  set('c-cbt', d.cbt);
-  set('c-est', d.est);
-  set('c-obs', d.obs);
-  set('c-data-visita', d.data_visita);
-
-  showScreen('cad');
-}
-
-function cancelarEdicao() {
-  editandoId = null;
-  limparForm();
-  showScreen('lista');
-}
-
-async function salvarCliente() {
-  const produtor = document.getElementById('c-produtor').value.trim();
-  const cidade = document.getElementById('c-cidade').value.trim();
-  if (!produtor) { showToast('⚠️ Informe o nome do produtor', true); return; }
-
-  const num = id => parseFloat(document.getElementById(id).value) || 0;
-  const str = id => document.getElementById(id).value.trim();
-
-  const vacas = num('c-vacas');
-  const media = num('c-media-prod');
-  const prodDia = num('c-prod-dia') || (vacas * media) || 0;
-
-  const dados = {
-    produtor: produtor.toUpperCase(),
-    propriedade: str('c-propriedade').toUpperCase(),
-    situacao: str('c-situacao'),
-    produto: str('c-produto'),
-    cidade: cidade.toUpperCase(),
-    estado: str('c-estado'),
-    regiao: str('c-regiao'),
-    vacas: vacas,
-    lactacao: num('c-lactacao'),
-    secas: num('c-secas'),
-    novilhas: num('c-novilhas'),
-    bezerras: num('c-bezerras'),
-    media_prod: media,
-    prod_diaria: prodDia,
-    sistema: str('c-sistema'),
-    ordenha: str('c-ordenha'),
-    del: num('c-del'),
-    gordura: num('c-gordura'),
-    proteina: num('c-proteina'),
-    ccs: num('c-ccs'),
-    cbt: num('c-cbt'),
-    est: num('c-est'),
-    obs: str('c-obs'),
-    data_visita: str('c-data-visita'),
-    vendedor: usuarioAtual.email,
-    nome_vendedor: nomeVendedor,
-    atualizado_em: new Date().toISOString(),
-  };
-
-  const dot = document.getElementById('sync-dot');
-  dot.className = 'sync-dot syncing';
-
-  try {
-    const btn = document.getElementById('btn-salvar');
-    btn.textContent = 'Salvando...'; btn.disabled = true;
-
-    if (editandoId) {
-      await db.ref('propriedades/' + editandoId).update(dados);
-      // Save snapshot to history
-      const snapshot = {
-        data: new Date().toISOString(),
-        vacas: dados.vacas,
-        lactacao: dados.lactacao,
-        secas: dados.secas || 0,
-        novilhas: dados.novilhas,
-        bezerras: dados.bezerras || 0,
-        media_prod: dados.media_prod,
-        prod_diaria: dados.prod_diaria,
-        del: dados.del || 0,
-        gordura: dados.gordura || 0,
-        proteina: dados.proteina || 0,
-        ccs: dados.ccs || 0,
-        cbt: dados.cbt || 0,
-        obs: dados.obs || '',
-        vendedor: nomeVendedor,
-      };
-      await db.ref('historico/' + editandoId).push(snapshot);
-    } else {
-      dados.criado_em = new Date().toISOString();
-      const ref = await db.ref('propriedades').push(dados);
-      // First history entry
-      const snapshot = {
-        data: new Date().toISOString(),
-        vacas: dados.vacas, lactacao: dados.lactacao, secas: dados.secas || 0,
-        novilhas: dados.novilhas, bezerras: dados.bezerras || 0,
-        media_prod: dados.media_prod, prod_diaria: dados.prod_diaria,
-        del: dados.del || 0, gordura: dados.gordura || 0, proteina: dados.proteina || 0,
-        ccs: dados.ccs || 0, cbt: dados.cbt || 0, obs: dados.obs || '', vendedor: nomeVendedor,
-      };
-      await db.ref('historico/' + ref.key).push(snapshot);
-    }
-
-    limparForm();
-    editandoId = null;
-    showToast(editandoId ? '✅ Atualizado!' : '✅ Propriedade salva!');
-    showScreen('lista');
-  } catch(e) {
-    showToast('❌ Erro ao salvar. Verifique a conexão.', true);
-  } finally {
-    const btn = document.getElementById('btn-salvar');
-    btn.textContent = editandoId ? '💾 Atualizar' : '💾 Salvar Propriedade';
-    btn.disabled = false;
-  }
-}
-
-async function excluirCliente(id, nome) {
-  if (!confirm(`Excluir ${nome}?`)) return;
-  try {
-    await db.ref('propriedades/' + id).remove();
-    showToast('🗑️ Excluído com sucesso');
-    showScreen('lista');
-  } catch(e) {
-    showToast('Erro ao excluir', true);
-  }
-}
-
-// ── DASHBOARD ─────────────────────────────────────────────
-let dashCharts = {};
-
-function renderDash() {
-  // Se dados ainda não carregaram, mostra mensagem
-  const dashSub = document.getElementById('dash-subtitle');
-  if(meusClientes.length === 0 && dashSub) {
-    dashSub.textContent = 'Carregando dados...';
-  }
-  const total = meusClientes.length;
-  const ativos  = meusClientes.filter(d => d.situacao === 'ATIVO');
-  const prospec  = meusClientes.filter(d => d.situacao === 'PROSPEC');
-  const inativos = meusClientes.filter(d => d.situacao === 'INATIVO');
-
-  const soma  = (arr, k) => arr.reduce((a,d) => a+(parseFloat(d[k])||0), 0);
-  const media = (arr, k) => { const v = arr.filter(d=>(d[k]||0)>0); return v.length ? soma(v,k)/v.length : 0; };
-
-  const totalVacas   = soma(ativos, 'vacas');
-  const totalProd    = soma(ativos, 'prod_diaria');
-  const mediaMedia   = media(ativos, 'media_prod');
-  const mediaRebanho = ativos.length ? totalVacas / ativos.length : 0;
-  const mediaDEL     = media(ativos, 'del');
-  const mediaGordura = media(ativos, 'gordura');
-  const mediaProteina= media(ativos, 'proteina');
-  const vacasInativos= soma(inativos, 'vacas');
-
-  // ── KPIs principais
-  const set = (id, val) => { const el = document.getElementById(id); if(el) el.textContent = val; };
-  set('d-ativos',       ativos.length);
-  set('d-ativos-pct',   total ? Math.round(ativos.length/total*100)+'% do total' : '—');
-  set('d-prospec',      prospec.length);
-  set('d-prospec-pct',  prospec.length + ' no pipeline');
-  set('d-vacas',        totalVacas >= 1000 ? (totalVacas/1000).toFixed(1)+'k' : totalVacas || '—');
-  set('d-rebanho-medio',`média: ${mediaRebanho.toFixed(0)} vacas`);
-  set('d-inativos',     inativos.length);
-  set('d-inativos-vacas', vacasInativos > 0 ? vacasInativos+' vacas perdidas' : '—');
-  set('d-prod-total',   totalProd >= 1000 ? (totalProd/1000).toFixed(1)+'k L' : totalProd > 0 ? totalProd+'L' : '—');
-  set('d-media-prod',   mediaMedia > 0 ? mediaMedia.toFixed(1)+' L' : '—');
-  set('d-del-medio',    mediaDEL > 0 ? mediaDEL.toFixed(0)+' dias' : '—');
-  set('d-gordura',      mediaGordura > 0 ? mediaGordura.toFixed(2)+'%' : '—');
-  set('d-proteina',     mediaProteina > 0 ? mediaProteina.toFixed(2)+'%' : '—');
-
-  // ── Gráfico situação (doughnut)
-  if (dashCharts['sit']) dashCharts['sit'].destroy();
-  const ctxSit = document.getElementById('ch-sit-vend');
-  if (ctxSit && total > 0) {
-    dashCharts['sit'] = new Chart(ctxSit, {
-      type: 'doughnut',
-      data: {
-        labels: ['Ativos','Prospectos','Inativos'],
-        datasets: [{ data: [ativos.length, prospec.length, inativos.length],
-          backgroundColor: ['#39ba79','#d29922','#f85149'], borderWidth: 0 }]
-      },
-      options: { responsive:false, cutout:'68%', plugins:{ legend:{ display:false } } }
-    });
-    document.getElementById('sit-legend').innerHTML = [
-      ['#39ba79','Ativos', ativos.length],
-      ['#d29922','Prospectos', prospec.length],
-      ['#f85149','Inativos', inativos.length],
-    ].map(([c,l,n]) => `
-      <div style="display:flex;align-items:center;gap:8px;padding:5px 0;border-bottom:1px solid var(--border)">
-        <div style="width:10px;height:10px;border-radius:50%;background:${c};flex-shrink:0"></div>
-        <div style="font-size:12px;flex:1">${l}</div>
-        <div style="font-size:14px;font-weight:700;color:${c}">${n}</div>
-      </div>`).join('');
-  }
-
-  // ── Gráfico sistemas
-  const sistemas = {};
-  ativos.forEach(d => { const s = d.sistema||'Não informado'; sistemas[s] = (sistemas[s]||0)+1; });
-  const sistKeys = Object.entries(sistemas).sort((a,b)=>b[1]-a[1]);
-  if (dashCharts['sis']) dashCharts['sis'].destroy();
-  const ctxSis = document.getElementById('ch-sistemas-vend');
-  if (ctxSis && sistKeys.length > 0) {
-    dashCharts['sis'] = new Chart(ctxSis, {
-      type: 'bar',
-      data: {
-        labels: sistKeys.map(([k])=>k),
-        datasets: [{ data: sistKeys.map(([,v])=>v),
-          backgroundColor: ['#39ba79','#3498db','#9b59b6','#e67e22','#1abc9c','#e74c3c','#f39c12'],
-          borderRadius: 5, borderSkipped: false }]
-      },
-      options: {
-        responsive:true, maintainAspectRatio:true,
-        plugins:{ legend:{ display:false } },
-        scales:{
-          x:{ ticks:{ color:'#6b8872', font:{ size:9 } }, grid:{ display:false } },
-          y:{ ticks:{ color:'#6b8872', font:{ size:10 }, stepSize:1 }, grid:{ color:'rgba(255,255,255,0.05)' } }
-        }
-      }
-    });
-  }
-
-  // ── Ranking rebanho
-  const rankRow = (d, i, val, color, fmt) => `
-    <div class="rank-row">
-      <div class="rank-num">${i+1}</div>
-      <div class="rank-name">${d.produtor||'—'}</div>
-      <div class="rank-bar-wrap" style="width:90px;position:relative;height:5px">
-        <div style="position:absolute;inset:0;background:var(--border);border-radius:3px"></div>
-        <div style="position:absolute;top:0;left:0;height:5px;width:${val}%;background:${color};border-radius:3px"></div>
-      </div>
-      <div class="rank-val" style="color:${color}">${fmt}</div>
-    </div>`;
-
-  const empty = '<div style="color:var(--muted);font-size:12px;padding:10px 0;text-align:center">Sem dados suficientes</div>';
-
-  // Rebanho
-  const top5r = [...ativos].sort((a,b)=>(b.vacas||0)-(a.vacas||0)).slice(0,5);
-  const maxV = top5r[0]?.vacas || 1;
-  document.getElementById('rank-prod').innerHTML = top5r.length ?
-    top5r.map((d,i) => rankRow(d, i, d.vacas/maxV*100, '#39ba79', d.vacas+' vacas')).join('') : empty;
-
-  // Produção diária
-  const top5l = [...ativos].filter(d=>d.prod_diaria>0).sort((a,b)=>(b.prod_diaria||0)-(a.prod_diaria||0)).slice(0,5);
-  const maxL = top5l[0]?.prod_diaria || 1;
-  document.getElementById('rank-litros').innerHTML = top5l.length ?
-    top5l.map((d,i) => rankRow(d, i, d.prod_diaria/maxL*100, '#3498db', (d.prod_diaria/1000).toFixed(1)+'k L')).join('') : empty;
-
-  // Média produção
-  const top5m = [...ativos].filter(d=>d.media_prod>0).sort((a,b)=>(b.media_prod||0)-(a.media_prod||0)).slice(0,5);
-  const maxM = top5m[0]?.media_prod || 1;
-  document.getElementById('rank-media').innerHTML = top5m.length ?
-    top5m.map((d,i) => rankRow(d, i, d.media_prod/maxM*100, '#1abc9c', parseFloat(d.media_prod).toFixed(1)+' L/vaca')).join('') : empty;
-
-  // Inativos — potencial
-  const topInat = [...inativos].sort((a,b)=>(b.vacas||0)-(a.vacas||0)).slice(0,5);
-  const maxI = topInat[0]?.vacas || 1;
-  document.getElementById('rank-inativos').innerHTML = topInat.length ?
-    topInat.map((d,i) => rankRow(d, i, d.vacas/maxI*100, '#f85149', d.vacas+' vacas')).join('') :
-    '<div style="color:var(--muted);font-size:12px;padding:10px 0;text-align:center">Nenhum cliente inativo 🎉</div>';
-}
-
-// ── TOAST ─────────────────────────────────────────────────
 
 // ══════════════════════════
 // FICHA DE VISITA
@@ -2292,9 +1876,7 @@ function carregarDieta(farmId) {
 }
 
 
-// ══════════════════════════════════════════
-// BENCHMARKS DO VENDEDOR
-// ══════════════════════════════════════════
+
 function renderBenchApp() {
   const wrap = document.getElementById('bench-cards-wrap');
   const sub  = document.getElementById('bench-subtitle');
