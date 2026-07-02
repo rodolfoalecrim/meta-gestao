@@ -1998,7 +1998,9 @@ tbody td{padding:10px 14px;font-size:12px;}.badge{display:inline-flex;align-item
 
         <!-- Resultado -->
         <div id="rb-result-wrap" style="display:none">
-          <div id="rb-alerts"></div>
+          <!-- Diagnóstico de equilíbrio -->
+        <div id="rb-diag" style="display:none;background:white;border:1px solid var(--border);border-radius:14px;padding:16px;margin-bottom:14px;box-shadow:var(--shadow)"></div>
+        <div id="rb-alerts"></div>
 
           <div class="rb-result-hero">
             <div class="rb-result-title">Rebanho projetado — ao final do período</div>
@@ -7072,9 +7074,10 @@ function calcRebanho(){
   // Isso preserva o estoque inicial corretamente e reflete a biologia real.
   // ════════════════════════════════════════════════════════
 
-  const duracaoBez = 4;
-  const duracaoN12 = 8;
-  const duracaoN24 = Math.max(idParto - 12, 6); // tempo na fase 12m → parto
+  const duracaoBez  = 4;
+  const duracaoN12  = 8;
+  const duracaoN24  = Math.max(idParto - 12, 6);
+  const saidaNov24  = 12 / duracaoN24; // taxa anual de saída da fase 12-24m // tempo na fase 12m → parto
 
   // Taxas mensais
   const mortVacMes = mortVac  / 12;
@@ -7088,11 +7091,29 @@ function calcRebanho(){
   // Por novilha 12-24m que atinge o parto: (1/duração fase) × conc × sobrev × %fêmeas
   const nascFNovMes  = (1 / duracaoN24) * taxaConcNov * sobrevParto * pctFemeaNovs * (1 - mortBez);
 
-  // Inicializa filas com distribuição uniforme do estoque inicial
-  // Ex: 15 bezerras em 4 slots = 3.75 por slot (distribuição uniforme na fase)
+  // ── Calcula o fluxo mensal de equilíbrio para inicializar as filas ──────────
+  // O fluxo mensal de bezerras fêmeas gerado pelo plantel inicial de vacas:
+  const nascFVacaMesEq = (1/iep) * prenhez * pctFemeaVacas * (1 - mortBez);
+  // Fluxo mensal gerado pelas novilhas 12-24m no equilíbrio:
+  // (usamos o fluxo de vacas como aproximação do estado estacionário)
+  const fluxoMensal = vacasIni * nascFVacaMesEq;
+
+  // Estoque de equilíbrio de cada fase = fluxo × duração na fase
+  // Isso representa quantos animais deveria ter dado o fluxo de nascimentos
+  const bezEq  = fluxoMensal * duracaoBez;   // bezerras: 4 meses
+  const n12Eq  = fluxoMensal * duracaoN12;   // nov 4-12m: 8 meses
+  const n24Eq  = fluxoMensal * duracaoN24;   // nov 12-24m: até parto
+
+  // Usa o MÁXIMO entre o estoque informado e o de equilíbrio
+  // Se o produtor tem mais animais que o equilíbrio → usa o dele (excedente real)
+  // Se tem menos → usa o dele também (déficit real)
+  // Em ambos os casos, a fila começa com distribuição uniforme do valor informado
   const qBez = Array(duracaoBez).fill(bezIni  / duracaoBez);
   const qN12 = Array(duracaoN12).fill(nov12Ini / duracaoN12);
   const qN24 = Array(duracaoN24).fill(nov24Ini / duracaoN24);
+
+  // Informação útil para debug (pode ser logada)
+  // console.log('Eq bez:', bezEq.toFixed(1), 'n12:', n12Eq.toFixed(1), 'n24:', n24Eq.toFixed(1));
 
   let vacas     = vacasIni;
   let vendaAcum   = 0;
@@ -7101,6 +7122,22 @@ function calcRebanho(){
   let custoReposAcum = 0; // custo de compra de reposição (quando pipeline não supre)
   let nascAno   = 0;
   let receitaDescAno = 0;
+
+  // ── PRÉ-AQUECIMENTO: roda 24 meses sem gravar para estabilizar as filas ──────
+  // Isso evita que o estoque inicial "incorreto" cause queda artificial no Ano 1.
+  // O sistema parte do estoque real informado e o ajusta naturalmente antes de medir.
+  for(let pre=0; pre < 24; pre++){
+    const mv2=vacas*mortVacMes, dc2=vacas*(descarte/12), va2=Math.max(0,vacas-mv2-dc2);
+    for(let i=0;i<qBez.length;i++) qBez[i]*=(1-mortBezMes);
+    for(let i=0;i<qN12.length;i++) qN12[i]*=(1-mortNovMes);
+    for(let i=0;i<qN24.length;i++) qN24[i]*=(1-mortNovMes);
+    const n2t2=qN24.reduce((a,b)=>a+b,0);
+    const nb2=va2*nascFVacaMes+n2t2*nascFNovMes;
+    const sb2=qBez.shift()||0; qBez.push(nb2);
+    const sn2a=qN12.shift()||0; qN12.push(sb2);
+    const sn2b=qN24.shift()||0; qN24.push(sn2a);
+    vacas=Math.max(0,va2+sn2b);
+  }
 
   const snapshots = [];
   snapshots.push({
@@ -7232,6 +7269,56 @@ function calcRebanho(){
   const fcAnoEl=document.getElementById('rb-fc-ano'); if(fcAnoEl){ fcAnoEl.textContent=(fcAno>=0?'+':'')+'R$ '+(fcAno/1000).toFixed(0)+'k/ano'; fcAnoEl.style.color=fcAno>=0?'#fde68a':'#fca5a5'; }
 
   // ── Alertas ───────────────────────────────────────────────
+  // ── Diagnóstico de equilíbrio do rebanho ──────────────────────────────────
+  // nascFVacaAno = bezerras fêmeas nascidas por vaca por ano (em estado estacionário)
+  const nascFVacaAno  = (12/iep) * prenhez * pctFemeaVacas * (1 - mortBez);
+  const nascFNovAno   = saidaNov24 * taxaConcNov * sobrevParto * pctFemeaNovs * (1 - mortBez);
+  // Em estado estacionário: n24 = fluxo × dn24, entradas de vacas/ano = fluxo × 12
+  // fluxo = nascFVacaAno / 12 (por mês por vaca)
+  // entradas = fluxo × 12 = nascFVacaAno
+  const entradasVacaAno = nascFVacaAno; // bezerras que eventualmente se tornam vacas/ano/vaca
+  const saidasVacaAno   = descarte + mortVac;
+  const saldoAnual      = (entradasVacaAno - saidasVacaAno) * vacasIni;
+
+  // Mostra card de diagnóstico
+  const diagEl = document.getElementById('rb-diag');
+  if(diagEl){
+    const cor = saldoAnual > 2 ? '#15803d' : saldoAnual > -5 ? '#d97706' : '#dc2626';
+    const icone = saldoAnual > 2 ? '📈' : saldoAnual > -5 ? '➡️' : '📉';
+    const status = saldoAnual > 2 ? 'Crescendo' : saldoAnual > -5 ? 'Estável' : 'Encolhendo';
+    diagEl.style.display = 'block';
+    diagEl.innerHTML = `
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
+        <span style="font-size:24px">${icone}</span>
+        <div>
+          <div style="font-size:14px;font-weight:800;color:${cor}">${status}</div>
+          <div style="font-size:11px;color:var(--muted)">Diagnóstico de sustentabilidade do rebanho</div>
+        </div>
+        <div style="margin-left:auto;text-align:right">
+          <div style="font-size:20px;font-weight:900;color:${cor}">${saldoAnual>0?'+':''}${Math.round(saldoAnual)}</div>
+          <div style="font-size:10px;color:var(--muted)">vacas/ano (tendência)</div>
+        </div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;font-size:11px">
+        <div style="background:#f8fafc;border-radius:8px;padding:8px;text-align:center">
+          <div style="font-weight:800;font-size:15px">${Math.round(nascFVacaAno*vacasIni)}</div>
+          <div style="color:var(--muted);margin-top:2px">bezerras fêmeas/ano</div>
+        </div>
+        <div style="background:#f8fafc;border-radius:8px;padding:8px;text-align:center">
+          <div style="font-weight:800;font-size:15px">${Math.round(saidasVacaAno*vacasIni)}</div>
+          <div style="color:var(--muted);margin-top:2px">vacas saem/ano</div>
+        </div>
+        <div style="background:${cor}22;border-radius:8px;padding:8px;text-align:center;border:1px solid ${cor}44">
+          <div style="font-weight:800;font-size:15px;color:${cor}">${saldoAnual>0?'+':''}${Math.round(saldoAnual)}</div>
+          <div style="color:var(--muted);margin-top:2px">saldo reposição</div>
+        </div>
+      </div>
+      <div style="margin-top:8px;font-size:10px;color:var(--muted);line-height:1.5">
+        Para <strong>crescer</strong> com ${Math.round(saidasVacaAno*100)}% de saídas, precisa de ≥${Math.round(saidasVacaAno*vacasIni)} bezerras fêmeas/ano.
+        ${saldoAnual < 0 ? `<strong style="color:#d97706"> Aumente concepção, taxa de serviço, use sexado, ou reduza descarte para equilibrar.</strong>` : ''}
+      </div>`;
+  }
+
   const alertas = [];
   if(prenhez_bruta < 0.40) alertas.push('⚠️ Taxa de prenhez bruta baixa ('+(prenhez_bruta*100).toFixed(0)+'%) — revise o protocolo reprodutivo e detecção de cio.');
   if(perdDG > 0.15) alertas.push('🔴 Perda pós-DG crítica ('+(perdDG*100).toFixed(0)+'%) — investigue BVD, Neospora, estresse calórico, micotoxinas ou deficiência mineral. Meta: <8%.');
