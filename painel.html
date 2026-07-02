@@ -2760,6 +2760,8 @@ const refs=[
  fn:()=>{const vals=Object.values(_dietasBenchCache).filter(d=>d.cvd>0).map(d=>d.cvd);return vals.length?vals.reduce((a,b)=>a+b,0)/vals.length:0;}},
 {key:'_rmca',l:'RMCA Médio/dia',u:' R$',ref:0,meta:5000,icon:'📈',desc:'Retorno Menos Custo Alimentar médio das fazendas com dieta cadastrada',dec:0,
  fn:()=>{const vals=Object.values(_dietasBenchCache).filter(d=>d.rmca>0).map(d=>d.rmca);return vals.length?vals.reduce((a,b)=>a+b,0)/vals.length:0;}},
+{key:'_custoLitro',l:'Custo/litro de leite',u:' R$',ref:0.80,meta:0.50,icon:'🥛',desc:'Custo alimentar por litro de leite produzido — quanto custa alimentar para produzir 1L',dec:3,lowerIsBetter:true,
+ fn:()=>{const vals=Object.values(_dietasBenchCache).filter(d=>d.custoLitro>0).map(d=>d.custoLitro);return vals.length?vals.reduce((a,b)=>a+b,0)/vals.length:0;}},
 ];
 document.getElementById('bm-cards').innerHTML=refs.map(r=>{
 const val=r.fn?r.fn(at):r.pctOf?(()=>{
@@ -2943,6 +2945,45 @@ if(dietaFarms.length > 0 && bmDietaWrap){
     scales:{
       x:{title:{display:true,text:'Produção L/vaca/dia',color:'#94a3b8',font:{size:10}},...SY,ticks:{color:'#94a3b8'}},
       y:{title:{display:true,text:'RMCA/animal/dia R$',color:'#94a3b8',font:{size:10}},...SY,ticks:{color:'#94a3b8',callback:v=>'R$'+v.toFixed(0)}},
+    },
+  });
+}
+
+// ── SCATTER Custo/litro × Produção (só se tiver dietas) ─────────────────────
+const scCL = enriched.filter(d=>d.prod>0&&d.custoLitro>0).map(d=>({
+  x: d.prod, y: d.custoLitro, label: d.label, vacas: d.totalVacas||50,
+}));
+if(scCL.length > 0){
+  // Cria container para o scatter se não existir
+  let scCLWrap = document.getElementById('bm-scat-cl-wrap');
+  if(!scCLWrap){
+    scCLWrap = document.createElement('div');
+    scCLWrap.id = 'bm-scat-cl-wrap';
+    scCLWrap.className = 'cc';
+    scCLWrap.style.marginBottom='14px';
+    scCLWrap.innerHTML = '<div class="cc-hdr"><span class="cc-ico">🎯</span><span class="cc-title">Custo/litro de leite × Produção L/vaca — quem produz mais com menor custo?</span></div><canvas id="ch-scat-cl" height="240"></canvas>';
+    const diagCharts = document.getElementById('bm-dieta-charts');
+    if(diagCharts) diagCharts.appendChild(scCLWrap);
+  }
+  mk('ch-scat-cl','scatter',{datasets:[{
+    label:'Fazendas',
+    data: scCL,
+    backgroundColor: scCL.map(p=>p.y<=0.50?'rgba(21,128,61,0.75)':p.y<=0.80?'rgba(217,119,6,0.75)':'rgba(220,38,38,0.75)'),
+    pointRadius: scCL.map(p=>Math.max(5,Math.min(16,Math.sqrt(p.vacas)*0.65))),
+    pointHoverRadius:12,borderColor:'rgba(255,255,255,0.7)',borderWidth:1.5,
+  }]},{
+    plugins:{legend:{display:false},
+      tooltip:{callbacks:{label:c=>`${c.raw.label} — Prod: ${c.raw.x.toFixed(1)}L | Custo/L: R$${c.raw.y.toFixed(3)}`}},
+      annotation:{annotations:{
+        meta:{type:'line',yMin:0.50,yMax:0.50,borderColor:'#15803d',borderWidth:1.5,borderDash:[5,4],
+          label:{display:true,content:'Meta R$0,50/L',color:'#15803d',font:{size:8,weight:'bold'},position:'end',backgroundColor:'rgba(240,253,244,.9)',padding:{x:4,y:2},borderRadius:4}},
+        ref:{type:'line',yMin:0.80,yMax:0.80,borderColor:'#d97706',borderWidth:1,borderDash:[4,4],
+          label:{display:true,content:'Ref R$0,80/L',color:'#92400e',font:{size:8},position:'start',backgroundColor:'rgba(255,251,235,.9)',padding:{x:4,y:2},borderRadius:4}},
+      }},
+    },
+    scales:{
+      x:{title:{display:true,text:'Produção L/vaca/dia',color:'#94a3b8',font:{size:10}},...SY,ticks:{color:'#94a3b8'}},
+      y:{title:{display:true,text:'Custo/litro R$',color:'#94a3b8',font:{size:10}},...SY,ticks:{color:'#94a3b8',callback:v=>'R$'+v.toFixed(2)}},
     },
   });
 }
@@ -5831,12 +5872,21 @@ manejo_pts = Math.min(manejo_pts, 20);
 // ═══════════════════════════════════════════════════════════════
 // TOTAL
 // ═══════════════════════════════════════════════════════════════
-const total = Math.min(prod_pts + qual_pts + manejo_pts, 100);
+// Bônus econômico: custo/litro via dieta cadastrada (0-5 pts)
+let econ_pts = 0;
+if(typeof _dietasBenchCache !== 'undefined' && d.id && _dietasBenchCache[d.id]){
+  const cl = _dietasBenchCache[d.id].custoLitro || 0;
+  if(cl > 0){
+    econ_pts = cl <= 0.50 ? 5 : cl <= 0.65 ? 3 : cl <= 0.80 ? 1 : 0;
+  }
+}
+const total = Math.min(100, prod_pts + qual_pts + manejo_pts + econ_pts);
 return {
   total,
   prod:   prod_pts,
   qual:   qual_pts,
   manejo: manejo_pts,
+  econ:   econ_pts,
   temVisita: !!v,
 };
 }
@@ -6607,7 +6657,7 @@ function renderLotes() {
         <td><input class="dt-inp" style="min-width:160px" value="${a.nome||''}" oninput="dietaLotes.find(l=>l.id==='${lote.id}').alimentos[${i}].nome=this.value;atualizarTotaisLote('${lote.id}')" placeholder="Nome do alimento"></td>
         <td><input class="dt-inp" style="width:80px;text-align:right" type="number" step="0.1" value="${a.kg||0}" oninput="dietaLotes.find(l=>l.id==='${lote.id}').alimentos[${i}].kg=parseFloat(this.value)||0;atualizarTotaisLote('${lote.id}')" placeholder="kg"></td>
         <td><input class="dt-inp" style="width:90px;text-align:right" type="number" step="0.01" value="${a.custo||0}" oninput="dietaLotes.find(l=>l.id==='${lote.id}').alimentos[${i}].custo=parseFloat(this.value)||0;atualizarTotaisLote('${lote.id}')" placeholder="R$/kg"></td>
-        <td style="font-weight:700;color:#0f172a;white-space:nowrap">R$ ${fmt2(subtotal)}<span style="font-size:9px;color:var(--muted);margin-left:4px">/vaca/dia</span></td>
+        <td id="dtv-sub-${lote.id}-${i}" style="font-weight:700;color:#0f172a;white-space:nowrap">R$ ${fmt2(subtotal)}<span style="font-size:9px;color:var(--muted);margin-left:4px">/vaca/dia</span></td>
         <td style="text-align:center"><span style="font-size:10px;color:var(--muted)">${pct.toFixed(1)}%</span></td>
         <td><button class="dt-del-btn" onclick="removeAlimento('${lote.id}',${i})">🗑</button></td>
       </tr>`;
@@ -6661,31 +6711,30 @@ function renderLotes() {
             <input class="dt-inp" type="number" step="0.1" value="${lote.nul||0}" oninput="dietaLotes.find(l=>l.id==='${lote.id}').nul=parseFloat(this.value)||0" placeholder="mg/dL">
           </div>
         </div>
-        <!-- Card métricas principais -->
+        <!-- Card métricas principais — IDs para update sem scroll -->
         <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:14px">
           <div class="dt-metric" style="background:#f0fdf4;border:1px solid #86efac">
             <div style="font-size:10px;font-weight:700;color:var(--muted);margin-bottom:3px">Custo/vaca/dia</div>
-            <div style="font-size:24px;font-weight:900;color:#15803d">R$ ${fmt2(c.custoPorVaca)}</div>
+            <div id="dtv-cvd-${lote.id}" style="font-size:24px;font-weight:900;color:#15803d">R$ ${fmt2(c.custoPorVaca)}</div>
           </div>
           <div class="dt-metric" style="background:#fef9c3;border:1px solid #fcd34d">
             <div style="font-size:10px;font-weight:700;color:var(--muted);margin-bottom:3px">Custo/litro de leite</div>
-            <div style="font-size:24px;font-weight:900;color:#92400e">R$ ${fmt2(c.custoLitro)}</div>
-            <div style="font-size:10px;color:#a16207;margin-top:2px">CVD ÷ ${c.prod.toFixed(1)} L/vaca</div>
+            <div id="dtv-cl-${lote.id}" style="font-size:24px;font-weight:900;color:#92400e">R$ ${fmt2(c.custoLitro)}</div>
+            <div id="dtv-cl-sub-${lote.id}" style="font-size:10px;color:#a16207;margin-top:2px">CVD ÷ ${c.prod.toFixed(1)} L/vaca</div>
           </div>
-          <div class="dt-metric" style="background:${c.margemLitro>=0?'#f0fdf4':'#fef2f2'};border:1px solid ${c.margemLitro>=0?'#86efac':'#fca5a5'}">
+          <div id="dtv-mg-box-${lote.id}" class="dt-metric" style="background:${c.margemLitro>=0?'#f0fdf4':'#fef2f2'};border:1px solid ${c.margemLitro>=0?'#86efac':'#fca5a5'}">
             <div style="font-size:10px;font-weight:700;color:var(--muted);margin-bottom:3px">Margem/litro</div>
-            <div style="font-size:24px;font-weight:900;color:${c.margemLitro>=0?'#15803d':'#dc2626'}">${c.margemLitro>=0?'+':''}R$ ${fmt2(c.margemLitro)}</div>
-            <div style="font-size:10px;color:var(--muted);margin-top:2px">Preço R$${fmt2(c.preco)} − Custo R$${fmt2(c.custoLitro)}</div>
+            <div id="dtv-mg-${lote.id}" style="font-size:24px;font-weight:900;color:${c.margemLitro>=0?'#15803d':'#dc2626'}">${c.margemLitro>=0?'+':''}R$ ${fmt2(c.margemLitro)}</div>
           </div>
-          <div class="dt-metric" style="background:${rmcaBg};border:1px solid ${c.rmcaVaca>=0?'#86efac':'#fca5a5'}">
+          <div id="dtv-rmca-box-${lote.id}" class="dt-metric" style="background:${rmcaBg};border:1px solid ${c.rmcaVaca>=0?'#86efac':'#fca5a5'}">
             <div style="font-size:10px;font-weight:700;color:var(--muted);margin-bottom:3px">RMCA/animal/dia</div>
-            <div style="font-size:24px;font-weight:900;color:${rmcaCol}">${c.rmcaVaca>=0?'+':''}R$ ${fmt2(c.rmcaVaca)}</div>
+            <div id="dtv-rmca-${lote.id}" style="font-size:24px;font-weight:900;color:${rmcaCol}">${c.rmcaVaca>=0?'+':''}R$ ${fmt2(c.rmcaVaca)}</div>
             <div style="font-size:10px;color:var(--muted);margin-top:2px">Total: R$ ${fmt2(c.rmca)}/dia</div>
           </div>
         </div>
 
-        <!-- Métricas calculadas -->
-        <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:8px;margin-bottom:16px">
+        <!-- Linha compacta: custo total, retorno e MS -->
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:16px">
           <div class="dt-metric">
             <div class="dt-metric-val" style="color:#0891b2;font-size:16px">R$ ${fmt2(c.custoTotal)}</div>
             <div class="dt-metric-lbl">Custo total/dia</div>
@@ -6693,24 +6742,6 @@ function renderLotes() {
           <div class="dt-metric">
             <div class="dt-metric-val" style="color:#15803d;font-size:16px">R$ ${fmt2(c.retornoDia)}</div>
             <div class="dt-metric-lbl">Retorno/dia</div>
-          </div>
-          <div class="dt-metric" style="background:${rmcaBg};border:1px solid ${c.rmca>=0?'#86efac':'#fca5a5'}">
-            <div class="dt-metric-val" style="color:${rmcaCol};font-size:16px">${c.rmca>=0?'+':''}R$ ${fmt2(c.rmca)}</div>
-            <div class="dt-metric-lbl">RMCA/dia</div>
-          </div>
-          <div class="dt-metric" style="background:${rmcaBg}">
-            <div class="dt-metric-val" style="color:${rmcaCol};font-size:16px">${c.rmca>=0?'+':''}R$ ${fmt2(c.rmcaVaca)}</div>
-            <div class="dt-metric-lbl">RMCA/animal/dia</div>
-          </div>
-          <div class="dt-metric" style="background:#fef9c3;border:1px solid #fcd34d">
-            <div class="dt-metric-val" style="color:#92400e;font-size:16px">R$ ${fmt2(c.custoLitro)}</div>
-            <div class="dt-metric-lbl">Custo/litro leite</div>
-            <div style="font-size:9px;color:#a16207;margin-top:2px">CVD ÷ L/vaca</div>
-          </div>
-          <div class="dt-metric" style="background:${c.margemLitro>=0?'#f0fdf4':'#fef2f2'};border:1px solid ${c.margemLitro>=0?'#86efac':'#fca5a5'}">
-            <div class="dt-metric-val" style="color:${c.margemLitro>=0?'#15803d':'#dc2626'};font-size:16px">${c.margemLitro>=0?'+':''}R$ ${fmt2(c.margemLitro)}</div>
-            <div class="dt-metric-lbl">Margem/litro</div>
-            <div style="font-size:9px;color:var(--muted);margin-top:2px">Preço − Custo/L</div>
           </div>
           <div class="dt-metric">
             <div class="dt-metric-val" style="font-size:16px">${fmt2(c.ms)} kg</div>
@@ -6739,7 +6770,7 @@ function renderLotes() {
             <tfoot><tr style="background:#f0fdf4;font-weight:800">
               <td colspan="2" style="padding:10px 12px;font-size:11px;color:#15803d">Total</td>
               <td></td>
-              <td style="padding:10px 12px;font-weight:900;color:#0f172a">R$ ${fmt2(c.custoPorVaca)}/vaca/dia</td>
+              <td id="dtv-total-${lote.id}" style="padding:10px 12px;font-weight:900;color:#0f172a">R$ ${fmt2(c.custoPorVaca)}/vaca/dia</td>
               <td style="padding:10px 12px;font-size:10px;color:var(--muted)">${lote.alimentos.reduce((s,a)=>s+(parseFloat(a.kg)||0),0).toFixed(1)} kg MS est.</td>
               <td></td>
             </tr></tfoot>
@@ -6757,70 +6788,51 @@ function toggleLote(id){
 }
 
 function atualizarTotaisLote(id){
-  // Atualiza apenas os elementos de resultado sem recriar o DOM
-  // Isso evita que o foco do input seja perdido
+  // Atualiza APENAS textContent/style — nunca innerHTML — para não perder foco
   const lote = dietaLotes.find(l=>l.id===id);
   if(!lote) return;
   const c = calcLote(lote);
-  const rmcaOk = c.rmca >= 0;
+  const rmcaOk  = c.rmca >= 0;
   const rmcaCol = rmcaOk ? '#15803d' : '#dc2626';
   const rmcaBg  = rmcaOk ? '#f0fdf4' : '#fef2f2';
+  const t = (sel,v) => { const el=document.getElementById(sel); if(el) el.textContent=v; };
+  const s = (sel,p,v) => { const el=document.getElementById(sel); if(el) el.style[p]=v; };
 
-  // Atualiza o badge de RMCA no header do lote
+  // Badge RMCA no header
   const badge = document.querySelector('#dt-lote-'+id+' .dt-lote-badge');
-  if(badge){
-    badge.textContent = 'RMCA '+(c.rmca>=0?'+':'')+'R$ '+fmt2(c.rmca)+'/dia';
-    badge.style.background = rmcaBg;
-    badge.style.color = rmcaCol;
-  }
+  if(badge){ badge.textContent='RMCA '+(c.rmca>=0?'+':'')+'R$ '+fmt2(c.rmca)+'/dia'; badge.style.background=rmcaBg; badge.style.color=rmcaCol; }
 
-  // Atualiza o card de métricas principais (CVD, custo/litro, margem, RMCA/animal)
-  const heroCard = document.querySelector('#dt-lote-'+id+' .dt-lote-body > div:nth-child(2)');
-  if(heroCard) heroCard.innerHTML = `
-    <div class="dt-metric" style="background:#f0fdf4;border:1px solid #86efac">
-      <div style="font-size:10px;font-weight:700;color:var(--muted);margin-bottom:3px">Custo/vaca/dia</div>
-      <div style="font-size:24px;font-weight:900;color:#15803d">R$ ${fmt2(c.custoPorVaca)}</div>
-    </div>
-    <div class="dt-metric" style="background:#fef9c3;border:1px solid #fcd34d">
-      <div style="font-size:10px;font-weight:700;color:var(--muted);margin-bottom:3px">Custo/litro de leite</div>
-      <div style="font-size:24px;font-weight:900;color:#92400e">R$ ${fmt2(c.custoLitro)}</div>
-      <div style="font-size:10px;color:#a16207;margin-top:2px">CVD ÷ ${c.prod.toFixed(1)} L/vaca</div>
-    </div>
-    <div class="dt-metric" style="background:${rmcaBg};border:1px solid ${c.margemLitro>=0?'#86efac':'#fca5a5'}">
-      <div style="font-size:10px;font-weight:700;color:var(--muted);margin-bottom:3px">Margem/litro</div>
-      <div style="font-size:24px;font-weight:900;color:${c.margemLitro>=0?'#15803d':'#dc2626'}">${c.margemLitro>=0?'+':''}R$ ${fmt2(c.margemLitro)}</div>
-    </div>
-    <div class="dt-metric" style="background:${rmcaBg};border:1px solid ${rmcaOk?'#86efac':'#fca5a5'}">
-      <div style="font-size:10px;font-weight:700;color:var(--muted);margin-bottom:3px">RMCA/animal/dia</div>
-      <div style="font-size:24px;font-weight:900;color:${rmcaCol}">${c.rmcaVaca>=0?'+':''}R$ ${fmt2(c.rmcaVaca)}</div>
-    </div>`;
+  // Cards de métricas — apenas textContent
+  t('dtv-cvd-'+id,   'R$ '+fmt2(c.custoPorVaca));
+  t('dtv-cl-'+id,    'R$ '+fmt2(c.custoLitro));
+  t('dtv-cl-sub-'+id,'CVD ÷ '+c.prod.toFixed(1)+' L/vaca');
+  t('dtv-mg-'+id,    (c.margemLitro>=0?'+':'')+'R$ '+fmt2(c.margemLitro));
+  s('dtv-mg-'+id,    'color', c.margemLitro>=0?'#15803d':'#dc2626');
+  s('dtv-mg-box-'+id,'background', rmcaBg);
+  t('dtv-rmca-'+id,  (c.rmcaVaca>=0?'+':'')+'R$ '+fmt2(c.rmcaVaca));
+  s('dtv-rmca-'+id,  'color', rmcaCol);
+  s('dtv-rmca-box-'+id,'background', rmcaBg);
 
-  // Atualiza as células de custo por alimento na tabela
-  const rows = document.querySelectorAll('#dt-lote-'+id+' tbody tr');
-  lote.alimentos.forEach((a, i) => {
-    if(!rows[i]) return;
-    const subtotal = (parseFloat(a.kg)||0) * (parseFloat(a.custo)||0);
-    const pct = c.custoPorVaca > 0 ? (subtotal/c.custoPorVaca*100).toFixed(1) : 0;
-    const cells = rows[i].querySelectorAll('td');
-    if(cells[3]) cells[3].innerHTML = `<strong>R$ ${fmt2(subtotal)}</strong><span style="font-size:9px;color:var(--muted);margin-left:4px">/vaca/dia</span>`;
-    if(cells[4]) cells[4].innerHTML = `<span style="font-size:10px;color:var(--muted)">${pct}%</span>`;
+  // Células de custo por alimento — por ID direto
+  lote.alimentos.forEach((a,i) => {
+    const subtotal = (parseFloat(a.kg)||0)*(parseFloat(a.custo)||0);
+    const pct = c.custoPorVaca>0?(subtotal/c.custoPorVaca*100).toFixed(1):0;
+    const subEl = document.getElementById('dtv-sub-'+id+'-'+i);
+    const pctEl = document.getElementById('dtv-pct-'+id+'-'+i);
+    if(subEl) subEl.textContent = 'R$ '+fmt2(subtotal)+' /vaca/dia';
+    if(pctEl) pctEl.textContent = pct+'%';
   });
 
-  // Atualiza o total no tfoot
-  const tfoot = document.querySelector('#dt-lote-'+id+' tfoot td:nth-child(4)');
-  if(tfoot) tfoot.innerHTML = `<strong>R$ ${fmt2(c.custoPorVaca)}/vaca/dia</strong>`;
+  // Total no tfoot
+  t('dtv-total-'+id, 'R$ '+fmt2(c.custoPorVaca)+'/vaca/dia');
 
-  // Atualiza a barra de RMCA
-  if(c.retornoDia > 0) {
+  // Barra RMCA
+  if(c.retornoDia>0){
     const bar = document.querySelector('#dt-lote-'+id+' .dt-rmca-fill');
-    if(bar){
-      bar.style.width = Math.min(c.custoTotal/c.retornoDia*100, 100).toFixed(1)+'%';
-      bar.style.background = c.rmca>=0 ? '#22c55e' : '#dc2626';
-    }
-    const pctText = document.querySelector('#dt-lote-'+id+' .dt-rmca-fill')?.parentElement?.nextElementSibling;
+    if(bar){ bar.style.width=Math.min(c.custoTotal/c.retornoDia*100,100).toFixed(1)+'%'; bar.style.background=c.rmca>=0?'#22c55e':'#dc2626'; }
   }
 
-  // Atualiza o hero consolidado no topo
+  // Hero consolidado no topo (sem recriar DOM)
   atualizarHeroConsolidado();
 }
 
@@ -7207,11 +7219,7 @@ function calcRebanho(){
   const mortBezMes = mortBez  / 12;
   const descMes    = descarte / 12;
 
-  // Nascimentos mensais de fêmeas:
-  // Por vaca: (1/IEP) × prenhez_efetiva × %fêmeas × sobrev_bezerra
-  // (nascFVacaMes já calculado acima)
-  // Por novilha 12-24m que atinge o parto: (1/duração fase) × conc × sobrev × %fêmeas
-// (nascFNovMes já calculado acima)
+  // nascFVacaMes e nascFNovMes já declarados acima (linha 7180)
 
   // Inicializa filas com distribuição uniforme do estoque informado pelo usuário
   // Respeita os valores reais de cada categoria — não tenta "corrigir" para equilíbrio
