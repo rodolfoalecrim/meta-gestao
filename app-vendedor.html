@@ -100,19 +100,25 @@ body{font-family:Inter,sans-serif;background:var(--bg);color:var(--text);height:
 .dash-lista-item:last-child{border-bottom:none}
 .dash-lista-item:hover{background:var(--surface2)}
 /* BENCHMARK CARDS */
-.bm-grid-2{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px}
-.bm-hero{background:white;border:1px solid var(--border);border-radius:14px;padding:14px;box-shadow:var(--shadow);text-align:center}
-.bm-hero-icon{font-size:28px;margin-bottom:8px}
-.bm-hero-val{font-size:28px;font-weight:900}
-.bm-hero-lbl{font-size:11px;color:var(--muted);margin-top:4px;font-weight:600}
-.bm-card{background:white;border:1px solid var(--border);border-radius:14px;padding:14px;box-shadow:var(--shadow);margin-bottom:10px;position:relative}
-.bm-card-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
-.bm-card-lbl{font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px}
-.bm-card-status{font-size:18px}
-.bm-card-val{font-size:30px;font-weight:900;line-height:1}
-.bm-bar{height:6px;background:#f1f5f9;border-radius:3px;margin-top:10px;overflow:hidden}
+/* Benchmarks — estilo idêntico ao Painel */
+.bm-grid-app{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margin-bottom:14px}
+.bm{background:white;border:1px solid var(--border);border-radius:14px;padding:16px;box-shadow:var(--shadow);position:relative;overflow:hidden}
+.bm-top{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+.bm-icon{font-size:22px;flex-shrink:0}
+.bm-lbl{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;font-weight:600}
+.bm-val{font-size:26px;font-weight:800;margin-bottom:4px;letter-spacing:-.5px}
+.bm-ref{font-size:10px;color:var(--dim);margin-bottom:10px}
+.bm-bar{height:6px;background:#f1f5f9;border-radius:3px;overflow:hidden;margin-bottom:6px}
 .bm-fill{height:100%;border-radius:3px;transition:width .8s}
-.bm-refs{display:flex;justify-content:space-between;font-size:10px;color:var(--dim);margin-top:4px}
+.bm-refs-row{display:flex;justify-content:space-between;font-size:10px;color:var(--dim)}
+.bm-ok{color:#16a34a}.bm-warn{color:#d97706}.bm-bad{color:#dc2626}
+.bm-status{margin-left:auto;font-size:18px}
+/* Cards de destaque (prod total / clientes) */
+.bm-dest-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px}
+.bm-dest{background:white;border:1px solid var(--border);border-radius:14px;padding:16px;box-shadow:var(--shadow);text-align:center}
+.bm-dest-icon{font-size:28px;margin-bottom:8px}
+.bm-dest-val{font-size:28px;font-weight:900}
+.bm-dest-lbl{font-size:11px;color:var(--muted);margin-top:4px;font-weight:600}
 /* DETAIL */
 .detail-hdr{background:linear-gradient(135deg,var(--GD),var(--G));border-radius:16px;padding:20px;margin-bottom:14px;color:white}
 .detail-avatar{width:48px;height:48px;border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:800;background:rgba(255,255,255,.2);margin-bottom:12px}
@@ -188,7 +194,7 @@ body{font-family:Inter,sans-serif;background:var(--bg);color:var(--text);height:
 <div id="login-screen">
   <div class="login-box">
     <div class="login-logo">
-      <svg width="48" height="48" viewBox="0 0 32 32" fill="none"><circle cx="16" cy="16" r="16" fill="#052e16"/><path d="M8 22 L13 10 L16 17 L19 10 L24 22" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      <img src="meta_logo.jpg" alt="Meta Nutrição" style="height:60px;width:auto;object-fit:contain">
     </div>
     <div class="login-title">Meta Gestão</div>
     <div class="login-sub">Acesso do Vendedor</div>
@@ -209,8 +215,7 @@ body{font-family:Inter,sans-serif;background:var(--bg);color:var(--text);height:
   <!-- TOPBAR -->
   <div class="topbar">
     <div class="topbar-logo">
-      <svg width="28" height="28" viewBox="0 0 32 32" fill="none"><circle cx="16" cy="16" r="16" fill="#052e16"/><path d="M8 22 L13 10 L16 17 L19 10 L24 22" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
-      meta
+      <img src="meta_logo.jpg" alt="Meta" style="height:32px;width:auto;object-fit:contain">
     </div>
     <div class="topbar-title" id="topbar-title">Propriedades</div>
     <div class="topbar-right">
@@ -1224,7 +1229,7 @@ function renderDash() {
 // BENCHMARKS
 // ════════════════════════════════════════
 function renderBench() {
-  const at = meusClientes.filter(c => c.situacao==='ATIVO');
+  const at   = meusClientes.filter(c => c.situacao==='ATIVO');
   const wrap = document.getElementById('bench-wrap');
   if (!wrap) return;
   if (!at.length) {
@@ -1232,46 +1237,67 @@ function renderBench() {
     return;
   }
   ss('bench-subtitle', at.length+' clientes ativos · médias da carteira');
-  function avg(arr,k){const v=arr.filter(d=>parseFloat(d[k])>0);return v.length?v.reduce((s,d)=>s+parseFloat(d[k]),0)/v.length:0;}
-  function sumV(arr,k){return arr.reduce((s,d)=>s+(parseFloat(d[k])||0),0);}
-  const prodTotal = at.reduce((s,c)=>s+(parseFloat(c.media_prod)||0)*(parseFloat(c.lactacao)||parseFloat(c.vacas)||0),0);
-  const somL = at.reduce((s,c)=>s+(parseFloat(c.lactacao)||parseFloat(c.vacas)||0),0);
-  const mediaProd = somL>0?prodTotal/somL:0;
+  function avg(arr,k){ const v=arr.filter(d=>parseFloat(d[k])>0); return v.length?v.reduce((s,d)=>s+parseFloat(d[k]),0)/v.length:0; }
+  const somL     = at.reduce((s,c)=>s+(parseFloat(c.lactacao)||parseFloat(c.vacas)||0),0);
+  const prodTotal= at.reduce((s,c)=>s+(parseFloat(c.media_prod)||0)*(parseFloat(c.lactacao)||parseFloat(c.vacas)||0),0);
+  const mediaProd= somL>0?prodTotal/somL:0;
 
-  const bms = [
-    {icon:'🥛',lbl:'Média L/vaca/dia',val:mediaProd,fmt:v=>v.toFixed(1),unit:'L',ref:28,meta:37,lower:false},
-    {icon:'🐄',lbl:'Rebanho médio',val:avg(at,'vacas'),fmt:v=>Math.round(v),unit:' vacas',ref:60,meta:200,lower:false},
-    {icon:'🧈',lbl:'Gordura média',val:avg(at,'gordura'),fmt:v=>v.toFixed(2),unit:'%',ref:3.5,meta:4.0,lower:false},
-    {icon:'🧪',lbl:'Proteína média',val:avg(at,'proteina'),fmt:v=>v.toFixed(2),unit:'%',ref:3.1,meta:3.5,lower:false},
-    {icon:'🔬',lbl:'CCS médio',val:avg(at,'ccs'),fmt:v=>Math.round(v),unit:'k',ref:300,meta:150,lower:true},
-    {icon:'📅',lbl:'DEL médio',val:avg(at,'del'),fmt:v=>Math.round(v),unit:'d',ref:150,meta:120,lower:false},
+  const refs = [
+    {l:'Média L/vaca/dia',  u:'L',      ref:28,  meta:37,  icon:'🥛', desc:'Embrapa: 28L | Top 100: 35.4L | Meta: 37L', dec:1, val:mediaProd},
+    {l:'Rebanho Médio',     u:' vacas', ref:60,  meta:200, icon:'🐄', desc:'Média nacional: 60 | Meta carteira: 200',    dec:0, val:avg(at,'vacas')},
+    {l:'Gordura',           u:'%',      ref:3.5, meta:4.0, icon:'🧈', desc:'IN77 mínimo: 3.0% | Premium: 4.0%',         dec:2, val:avg(at,'gordura')},
+    {l:'Proteína',          u:'%',      ref:3.1, meta:3.5, icon:'🧪', desc:'IN77 mínimo: 2.9% | Premium: 3.5%',         dec:2, val:avg(at,'proteina')},
+    {l:'CCS Médio',         u:'k',      ref:300, meta:150, icon:'🔬', desc:'IN77: ≤500k | Qualidade: ≤200k | Meta: ≤150k', dec:0, val:avg(at,'ccs'), lower:true},
+    {l:'DEL Médio',         u:' d',     ref:150, meta:120, icon:'📅', desc:'DEL ideal: 120-150 dias', dec:0, val:avg(at,'del')},
+    {l:'NUL Médio',         u:' mg/dL', ref:12,  meta:18,  icon:'🧬', desc:'Meta: 12-18 mg/dL', dec:1, val:avg(at,'nul'), ideal:true, min:12, max:18},
   ];
 
-  let html = '<div class="bm-grid-2" style="margin-bottom:10px">';
-  html += '<div class="bm-hero"><div class="bm-hero-icon">🥛</div>'
-    +'<div class="bm-hero-val" style="color:#7c3aed">'+Math.round(prodTotal).toLocaleString('pt-BR')+'</div>'
-    +'<div class="bm-hero-lbl">Litros/dia total</div></div>';
-  html += '<div class="bm-hero"><div class="bm-hero-icon">🏡</div>'
-    +'<div class="bm-hero-val" style="color:#15803d">'+at.length+'</div>'
-    +'<div class="bm-hero-lbl">Clientes ativos</div></div>';
-  html += '</div>';
+  let html = '<div class="bm-dest-grid">'
+    +'<div class="bm-dest"><div class="bm-dest-icon">🥛</div>'
+    +'<div class="bm-dest-val" style="color:#7c3aed">'+Math.round(prodTotal).toLocaleString('pt-BR')+'</div>'
+    +'<div class="bm-dest-lbl">Litros/dia total</div></div>'
+    +'<div class="bm-dest"><div class="bm-dest-icon">🏡</div>'
+    +'<div class="bm-dest-val" style="color:#15803d">'+at.length+'</div>'
+    +'<div class="bm-dest-lbl">Clientes ativos</div></div>'
+    +'</div>';
 
-  bms.forEach(b => {
-    if (!b.val) return;
-    const ok = b.lower ? b.val<=b.meta : b.val>=b.meta;
-    const warn = b.lower ? b.val<=b.ref : b.val>=b.ref;
-    const col = ok?'#15803d':warn?'#d97706':'#dc2626';
-    const status = ok?'✅':warn?'⚠️':'❌';
-    const barW = b.lower
-      ? Math.max(0,Math.min(100,(1-(b.val-b.meta)/(b.ref-b.meta+.001))*100))
-      : Math.min(100,(b.val/b.meta)*100);
-    html += '<div class="bm-card">'
-      +'<div class="bm-card-top"><div class="bm-card-lbl">'+b.icon+' '+b.lbl+'</div><span class="bm-card-status">'+status+'</span></div>'
-      +'<div class="bm-card-val" style="color:'+col+'">'+b.fmt(b.val)+'<span style="font-size:14px;font-weight:600;opacity:.6;margin-left:4px">'+b.unit+'</span></div>'
-      +'<div class="bm-bar"><div class="bm-fill" style="width:'+barW+'%;background:'+col+'"></div></div>'
-      +'<div class="bm-refs"><span>Ref: '+b.ref+b.unit+'</span><span>Meta: '+b.meta+b.unit+'</span></div>'
+  html += '<div class="bm-grid-app">';
+  refs.forEach(function(r) {
+    var val = r.val || 0;
+    if (!val) return;
+    var cls, col, status;
+    if (r.ideal) {
+      var ok = val>=r.min&&val<=r.max;
+      cls=ok?'bm-ok':'bm-warn'; col=ok?'#16a34a':'#d97706'; status=ok?'✅':'⚠️';
+    } else if (r.lower) {
+      cls=val<=r.meta?'bm-ok':val<=r.ref?'bm-warn':'bm-bad';
+      col=val<=r.meta?'#16a34a':val<=r.ref?'#d97706':'#dc2626';
+      status=val<=r.meta?'✅':val<=r.ref?'⚠️':'❌';
+    } else {
+      cls=val>=r.meta?'bm-ok':val>=r.ref?'bm-warn':'bm-bad';
+      col=val>=r.meta?'#16a34a':val>=r.ref?'#d97706':'#dc2626';
+      status=val>=r.meta?'✅':val>=r.ref?'⚠️':'❌';
+    }
+    var fv = r.u==='%'?val.toFixed(r.dec)+'%'
+           : r.u===' mg/dL'?val.toFixed(r.dec)+r.u
+           : val>=1000?(val/1000).toFixed(1)+'k '+r.u.trim()
+           : val.toFixed(r.dec)+r.u;
+    var pct = r.lower
+      ? Math.max(0,Math.min(100,(1-(val-r.meta)/Math.max(r.ref-r.meta,1))*100))
+      : Math.min(100,(val/r.meta)*100);
+    var refLbl = r.ideal?'Min: '+r.min+r.u:'Ref: '+r.ref+r.u;
+    var metaLbl = r.ideal?'Max: '+r.max+r.u:'Meta: '+r.meta+r.u;
+    html += '<div class="bm">'
+      +'<div class="bm-top"><div class="bm-icon">'+r.icon+'</div>'
+      +'<div class="bm-lbl">'+r.l+'</div>'
+      +'<div class="bm-status">'+status+'</div></div>'
+      +'<div class="bm-val '+cls+'">'+fv+'</div>'
+      +'<div class="bm-ref">'+r.desc+'</div>'
+      +'<div class="bm-bar"><div class="bm-fill" style="width:'+pct.toFixed(0)+'%;background:'+col+'"></div></div>'
+      +'<div class="bm-refs-row"><span>'+refLbl+'</span><span>'+metaLbl+'</span></div>'
       +'</div>';
   });
+  html += '</div>';
   wrap.innerHTML = html;
 }
 
