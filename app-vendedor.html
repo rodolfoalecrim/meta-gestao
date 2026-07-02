@@ -1230,101 +1230,174 @@ function renderDash() {
 // BENCHMARKS
 // ════════════════════════════════════════
 function renderBench() {
-  // Usa TODOS os clientes ativos da Meta (não só do vendedor)
-  const at   = Object.values(todosClientes).filter(function(c){ return c.situacao==='ATIVO'; });
+  const at   = Object.values(todosClientes).filter(c => c.situacao==='ATIVO');
   const wrap = document.getElementById('bench-wrap');
   if (!wrap) return;
   if (!at.length) {
-    wrap.innerHTML = '<div style="text-align:center;padding:48px;color:var(--muted)"><div style="font-size:40px;margin-bottom:12px">📭</div><div style="font-size:14px;font-weight:700;color:var(--text)">Nenhum cliente ativo</div></div>';
+    wrap.innerHTML = '<div style="text-align:center;padding:48px;color:var(--muted)"><div style="font-size:40px">📭</div><div style="font-size:14px;font-weight:700;margin-top:12px">Nenhum cliente ativo</div></div>';
     return;
   }
-  var meus = meusClientes.filter(function(c){ return c.situacao==='ATIVO'; });
-  ss('bench-subtitle', 'Desempenho de '+at.length+' clientes ativos vs referências nacionais (Embrapa / MAPA / CNA 2024)');
+  const meus = meusClientes.filter(c => c.situacao==='ATIVO');
+  ss('bench-subtitle','Desempenho de '+at.length+' clientes ativos vs referências nacionais (Embrapa / MAPA / CNA 2024)');
 
-  function avg(arr, k) {
-    var v = arr.filter(function(d){ return parseFloat(d[k])>0; });
-    return v.length ? v.reduce(function(s,d){ return s+parseFloat(d[k]); },0)/v.length : 0;
-  }
-  function sum(arr, k) {
-    return arr.reduce(function(s,d){ return s+(parseFloat(d[k])||0); },0);
-  }
-  function pctOf(arr, key, ofKey) {
-    var pairs = arr.filter(function(d){ return d[key]>0&&d[ofKey]>0; });
-    return pairs.length ? pairs.reduce(function(s,d){ return s+(d[key]/d[ofKey]*100); },0)/pairs.length : 0;
-  }
+  function avg(arr,k){const v=arr.filter(d=>parseFloat(d[k])>0);return v.length?v.reduce((s,d)=>s+parseFloat(d[k]),0)/v.length:0;}
+  function sum(arr,k){return arr.reduce((s,d)=>s+(parseFloat(d[k])||0),0);}
+  function pctOf(arr,key,ofKey){const p=arr.filter(d=>d[key]>0&&d[ofKey]>0);return p.length?p.reduce((s,d)=>s+(d[key]/d[ofKey]*100),0)/p.length:0;}
 
-  // Mesmos indicadores do painel admin
-  var refs = [
-    {l:'Média L/vaca/dia',    u:'L',      ref:28,   meta:37,   icon:'🥛', desc:'Embrapa: 28L | Top 100 MilkPoint 2026: 35.4L | Premium: 37L', dec:1, val:avg(at,'media_prod')},
-    {l:'Tamanho Rebanho',     u:'vacas',  ref:60,   meta:200,  icon:'🐄', desc:'Média nacional: 60 | Meta carteira: 200',                     dec:0, val:at.length?sum(at,'vacas')/at.length:0},
-    {l:'Gordura',             u:'%',      ref:3.5,  meta:4.0,  icon:'🧈', desc:'IN77 mínimo: 3.0% | Premium: 4.0%',                          dec:2, val:avg(at,'gordura')},
-    {l:'Proteína',            u:'%',      ref:3.1,  meta:3.5,  icon:'🧪', desc:'IN77 mínimo: 2.9% | Premium: 3.5%',                          dec:2, val:avg(at,'proteina')},
-    {l:'DEL Médio',           u:'dias',   ref:175,  meta:160,  icon:'📅', desc:'Ideal 150-180 dias em lactação',                              dec:0, val:avg(at,'del'), ideal:true, min:150, max:180},
-    {l:'Prod. Média/Fazenda', u:'L',      ref:3000, meta:8000, icon:'🏭', desc:'Produção diária média por propriedade ativa',                 dec:0, val:at.length?sum(at,'prod_diaria')/at.length:0},
-    {l:'NUL Médio',           u:' mg/dL', ref:12,   meta:18,   icon:'🧬', desc:'Nitrogênio Ureico: ideal 12–18 mg/dL | Alerta: <10 ou >20', dec:1, val:avg(at,'nul'), ideal:true, min:12, max:18},
-    {l:'Novilhas / Rebanho',  u:'%',      ref:15,   meta:25,   icon:'🐮', desc:'Índice de reposição: ideal 20–30% das vacas',                dec:0, val:pctOf(at,'novilhas','vacas'), ideal:true, min:15, max:35},
-    {l:'Vacas Secas / Reb.',  u:'%',      ref:12,   meta:18,   icon:'🌙', desc:'Período seco: ideal 15–20% do rebanho',                      dec:0, val:pctOf(at,'secas','vacas'), ideal:true, min:10, max:22},
-    {l:'Bezerras / Rebanho',  u:'%',      ref:10,   meta:20,   icon:'🍼', desc:'Índice de natalidade: presença indica reposição ativa',       dec:0, val:pctOf(at,'bezerras','vacas'), ideal:true, min:8, max:30},
-    {l:'CCS Médio',           u:'k',      ref:300,  meta:150,  icon:'🔬', desc:'IN77: ≤500k | Qualidade: ≤200k | Meta: ≤150k',               dec:0, val:avg(at,'ccs'), lower:true},
-    {l:'CBT Médio',           u:'k',      ref:300,  meta:100,  icon:'🦠', desc:'IN77: ≤300k | Premium: ≤100k',                               dec:0, val:avg(at,'cbt'), lower:true},
+  // Cards de destaque
+  wrap.innerHTML = '<div id="bench-dest" class="bm-dest-grid">'
+    +'<div class="bm-dest"><div class="bm-dest-icon">🏡</div>'
+    +'<div class="bm-dest-val" style="color:#15803d">'+at.length+'</div>'
+    +'<div class="bm-dest-lbl">Clientes ativos Meta</div></div>'
+    +'<div class="bm-dest"><div class="bm-dest-icon">👤</div>'
+    +'<div class="bm-dest-val" style="color:#2563eb">'+meus.length+'</div>'
+    +'<div class="bm-dest-lbl">Minha carteira</div></div>'
+    +'</div>'
+    +'<div id="bench-cards-grid" class="bm-grid-app"></div>'
+    +'<div id="bench-dieta-cards" class="bm-grid-app" style="margin-top:0"></div>'
+    +'<div id="bench-tec-wrap" style="margin-top:14px"></div>';
+
+  // ── Indicadores técnicos ────────────────────────────────────────────────
+  const refs = [
+    {l:'Média L/vaca/dia',    u:'L',     ref:28,  meta:37,  icon:'🥛', desc:'Embrapa: 28L | Top 100 MilkPoint 2026: 35.4L | Premium: 37L', dec:1, val:avg(at,'media_prod')},
+    {l:'Tamanho Rebanho',     u:'vacas', ref:60,  meta:200, icon:'🐄', desc:'Média nacional: 60 | Meta carteira: 200', dec:0, val:at.length?sum(at,'vacas')/at.length:0},
+    {l:'Gordura',             u:'%',     ref:3.5, meta:4.0, icon:'🧈', desc:'IN77 mínimo: 3.0% | Premium: 4.0%', dec:2, val:avg(at,'gordura')},
+    {l:'Proteína',            u:'%',     ref:3.1, meta:3.5, icon:'🧪', desc:'IN77 mínimo: 2.9% | Premium: 3.5%', dec:2, val:avg(at,'proteina')},
+    {l:'DEL Médio',           u:'dias',  ref:175, meta:160, icon:'📅', desc:'Ideal 150-180 dias em lactação', dec:0, val:avg(at,'del'), ideal:true, min:150, max:180},
+    {l:'Prod. Média/Fazenda', u:'L',     ref:3000,meta:8000,icon:'🏭', desc:'Produção diária média por propriedade ativa', dec:0, val:at.length?sum(at,'prod_diaria')/at.length:0},
+    {l:'NUL Médio',           u:' mg/dL',ref:12,  meta:18,  icon:'🧬', desc:'Nitrogênio Ureico: ideal 12–18 mg/dL', dec:1, val:avg(at,'nul'), ideal:true, min:12, max:18},
+    {l:'Novilhas / Rebanho',  u:'%',     ref:15,  meta:25,  icon:'🐮', desc:'Índice de reposição: ideal 20–30% das vacas', dec:0, val:pctOf(at,'novilhas','vacas'), ideal:true, min:15, max:35},
+    {l:'Vacas Secas / Reb.',  u:'%',     ref:12,  meta:18,  icon:'🌙', desc:'Período seco: ideal 15–20% do rebanho', dec:0, val:pctOf(at,'secas','vacas'), ideal:true, min:10, max:22},
+    {l:'Bezerras / Rebanho',  u:'%',     ref:10,  meta:20,  icon:'🍼', desc:'Índice de natalidade: presença indica reposição ativa', dec:0, val:pctOf(at,'bezerras','vacas'), ideal:true, min:8, max:30},
+    {l:'CCS Médio',           u:'k',     ref:300, meta:150, icon:'🔬', desc:'IN77: ≤500k | Qualidade: ≤200k | Meta: ≤150k', dec:0, val:avg(at,'ccs'), lower:true},
+    {l:'CBT Médio',           u:'k',     ref:300, meta:100, icon:'🦠', desc:'IN77: ≤300k | Premium: ≤100k', dec:0, val:avg(at,'cbt'), lower:true},
   ];
 
-  // Cards de destaque: clientes ativos e minha carteira
-  var html = '<div class="bm-dest-grid">'
-    + '<div class="bm-dest"><div class="bm-dest-icon">🏡</div>'
-    + '<div class="bm-dest-val" style="color:#15803d">'+at.length+'</div>'
-    + '<div class="bm-dest-lbl">Clientes ativos Meta</div></div>'
-    + '<div class="bm-dest"><div class="bm-dest-icon">👤</div>'
-    + '<div class="bm-dest-val" style="color:#2563eb">'+meus.length+'</div>'
-    + '<div class="bm-dest-lbl">Minha carteira</div></div>'
-    + '</div>';
-
-  html += '<div class="bm-grid-app">';
-  refs.forEach(function(r) {
-    var val = r.val || 0;
-    if (!val) return;
-    var cls, col, status;
-    if (r.ideal) {
-      var ok = val>=r.min && val<=r.max;
-      var close = val>=(r.min-3) && val<=(r.max+3);
-      cls=ok?'bm-ok':close?'bm-warn':'bm-bad';
-      col=ok?'#16a34a':close?'#d97706':'#dc2626';
-      status=ok?'✅':close?'⚠️':'❌';
-    } else if (r.lower) {
-      cls=val<=r.meta?'bm-ok':val<=r.ref?'bm-warn':'bm-bad';
-      col=val<=r.meta?'#16a34a':val<=r.ref?'#d97706':'#dc2626';
-      status=val<=r.meta?'✅':val<=r.ref?'⚠️':'❌';
+  function bmCard(r) {
+    const val = r.val||0;
+    if(!val) return '';
+    let cls,col,status;
+    if(r.ideal){
+      const ok=val>=r.min&&val<=r.max, close=val>=(r.min-3)&&val<=(r.max+3);
+      cls=ok?'bm-ok':close?'bm-warn':'bm-bad'; col=ok?'#16a34a':close?'#d97706':'#dc2626'; status=ok?'✅':close?'⚠️':'❌';
+    } else if(r.lower){
+      cls=val<=r.meta?'bm-ok':val<=r.ref?'bm-warn':'bm-bad'; col=val<=r.meta?'#16a34a':val<=r.ref?'#d97706':'#dc2626'; status=val<=r.meta?'✅':val<=r.ref?'⚠️':'❌';
     } else {
-      cls=val>=r.meta?'bm-ok':val>=r.ref?'bm-warn':'bm-bad';
-      col=val>=r.meta?'#16a34a':val>=r.ref?'#d97706':'#dc2626';
-      status=val>=r.meta?'✅':val>=r.ref?'⚠️':'❌';
+      cls=val>=r.meta?'bm-ok':val>=r.ref?'bm-warn':'bm-bad'; col=val>=r.meta?'#16a34a':val>=r.ref?'#d97706':'#dc2626'; status=val>=r.meta?'✅':val>=r.ref?'⚠️':'❌';
     }
-    // Formata valor (igual ao painel)
-    var fv;
-    if (r.u==='%') fv = val.toFixed(r.dec)+'%';
-    else if (r.u===' mg/dL') fv = val.toFixed(r.dec)+r.u;
-    else if (r.u===' R$') fv = 'R$ '+(val>=1000?(val/1000).toFixed(1)+'k':val.toFixed(r.dec));
-    else if (val>=1000) fv = (val/1000).toFixed(1)+'k '+r.u;
-    else fv = val.toFixed(r.dec)+' '+r.u;
+    const fv = r.u==='%'?val.toFixed(r.dec)+'%'
+             : r.u===' mg/dL'?val.toFixed(r.dec)+r.u
+             : r.u===' R$'?'R$ '+(val>=1000?(val/1000).toFixed(1)+'k':val.toFixed(r.dec))
+             : val>=1000?(val/1000).toFixed(1)+'k '+r.u : val.toFixed(r.dec)+' '+r.u;
+    const pct = r.ideal?Math.min(val/r.max*100,100):(r.meta>0?Math.min(val/r.meta*100,100):0);
+    const scaleTxt = r.ideal
+      ?'<span>0</span><span>Min: '+r.min+r.u+'</span><span>Max: '+r.max+r.u+'</span>'
+      :'<span>0</span><span>Ref: '+r.ref+r.u+'</span><span>Meta: '+r.meta+r.u+'</span>';
+    return '<div class="bm"><div class="bm-top"><div class="bm-icon">'+r.icon+'</div>'
+      +'<div class="bm-lbl">'+r.l+'</div><div style="margin-left:auto;font-size:18px">'+status+'</div></div>'
+      +'<div class="bm-val '+cls+'">'+fv+'</div><div class="bm-ref">'+r.desc+'</div>'
+      +'<div class="bm-bar"><div class="bm-fill" style="width:'+pct.toFixed(0)+'%;background:'+col+'"></div></div>'
+      +'<div class="bm-scale">'+scaleTxt+'</div></div>';
+  }
 
-    var pct = r.ideal ? Math.min(val/r.max*100,100)
-            : (r.meta>0 ? Math.min(val/r.meta*100,100) : 0);
-    var scaleTxt = r.ideal
-      ? '<span>0</span><span>Min: '+r.min+r.u+'</span><span>Max: '+r.max+r.u+'</span>'
-      : '<span>0</span><span>Ref: '+r.ref+r.u+'</span><span>Meta: '+r.meta+r.u+'</span>';
+  document.getElementById('bench-cards-grid').innerHTML = refs.map(r=>bmCard(r)).join('');
 
-    html += '<div class="bm">'
-      + '<div class="bm-top"><div class="bm-icon">'+r.icon+'</div>'
-      + '<div class="bm-lbl">'+r.l+'</div>'
-      + '<div style="margin-left:auto;font-size:18px">'+status+'</div></div>'
-      + '<div class="bm-val '+cls+'">'+fv+'</div>'
-      + '<div class="bm-ref">'+r.desc+'</div>'
-      + '<div class="bm-bar"><div class="bm-fill" style="width:'+pct.toFixed(0)+'%;background:'+col+'"></div></div>'
-      + '<div class="bm-scale">'+scaleTxt+'</div>'
-      + '</div>';
+  // ── Indicadores de dieta (CVD, RMCA, Custo/litro) ────────────────────────
+  // Carrega dietas do Firebase
+  db.ref('dietas').once('value', snap => {
+    const dietas = snap.val()||{};
+    let totalCusto=0, totalVacas=0, totalRetorno=0, totalLitros=0, countDietas=0;
+    Object.keys(dietas).forEach(farmId => {
+      const d = dietas[farmId];
+      if(!d||!d.lotes) return;
+      const lotes = Object.values(d.lotes);
+      lotes.forEach(l => {
+        const vacas=parseFloat(l.vacas)||0, prod=parseFloat(l.prod)||0, preco=parseFloat(l.preco)||0;
+        if(!vacas) return;
+        const cvd=(l.alimentos||[]).reduce((s,a)=>s+(parseFloat(a.kg)||0)*(parseFloat(a.custo)||0),0);
+        totalCusto  += cvd*vacas;
+        totalVacas  += vacas;
+        totalRetorno += prod*vacas*preco;
+        totalLitros += prod*vacas;
+      });
+      if(lotes.length) countDietas++;
+    });
+    if(!totalVacas){
+      document.getElementById('bench-dieta-cards').innerHTML='<div style="font-size:11px;color:var(--muted);padding:8px 0">Nenhuma dieta cadastrada ainda.</div>';
+      return;
+    }
+    const cvdMedio   = totalVacas>0?totalCusto/totalVacas:0;
+    const rmcaMedio  = totalRetorno-totalCusto;
+    const custoLitro = totalLitros>0?totalCusto/totalLitros:0;
+
+    const dietaRefs = [
+      {l:'Custo Alim./vaca/dia', u:' R$', ref:25, meta:18, icon:'💰', desc:'Custo alimentar médio por vaca por dia — baseado nas dietas cadastradas', dec:2, val:cvdMedio, lower:true},
+      {l:'RMCA Médio/dia',       u:' R$', ref:0,  meta:5000,icon:'📈', desc:'Retorno Menos Custo Alimentar médio das fazendas com dieta cadastrada', dec:0, val:rmcaMedio},
+      {l:'Custo/litro de leite', u:' R$', ref:0.80,meta:0.50,icon:'🥛', desc:'Custo alimentar por litro de leite produzido — quanto custa alimentar para produzir 1L', dec:3, val:custoLitro, lower:true},
+    ];
+
+    let html = '<div style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin:16px 0 10px">💰 Custos Alimentares ('+countDietas+' fazendas com dieta)</div>';
+    html += '<div class="bm-grid-app">';
+    dietaRefs.forEach(r => { html += bmCard(r); });
+    html += '</div>';
+    document.getElementById('bench-dieta-cards').innerHTML = html;
   });
-  html += '</div>';
-  wrap.innerHTML = html;
+
+  // ── Técnicos por vendedor ─────────────────────────────────────────────────
+  db.ref('tecnicos').once('value', snap => {
+    const tecnicos = snap.val()||{};
+    const tecWrap = document.getElementById('bench-tec-wrap');
+    if(!tecWrap) return;
+
+    // Agrupa clientes por técnico
+    const tecMap = {};
+    at.forEach(c => {
+      const tec = (c.nome_tecnico || c.tecnico || '—').trim();
+      const vend= (c.nome_vendedor || c.vendedor || '—').toUpperCase().trim();
+      if(!tecMap[tec]) tecMap[tec] = {nome:tec, total:0, ativos:0, vacas:0, prod:0, vendedores:{}};
+      tecMap[tec].total++;
+      if(c.situacao==='ATIVO') tecMap[tec].ativos++;
+      tecMap[tec].vacas += parseFloat(c.vacas)||0;
+      tecMap[tec].prod  += (parseFloat(c.media_prod)||0)*(parseFloat(c.vacas)||0);
+      if(vend && vend!=='—'){
+        tecMap[tec].vendedores[vend] = (tecMap[tec].vendedores[vend]||0)+1;
+      }
+    });
+
+    const tecList = Object.values(tecMap).filter(t=>t.total>0).sort((a,b)=>b.total-a.total);
+    if(!tecList.length){
+      tecWrap.innerHTML='';
+      return;
+    }
+
+    let html = '<div style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px">👨‍⚕️ Técnicos × Vendedores</div>';
+    html += '<div style="background:white;border:1px solid var(--border);border-radius:14px;overflow:hidden;box-shadow:var(--shadow)">';
+    html += '<div style="display:grid;grid-template-columns:1fr auto auto auto auto;gap:0;background:var(--surface2);padding:8px 14px;border-bottom:1px solid var(--border)">'
+      +'<span style="font-size:10px;font-weight:700;color:var(--muted)">TÉCNICO</span>'
+      +'<span style="font-size:10px;font-weight:700;color:var(--muted);text-align:center;min-width:60px">CLIENTES</span>'
+      +'<span style="font-size:10px;font-weight:700;color:var(--muted);text-align:center;min-width:70px">VACAS</span>'
+      +'<span style="font-size:10px;font-weight:700;color:var(--muted);text-align:center;min-width:70px">MÉD. L</span>'
+      +'<span style="font-size:10px;font-weight:700;color:var(--muted);min-width:140px;padding-left:10px">VENDEDORES</span>'
+      +'</div>';
+
+    tecList.forEach((t,i) => {
+      const mediaProd = t.vacas>0?(t.prod/t.vacas).toFixed(1):0;
+      const prodCol = mediaProd>=37?'#15803d':mediaProd>=28?'#d97706':'#dc2626';
+      const vends = Object.entries(t.vendedores)
+        .sort((a,b)=>b[1]-a[1])
+        .map(([v,n])=>'<span style="background:#eff6ff;color:#1d4ed8;font-size:9px;font-weight:700;padding:2px 7px;border-radius:10px;white-space:nowrap">'+v+' ('+n+')</span>')
+        .join(' ');
+      html += '<div style="display:grid;grid-template-columns:1fr auto auto auto auto;gap:0;padding:10px 14px;border-bottom:'+(i<tecList.length-1?'1px solid var(--border)':'none')+';align-items:center">'
+        +'<div><div style="font-size:12px;font-weight:700">'+t.nome+'</div></div>'
+        +'<div style="text-align:center;min-width:60px"><span style="font-size:14px;font-weight:800;color:#2563eb">'+t.total+'</span></div>'
+        +'<div style="text-align:center;min-width:70px"><span style="font-size:12px;font-weight:700">'+t.vacas.toLocaleString('pt-BR')+'</span></div>'
+        +'<div style="text-align:center;min-width:70px"><span style="font-size:13px;font-weight:800;color:'+prodCol+'">'+mediaProd+' L</span></div>'
+        +'<div style="min-width:140px;padding-left:10px;display:flex;flex-wrap:wrap;gap:3px">'+vends+'</div>'
+        +'</div>';
+    });
+    html += '</div>';
+    tecWrap.innerHTML = html;
+  });
 }
 
 </script>
