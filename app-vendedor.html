@@ -822,49 +822,7 @@ connRef.on('value', snap => {
 });
 
 // ── INIT ─────────────────────────────────────────────────
-function iniciarApp() {
-  // Data padrão de hoje no campo de visita
-  document.getElementById('c-data-visita').value = new Date().toISOString().split('T')[0];
 
-  // Mapa email → nomes possíveis no campo vendedor do painel
-  const VENDEDOR_MAP = {
-    'vetsinvesting@gmail.com':   ['PAULO','PAULO VETS','VETSINVESTING'],
-    'jozielsantossoares@gmail.com': ['JOZIEL','JOZIEL SANTOS','JOZIELSANTOSSOARES'],
-    'vetdalmolin@gmail.com':     ['MAICON','MAICON DALMOLIN','VETDALMOLIN'],
-    'arthursoaresaa@gmail.com':  ['ARTHUR','ARTHUR SOARES','ARTHURSOARESAA'],
-    'lucasbianchi214@gmail.com': ['LUCAS','LUCAS BIANCHI','LUCASBIANCHI214'],
-    'jrlucasramos2@gmail.com':   ['JOSÉ LUCAS','JOSE LUCAS','JRLUCASRAMOS2'],
-    'mullerjulio02@gmail.com':   ['JULIO','JULIO MULLER','MULLERJULIO02'],
-    'vagner7leguas@gmail.com':   ['VAGNER','VAGNER7LEGUAS','VAGNER LEGUAS'],
-  };
-
-  const emailLogin = (usuarioAtual.email || '').toLowerCase().trim();
-  const nomesValidos = (VENDEDOR_MAP[emailLogin] || []).map(n => n.toUpperCase().trim());
-  // Adiciona prefixo do email como fallback
-  const prefixo = emailLogin.split('@')[0].toUpperCase().trim();
-  if (!nomesValidos.includes(prefixo)) nomesValidos.push(prefixo);
-  nomesValidos.push(emailLogin); // também tenta o email direto
-
-  console.log('Vendedor logado:', emailLogin, '→ nomes:', nomesValidos);
-
-  db.ref('propriedades').on('value', snap => {
-    todosClientes = {};
-    meusClientes = [];
-    snap.forEach(child => {
-      const d = { id: child.key, ...child.val() };
-      todosClientes[child.key] = d;
-      const vNome  = (d.nome_vendedor || d.vendedor || '').toUpperCase().trim();
-      const vEmail = (d.vendedor || '').toLowerCase().trim();
-      const match = nomesValidos.some(n => vNome === n || vEmail === n.toLowerCase());
-      if (match) meusClientes.push(d);
-    });
-    meusClientes.sort((a,b) => (b.vacas||0) - (a.vacas||0));
-    filtrarLista();
-    renderDash();
-  });
-}
-
-// ── SCREENS ──────────────────────────────────────────────
 function showScreen(name, data=null) {
   document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
   document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
@@ -896,45 +854,7 @@ function setChip(el, filtro) {
   filtrarLista();
 }
 
-function filtrarLista() {
-  const q = (document.getElementById('search-q').value || '').toLowerCase();
-  let rows = meusClientes;
-  if (filtroAtivo) rows = rows.filter(d => d.situacao === filtroAtivo);
-  if (q) rows = rows.filter(d =>
-    (d.produtor||'').toLowerCase().includes(q) ||
-    (d.propriedade||'').toLowerCase().includes(q) ||
-    (d.cidade||'').toLowerCase().includes(q)
-  );
-  document.getElementById('lista-count').textContent = rows.length + ' registro' + (rows.length!==1?'s':'');
 
-  if (rows.length === 0) {
-    document.getElementById('lista-clientes').innerHTML = `<div class="empty"><div class="emoji">🔍</div><p>Nenhuma propriedade encontrada.</p></div>`;
-    return;
-  }
-
-  document.getElementById('lista-clientes').innerHTML = rows.map(d => {
-    const cor = avatarColor(d.produtor);
-    const ini = iniciais(d.produtor);
-    const sitClass = d.situacao==='ATIVO'?'b-ativo':d.situacao==='INATIVO'?'b-inativo':'b-prospec';
-    const sitLabel = d.situacao==='ATIVO'?'✅ Ativo':d.situacao==='INATIVO'?'❌ Inativo':'🎯 Prospecto';
-    return `<div class="client-card" onclick='abrirDetalhe(${JSON.stringify(d)})'>
-      <div class="client-avatar" style="background:${cor}">${ini}</div>
-      <div class="client-info">
-        <div class="client-name">${d.produtor||'—'}</div>
-        <div class="client-meta">${d.propriedade||''} ${d.propriedade&&d.cidade?'·':''} ${d.cidade||''}</div>
-        <span class="badge ${sitClass}">${sitLabel}</span>
-        ${d.produto?`<span class="badge" style="background:rgba(52,152,219,.12);color:#3498db">${d.produto}</span>`:''}
-      </div>
-      <div class="client-right">
-        <div class="client-vacas">${d.vacas||'—'}</div>
-        <div class="client-vacas-lbl">vacas</div>
-        ${d.prod_diaria>0?`<div style="font-size:11px;color:var(--muted);margin-top:4px">${(d.prod_diaria/1000).toFixed(1)}k L/dia</div>`:''}
-      </div>
-    </div>`;
-  }).join('');
-}
-
-// ── DETALHE ──────────────────────────────────────────────
 function abrirDetalhe(d) {
   clienteAtual = d;
   const cor = avatarColor(d.produtor);
@@ -1491,79 +1411,6 @@ function carregarDieta(farmId) {
 // ══════════════════════════════════════════
 // BENCHMARKS DO VENDEDOR
 // ══════════════════════════════════════════
-function renderBenchApp() {
-  const wrap = document.getElementById('bench-cards-wrap');
-  const sub  = document.getElementById('bench-subtitle');
-  if(!wrap) return;
-
-  const at = meusClientes.filter(d => d.situacao === 'ATIVO');
-  if(!at.length) {
-    wrap.innerHTML = '<div style="text-align:center;padding:40px;color:var(--muted)"><div style="font-size:32px;margin-bottom:10px">📭</div><div style="font-size:14px;font-weight:700;color:var(--text)">Nenhum cliente ativo</div></div>';
-    return;
-  }
-  if(sub) sub.textContent = at.length + ' clientes ativos · médias da carteira';
-
-  function avg(arr, key) {
-    const v = arr.filter(d => parseFloat(d[key]) > 0);
-    return v.length ? v.reduce((s,d) => s + parseFloat(d[key]), 0) / v.length : 0;
-  }
-  function sum(arr, key) {
-    return arr.reduce((s,d) => s + (parseFloat(d[key]) || 0), 0);
-  }
-  function pct(v, ref, meta, lowerBetter) {
-    if(lowerBetter) return v === 0 ? 0 : Math.min(100, (ref / v) * 50);
-    return meta > 0 ? Math.min(100, (v / meta) * 100) : 0;
-  }
-
-  const benchmarks = [
-    { icon:'🥛', lbl:'Média L/vaca/dia',     val:avg(at,'media_prod').toFixed(1),  unit:'L',  ref:28,  meta:37,   col: avg(at,'media_prod')>=37?'#15803d':avg(at,'media_prod')>=28?'#d97706':'#dc2626', barW: pct(avg(at,'media_prod'),28,42,false) },
-    { icon:'🐄', lbl:'Rebanho médio',        val:Math.round(avg(at,'vacas')),      unit:'vacas', ref:60, meta:200, col:'#2563eb', barW: pct(avg(at,'vacas'),60,200,false) },
-    { icon:'🧈', lbl:'Gordura média',        val:avg(at,'gordura').toFixed(2),     unit:'%',  ref:3.5, meta:4.0,  col: avg(at,'gordura')>=4?'#15803d':avg(at,'gordura')>=3.5?'#d97706':'#dc2626', barW: pct(avg(at,'gordura'),3.5,4.5,false) },
-    { icon:'🧪', lbl:'Proteína média',       val:avg(at,'proteina').toFixed(2),    unit:'%',  ref:3.1, meta:3.5,  col: avg(at,'proteina')>=3.5?'#15803d':avg(at,'proteina')>=3.1?'#d97706':'#dc2626', barW: pct(avg(at,'proteina'),3.1,3.8,false) },
-    { icon:'🔬', lbl:'CCS médio',            val:Math.round(avg(at,'ccs')),        unit:'k',  ref:300, meta:150,  col: avg(at,'ccs')<=150?'#15803d':avg(at,'ccs')<=300?'#d97706':'#dc2626', barW: avg(at,'ccs')>0?Math.max(0,100-pct(avg(at,'ccs'),150,600,true)):0 },
-    { icon:'📅', lbl:'DEL médio',            val:Math.round(avg(at,'del')),        unit:'d',  ref:150, meta:120,  col: avg(at,'del')>0&&avg(at,'del')<=120?'#15803d':avg(at,'del')<=150?'#d97706':'#dc2626', barW: pct(avg(at,'del'),0,200,false) },
-    { icon:'🥛', lbl:'Prod. total/dia',      val:Math.round(sum(at,'media_prod')*1).toLocaleString('pt-BR'), unit:'L', ref:0, meta:0, col:'#7c3aed', barW:0, hideBar:true },
-    { icon:'🏡', lbl:'Clientes ativos',      val:at.length,                        unit:'',   ref:0,  meta:0,    col:'#15803d', barW:0, hideBar:true },
-  ];
-
-  // Produção total real
-  const prodTotal = at.reduce((s,d) => s + (parseFloat(d.media_prod)||0)*(parseFloat(d.vacas)||0), 0);
-  benchmarks[6].val = Math.round(prodTotal).toLocaleString('pt-BR');
-
-  // Renderiza em grid 2x2 + cards individuais
-  let html = '<div class="bm-app-grid">';
-  // Primeiros 2 em destaque
-  benchmarks.slice(6).forEach(b => {
-    html += `<div class="bm-app" style="border-top:3px solid ${b.col}">
-      <div class="bm-app-lbl">${b.icon} ${b.lbl}</div>
-      <div class="bm-app-val" style="color:${b.col}">${b.val} <span style="font-size:14px;font-weight:600;opacity:.7">${b.unit}</span></div>
-    </div>`;
-  });
-  html += '</div>';
-
-  // Restantes individualmente
-  benchmarks.slice(0,6).forEach(b => {
-    const status = parseFloat(b.val) >= b.meta ? '✅' : parseFloat(b.val) >= b.ref ? '⚠️' : '❌';
-    html += `<div class="bm-app" style="border-top:3px solid ${b.col}">
-      <span class="bm-app-badge">${status}</span>
-      <div class="bm-app-lbl">${b.icon} ${b.lbl}</div>
-      <div class="bm-app-val" style="color:${b.col}">${b.val} <span style="font-size:14px;font-weight:600;opacity:.7">${b.unit}</span></div>
-      ${!b.hideBar ? `
-      <div class="bm-app-bar"><div class="bm-app-fill" style="width:${b.barW}%;background:${b.col}"></div></div>
-      <div class="bm-app-refs"><span>Ref: ${b.ref}${b.unit}</span><span>Meta: ${b.meta}${b.unit}</span></div>` : ''}
-    </div>`;
-  });
-
-  wrap.innerHTML = html;
-}
-
-function showToast(msg, err=false) {
-  const t = document.getElementById('toast');
-  t.textContent = msg;
-  t.className = 'toast' + (err?' error':'');
-  t.classList.add('show');
-  setTimeout(() => t.classList.remove('show'), 2800);
-}
 
 // Atalho Enter no login
 document.getElementById('l-senha').addEventListener('keydown', e => { if(e.key==='Enter') fazerLogin(); });
@@ -1682,6 +1529,8 @@ function iniciarApp() {
     meusClientes.sort((a,b) => (b.vacas||0) - (a.vacas||0));
     filtrarLista();
     renderDash();
+    // Atualiza benchmarks se estiver na tela
+    if(document.getElementById('screen-bench')?.classList.contains('active')) renderBenchApp();
   });
 }
 
@@ -2031,6 +1880,11 @@ async function excluirCliente(id, nome) {
 let dashCharts = {};
 
 function renderDash() {
+  // Se dados ainda não carregaram, mostra mensagem
+  const dashSub = document.getElementById('dash-subtitle');
+  if(meusClientes.length === 0 && dashSub) {
+    dashSub.textContent = 'Carregando dados...';
+  }
   const total = meusClientes.length;
   const ativos  = meusClientes.filter(d => d.situacao === 'ATIVO');
   const prospec  = meusClientes.filter(d => d.situacao === 'PROSPEC');
@@ -2481,26 +2335,33 @@ function renderBenchApp() {
   benchmarks[6].val = Math.round(prodTotal).toLocaleString('pt-BR');
 
   // Renderiza em grid 2x2 + cards individuais
-  let html = '<div class="bm-app-grid">';
-  // Primeiros 2 em destaque
+  let html = '';
+
+  // Cards de destaque: prod total + clientes ativos
+  html += '<div class="bm-app-grid" style="margin-bottom:10px">';
   benchmarks.slice(6).forEach(b => {
-    html += `<div class="bm-app" style="border-top:3px solid ${b.col}">
-      <div class="bm-app-lbl">${b.icon} ${b.lbl}</div>
-      <div class="bm-app-val" style="color:${b.col}">${b.val} <span style="font-size:14px;font-weight:600;opacity:.7">${b.unit}</span></div>
+    html += `<div class="bm-app" style="border-top:3px solid ${b.col};text-align:center">
+      <div style="font-size:28px;margin-bottom:4px">${b.icon}</div>
+      <div style="font-size:26px;font-weight:900;color:${b.col}">${b.val}</div>
+      <div style="font-size:11px;color:var(--muted);margin-top:4px;font-weight:600">${b.lbl}</div>
     </div>`;
   });
   html += '</div>';
 
-  // Restantes individualmente
+  // Cards individuais com barra
   benchmarks.slice(0,6).forEach(b => {
-    const status = parseFloat(b.val) >= b.meta ? '✅' : parseFloat(b.val) >= b.ref ? '⚠️' : '❌';
-    html += `<div class="bm-app" style="border-top:3px solid ${b.col}">
-      <span class="bm-app-badge">${status}</span>
-      <div class="bm-app-lbl">${b.icon} ${b.lbl}</div>
-      <div class="bm-app-val" style="color:${b.col}">${b.val} <span style="font-size:14px;font-weight:600;opacity:.7">${b.unit}</span></div>
-      ${!b.hideBar ? `
-      <div class="bm-app-bar"><div class="bm-app-fill" style="width:${b.barW}%;background:${b.col}"></div></div>
-      <div class="bm-app-refs"><span>Ref: ${b.ref}${b.unit}</span><span>Meta: ${b.meta}${b.unit}</span></div>` : ''}
+    const vNum = parseFloat(b.val) || 0;
+    const status = b.lbl.includes('CCS')
+      ? (vNum <= b.meta ? '✅' : vNum <= b.ref ? '⚠️' : '❌')
+      : (vNum >= b.meta ? '✅' : vNum >= b.ref ? '⚠️' : '❌');
+    html += `<div class="bm-app">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+        <div style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px">${b.icon} ${b.lbl}</div>
+        <span style="font-size:18px">${status}</span>
+      </div>
+      <div style="font-size:30px;font-weight:900;color:${b.col};line-height:1">${b.val}<span style="font-size:14px;font-weight:600;opacity:.6;margin-left:4px">${b.unit}</span></div>
+      <div class="bm-app-bar" style="margin-top:10px"><div class="bm-app-fill" style="width:${b.barW}%;background:${b.col}"></div></div>
+      <div class="bm-app-refs"><span>Ref: ${b.ref}${b.unit}</span><span>Meta: ${b.meta}${b.unit}</span></div>
     </div>`;
   });
 
