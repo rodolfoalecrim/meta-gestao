@@ -1856,15 +1856,15 @@ tbody td{padding:10px 14px;font-size:12px;}.badge{display:inline-flex;align-item
               </div>
               <div class="rb-field">
                 <div class="rb-label">Novilhas 12–24 meses<span class="rb-label-hint">cabeças</span></div>
-                <input class="rb-input" type="number" id="rb-nov24" value="25" min="0" oninput="calcRebanho()">
+                <input class="rb-input" type="number" id="rb-nov24" value="20" min="0" oninput="calcRebanho()">
               </div>
               <div class="rb-field">
                 <div class="rb-label">Novilhas 4–12 meses<span class="rb-label-hint">cabeças</span></div>
-                <input class="rb-input" type="number" id="rb-nov12" value="20" min="0" oninput="calcRebanho()">
+                <input class="rb-input" type="number" id="rb-nov12" value="15" min="0" oninput="calcRebanho()">
               </div>
               <div class="rb-field">
                 <div class="rb-label">Bezerras 0–4 meses<span class="rb-label-hint">cabeças</span></div>
-                <input class="rb-input" type="number" id="rb-bez" value="15" min="0" oninput="calcRebanho()">
+                <input class="rb-input" type="number" id="rb-bez" value="10" min="0" oninput="calcRebanho()">
               </div>
             </div>
 
@@ -1886,23 +1886,23 @@ tbody td{padding:10px 14px;font-size:12px;}.badge{display:inline-flex;align-item
               </div>
               <div class="rb-field">
                 <div class="rb-label">Taxa de concepção vacas (%)<span class="rb-label-hint">% prenha por IA/TE</span></div>
-                <input class="rb-input" type="number" id="rb-concep" value="55" min="1" max="100" oninput="calcRebanho()">
+                <input class="rb-input" type="number" id="rb-concep" value="45" min="1" max="100" oninput="calcRebanho()">
               </div>
               <div class="rb-field">
                 <div class="rb-label">Taxa de serviço (%)<span class="rb-label-hint">% inseminadas no cio</span></div>
-                <input class="rb-input" type="number" id="rb-serv" value="80" min="1" max="100" oninput="calcRebanho()">
+                <input class="rb-input" type="number" id="rb-serv" value="55" min="1" max="100" oninput="calcRebanho()">
               </div>
               <div class="rb-field">
                 <div class="rb-label">Concepção novilhas (%)<span class="rb-label-hint">geralmente maior que vacas</span></div>
-                <input class="rb-input" type="number" id="rb-concep-nov" value="65" min="1" max="100" oninput="calcRebanho()">
+                <input class="rb-input" type="number" id="rb-concep-nov" value="60" min="1" max="100" oninput="calcRebanho()">
               </div>
               <div class="rb-field">
                 <div class="rb-label">Idade ao primeiro parto<span class="rb-label-hint">meses</span></div>
-                <input class="rb-input" type="number" id="rb-idparto" value="26" min="18" max="36" oninput="calcRebanho()">
+                <input class="rb-input" type="number" id="rb-idparto" value="28" min="18" max="36" oninput="calcRebanho()">
               </div>
               <div class="rb-field">
                 <div class="rb-label">Intervalo entre partos<span class="rb-label-hint">meses</span></div>
-                <input class="rb-input" type="number" id="rb-iep" value="13" min="10" max="18" oninput="calcRebanho()">
+                <input class="rb-input" type="number" id="rb-iep" value="14" min="10" max="18" oninput="calcRebanho()">
               </div>
               <!-- Perda de prenhez -->
               <div style="margin-top:14px;padding-top:14px;border-top:1px solid var(--border)">
@@ -1912,7 +1912,7 @@ tbody td{padding:10px 14px;font-size:12px;}.badge{display:inline-flex;align-item
                 </div>
                 <div class="rb-field">
                   <div class="rb-label">Perda de prenhez pós-DG (%)<span class="rb-label-hint">absorções + abortos até o parto</span></div>
-                  <input class="rb-input" type="number" id="rb-perd-dg" value="12" min="0" max="60" oninput="calcRebanho()" style="border-color:#fca5a5">
+                  <input class="rb-input" type="number" id="rb-perd-dg" value="15" min="0" max="60" oninput="calcRebanho()" style="border-color:#fca5a5">
                 </div>
                 <div id="rb-perd-resultado" style="background:#f8fafc;border-radius:10px;padding:10px 12px;font-size:11px;color:var(--muted);margin-top:4px">
                 </div>
@@ -1926,20 +1926,48 @@ tbody td{padding:10px 14px;font-size:12px;}.badge{display:inline-flex;align-item
               <div class="rb-section-title">💀 Mortalidade por Categoria</div>
               <div class="rb-field">
                 <div class="rb-label">Mortalidade bezerras (%)<span class="rb-label-hint">0–4 meses</span></div>
-                <input class="rb-input" type="number" id="rb-mort-bez" value="5" min="0" max="50" oninput="calcRebanho()">
+                <input class="rb-input" type="number" id="rb-mort-bez" value="12" min="0" max="50" oninput="calcRebanho()">
               </div>
               <div class="rb-field">
                 <div class="rb-label">Mortalidade novilhas (%)<span class="rb-label-hint">4–24 meses</span></div>
-                <input class="rb-input" type="number" id="rb-mort-nov" value="2" min="0" max="30" oninput="calcRebanho()">
+                <input class="rb-input" type="number" id="rb-mort-nov" value="3" min="0" max="30" oninput="calcRebanho()">
               </div>
               <div class="rb-field">
                 <div class="rb-label">Mortalidade vacas adultas (%)<span class="rb-label-hint">por ano</span></div>
                 <input class="rb-input" type="number" id="rb-mort-vac" value="2" min="0" max="20" oninput="calcRebanho()">
               </div>
               <div class="rb-field" style="margin-top:16px;padding-top:16px;border-top:1px solid var(--border)">
-                <div class="rb-section-title" style="margin-bottom:10px">✂️ Descarte</div>
-                <div class="rb-label">Taxa de descarte vacas (%/ano)<span class="rb-label-hint">descarte voluntário + involuntário</span></div>
-                <input class="rb-input" type="number" id="rb-descarte" value="20" min="0" max="50" oninput="calcRebanho()">
+                <div class="rb-section-title" style="margin-bottom:10px">✂️ Descarte & Reposição</div>
+                <div style="background:#fef9c3;border:1px solid #fcd34d;border-radius:9px;padding:9px 12px;font-size:10px;color:#92400e;margin-bottom:12px;line-height:1.5">
+                  Descarte alto melhora a média de produção mas exige mais reposição. O excedente de novilhas pode gerar renda.
+                </div>
+                <div class="rb-field">
+                  <div class="rb-label">Descarte voluntário (%/ano)<span class="rb-label-hint">baixa produção, problemas reprodutivos</span></div>
+                  <input class="rb-input" type="number" id="rb-desc-vol" value="12" min="0" max="40" oninput="calcRebanho()">
+                </div>
+                <div class="rb-field">
+                  <div class="rb-label">Descarte involuntário (%/ano)<span class="rb-label-hint">doenças, acidentes, morte</span></div>
+                  <input class="rb-input" type="number" id="rb-desc-inv" value="3" min="0" max="20" oninput="calcRebanho()">
+                </div>
+                <div id="rb-desc-total-info" style="background:#f8fafc;border-radius:8px;padding:7px 12px;font-size:11px;color:var(--muted);margin-bottom:10px">
+                  Total de descarte: <strong id="rb-desc-total">15%</strong>/ano
+                </div>
+                <!-- Fluxo de caixa -->
+                <div style="margin-top:12px;padding-top:12px;border-top:1px solid var(--border)">
+                  <div class="rb-section-title" style="margin-bottom:10px;color:#1d4ed8">💰 Fluxo de Caixa</div>
+                  <div class="rb-field">
+                    <div class="rb-label">Valor vaca de descarte (R$)<span class="rb-label-hint">preço médio de venda</span></div>
+                    <input class="rb-input" type="number" id="rb-preco-vaca-desc" value="4500" min="0" oninput="calcRebanho()">
+                  </div>
+                  <div class="rb-field">
+                    <div class="rb-label">Valor novilha excedente (R$)<span class="rb-label-hint">novilha gestante ou próx. ao parto</span></div>
+                    <input class="rb-input" type="number" id="rb-preco-nov" value="6000" min="0" oninput="calcRebanho()">
+                  </div>
+                  <div class="rb-field">
+                    <div class="rb-label">Custo de reposição (R$/novilha)<span class="rb-label-hint">compra se produção interna insuficiente</span></div>
+                    <input class="rb-input" type="number" id="rb-custo-repos" value="7000" min="0" oninput="calcRebanho()">
+                  </div>
+                </div>
               </div>
             </div>
 
@@ -1992,8 +2020,30 @@ tbody td{padding:10px 14px;font-size:12px;}.badge{display:inline-flex;align-item
               </div>
               <div class="rb-result-num">
                 <div class="rb-result-val" id="rb-r-venda">—</div>
-                <div class="rb-result-lbl">Fêmeas vendidas</div>
+                <div class="rb-result-lbl">Novilhas vendidas</div>
                 <div class="rb-result-delta" id="rb-r-venda-d"></div>
+              </div>
+            </div>
+            <!-- Fluxo de caixa do rebanho -->
+            <div id="rb-fc-wrap" style="margin-top:16px;padding-top:16px;border-top:1px solid rgba(255,255,255,.15)">
+              <div style="font-size:10px;font-weight:700;opacity:.7;text-transform:uppercase;letter-spacing:.6px;margin-bottom:10px">💰 Fluxo de Caixa do Rebanho — período total</div>
+              <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:12px">
+                <div style="text-align:center">
+                  <div style="font-size:20px;font-weight:900;color:#86efac" id="rb-fc-entrada">R$ —</div>
+                  <div style="font-size:9px;opacity:.7;margin-top:3px">Receita (descarte + novs)</div>
+                </div>
+                <div style="text-align:center">
+                  <div style="font-size:20px;font-weight:900;color:#fca5a5" id="rb-fc-saida">R$ —</div>
+                  <div style="font-size:9px;opacity:.7;margin-top:3px">Custo de reposição</div>
+                </div>
+                <div style="text-align:center">
+                  <div style="font-size:20px;font-weight:900" id="rb-fc-saldo">R$ —</div>
+                  <div style="font-size:9px;opacity:.7;margin-top:3px">Saldo líquido</div>
+                </div>
+                <div style="text-align:center">
+                  <div style="font-size:20px;font-weight:900;color:#fde68a" id="rb-fc-ano">R$ —</div>
+                  <div style="font-size:9px;opacity:.7;margin-top:3px">Média por ano</div>
+                </div>
               </div>
             </div>
           </div>
@@ -6892,10 +6942,11 @@ function rbLimparFazenda(){
   // Restaura defaults
   const defaults = {
     'rb-vacas':100,'rb-nov24':25,'rb-nov12':20,'rb-bez':15,
-    'rb-concep':55,'rb-serv':80,'rb-concep-nov':65,
-    'rb-perd-dg':12,
-    'rb-idparto':26,'rb-iep':13,'rb-gestacao':12,
-    'rb-mort-bez':5,'rb-mort-nov':2,'rb-mort-vac':2,'rb-descarte':20
+    'rb-concep':45,'rb-serv':55,'rb-concep-nov':60,
+    'rb-perd-dg':15,
+    'rb-idparto':28,'rb-iep':14,'rb-gestacao':12,
+    'rb-mort-bez':12,'rb-mort-nov':3,'rb-mort-vac':2,
+    'rb-desc-vol':12,'rb-desc-inv':3,'rb-preco-vaca-desc':4500,'rb-preco-nov':6000,'rb-custo-repos':7000
   };
   Object.entries(defaults).forEach(([id,v])=>{
     const el=document.getElementById(id);
@@ -6967,7 +7018,16 @@ function calcRebanho(){
   const mortBez    = gn('rb-mort-bez')  / 100;
   const mortNov    = gn('rb-mort-nov')  / 100;
   const mortVac    = gn('rb-mort-vac')  / 100;
-  const descarte   = gn('rb-descarte') / 100;
+  const descVol  = gn('rb-desc-vol') / 100;   // descarte voluntário (seletivo)
+  const descInv  = gn('rb-desc-inv') / 100;   // descarte involuntário
+  const descarte = descVol + descInv;           // total
+  const precoVacaDesc = gn('rb-preco-vaca-desc') || 4500;
+  const precoNovVenda = gn('rb-preco-nov')     || 6000;
+  const custoRepos    = gn('rb-custo-repos')   || 7000;
+
+  // Atualiza display do total de descarte
+  const dtEl = document.getElementById('rb-desc-total');
+  if(dtEl) dtEl.textContent = (descarte*100).toFixed(0)+'%';
 
   // ── Perda de prenhez pós-DG (absorções + abortos) ──────────
   const perdDG = gn('rb-perd-dg') / 100; // perda após DG positivo até o parto
@@ -7006,117 +7066,136 @@ function calcRebanho(){
   }
 
   // ════════════════════════════════════════════════════════
-  // SIMULAÇÃO MENSAL — precisão real por fase de vida
-  // Cada animal progride mês a mês entre as categorias:
-  // Bezerra (0-4m) → Nov 4-12m (8m) → Nov 12-idParto → Vaca
+  // SIMULAÇÃO COM FILA (QUEUE) — abordagem correta
+  // Cada animal entra na fila da sua fase e avança slot a slot.
+  // Bezerra nasce → fica 4 meses → avança para Nov 4-12m (8m) → Nov 12-idParto → Vaca.
+  // Isso preserva o estoque inicial corretamente e reflete a biologia real.
   // ════════════════════════════════════════════════════════
 
-  // Taxa MENSAL de nascimentos de fêmeas por vaca:
-  // = (1/IEP) × prenhez_efetiva × %fêmeas × (1-mort_bez)
-  const nascFVacaMes = (1/iep) * prenhez * pctFemeaVacas * (1 - mortBez);
+  const duracaoBez = 4;
+  const duracaoN12 = 8;
+  const duracaoN24 = Math.max(idParto - 12, 6); // tempo na fase 12m → parto
 
-  // Taxa MENSAL de parto de novilhas prontas (idade ao parto atingida):
-  // Fração mensal de novilhas 12-idParto que parem = 1/duracaoNov24
-  const duracaoNov24 = Math.max(idParto - 12, 6);
-  const nascFNovMes  = (1/duracaoNov24) * taxaConcNov * sobrevParto * pctFemeaNovs * (1 - mortBez);
-
-  // Mortalidade MENSAL (taxa anual / 12)
+  // Taxas mensais
   const mortVacMes = mortVac  / 12;
   const mortNovMes = mortNov  / 12;
   const mortBezMes = mortBez  / 12;
   const descMes    = descarte / 12;
 
-  // Taxa mensal de progressão entre fases = 1 / duração_meses
-  const saidaBezMes  = 1 / 4;              // bezerras: saem em 4 meses
-  const saidaN12Mes  = 1 / 8;              // nov 4-12m: saem em 8 meses
-  const saidaN24Mes  = 1 / duracaoNov24;   // nov 12-idParto: saem quando atingem idade
+  // Nascimentos mensais de fêmeas:
+  // Por vaca: (1/IEP) × prenhez_efetiva × %fêmeas × sobrev_bezerra
+  const nascFVacaMes = (1 / iep) * prenhez * pctFemeaVacas * (1 - mortBez);
+  // Por novilha 12-24m que atinge o parto: (1/duração fase) × conc × sobrev × %fêmeas
+  const nascFNovMes  = (1 / duracaoN24) * taxaConcNov * sobrevParto * pctFemeaNovs * (1 - mortBez);
 
-  // Estado inicial
-  let vacas = vacasIni;
-  let nov24 = nov24Ini;
-  let nov12 = nov12Ini;
-  let bez   = bezIni;
-  let vendaAcum = 0;
+  // Inicializa filas com distribuição uniforme do estoque inicial
+  // Ex: 15 bezerras em 4 slots = 3.75 por slot (distribuição uniforme na fase)
+  const qBez = Array(duracaoBez).fill(bezIni  / duracaoBez);
+  const qN12 = Array(duracaoN12).fill(nov12Ini / duracaoN12);
+  const qN24 = Array(duracaoN24).fill(nov24Ini / duracaoN24);
 
-  const anos  = [];
-  const labels = [];
-  const snapshots = []; // captura estado a cada 12 meses
+  let vacas     = vacasIni;
+  let vendaAcum   = 0;
+  let receitaDesc = 0;  // receita das vacas descartadas
+  let receitaNov  = 0;  // receita das novilhas excedentes vendidas
+  let custoReposAcum = 0; // custo de compra de reposição (quando pipeline não supre)
+  let nascAno   = 0;
+  let receitaDescAno = 0;
 
-  // Snapshot inicial
-  snapshots.push({ vacas, nov24, nov12, bez, venda: 0 });
+  const snapshots = [];
+  snapshots.push({
+    vacas,
+    bez: qBez.reduce((a,b)=>a+b,0),
+    n12: qN12.reduce((a,b)=>a+b,0),
+    n24: qN24.reduce((a,b)=>a+b,0),
+    venda: 0, nasc: 0
+  });
 
-  // Simula mês a mês
-  const totalMeses = rbAnos * 12;
-  let nascAno = 0;
+  for(let mes = 1; mes <= rbAnos * 12; mes++){
 
-  for(let mes = 1; mes <= totalMeses; mes++){
+    // ── Mortalidade e descarte ────────────────────────────
+    const mortV   = vacas * mortVacMes;
+    const descVolM = vacas * (descVol/12);   // descarte voluntário mensal
+    const descInvM = vacas * (descInv/12);   // descarte involuntário mensal
+    const desc     = descVolM + descInvM;
+    const vacasAt  = Math.max(0, vacas - mortV - desc);
+    // Receita das vacas descartadas (voluntário + involuntário com % de aproveitamento)
+    receitaDesc += descVolM * precoVacaDesc + descInvM * precoVacaDesc * 0.6;
+    if(typeof receitaDescAno!=='undefined') receitaDescAno += descVolM * precoVacaDesc + descInvM * precoVacaDesc * 0.6;
 
-    // ── Saídas definitivas ──────────────────────────────
-    const mortV  = vacas * mortVacMes;
-    const mortN24 = nov24 * mortNovMes;
-    const mortN12 = nov12 * mortNovMes;
-    const mortB  = bez   * mortBezMes;
-    const desc   = vacas * descMes;
-
-    // ── Vacas produtivas neste mês ───────────────────────
-    const vacasAtivas = Math.max(0, vacas - mortV - desc);
+    // Aplica mortalidade proporcional em cada slot das filas
+    for(let i=0;i<qBez.length;i++) qBez[i] = Math.max(0, qBez[i] * (1 - mortBezMes));
+    for(let i=0;i<qN12.length;i++) qN12[i] = Math.max(0, qN12[i] * (1 - mortNovMes));
+    for(let i=0;i<qN24.length;i++) qN24[i] = Math.max(0, qN24[i] * (1 - mortNovMes));
 
     // ── Nascimentos fêmeas este mês ──────────────────────
-    const nascBezMes = vacasAtivas * nascFVacaMes
-                     + Math.max(0, nov24 - mortN24) * nascFNovMes;
-    nascAno += nascBezMes;
+    const n24Total = qN24.reduce((a,b)=>a+b,0);
+    const nascMes  = vacasAt * nascFVacaMes + n24Total * nascFNovMes;
+    nascAno += nascMes;
 
-    // ── Progressão entre categorias ──────────────────────
-    const bezSobrev  = Math.max(0, bez  - mortB);
-    const n12Sobrev  = Math.max(0, nov12 - mortN12);
-    const n24Sobrev  = Math.max(0, nov24 - mortN24);
+    // ── Progressão de fase (a mais antiga sai, nova entra) ─
+    const saiuBez = qBez.shift() || 0;  // bezerra de 4m → vira Nov4-12m
+    qBez.push(nascMes);                  // novo nascimento entra nas bezerras
 
-    // Animais que avançam de fase neste mês
-    const bezParaN12 = bezSobrev  * saidaBezMes;
-    const n12ParaN24 = n12Sobrev  * saidaN12Mes;
-    const n24ParaVac = n24Sobrev  * saidaN24Mes;
+    const saiuN12 = qN12.shift() || 0;  // Nov4-12m de 8m → vira Nov12-24m
+    qN12.push(saiuBez);
+
+    const saiuN24 = qN24.shift() || 0;  // Nov12-24m atingiu idParto → vira vaca
+    qN24.push(saiuN12);
 
     // ── Venda de excedente ────────────────────────────────
-    const precisaRepor = mortV + desc;
-    let entramVac = n24ParaVac;
+    let entramVac = saiuN24;
     let vendaMes  = 0;
     if(rbReposicao === 'venda'){
+      const precisaRepor = mortV + desc;
       const excedente = Math.max(0, entramVac - precisaRepor);
       vendaMes  = excedente * 0.70;
       entramVac = entramVac - vendaMes;
     }
-    vendaAcum += vendaMes;
+    vendaAcum   += vendaMes;
+    receitaNov  += vendaMes * precoNovVenda;
+    // Se novilhas insuficientes para repor vacas descartadas → compra externa
+    const precisaRepor2 = mortV + desc;
+    if(entramVac < precisaRepor2 * 0.5) {
+      custoReposAcum += (precisaRepor2 - entramVac) * custoRepos / 12;
+    }
 
     // ── Novos estoques ────────────────────────────────────
-    vacas = Math.max(0, vacasAtivas + entramVac);
-    nov24 = Math.max(0, n24Sobrev - n24ParaVac + n12ParaN24);
-    nov12 = Math.max(0, n12Sobrev - n12ParaN24 + bezParaN12);
-    bez   = Math.max(0, bezSobrev  - bezParaN12 + nascBezMes);
+    vacas = Math.max(0, vacasAt + entramVac);
 
     // ── Snapshot anual ────────────────────────────────────
     if(mes % 12 === 0){
-      snapshots.push({ vacas, nov24, nov12, bez, venda: vendaAcum, nasc: Math.round(nascAno) });
+      snapshots.push({
+        vacas,
+        bez: qBez.reduce((a,b)=>a+b,0),
+        n12: qN12.reduce((a,b)=>a+b,0),
+        n24: qN24.reduce((a,b)=>a+b,0),
+        venda: vendaAcum,
+        nasc:  Math.round(nascAno),
+        recDesc: Math.round(receitaDescAno || 0)
+      });
       nascAno = 0;
+      receitaDescAno = 0;
     }
   }
 
-  // Monta array de anos para exibição
+  // Monta array de anos
   for(let yr = 0; yr <= rbAnos; yr++){
     const s = snapshots[yr];
-    const total = Math.round(s.vacas + s.nov24 + s.nov12 + s.bez);
+    const total = Math.round(s.vacas + s.bez + s.n12 + s.n24);
     anos.push({
       yr,
-      vacas:  Math.round(s.vacas),
-      nov24:  Math.round(s.nov24),
-      nov12:  Math.round(s.nov12),
-      bez:    Math.round(s.bez),
+      vacas: Math.round(s.vacas),
+      nov24: Math.round(s.n24),
+      nov12: Math.round(s.n12),
+      bez:   Math.round(s.bez),
       total,
-      venda:  Math.round(s.venda),
-      nasc:   s.nasc || 0
+      venda: Math.round(s.venda),
+      nasc:  s.nasc || 0,
+      recDesc: s.recDesc || 0
     });
     labels.push(yr === 0 ? 'Atual' : 'Ano ' + yr);
   }
-
   // ── Renderiza resultado ──────────────────────────────────
   document.getElementById('rb-result-wrap').style.display='block';
 
@@ -7130,8 +7209,25 @@ function calcRebanho(){
   s('rb-r-nov-d',   delta(fim.nov24+fim.nov12, ini.nov24+ini.nov12));
   s('rb-r-total',   fim.total);
   s('rb-r-total-d', delta(fim.total, ini.total));
-  s('rb-r-venda',   fim.venda);
-  s('rb-r-venda-d', '<span style="opacity:.7;font-size:10px">fêmeas excedentes</span>');
+  s('rb-r-venda',   fim.venda > 0 ? fim.venda : '0');
+  s('rb-r-venda-d', fim.venda > 0 ? '<span style="color:#86efac;font-size:10px">excedente vendido</span>' : '<span style="opacity:.5;font-size:10px">sem excedente</span>');
+
+  // Fluxo de caixa
+  const fcEntrada = receitaDesc + receitaNov;
+  const fcSaida   = custoReposAcum;
+  const fcSaldo   = fcEntrada - fcSaida;
+  const fcAno     = fcSaldo / rbAnos;
+  const fmtR = v => 'R$ ' + (Math.abs(v)/1000).toFixed(0) + 'k';
+  const setFC = (id,v,positiveGreen=true) => {
+    const el=document.getElementById(id); if(!el) return;
+    el.textContent = (v<0?'-':v>0?'+':'') + fmtR(v);
+    el.style.color = v>0&&positiveGreen?'#86efac':v<0?'#fca5a5':'#e2e8f0';
+  };
+  const setFCRaw = (id,v) => { const el=document.getElementById(id); if(el) el.textContent=v; };
+  setFCRaw('rb-fc-entrada', 'R$ '+(fcEntrada/1000).toFixed(0)+'k');
+  const fcSaidaEl=document.getElementById('rb-fc-saida'); if(fcSaidaEl) fcSaidaEl.textContent='R$ '+(fcSaida/1000).toFixed(0)+'k';
+  setFC('rb-fc-saldo', fcSaldo);
+  const fcAnoEl=document.getElementById('rb-fc-ano'); if(fcAnoEl){ fcAnoEl.textContent=(fcAno>=0?'+':'')+'R$ '+(fcAno/1000).toFixed(0)+'k/ano'; fcAnoEl.style.color=fcAno>=0?'#fde68a':'#fca5a5'; }
 
   // ── Alertas ───────────────────────────────────────────────
   const alertas = [];
@@ -7238,7 +7334,7 @@ function calcRebanho(){
   if(tbl){
     const crescTot=((fim.total/ini.total-1)*100).toFixed(1);
     tbl.innerHTML=`<thead><tr>
-      <th>Período</th><th>Vacas</th><th>Nov 12-24m</th><th>Nov 4-12m</th><th>Bezerras</th><th>Total</th><th>Δ Total</th><th>Nascimentos/ano</th><th>Fêmeas Vendidas</th>
+      <th>Período</th><th>Vacas</th><th>Nov 12-24m</th><th>Nov 4-12m</th><th>Bezerras</th><th>Total</th><th>Δ Total</th><th>Nasc./ano</th><th>Novs vendidas</th><th>Receita desc.</th>
     </tr></thead><tbody>`+anos.map((a,i)=>{
       const prev=i>0?anos[i-1]:null;
       const dT=prev?a.total-prev.total:0;
@@ -7254,6 +7350,7 @@ function calcRebanho(){
         <td style="color:${dCol};font-weight:700">${dT>0?'+':''}${dT!==0?dT.toLocaleString('pt-BR')+(dPct?' ('+dPct+'%)':''):'—'}</td>
         <td style="color:#7c3aed;font-weight:700">${a.yr>0&&a.nasc>0?a.nasc.toLocaleString('pt-BR'):'—'}</td>
         <td style="color:#1d4ed8;font-weight:700">${a.venda>0?'+'+a.venda.toLocaleString('pt-BR'):'—'}</td>
+        <td style="color:#15803d;font-weight:700">${a.yr>0&&a.recDesc>0?'R$'+(a.recDesc/1000).toFixed(0)+'k':'—'}</td>
       </tr>`;
     }).join('')+`</tbody><tfoot><tr style="background:#f0fdf4;font-weight:800">
       <td colspan="5" style="padding:10px 12px;color:#15803d">Crescimento total do período</td>
