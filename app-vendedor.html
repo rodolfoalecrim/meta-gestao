@@ -101,7 +101,8 @@ body{font-family:Inter,sans-serif;background:var(--bg);color:var(--text);height:
 .dash-lista-item:hover{background:var(--surface2)}
 /* BENCHMARK CARDS */
 /* Benchmarks — estilo idêntico ao Painel */
-.bm-grid-app{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margin-bottom:14px}
+.bm-grid-app{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:14px}
+.bm-scale{display:flex;justify-content:space-between;font-size:9px;color:var(--dim);margin-top:3px}
 .bm{background:white;border:1px solid var(--border);border-radius:14px;padding:16px;box-shadow:var(--shadow);position:relative;overflow:hidden}
 .bm-top{display:flex;align-items:center;gap:10px;margin-bottom:10px}
 .bm-icon{font-size:22px;flex-shrink:0}
@@ -422,8 +423,8 @@ body{font-family:Inter,sans-serif;background:var(--bg);color:var(--text);height:
     <!-- ═══ BENCHMARKS ═══ -->
     <div class="screen" id="screen-bench">
       <div style="margin-bottom:16px">
-        <div style="font-size:18px;font-weight:800">🎯 Benchmarks</div>
-        <div style="font-size:11px;color:var(--muted);margin-top:2px" id="bench-subtitle">Médias da carteira ativa</div>
+        <div style="font-size:18px;font-weight:800">🎯 Benchmarks Técnicos</div>
+        <div style="font-size:11px;color:var(--muted);margin-top:2px" id="bench-subtitle">Desempenho dos clientes ativos vs referências nacionais (Embrapa / MAPA / CNA 2024)</div>
       </div>
       <div id="bench-wrap">
         <div style="text-align:center;padding:48px;color:var(--muted)">Carregando...</div>
@@ -1229,37 +1230,54 @@ function renderDash() {
 // BENCHMARKS
 // ════════════════════════════════════════
 function renderBench() {
-  const at   = meusClientes.filter(c => c.situacao==='ATIVO');
+  // Usa TODOS os clientes ativos da Meta (não só do vendedor)
+  const at   = Object.values(todosClientes).filter(function(c){ return c.situacao==='ATIVO'; });
   const wrap = document.getElementById('bench-wrap');
   if (!wrap) return;
   if (!at.length) {
-    wrap.innerHTML='<div style="text-align:center;padding:48px;color:var(--muted)"><div style="font-size:40px;margin-bottom:12px">📭</div><div style="font-size:14px;font-weight:700;color:var(--text)">Nenhum cliente ativo</div></div>';
+    wrap.innerHTML = '<div style="text-align:center;padding:48px;color:var(--muted)"><div style="font-size:40px;margin-bottom:12px">📭</div><div style="font-size:14px;font-weight:700;color:var(--text)">Nenhum cliente ativo</div></div>';
     return;
   }
-  ss('bench-subtitle', at.length+' clientes ativos · médias da carteira');
-  function avg(arr,k){ const v=arr.filter(d=>parseFloat(d[k])>0); return v.length?v.reduce((s,d)=>s+parseFloat(d[k]),0)/v.length:0; }
-  const somL     = at.reduce((s,c)=>s+(parseFloat(c.lactacao)||parseFloat(c.vacas)||0),0);
-  const prodTotal= at.reduce((s,c)=>s+(parseFloat(c.media_prod)||0)*(parseFloat(c.lactacao)||parseFloat(c.vacas)||0),0);
-  const mediaProd= somL>0?prodTotal/somL:0;
+  var meus = meusClientes.filter(function(c){ return c.situacao==='ATIVO'; });
+  ss('bench-subtitle', 'Desempenho de '+at.length+' clientes ativos vs referências nacionais (Embrapa / MAPA / CNA 2024)');
 
-  const refs = [
-    {l:'Média L/vaca/dia',  u:'L',      ref:28,  meta:37,  icon:'🥛', desc:'Embrapa: 28L | Top 100: 35.4L | Meta: 37L', dec:1, val:mediaProd},
-    {l:'Rebanho Médio',     u:' vacas', ref:60,  meta:200, icon:'🐄', desc:'Média nacional: 60 | Meta carteira: 200',    dec:0, val:avg(at,'vacas')},
-    {l:'Gordura',           u:'%',      ref:3.5, meta:4.0, icon:'🧈', desc:'IN77 mínimo: 3.0% | Premium: 4.0%',         dec:2, val:avg(at,'gordura')},
-    {l:'Proteína',          u:'%',      ref:3.1, meta:3.5, icon:'🧪', desc:'IN77 mínimo: 2.9% | Premium: 3.5%',         dec:2, val:avg(at,'proteina')},
-    {l:'CCS Médio',         u:'k',      ref:300, meta:150, icon:'🔬', desc:'IN77: ≤500k | Qualidade: ≤200k | Meta: ≤150k', dec:0, val:avg(at,'ccs'), lower:true},
-    {l:'DEL Médio',         u:' d',     ref:150, meta:120, icon:'📅', desc:'DEL ideal: 120-150 dias', dec:0, val:avg(at,'del')},
-    {l:'NUL Médio',         u:' mg/dL', ref:12,  meta:18,  icon:'🧬', desc:'Meta: 12-18 mg/dL', dec:1, val:avg(at,'nul'), ideal:true, min:12, max:18},
+  function avg(arr, k) {
+    var v = arr.filter(function(d){ return parseFloat(d[k])>0; });
+    return v.length ? v.reduce(function(s,d){ return s+parseFloat(d[k]); },0)/v.length : 0;
+  }
+  function sum(arr, k) {
+    return arr.reduce(function(s,d){ return s+(parseFloat(d[k])||0); },0);
+  }
+  function pctOf(arr, key, ofKey) {
+    var pairs = arr.filter(function(d){ return d[key]>0&&d[ofKey]>0; });
+    return pairs.length ? pairs.reduce(function(s,d){ return s+(d[key]/d[ofKey]*100); },0)/pairs.length : 0;
+  }
+
+  // Mesmos indicadores do painel admin
+  var refs = [
+    {l:'Média L/vaca/dia',    u:'L',      ref:28,   meta:37,   icon:'🥛', desc:'Embrapa: 28L | Top 100 MilkPoint 2026: 35.4L | Premium: 37L', dec:1, val:avg(at,'media_prod')},
+    {l:'Tamanho Rebanho',     u:'vacas',  ref:60,   meta:200,  icon:'🐄', desc:'Média nacional: 60 | Meta carteira: 200',                     dec:0, val:at.length?sum(at,'vacas')/at.length:0},
+    {l:'Gordura',             u:'%',      ref:3.5,  meta:4.0,  icon:'🧈', desc:'IN77 mínimo: 3.0% | Premium: 4.0%',                          dec:2, val:avg(at,'gordura')},
+    {l:'Proteína',            u:'%',      ref:3.1,  meta:3.5,  icon:'🧪', desc:'IN77 mínimo: 2.9% | Premium: 3.5%',                          dec:2, val:avg(at,'proteina')},
+    {l:'DEL Médio',           u:'dias',   ref:175,  meta:160,  icon:'📅', desc:'Ideal 150-180 dias em lactação',                              dec:0, val:avg(at,'del'), ideal:true, min:150, max:180},
+    {l:'Prod. Média/Fazenda', u:'L',      ref:3000, meta:8000, icon:'🏭', desc:'Produção diária média por propriedade ativa',                 dec:0, val:at.length?sum(at,'prod_diaria')/at.length:0},
+    {l:'NUL Médio',           u:' mg/dL', ref:12,   meta:18,   icon:'🧬', desc:'Nitrogênio Ureico: ideal 12–18 mg/dL | Alerta: <10 ou >20', dec:1, val:avg(at,'nul'), ideal:true, min:12, max:18},
+    {l:'Novilhas / Rebanho',  u:'%',      ref:15,   meta:25,   icon:'🐮', desc:'Índice de reposição: ideal 20–30% das vacas',                dec:0, val:pctOf(at,'novilhas','vacas'), ideal:true, min:15, max:35},
+    {l:'Vacas Secas / Reb.',  u:'%',      ref:12,   meta:18,   icon:'🌙', desc:'Período seco: ideal 15–20% do rebanho',                      dec:0, val:pctOf(at,'secas','vacas'), ideal:true, min:10, max:22},
+    {l:'Bezerras / Rebanho',  u:'%',      ref:10,   meta:20,   icon:'🍼', desc:'Índice de natalidade: presença indica reposição ativa',       dec:0, val:pctOf(at,'bezerras','vacas'), ideal:true, min:8, max:30},
+    {l:'CCS Médio',           u:'k',      ref:300,  meta:150,  icon:'🔬', desc:'IN77: ≤500k | Qualidade: ≤200k | Meta: ≤150k',               dec:0, val:avg(at,'ccs'), lower:true},
+    {l:'CBT Médio',           u:'k',      ref:300,  meta:100,  icon:'🦠', desc:'IN77: ≤300k | Premium: ≤100k',                               dec:0, val:avg(at,'cbt'), lower:true},
   ];
 
-  let html = '<div class="bm-dest-grid">'
-    +'<div class="bm-dest"><div class="bm-dest-icon">🥛</div>'
-    +'<div class="bm-dest-val" style="color:#7c3aed">'+Math.round(prodTotal).toLocaleString('pt-BR')+'</div>'
-    +'<div class="bm-dest-lbl">Litros/dia total</div></div>'
-    +'<div class="bm-dest"><div class="bm-dest-icon">🏡</div>'
-    +'<div class="bm-dest-val" style="color:#15803d">'+at.length+'</div>'
-    +'<div class="bm-dest-lbl">Clientes ativos</div></div>'
-    +'</div>';
+  // Cards de destaque: clientes ativos e minha carteira
+  var html = '<div class="bm-dest-grid">'
+    + '<div class="bm-dest"><div class="bm-dest-icon">🏡</div>'
+    + '<div class="bm-dest-val" style="color:#15803d">'+at.length+'</div>'
+    + '<div class="bm-dest-lbl">Clientes ativos Meta</div></div>'
+    + '<div class="bm-dest"><div class="bm-dest-icon">👤</div>'
+    + '<div class="bm-dest-val" style="color:#2563eb">'+meus.length+'</div>'
+    + '<div class="bm-dest-lbl">Minha carteira</div></div>'
+    + '</div>';
 
   html += '<div class="bm-grid-app">';
   refs.forEach(function(r) {
@@ -1267,8 +1285,11 @@ function renderBench() {
     if (!val) return;
     var cls, col, status;
     if (r.ideal) {
-      var ok = val>=r.min&&val<=r.max;
-      cls=ok?'bm-ok':'bm-warn'; col=ok?'#16a34a':'#d97706'; status=ok?'✅':'⚠️';
+      var ok = val>=r.min && val<=r.max;
+      var close = val>=(r.min-3) && val<=(r.max+3);
+      cls=ok?'bm-ok':close?'bm-warn':'bm-bad';
+      col=ok?'#16a34a':close?'#d97706':'#dc2626';
+      status=ok?'✅':close?'⚠️':'❌';
     } else if (r.lower) {
       cls=val<=r.meta?'bm-ok':val<=r.ref?'bm-warn':'bm-bad';
       col=val<=r.meta?'#16a34a':val<=r.ref?'#d97706':'#dc2626';
@@ -1278,24 +1299,29 @@ function renderBench() {
       col=val>=r.meta?'#16a34a':val>=r.ref?'#d97706':'#dc2626';
       status=val>=r.meta?'✅':val>=r.ref?'⚠️':'❌';
     }
-    var fv = r.u==='%'?val.toFixed(r.dec)+'%'
-           : r.u===' mg/dL'?val.toFixed(r.dec)+r.u
-           : val>=1000?(val/1000).toFixed(1)+'k '+r.u.trim()
-           : val.toFixed(r.dec)+r.u;
-    var pct = r.lower
-      ? Math.max(0,Math.min(100,(1-(val-r.meta)/Math.max(r.ref-r.meta,1))*100))
-      : Math.min(100,(val/r.meta)*100);
-    var refLbl = r.ideal?'Min: '+r.min+r.u:'Ref: '+r.ref+r.u;
-    var metaLbl = r.ideal?'Max: '+r.max+r.u:'Meta: '+r.meta+r.u;
+    // Formata valor (igual ao painel)
+    var fv;
+    if (r.u==='%') fv = val.toFixed(r.dec)+'%';
+    else if (r.u===' mg/dL') fv = val.toFixed(r.dec)+r.u;
+    else if (r.u===' R$') fv = 'R$ '+(val>=1000?(val/1000).toFixed(1)+'k':val.toFixed(r.dec));
+    else if (val>=1000) fv = (val/1000).toFixed(1)+'k '+r.u;
+    else fv = val.toFixed(r.dec)+' '+r.u;
+
+    var pct = r.ideal ? Math.min(val/r.max*100,100)
+            : (r.meta>0 ? Math.min(val/r.meta*100,100) : 0);
+    var scaleTxt = r.ideal
+      ? '<span>0</span><span>Min: '+r.min+r.u+'</span><span>Max: '+r.max+r.u+'</span>'
+      : '<span>0</span><span>Ref: '+r.ref+r.u+'</span><span>Meta: '+r.meta+r.u+'</span>';
+
     html += '<div class="bm">'
-      +'<div class="bm-top"><div class="bm-icon">'+r.icon+'</div>'
-      +'<div class="bm-lbl">'+r.l+'</div>'
-      +'<div class="bm-status">'+status+'</div></div>'
-      +'<div class="bm-val '+cls+'">'+fv+'</div>'
-      +'<div class="bm-ref">'+r.desc+'</div>'
-      +'<div class="bm-bar"><div class="bm-fill" style="width:'+pct.toFixed(0)+'%;background:'+col+'"></div></div>'
-      +'<div class="bm-refs-row"><span>'+refLbl+'</span><span>'+metaLbl+'</span></div>'
-      +'</div>';
+      + '<div class="bm-top"><div class="bm-icon">'+r.icon+'</div>'
+      + '<div class="bm-lbl">'+r.l+'</div>'
+      + '<div style="margin-left:auto;font-size:18px">'+status+'</div></div>'
+      + '<div class="bm-val '+cls+'">'+fv+'</div>'
+      + '<div class="bm-ref">'+r.desc+'</div>'
+      + '<div class="bm-bar"><div class="bm-fill" style="width:'+pct.toFixed(0)+'%;background:'+col+'"></div></div>'
+      + '<div class="bm-scale">'+scaleTxt+'</div>'
+      + '</div>';
   });
   html += '</div>';
   wrap.innerHTML = html;
