@@ -7180,6 +7180,8 @@ function calcRebanho(){
   }
 
   // Monta array de anos
+  const anos   = [];
+  const labels = [];
   for(let yr = 0; yr <= rbAnos; yr++){
     const s = snapshots[yr];
     const total = Math.round(s.vacas + s.bez + s.n12 + s.n24);
