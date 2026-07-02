@@ -573,7 +573,18 @@ html, body { height: 100%; overflow: hidden; background: var(--bg); color: var(-
 
 
     <!-- DIETA & CUSTOS -->
-    <div class="screen" id="screen-dieta">
+    <!-- ═══ BENCHMARK ═══ -->
+    <div class="screen" id="screen-bench">
+      <div style="margin-bottom:16px">
+        <div style="font-size:18px;font-weight:800;color:var(--text)">🎯 Benchmarks</div>
+        <div style="font-size:11px;color:var(--muted);margin-top:2px" id="bench-subtitle">Médias da carteira ativa</div>
+      </div>
+      <div id="bench-cards-wrap">
+        <div style="text-align:center;padding:40px;color:var(--muted)">Carregando...</div>
+      </div>
+    </div>
+
+        <div class="screen" id="screen-dieta">
       <div id="dieta-body" style="padding:16px;padding-bottom:80px">
         <!-- preenchido via JS -->
       </div>
@@ -693,13 +704,16 @@ html, body { height: 100%; overflow: hidden; background: var(--bg); color: var(-
 
   <div class="bottom-nav">
     <button class="nav-btn active" id="nav-lista" onclick="showScreen('lista')">
-      <span class="ico">🏡</span>Propriedades
+      <span class="ico">🏡</span>Clientes
     </button>
     <button class="nav-btn" id="nav-cad" onclick="novoCliente()">
       <span class="ico">➕</span>Cadastrar
     </button>
-    <button class="nav-btn" id="nav-dash" onclick="showScreen('dash')">
-      <span class="ico">📊</span>Meu Resultado
+    <button class="nav-btn" id="nav-dash" onclick="showScreen('dash');renderDash()">
+      <span class="ico">📊</span>Dashboard
+    </button>
+    <button class="nav-btn" id="nav-bench" onclick="showScreen('bench');renderBenchApp()">
+      <span class="ico">🎯</span>Benchmarks
     </button>
   </div>
 </div>
@@ -751,7 +765,18 @@ auth.onAuthStateChanged(user => {
   document.getElementById('loading-screen').style.display = 'none';
   if (user) {
     usuarioAtual = user;
-    nomeVendedor = user.email.split('@')[0].toUpperCase();
+    // Usa nome amigável baseado no email
+    const NOME_AMIGAVEL = {
+      'vetsinvesting@gmail.com':   'Paulo',
+      'jozielsantossoares@gmail.com': 'Joziel',
+      'vetdalmolin@gmail.com':     'Maicon',
+      'arthursoaresaa@gmail.com':  'Arthur',
+      'lucasbianchi214@gmail.com': 'Lucas',
+      'jrlucasramos2@gmail.com':   'José Lucas',
+      'mullerjulio02@gmail.com':   'Julio',
+      'vagner7leguas@gmail.com':   'Vagner',
+    };
+    nomeVendedor = NOME_AMIGAVEL[user.email.toLowerCase()] || user.email.split('@')[0].toUpperCase();
     document.getElementById('tvendedor').textContent = nomeVendedor;
     document.getElementById('app').style.display = 'flex';
     document.getElementById('login-screen').style.display = 'none';
@@ -801,17 +826,863 @@ function iniciarApp() {
   // Data padrão de hoje no campo de visita
   document.getElementById('c-data-visita').value = new Date().toISOString().split('T')[0];
 
-  // Escuta os PRÓPRIOS clientes em tempo real
-  db.ref('propriedades').orderByChild('vendedor').equalTo(usuarioAtual.email)
-    .on('value', snap => {
-      meusClientes = [];
-      snap.forEach(child => {
-        meusClientes.push({ id: child.key, ...child.val() });
-      });
-      meusClientes.sort((a,b) => (b.vacas||0) - (a.vacas||0));
-      filtrarLista();
-      renderDash();
+  // Mapa email → nomes possíveis no campo vendedor do painel
+  const VENDEDOR_MAP = {
+    'vetsinvesting@gmail.com':   ['PAULO','PAULO VETS','VETSINVESTING'],
+    'jozielsantossoares@gmail.com': ['JOZIEL','JOZIEL SANTOS','JOZIELSANTOSSOARES'],
+    'vetdalmolin@gmail.com':     ['MAICON','MAICON DALMOLIN','VETDALMOLIN'],
+    'arthursoaresaa@gmail.com':  ['ARTHUR','ARTHUR SOARES','ARTHURSOARESAA'],
+    'lucasbianchi214@gmail.com': ['LUCAS','LUCAS BIANCHI','LUCASBIANCHI214'],
+    'jrlucasramos2@gmail.com':   ['JOSÉ LUCAS','JOSE LUCAS','JRLUCASRAMOS2'],
+    'mullerjulio02@gmail.com':   ['JULIO','JULIO MULLER','MULLERJULIO02'],
+    'vagner7leguas@gmail.com':   ['VAGNER','VAGNER7LEGUAS','VAGNER LEGUAS'],
+  };
+
+  const emailLogin = (usuarioAtual.email || '').toLowerCase().trim();
+  const nomesValidos = (VENDEDOR_MAP[emailLogin] || []).map(n => n.toUpperCase().trim());
+  // Adiciona prefixo do email como fallback
+  const prefixo = emailLogin.split('@')[0].toUpperCase().trim();
+  if (!nomesValidos.includes(prefixo)) nomesValidos.push(prefixo);
+  nomesValidos.push(emailLogin); // também tenta o email direto
+
+  console.log('Vendedor logado:', emailLogin, '→ nomes:', nomesValidos);
+
+  db.ref('propriedades').on('value', snap => {
+    todosClientes = {};
+    meusClientes = [];
+    snap.forEach(child => {
+      const d = { id: child.key, ...child.val() };
+      todosClientes[child.key] = d;
+      const vNome  = (d.nome_vendedor || d.vendedor || '').toUpperCase().trim();
+      const vEmail = (d.vendedor || '').toLowerCase().trim();
+      const match = nomesValidos.some(n => vNome === n || vEmail === n.toLowerCase());
+      if (match) meusClientes.push(d);
     });
+    meusClientes.sort((a,b) => (b.vacas||0) - (a.vacas||0));
+    filtrarLista();
+    renderDash();
+  });
+}
+
+// ── SCREENS ──────────────────────────────────────────────
+function showScreen(name, data=null) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('screen-' + name).classList.add('active');
+  const nb = document.getElementById('nav-' + name);
+  if (nb) nb.classList.add('active');
+
+  const backBtn = document.getElementById('back-btn');
+  const tlogo = document.getElementById('tlogo');
+  if (name === 'detail') {
+    backBtn.style.display = 'block'; tlogo.style.visibility='hidden';
+    document.getElementById('ttitle').textContent = '';
+  } else {
+    backBtn.style.display = 'none'; tlogo.style.visibility='visible';
+    const titles = { lista:'Propriedades', cad: editandoId?'Editar':'Cadastrar', dash:'Meu Resultado' };
+    document.getElementById('ttitle').textContent = titles[name] || 'LeitePRO';
+  }
+  prevScreen = name === 'detail' ? prevScreen : name;
+  document.getElementById('content').scrollTop = 0;
+}
+
+function goBack() { showScreen(prevScreen || 'lista'); }
+
+// ── LISTA ────────────────────────────────────────────────
+function setChip(el, filtro) {
+  document.querySelectorAll('.chip').forEach(c => c.classList.remove('active'));
+  el.classList.add('active');
+  filtroAtivo = filtro;
+  filtrarLista();
+}
+
+function filtrarLista() {
+  const q = (document.getElementById('search-q').value || '').toLowerCase();
+  let rows = meusClientes;
+  if (filtroAtivo) rows = rows.filter(d => d.situacao === filtroAtivo);
+  if (q) rows = rows.filter(d =>
+    (d.produtor||'').toLowerCase().includes(q) ||
+    (d.propriedade||'').toLowerCase().includes(q) ||
+    (d.cidade||'').toLowerCase().includes(q)
+  );
+  document.getElementById('lista-count').textContent = rows.length + ' registro' + (rows.length!==1?'s':'');
+
+  if (rows.length === 0) {
+    document.getElementById('lista-clientes').innerHTML = `<div class="empty"><div class="emoji">🔍</div><p>Nenhuma propriedade encontrada.</p></div>`;
+    return;
+  }
+
+  document.getElementById('lista-clientes').innerHTML = rows.map(d => {
+    const cor = avatarColor(d.produtor);
+    const ini = iniciais(d.produtor);
+    const sitClass = d.situacao==='ATIVO'?'b-ativo':d.situacao==='INATIVO'?'b-inativo':'b-prospec';
+    const sitLabel = d.situacao==='ATIVO'?'✅ Ativo':d.situacao==='INATIVO'?'❌ Inativo':'🎯 Prospecto';
+    return `<div class="client-card" onclick='abrirDetalhe(${JSON.stringify(d)})'>
+      <div class="client-avatar" style="background:${cor}">${ini}</div>
+      <div class="client-info">
+        <div class="client-name">${d.produtor||'—'}</div>
+        <div class="client-meta">${d.propriedade||''} ${d.propriedade&&d.cidade?'·':''} ${d.cidade||''}</div>
+        <span class="badge ${sitClass}">${sitLabel}</span>
+        ${d.produto?`<span class="badge" style="background:rgba(52,152,219,.12);color:#3498db">${d.produto}</span>`:''}
+      </div>
+      <div class="client-right">
+        <div class="client-vacas">${d.vacas||'—'}</div>
+        <div class="client-vacas-lbl">vacas</div>
+        ${d.prod_diaria>0?`<div style="font-size:11px;color:var(--muted);margin-top:4px">${(d.prod_diaria/1000).toFixed(1)}k L/dia</div>`:''}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ── DETALHE ──────────────────────────────────────────────
+function abrirDetalhe(d) {
+  clienteAtual = d;
+  const cor = avatarColor(d.produtor);
+  const ini = iniciais(d.produtor);
+  const sitClass = d.situacao==='ATIVO'?'b-ativo':d.situacao==='INATIVO'?'b-inativo':'b-prospec';
+  const sitLabel = d.situacao==='ATIVO'?'✅ Ativo':d.situacao==='INATIVO'?'❌ Inativo':'🎯 Prospecto';
+
+  document.getElementById('ttitle').textContent = (d.produtor||'').split(' ')[0];
+
+  document.getElementById('detail-hero').innerHTML = `
+    <div class="detail-avatar" style="background:${cor}">${ini}</div>
+    <div class="detail-name">${d.produtor||'—'}</div>
+    <div class="detail-sub">${d.propriedade||''} ${d.cidade?' · '+d.cidade:''} ${d.estado?' · '+d.estado:''}</div>
+    <div style="margin-top:10px">
+      <span class="badge ${sitClass}">${sitLabel}</span>
+      ${d.produto?`<span class="badge" style="background:rgba(52,152,219,.12);color:#3498db">${d.produto}</span>`:''}
+      ${d.ordenha==='ROBOTIZADA'?`<span class="badge" style="background:rgba(240,180,41,.12);color:var(--yellow)">🤖 Robotizada</span>`:''}
+    </div>`;
+
+  const fmt = v => v>0?v:'—';
+  const fmtPct = v => v>0?`${parseFloat(v).toFixed(2)}%`:'—';
+
+  document.getElementById('detail-body').innerHTML = `
+    <div class="stat-grid" style="grid-template-columns:repeat(3,1fr)">
+      <div class="stat-box">
+        <div class="val" style="color:var(--blue)">${d.vacas||'—'}</div>
+        <div class="lbl">Total Vacas</div>
+      </div>
+      <div class="stat-box">
+        <div class="val" style="color:var(--green)">${d.lactacao>0?d.lactacao:'—'}</div>
+        <div class="lbl">Em Lactação</div>
+      </div>
+      <div class="stat-box">
+        <div class="val" style="color:#3498db">${d.secas>0?d.secas:'—'}</div>
+        <div class="lbl">Secas</div>
+      </div>
+      <div class="stat-box">
+        <div class="val" style="color:#e67e22">${d.novilhas>0?d.novilhas:'—'}</div>
+        <div class="lbl">Novilhas</div>
+      </div>
+      <div class="stat-box">
+        <div class="val" style="color:#9b59b6">${d.bezerras>0?d.bezerras:'—'}</div>
+        <div class="lbl">Bezerras</div>
+      </div>
+      <div class="stat-box">
+        <div class="val" style="color:var(--green)">${d.media_prod>0?parseFloat(d.media_prod).toFixed(1)+' L':'—'}</div>
+        <div class="lbl">Média/vaca</div>
+      </div>
+    </div>
+
+    <div class="info-list">
+      ${d.lactacao>0?`<div class="info-row"><span class="info-icon">🐄</span><div class="info-txt"><div class="info-key">Vacas em Lactação</div></div><div class="info-val-right">${d.lactacao}</div></div>`:''}
+      ${d.novilhas>0?`<div class="info-row"><span class="info-icon">🐮</span><div class="info-txt"><div class="info-key">Novilhas</div></div><div class="info-val-right">${d.novilhas}</div></div>`:''}
+      <div class="info-row"><span class="info-icon">🏗️</span><div class="info-txt"><div class="info-key">Sistema</div></div><div class="info-val-right">${d.sistema||'—'}</div></div>
+      <div class="info-row"><span class="info-icon">📍</span><div class="info-txt"><div class="info-key">Localização</div></div><div class="info-val-right">${d.cidade||'—'} · ${d.regiao||''}</div></div>
+    </div>
+
+    ${(d.gordura||d.proteina||d.ccs)?`
+    <div class="info-list" style="margin-bottom:14px">
+      <div class="info-row"><span class="info-icon">🥛</span><div class="info-txt"><div class="info-key">Gordura</div></div><div class="info-val-right" style="color:var(--yellow)">${fmtPct(d.gordura)}</div></div>
+      <div class="info-row"><span class="info-icon">🧪</span><div class="info-txt"><div class="info-key">Proteína</div></div><div class="info-val-right" style="color:var(--blue)">${fmtPct(d.proteina)}</div></div>
+      ${d.ccs?`<div class="info-row"><span class="info-icon">🔬</span><div class="info-txt"><div class="info-key">CCS (x1000)</div></div><div class="info-val-right">${d.ccs}</div></div>`:''}
+      ${d.cbt?`<div class="info-row"><span class="info-icon">🦠</span><div class="info-txt"><div class="info-key">CBT (x1000)</div></div><div class="info-val-right">${d.cbt}</div></div>`:''}
+      ${d.est?`<div class="info-row"><span class="info-icon">📊</span><div class="info-txt"><div class="info-key">Extrato Seco</div></div><div class="info-val-right">${fmtPct(d.est)}</div></div>`:''}
+    </div>`:''}
+
+    ${d.obs?`<div class="info-list" style="margin-bottom:14px"><div class="info-row"><span class="info-icon">📝</span><div class="info-txt"><div class="info-key">Observações</div><div class="info-val">${d.obs}</div></div></div></div>`:''}
+    ${d.data_visita?`<div style="font-size:11px;color:var(--muted);text-align:center;margin-bottom:12px">Última visita: ${formatDate(d.data_visita)}</div>`:''}
+
+    <button class="btn-edit" onclick='editarCliente(${JSON.stringify(d)})'>✏️ Editar Propriedade</button>
+    <button class="btn-secondary" style="color:var(--red);border-color:var(--red);margin-top:8px" onclick="excluirCliente('${d.id}','${d.produtor}')">🗑️ Excluir</button>`;
+
+  // Adiciona botões no detail-body
+  const detailBody = document.getElementById('detail-body');
+  if(detailBody) {
+    const btnVisita = document.createElement('button');
+    btnVisita.innerHTML = '📋 Preencher Ficha de Visita';
+    btnVisita.style.cssText = 'width:100%;background:linear-gradient(135deg,#003c09,#1a6b35);color:white;border:none;border-radius:14px;padding:15px;font-size:15px;font-weight:700;font-family:Inter,sans-serif;cursor:pointer;margin-top:16px;display:block';
+    btnVisita.onclick = abrirVisita;
+    detailBody.appendChild(btnVisita);
+
+    const btnDieta = document.createElement('button');
+    btnDieta.innerHTML = '🌽 Ver Dieta & Custos';
+    btnDieta.style.cssText = 'width:100%;background:linear-gradient(135deg,#d97706,#92400e);color:white;border:none;border-radius:14px;padding:15px;font-size:15px;font-weight:700;font-family:Inter,sans-serif;cursor:pointer;margin-top:10px;display:block';
+    btnDieta.onclick = abrirDieta;
+    detailBody.appendChild(btnDieta);
+  }
+  showScreen('detail', d);
+}
+
+function formatDate(s) {
+  if (!s) return '—';
+  const [y,m,d] = s.split('-');
+  return `${d}/${m}/${y}`;
+}
+
+// ── CADASTRO ─────────────────────────────────────────────
+function novoCliente() {
+  editandoId = null;
+  document.getElementById('cad-titulo').textContent = 'Nova Propriedade';
+  document.getElementById('btn-salvar').textContent = '💾 Salvar Propriedade';
+  document.getElementById('edit-id').value = '';
+  limparForm();
+  showScreen('cad');
+}
+
+function limparForm() {
+  ['c-produtor','c-propriedade','c-cidade','c-vacas','c-lactacao','c-secas','c-novilhas','c-bezerras',
+   'c-media-prod','c-prod-dia','c-del','c-gordura','c-proteina','c-ccs','c-cbt','c-est','c-obs'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.value = '';
+  });
+  document.getElementById('c-situacao').value = 'PROSPEC';
+  document.getElementById('c-produto').value = 'ULTRAMAX';
+  document.getElementById('c-estado').value = 'PR';
+  document.getElementById('c-regiao').value = 'SUDOESTE PARANÁ';
+  document.getElementById('c-sistema').value = 'FREE STALL';
+  document.getElementById('c-ordenha').value = 'CONVENCIONAL';
+  document.getElementById('c-data-visita').value = new Date().toISOString().split('T')[0];
+}
+
+function editarCliente(d) {
+  editandoId = d.id;
+  document.getElementById('cad-titulo').textContent = 'Editar Propriedade';
+  document.getElementById('btn-salvar').textContent = '💾 Atualizar';
+  document.getElementById('edit-id').value = d.id;
+
+  const set = (id, val) => { const el = document.getElementById(id); if(el && val!==undefined && val!==null) el.value = val; };
+  set('c-produtor', d.produtor);
+  set('c-propriedade', d.propriedade);
+  set('c-cidade', d.cidade);
+  set('c-situacao', d.situacao);
+  set('c-produto', d.produto);
+  set('c-estado', d.estado);
+  set('c-regiao', d.regiao);
+  set('c-vacas', d.vacas);
+  set('c-lactacao', d.lactacao);
+  set('c-secas', d.secas);
+  set('c-novilhas', d.novilhas);
+  set('c-bezerras', d.bezerras);
+  set('c-media-prod', d.media_prod);
+  set('c-prod-dia', d.prod_diaria);
+  set('c-del', d.del);
+  set('c-sistema', d.sistema);
+  set('c-ordenha', d.ordenha);
+  set('c-gordura', d.gordura);
+  set('c-proteina', d.proteina);
+  set('c-ccs', d.ccs);
+  set('c-cbt', d.cbt);
+  set('c-est', d.est);
+  set('c-obs', d.obs);
+  set('c-data-visita', d.data_visita);
+
+  showScreen('cad');
+}
+
+function cancelarEdicao() {
+  editandoId = null;
+  limparForm();
+  showScreen('lista');
+}
+
+async function salvarCliente() {
+  const produtor = document.getElementById('c-produtor').value.trim();
+  const cidade = document.getElementById('c-cidade').value.trim();
+  if (!produtor) { showToast('⚠️ Informe o nome do produtor', true); return; }
+
+  const num = id => parseFloat(document.getElementById(id).value) || 0;
+  const str = id => document.getElementById(id).value.trim();
+
+  const vacas = num('c-vacas');
+  const media = num('c-media-prod');
+  const prodDia = num('c-prod-dia') || (vacas * media) || 0;
+
+  const dados = {
+    produtor: produtor.toUpperCase(),
+    propriedade: str('c-propriedade').toUpperCase(),
+    situacao: str('c-situacao'),
+    produto: str('c-produto'),
+    cidade: cidade.toUpperCase(),
+    estado: str('c-estado'),
+    regiao: str('c-regiao'),
+    vacas: vacas,
+    lactacao: num('c-lactacao'),
+    secas: num('c-secas'),
+    novilhas: num('c-novilhas'),
+    bezerras: num('c-bezerras'),
+    media_prod: media,
+    prod_diaria: prodDia,
+    sistema: str('c-sistema'),
+    ordenha: str('c-ordenha'),
+    del: num('c-del'),
+    gordura: num('c-gordura'),
+    proteina: num('c-proteina'),
+    ccs: num('c-ccs'),
+    cbt: num('c-cbt'),
+    est: num('c-est'),
+    obs: str('c-obs'),
+    data_visita: str('c-data-visita'),
+    vendedor: usuarioAtual.email,
+    nome_vendedor: nomeVendedor,
+    atualizado_em: new Date().toISOString(),
+  };
+
+  const dot = document.getElementById('sync-dot');
+  dot.className = 'sync-dot syncing';
+
+  try {
+    const btn = document.getElementById('btn-salvar');
+    btn.textContent = 'Salvando...'; btn.disabled = true;
+
+    if (editandoId) {
+      await db.ref('propriedades/' + editandoId).update(dados);
+      // Save snapshot to history
+      const snapshot = {
+        data: new Date().toISOString(),
+        vacas: dados.vacas,
+        lactacao: dados.lactacao,
+        secas: dados.secas || 0,
+        novilhas: dados.novilhas,
+        bezerras: dados.bezerras || 0,
+        media_prod: dados.media_prod,
+        prod_diaria: dados.prod_diaria,
+        del: dados.del || 0,
+        gordura: dados.gordura || 0,
+        proteina: dados.proteina || 0,
+        ccs: dados.ccs || 0,
+        cbt: dados.cbt || 0,
+        obs: dados.obs || '',
+        vendedor: nomeVendedor,
+      };
+      await db.ref('historico/' + editandoId).push(snapshot);
+    } else {
+      dados.criado_em = new Date().toISOString();
+      const ref = await db.ref('propriedades').push(dados);
+      // First history entry
+      const snapshot = {
+        data: new Date().toISOString(),
+        vacas: dados.vacas, lactacao: dados.lactacao, secas: dados.secas || 0,
+        novilhas: dados.novilhas, bezerras: dados.bezerras || 0,
+        media_prod: dados.media_prod, prod_diaria: dados.prod_diaria,
+        del: dados.del || 0, gordura: dados.gordura || 0, proteina: dados.proteina || 0,
+        ccs: dados.ccs || 0, cbt: dados.cbt || 0, obs: dados.obs || '', vendedor: nomeVendedor,
+      };
+      await db.ref('historico/' + ref.key).push(snapshot);
+    }
+
+    limparForm();
+    editandoId = null;
+    showToast(editandoId ? '✅ Atualizado!' : '✅ Propriedade salva!');
+    showScreen('lista');
+  } catch(e) {
+    showToast('❌ Erro ao salvar. Verifique a conexão.', true);
+  } finally {
+    const btn = document.getElementById('btn-salvar');
+    btn.textContent = editandoId ? '💾 Atualizar' : '💾 Salvar Propriedade';
+    btn.disabled = false;
+  }
+}
+
+async function excluirCliente(id, nome) {
+  if (!confirm(`Excluir ${nome}?`)) return;
+  try {
+    await db.ref('propriedades/' + id).remove();
+    showToast('🗑️ Excluído com sucesso');
+    showScreen('lista');
+  } catch(e) {
+    showToast('Erro ao excluir', true);
+  }
+}
+
+// ── DASHBOARD ─────────────────────────────────────────────
+let dashCharts = {};
+
+
+function calcProd() {
+  var m = parseFloat(document.getElementById('vt-media').value)||0;
+  var v = parseFloat(document.getElementById('vt-vacas').value)||0;
+  if(m>0&&v>0) document.getElementById('vt-prod').value = Math.round(m*v);
+}
+
+function ss(campo, valor, btn) {
+  visitaScores[campo] = valor;
+  btn.parentElement.querySelectorAll('.sbtn').forEach(function(b){
+    b.className='sbtn';
+  });
+  btn.className='sbtn s-'+valor;
+}
+
+function abrirVisita() {
+  if(!clienteAtual) return;
+  var d = clienteAtual;
+  // Limpa form
+  document.querySelectorAll('#screen-visita .visit-inp').forEach(function(el){ if(el.type!=='date') el.value=''; });
+  document.querySelectorAll('#screen-visita .sbtn').forEach(function(b){ b.className='sbtn'; });
+  Object.keys(visitaScores).forEach(function(k){ delete visitaScores[k]; });
+  // Pré-preenche
+  function sv(id,v){ var el=document.getElementById(id); if(el&&v) el.value=v; }
+  sv('vt-vacas',d.vacas); sv('vt-lactacao',d.lactacao); sv('vt-secas',d.secas);
+  sv('vt-novilhas',d.novilhas); sv('vt-bezerras',d.bezerras);
+  sv('vt-media',d.media_prod); sv('vt-prod',d.prod_diaria);
+  sv('vt-gordura',d.gordura); sv('vt-proteina',d.proteina);
+  sv('vt-ccs',d.ccs); sv('vt-nul',d.nul);
+  var prox = new Date(); prox.setDate(prox.getDate()+30);
+  sv('vt-prox', prox.toISOString().split('T')[0]);
+  prevScreen = 'detail';
+  showScreen('visita');
+}
+
+function gv(id) {
+  var el = document.getElementById(id);
+  if(!el) return null;
+  var v = el.value.trim();
+  if(v==='') return null;
+  return el.type==='number' ? (parseFloat(v)||0) : v;
+}
+
+async function salvarVisita() {
+  if(!clienteAtual) { showToast('Nenhum cliente selecionado', true); return; }
+  var user = firebase.auth().currentUser;
+  if(!user) { showToast('Faça login primeiro', true); return; }
+  var btn = document.querySelector('.vsave');
+  if(btn) { btn.textContent='⏳ Salvando...'; btn.disabled=true; }
+  try {
+    var now = new Date();
+    var farmId = clienteAtual.id;
+    var visita = {
+      data: now.toISOString(), criado_em: now.toISOString(),
+      vendedor: user.email, farm_id: farmId, produtor: clienteAtual.produtor,
+      vacas: gv('vt-vacas'), lactacao: gv('vt-lactacao'), secas: gv('vt-secas'),
+      novilhas: gv('vt-novilhas'), bezerras: gv('vt-bezerras'), del: gv('vt-del'),
+      media_prod: gv('vt-media'), prod_diaria: gv('vt-prod'),
+      gordura: gv('vt-gordura'), proteina: gv('vt-proteina'),
+      ccs: gv('vt-ccs'), nul: gv('vt-nul'),
+      silagem: visitaScores['silagem']||null, mistura: visitaScores['mistura']||null,
+      presecado: visitaScores['presecado']||null, consumo: visitaScores['consumo']||null,
+      cama: visitaScores['cama']||null, termal: visitaScores['termal']||null,
+      cascos: visitaScores['cascos']||null,
+      ecc: gv('vt-ecc'), ms_silagem: gv('vt-ms-sil'), sobras: gv('vt-sobras'),
+      temp_max: gv('vt-temp-max'),
+      retencao: gv('vt-retencao'), cetose: gv('vt-cetose'),
+      descarte: gv('vt-descarte'), morte_vacas: gv('vt-morte'),
+      positivos: gv('vt-positivos'), atencao: gv('vt-atencao'),
+      acoes: gv('vt-acoes'), proxima_data: gv('vt-prox')
+    };
+    // Remove nulls
+    Object.keys(visita).forEach(function(k){ if(visita[k]===null) delete visita[k]; });
+    // 1. Salva visita
+    await db.ref('visitas/'+farmId).push(visita);
+    // 2. Atualiza propriedade
+    var upd = { atualizado_em: now.toISOString(), atualizado_por: user.email };
+    var campos = ['vacas','lactacao','secas','novilhas','bezerras','del','gordura','proteina','ccs','nul'];
+    campos.forEach(function(c){ var v=gv('vt-'+c); if(v) upd[c]=v; });
+    var mp=gv('vt-media'); if(mp) upd.media_prod=mp;
+    var pd=gv('vt-prod'); if(pd) upd.prod_diaria=pd;
+    await db.ref('propriedades/'+farmId).update(upd);
+    // 3. Histórico
+    var hist = { data:now.toISOString(), vacas:visita.vacas, lactacao:visita.lactacao,
+      media_prod:visita.media_prod, prod_diaria:visita.prod_diaria,
+      gordura:visita.gordura, proteina:visita.proteina, nul:visita.nul, ccs:visita.ccs };
+    Object.keys(hist).forEach(function(k){ if(!hist[k]&&hist[k]!==0) delete hist[k]; });
+    await db.ref('historico/'+farmId).push(hist);
+    showToast('✅ Ficha salva com sucesso!');
+    setTimeout(function(){ showScreen('detail'); }, 1500);
+  } catch(e) {
+    console.error(e);
+    showToast('❌ Erro ao salvar. Tente novamente.', true);
+  } finally {
+    if(btn) { btn.textContent='💾 Salvar Ficha de Visita'; btn.disabled=false; }
+  }
+}
+
+
+// ══════════════════════════════════════════════
+// DIETA & CUSTOS
+// ══════════════════════════════════════════════
+function abrirDieta() {
+  if(!clienteAtual) return;
+  prevScreen = 'detail';
+  showScreen('dieta');
+  carregarDieta(clienteAtual.id);
+}
+
+function fmt2(v){ return parseFloat(v||0).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2}); }
+function fmtK(v){ return v>=1000?(v/1000).toFixed(1)+'k':v.toFixed(0); }
+
+function carregarDieta(farmId) {
+  const body = document.getElementById('dieta-body');
+  if(!body) return;
+  body.innerHTML = '<div style="text-align:center;padding:40px"><div style="font-size:24px;margin-bottom:8px">⏳</div><div style="font-size:13px;font-weight:600;color:#64748b">Carregando dieta...</div></div>';
+
+  db.ref('dietas/'+farmId).once('value', function(snap) {
+    const data = snap.val();
+    if(!data || !data.lotes) {
+      body.innerHTML = '<div class="dt-semdieta"><div class="dt-semdieta-icon">🌽</div><div class="dt-semdieta-title">Nenhuma dieta cadastrada</div><div style="font-size:12px">A dieta desta propriedade ainda não foi configurada no painel Meta.</div></div>';
+      return;
+    }
+
+    const lotes = Object.values(data.lotes).filter(function(l){ return l && (l.alimentos||[]).length > 0; });
+    if(!lotes.length) {
+      body.innerHTML = '<div class="dt-semdieta"><div class="dt-semdieta-icon">🌽</div><div class="dt-semdieta-title">Dieta sem alimentos</div><div style="font-size:12px">Configure os alimentos no painel Meta.</div></div>';
+      return;
+    }
+
+    // Calcula totais
+    var totalCustoVaca = 0, totalVacas = 0, totalRetorno = 0;
+    lotes.forEach(function(l) {
+      var vacas = parseFloat(l.vacas)||0;
+      var prod  = parseFloat(l.prod)||0;
+      var preco = parseFloat(l.preco)||0;
+      var cvd   = (l.alimentos||[]).reduce(function(s,a){ return s+(parseFloat(a.kg)||0)*(parseFloat(a.custo)||0); }, 0);
+      totalCustoVaca += cvd * vacas;
+      totalVacas     += vacas;
+      totalRetorno   += prod * vacas * preco;
+    });
+    var cvdGeral   = totalVacas>0 ? totalCustoVaca/totalVacas : 0;
+    var rmcaTotal  = totalRetorno - totalCustoVaca;
+    var rmcaAnimal = totalVacas>0 ? rmcaTotal/totalVacas : 0;
+
+    // ── Monta HTML ────────────────────────────────────────────────────────
+    var html = '';
+
+    // Header fazenda
+    html += '<div style="margin-bottom:14px">';
+    html += '<div style="font-size:11px;color:#64748b;font-weight:600;text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px">🌽 Dieta & Custos</div>';
+    html += '<div style="font-size:18px;font-weight:800;color:#0f172a">'+(clienteAtual.produtor||'Fazenda')+'</div>';
+    if(data.atualizado_em) {
+      var dt = new Date(data.atualizado_em);
+      html += '<div style="font-size:11px;color:#94a3b8;margin-top:2px">Atualizado em '+dt.toLocaleDateString('pt-BR')+'</div>';
+    }
+    html += '</div>';
+
+    // Hero KPIs consolidados
+    html += '<div class="dt-hero">';
+    html += '<div class="dt-hero-title">📊 Resultado Consolidado — '+lotes.length+' lote'+(lotes.length>1?'s':'')+'</div>';
+    html += '<div class="dt-kpi-row">';
+    html += '<div class="dt-kpi"><div class="dt-kpi-val">R$'+fmt2(cvdGeral)+'</div><div class="dt-kpi-lbl">Custo/vaca/dia</div></div>';
+    html += '<div class="dt-kpi"><div class="dt-kpi-val">R$'+fmtK(totalCustoVaca)+'</div><div class="dt-kpi-lbl">Custo total/dia</div></div>';
+    html += '<div class="dt-kpi" style="'+(rmcaTotal>=0?'':'background:rgba(220,38,38,.2)')+'"><div class="dt-kpi-val">'+(rmcaTotal>=0?'+':'')+'R$'+fmtK(rmcaTotal)+'</div><div class="dt-kpi-lbl">RMCA/dia</div></div>';
+    html += '<div class="dt-kpi" style="'+(rmcaAnimal>=0?'':'background:rgba(220,38,38,.2)')+'"><div class="dt-kpi-val">'+(rmcaAnimal>=0?'+':'')+'R$'+fmt2(rmcaAnimal)+'</div><div class="dt-kpi-lbl">RMCA/animal</div></div>';
+    html += '</div></div>';
+
+    // ── Por lote ──────────────────────────────────────────────────────────
+    lotes.forEach(function(lote) {
+      var vacas = parseFloat(lote.vacas)||0;
+      var prod  = parseFloat(lote.prod)||0;
+      var preco = parseFloat(lote.preco)||0;
+      var cvd   = (lote.alimentos||[]).reduce(function(s,a){ return s+(parseFloat(a.kg)||0)*(parseFloat(a.custo)||0); }, 0);
+      var custo = cvd * vacas;
+      var ret   = prod * vacas * preco;
+      var rmca  = ret - custo;
+      var rmcaV = vacas>0 ? rmca/vacas : 0;
+      var custoL = prod>0 ? cvd/prod : 0;
+
+      var rmcaOk = rmca >= 0;
+      html += '<div class="dt-lote-card">';
+      // Header do lote
+      html += '<div class="dt-lote-hdr">';
+      html += '<span style="font-size:16px">🐄</span>';
+      html += '<div class="dt-lote-nome">'+(lote.nomeDieta||lote.nome||'Lote')+'</div>';
+      html += '<span class="dt-lote-badge" style="background:'+(rmcaOk?'#dcfce7':'#fee2e2')+';color:'+(rmcaOk?'#15803d':'#dc2626')+'">RMCA '+(rmcaOk?'+':'')+' R$'+fmtK(rmca)+'/dia</span>';
+      html += '</div>';
+      html += '<div class="dt-lote-body">';
+
+      // Parâmetros do lote
+      html += '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin-bottom:10px;font-size:11px">';
+      html += '<div style="background:var(--surface2);border-radius:8px;padding:8px;text-align:center"><div style="font-weight:800;font-size:15px">'+vacas+'</div><div style="color:var(--muted);font-size:9px;margin-top:2px">VACAS</div></div>';
+      html += '<div style="background:var(--surface2);border-radius:8px;padding:8px;text-align:center"><div style="font-weight:800;font-size:15px">'+(prod>0?prod.toFixed(1):'—')+' L</div><div style="color:var(--muted);font-size:9px;margin-top:2px">L/VACA/DIA</div></div>';
+      html += '<div style="background:var(--surface2);border-radius:8px;padding:8px;text-align:center"><div style="font-weight:800;font-size:15px">R$'+(preco>0?fmt2(preco):'—')+'</div><div style="color:var(--muted);font-size:9px;margin-top:2px">PREÇO/L</div></div>';
+      html += '</div>';
+
+      // Métricas financeiras
+      html += '<div class="dt-metrics">';
+      html += '<div class="dt-metric" style="background:#f0fdf4"><div class="dt-metric-val" style="color:#15803d">R$'+fmt2(cvd)+'</div><div class="dt-metric-lbl">CVD</div></div>';
+      html += '<div class="dt-metric" style="background:#fef9c3"><div class="dt-metric-val" style="color:#92400e">R$'+fmt2(custoL)+'</div><div class="dt-metric-lbl">Custo/L</div></div>';
+      html += '<div class="dt-metric" style="background:'+(rmcaOk?'#f0fdf4':'#fef2f2')+'"><div class="dt-metric-val" style="color:'+(rmcaOk?'#15803d':'#dc2626')+'">'+(rmcaV>=0?'+':'')+' R$'+fmt2(rmcaV)+'</div><div class="dt-metric-lbl">RMCA/animal</div></div>';
+      html += '</div>';
+
+      // Alimentos
+      html += '<div style="font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">🌾 Composição da Dieta</div>';
+      var alis = (lote.alimentos||[]).filter(function(a){ return (parseFloat(a.kg)||0) > 0; });
+      alis.forEach(function(a) {
+        var kg    = parseFloat(a.kg)||0;
+        var custo = parseFloat(a.custo)||0;
+        var sub   = kg * custo;
+        var pct   = cvd>0 ? (sub/cvd*100).toFixed(0) : 0;
+        html += '<div class="dt-alimento-row">';
+        html += '<div style="width:4px;height:4px;border-radius:50%;background:#15803d;flex-shrink:0"></div>';
+        html += '<div class="dt-alimento-nome">'+(a.nome||'Alimento')+'</div>';
+        html += '<div class="dt-alimento-kg">'+kg.toFixed(1)+' kg</div>';
+        html += '<div style="font-size:10px;color:var(--muted);min-width:28px;text-align:right">'+pct+'%</div>';
+        html += '<div class="dt-alimento-custo" style="color:'+(sub>cvd*0.4?'#dc2626':'#0f172a')+'">R$'+fmt2(sub)+'/vaca</div>';
+        html += '</div>';
+      });
+
+      html += '</div></div>'; // lote-body + lote-card
+    });
+
+    // ── Cálculo mensal de ração ───────────────────────────────────────────
+    html += '<div class="dt-mes-card">';
+    html += '<div class="dt-mes-hdr">📦 Consumo Mensal por Alimento — controle de pedidos</div>';
+    html += '<div class="dt-mes-body">';
+    html += '<div style="font-size:11px;color:#64748b;margin-bottom:10px">Baseado nos lotes cadastrados · 30 dias · '+(totalVacas||0)+' vacas total</div>';
+
+    // Agrega consumo de todos os lotes por alimento
+    var consumoMap = {};
+    lotes.forEach(function(lote) {
+      var vacas = parseFloat(lote.vacas)||0;
+      (lote.alimentos||[]).forEach(function(a) {
+        var kg = parseFloat(a.kg)||0;
+        if(!kg || !a.nome) return;
+        var key = a.nome;
+        if(!consumoMap[key]) consumoMap[key] = {nome:a.nome, kgVaca:0, custo:parseFloat(a.custo)||0, vacasTot:0};
+        consumoMap[key].kgVaca  += kg; // kg por vaca por dia
+        consumoMap[key].vacasTot += vacas;
+      });
+    });
+
+    var items = Object.values(consumoMap).sort(function(a,b){ return (b.kgVaca*b.vacasTot)-(a.kgVaca*a.vacasTot); });
+    var totalKgMes = 0, totalCustoMes = 0;
+
+    items.forEach(function(item) {
+      var kgDia    = item.kgVaca * item.vacasTot; // total kg/dia
+      var kgMes    = kgDia * 30;
+      var custoMes = kgMes * item.custo;
+      totalKgMes   += kgMes;
+      totalCustoMes += custoMes;
+
+      html += '<div class="dt-mes-row">';
+      html += '<div>';
+      html += '<div class="dt-mes-item">'+(item.nome||'Alimento')+'</div>';
+      html += '<div style="font-size:10px;color:var(--muted)">'+(item.kgVaca).toFixed(1)+' kg/vaca/dia · R$'+fmt2(item.custo)+'/kg</div>';
+      html += '</div>';
+      html += '<div class="dt-mes-vals">';
+      html += '<div class="dt-mes-kg">'+(kgMes>=1000?(kgMes/1000).toFixed(2)+' ton':kgMes.toFixed(0)+' kg')+'</div>';
+      html += '<div style="display:flex;gap:6px;justify-content:flex-end;align-items:center;margin-top:1px">';
+      html += '<span class="dt-mes-ton" style="font-size:9px">'+kgDia.toFixed(0)+' kg/dia</span>';
+      html += '<span class="dt-mes-custo">R$'+fmtK(custoMes)+'/mês</span>';
+      html += '</div></div></div>';
+    });
+
+    // Total mensal
+    html += '<div class="dt-total-row">';
+    html += '<div><div style="font-size:12px;font-weight:800">Total mensal</div><div style="font-size:10px;color:var(--muted)">'+(totalVacas||0)+' vacas · 30 dias</div></div>';
+    html += '<div style="text-align:right"><div style="font-size:16px;font-weight:900;color:#1d4ed8">'+(totalKgMes>=1000?(totalKgMes/1000).toFixed(2)+' ton':totalKgMes.toFixed(0)+' kg')+'</div><div style="font-size:13px;font-weight:800;color:#0f172a">R$'+fmtK(totalCustoMes)+'/mês</div></div>';
+    html += '</div>';
+    html += '</div></div>'; // mes-body + mes-card
+
+    body.innerHTML = html;
+  });
+}
+
+
+// ══════════════════════════════════════════
+// BENCHMARKS DO VENDEDOR
+// ══════════════════════════════════════════
+function renderBenchApp() {
+  const wrap = document.getElementById('bench-cards-wrap');
+  const sub  = document.getElementById('bench-subtitle');
+  if(!wrap) return;
+
+  const at = meusClientes.filter(d => d.situacao === 'ATIVO');
+  if(!at.length) {
+    wrap.innerHTML = '<div style="text-align:center;padding:40px;color:var(--muted)"><div style="font-size:32px;margin-bottom:10px">📭</div><div style="font-size:14px;font-weight:700;color:var(--text)">Nenhum cliente ativo</div></div>';
+    return;
+  }
+  if(sub) sub.textContent = at.length + ' clientes ativos · médias da carteira';
+
+  function avg(arr, key) {
+    const v = arr.filter(d => parseFloat(d[key]) > 0);
+    return v.length ? v.reduce((s,d) => s + parseFloat(d[key]), 0) / v.length : 0;
+  }
+  function sum(arr, key) {
+    return arr.reduce((s,d) => s + (parseFloat(d[key]) || 0), 0);
+  }
+  function pct(v, ref, meta, lowerBetter) {
+    if(lowerBetter) return v === 0 ? 0 : Math.min(100, (ref / v) * 50);
+    return meta > 0 ? Math.min(100, (v / meta) * 100) : 0;
+  }
+
+  const benchmarks = [
+    { icon:'🥛', lbl:'Média L/vaca/dia',     val:avg(at,'media_prod').toFixed(1),  unit:'L',  ref:28,  meta:37,   col: avg(at,'media_prod')>=37?'#15803d':avg(at,'media_prod')>=28?'#d97706':'#dc2626', barW: pct(avg(at,'media_prod'),28,42,false) },
+    { icon:'🐄', lbl:'Rebanho médio',        val:Math.round(avg(at,'vacas')),      unit:'vacas', ref:60, meta:200, col:'#2563eb', barW: pct(avg(at,'vacas'),60,200,false) },
+    { icon:'🧈', lbl:'Gordura média',        val:avg(at,'gordura').toFixed(2),     unit:'%',  ref:3.5, meta:4.0,  col: avg(at,'gordura')>=4?'#15803d':avg(at,'gordura')>=3.5?'#d97706':'#dc2626', barW: pct(avg(at,'gordura'),3.5,4.5,false) },
+    { icon:'🧪', lbl:'Proteína média',       val:avg(at,'proteina').toFixed(2),    unit:'%',  ref:3.1, meta:3.5,  col: avg(at,'proteina')>=3.5?'#15803d':avg(at,'proteina')>=3.1?'#d97706':'#dc2626', barW: pct(avg(at,'proteina'),3.1,3.8,false) },
+    { icon:'🔬', lbl:'CCS médio',            val:Math.round(avg(at,'ccs')),        unit:'k',  ref:300, meta:150,  col: avg(at,'ccs')<=150?'#15803d':avg(at,'ccs')<=300?'#d97706':'#dc2626', barW: avg(at,'ccs')>0?Math.max(0,100-pct(avg(at,'ccs'),150,600,true)):0 },
+    { icon:'📅', lbl:'DEL médio',            val:Math.round(avg(at,'del')),        unit:'d',  ref:150, meta:120,  col: avg(at,'del')>0&&avg(at,'del')<=120?'#15803d':avg(at,'del')<=150?'#d97706':'#dc2626', barW: pct(avg(at,'del'),0,200,false) },
+    { icon:'🥛', lbl:'Prod. total/dia',      val:Math.round(sum(at,'media_prod')*1).toLocaleString('pt-BR'), unit:'L', ref:0, meta:0, col:'#7c3aed', barW:0, hideBar:true },
+    { icon:'🏡', lbl:'Clientes ativos',      val:at.length,                        unit:'',   ref:0,  meta:0,    col:'#15803d', barW:0, hideBar:true },
+  ];
+
+  // Produção total real
+  const prodTotal = at.reduce((s,d) => s + (parseFloat(d.media_prod)||0)*(parseFloat(d.vacas)||0), 0);
+  benchmarks[6].val = Math.round(prodTotal).toLocaleString('pt-BR');
+
+  // Renderiza em grid 2x2 + cards individuais
+  let html = '<div class="bm-app-grid">';
+  // Primeiros 2 em destaque
+  benchmarks.slice(6).forEach(b => {
+    html += `<div class="bm-app" style="border-top:3px solid ${b.col}">
+      <div class="bm-app-lbl">${b.icon} ${b.lbl}</div>
+      <div class="bm-app-val" style="color:${b.col}">${b.val} <span style="font-size:14px;font-weight:600;opacity:.7">${b.unit}</span></div>
+    </div>`;
+  });
+  html += '</div>';
+
+  // Restantes individualmente
+  benchmarks.slice(0,6).forEach(b => {
+    const status = parseFloat(b.val) >= b.meta ? '✅' : parseFloat(b.val) >= b.ref ? '⚠️' : '❌';
+    html += `<div class="bm-app" style="border-top:3px solid ${b.col}">
+      <span class="bm-app-badge">${status}</span>
+      <div class="bm-app-lbl">${b.icon} ${b.lbl}</div>
+      <div class="bm-app-val" style="color:${b.col}">${b.val} <span style="font-size:14px;font-weight:600;opacity:.7">${b.unit}</span></div>
+      ${!b.hideBar ? `
+      <div class="bm-app-bar"><div class="bm-app-fill" style="width:${b.barW}%;background:${b.col}"></div></div>
+      <div class="bm-app-refs"><span>Ref: ${b.ref}${b.unit}</span><span>Meta: ${b.meta}${b.unit}</span></div>` : ''}
+    </div>`;
+  });
+
+  wrap.innerHTML = html;
+}
+
+function showToast(msg, err=false) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'toast' + (err?' error':'');
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2800);
+}
+
+// Atalho Enter no login
+document.getElementById('l-senha').addEventListener('keydown', e => { if(e.key==='Enter') fazerLogin(); });
+</script>
+</body>
+</html>
+function avatarColor(nome) {
+  const cores = ['#0d7c3d','#1a6fa8','#8e44ad','#c0392b','#d68910','#1abc9c','#2980b9'];
+  let h = 0;
+  for (let c of (nome||'X')) h = (h * 31 + c.charCodeAt(0)) % cores.length;
+  return cores[h];
+}
+
+function iniciais(nome) {
+  return (nome||'?').split(' ').slice(0,2).map(w=>w[0]||'').join('').toUpperCase();
+}
+
+// ── AUTH ────────────────────────────────────────────────
+auth.onAuthStateChanged(user => {
+  document.getElementById('loading-screen').style.display = 'none';
+  if (user) {
+    usuarioAtual = user;
+    // Usa nome amigável baseado no email
+    const NOME_AMIGAVEL = {
+      'vetsinvesting@gmail.com':   'Paulo',
+      'jozielsantossoares@gmail.com': 'Joziel',
+      'vetdalmolin@gmail.com':     'Maicon',
+      'arthursoaresaa@gmail.com':  'Arthur',
+      'lucasbianchi214@gmail.com': 'Lucas',
+      'jrlucasramos2@gmail.com':   'José Lucas',
+      'mullerjulio02@gmail.com':   'Julio',
+      'vagner7leguas@gmail.com':   'Vagner',
+    };
+    nomeVendedor = NOME_AMIGAVEL[user.email.toLowerCase()] || user.email.split('@')[0].toUpperCase();
+    document.getElementById('tvendedor').textContent = nomeVendedor;
+    document.getElementById('app').style.display = 'flex';
+    document.getElementById('login-screen').style.display = 'none';
+    iniciarApp();
+  } else {
+    document.getElementById('login-screen').style.display = 'flex';
+    document.getElementById('app').style.display = 'none';
+  }
+});
+
+function fazerLogin() {
+  const email = document.getElementById('l-email').value.trim();
+  const senha = document.getElementById('l-senha').value;
+  const errEl = document.getElementById('login-error');
+  errEl.textContent = 'Entrando...';
+  if (!email || !senha) { errEl.textContent = 'Preencha e-mail e senha.'; return; }
+  auth.signInWithEmailAndPassword(email, senha)
+    .then(() => { errEl.textContent = 'Aguarde...'; })
+    .catch(err => {
+      console.error('Firebase error:', err.code, err.message);
+      const msgs = {
+        'auth/invalid-credential': 'Senha incorreta ou usuário não existe.',
+        'auth/user-not-found': 'Usuário não encontrado.',
+        'auth/wrong-password': 'Senha incorreta.',
+        'auth/too-many-requests': 'Muitas tentativas. Aguarde alguns minutos.',
+        'auth/network-request-failed': 'Sem conexão. Verifique a internet.',
+        'auth/api-key-not-valid': 'Erro de configuração. Contate o suporte.',
+      };
+      errEl.textContent = msgs[err.code] || ('Erro: ' + err.code);
+    });
+}
+
+function fazerLogout() {
+  if (confirm('Sair do sistema?')) auth.signOut();
+}
+
+// ── ONLINE/OFFLINE ───────────────────────────────────────
+const connRef = db.ref('.info/connected');
+connRef.on('value', snap => {
+  const dot = document.getElementById('sync-dot');
+  if (snap.val()) { dot.className = 'sync-dot'; dot.title = 'Online'; }
+  else { dot.className = 'sync-dot offline'; dot.title = 'Offline'; }
+});
+
+// ── INIT ─────────────────────────────────────────────────
+function iniciarApp() {
+  // Data padrão de hoje no campo de visita
+  document.getElementById('c-data-visita').value = new Date().toISOString().split('T')[0];
+
+  // Mapa email → nomes possíveis no campo vendedor do painel
+  const VENDEDOR_MAP = {
+    'vetsinvesting@gmail.com':   ['PAULO','PAULO VETS','VETSINVESTING'],
+    'jozielsantossoares@gmail.com': ['JOZIEL','JOZIEL SANTOS','JOZIELSANTOSSOARES'],
+    'vetdalmolin@gmail.com':     ['MAICON','MAICON DALMOLIN','VETDALMOLIN'],
+    'arthursoaresaa@gmail.com':  ['ARTHUR','ARTHUR SOARES','ARTHURSOARESAA'],
+    'lucasbianchi214@gmail.com': ['LUCAS','LUCAS BIANCHI','LUCASBIANCHI214'],
+    'jrlucasramos2@gmail.com':   ['JOSÉ LUCAS','JOSE LUCAS','JRLUCASRAMOS2'],
+    'mullerjulio02@gmail.com':   ['JULIO','JULIO MULLER','MULLERJULIO02'],
+    'vagner7leguas@gmail.com':   ['VAGNER','VAGNER7LEGUAS','VAGNER LEGUAS'],
+  };
+
+  const emailLogin = (usuarioAtual.email || '').toLowerCase().trim();
+  const nomesValidos = (VENDEDOR_MAP[emailLogin] || []).map(n => n.toUpperCase().trim());
+  // Adiciona prefixo do email como fallback
+  const prefixo = emailLogin.split('@')[0].toUpperCase().trim();
+  if (!nomesValidos.includes(prefixo)) nomesValidos.push(prefixo);
+  nomesValidos.push(emailLogin); // também tenta o email direto
+
+  console.log('Vendedor logado:', emailLogin, '→ nomes:', nomesValidos);
+
+  db.ref('propriedades').on('value', snap => {
+    todosClientes = {};
+    meusClientes = [];
+    snap.forEach(child => {
+      const d = { id: child.key, ...child.val() };
+      todosClientes[child.key] = d;
+      const vNome  = (d.nome_vendedor || d.vendedor || '').toUpperCase().trim();
+      const vEmail = (d.vendedor || '').toLowerCase().trim();
+      const match = nomesValidos.some(n => vNome === n || vEmail === n.toLowerCase());
+      if (match) meusClientes.push(d);
+    });
+    meusClientes.sort((a,b) => (b.vacas||0) - (a.vacas||0));
+    filtrarLista();
+    renderDash();
+  });
 }
 
 // ── SCREENS ──────────────────────────────────────────────
@@ -1564,6 +2435,76 @@ function carregarDieta(farmId) {
 
     body.innerHTML = html;
   });
+}
+
+
+// ══════════════════════════════════════════
+// BENCHMARKS DO VENDEDOR
+// ══════════════════════════════════════════
+function renderBenchApp() {
+  const wrap = document.getElementById('bench-cards-wrap');
+  const sub  = document.getElementById('bench-subtitle');
+  if(!wrap) return;
+
+  const at = meusClientes.filter(d => d.situacao === 'ATIVO');
+  if(!at.length) {
+    wrap.innerHTML = '<div style="text-align:center;padding:40px;color:var(--muted)"><div style="font-size:32px;margin-bottom:10px">📭</div><div style="font-size:14px;font-weight:700;color:var(--text)">Nenhum cliente ativo</div></div>';
+    return;
+  }
+  if(sub) sub.textContent = at.length + ' clientes ativos · médias da carteira';
+
+  function avg(arr, key) {
+    const v = arr.filter(d => parseFloat(d[key]) > 0);
+    return v.length ? v.reduce((s,d) => s + parseFloat(d[key]), 0) / v.length : 0;
+  }
+  function sum(arr, key) {
+    return arr.reduce((s,d) => s + (parseFloat(d[key]) || 0), 0);
+  }
+  function pct(v, ref, meta, lowerBetter) {
+    if(lowerBetter) return v === 0 ? 0 : Math.min(100, (ref / v) * 50);
+    return meta > 0 ? Math.min(100, (v / meta) * 100) : 0;
+  }
+
+  const benchmarks = [
+    { icon:'🥛', lbl:'Média L/vaca/dia',     val:avg(at,'media_prod').toFixed(1),  unit:'L',  ref:28,  meta:37,   col: avg(at,'media_prod')>=37?'#15803d':avg(at,'media_prod')>=28?'#d97706':'#dc2626', barW: pct(avg(at,'media_prod'),28,42,false) },
+    { icon:'🐄', lbl:'Rebanho médio',        val:Math.round(avg(at,'vacas')),      unit:'vacas', ref:60, meta:200, col:'#2563eb', barW: pct(avg(at,'vacas'),60,200,false) },
+    { icon:'🧈', lbl:'Gordura média',        val:avg(at,'gordura').toFixed(2),     unit:'%',  ref:3.5, meta:4.0,  col: avg(at,'gordura')>=4?'#15803d':avg(at,'gordura')>=3.5?'#d97706':'#dc2626', barW: pct(avg(at,'gordura'),3.5,4.5,false) },
+    { icon:'🧪', lbl:'Proteína média',       val:avg(at,'proteina').toFixed(2),    unit:'%',  ref:3.1, meta:3.5,  col: avg(at,'proteina')>=3.5?'#15803d':avg(at,'proteina')>=3.1?'#d97706':'#dc2626', barW: pct(avg(at,'proteina'),3.1,3.8,false) },
+    { icon:'🔬', lbl:'CCS médio',            val:Math.round(avg(at,'ccs')),        unit:'k',  ref:300, meta:150,  col: avg(at,'ccs')<=150?'#15803d':avg(at,'ccs')<=300?'#d97706':'#dc2626', barW: avg(at,'ccs')>0?Math.max(0,100-pct(avg(at,'ccs'),150,600,true)):0 },
+    { icon:'📅', lbl:'DEL médio',            val:Math.round(avg(at,'del')),        unit:'d',  ref:150, meta:120,  col: avg(at,'del')>0&&avg(at,'del')<=120?'#15803d':avg(at,'del')<=150?'#d97706':'#dc2626', barW: pct(avg(at,'del'),0,200,false) },
+    { icon:'🥛', lbl:'Prod. total/dia',      val:Math.round(sum(at,'media_prod')*1).toLocaleString('pt-BR'), unit:'L', ref:0, meta:0, col:'#7c3aed', barW:0, hideBar:true },
+    { icon:'🏡', lbl:'Clientes ativos',      val:at.length,                        unit:'',   ref:0,  meta:0,    col:'#15803d', barW:0, hideBar:true },
+  ];
+
+  // Produção total real
+  const prodTotal = at.reduce((s,d) => s + (parseFloat(d.media_prod)||0)*(parseFloat(d.vacas)||0), 0);
+  benchmarks[6].val = Math.round(prodTotal).toLocaleString('pt-BR');
+
+  // Renderiza em grid 2x2 + cards individuais
+  let html = '<div class="bm-app-grid">';
+  // Primeiros 2 em destaque
+  benchmarks.slice(6).forEach(b => {
+    html += `<div class="bm-app" style="border-top:3px solid ${b.col}">
+      <div class="bm-app-lbl">${b.icon} ${b.lbl}</div>
+      <div class="bm-app-val" style="color:${b.col}">${b.val} <span style="font-size:14px;font-weight:600;opacity:.7">${b.unit}</span></div>
+    </div>`;
+  });
+  html += '</div>';
+
+  // Restantes individualmente
+  benchmarks.slice(0,6).forEach(b => {
+    const status = parseFloat(b.val) >= b.meta ? '✅' : parseFloat(b.val) >= b.ref ? '⚠️' : '❌';
+    html += `<div class="bm-app" style="border-top:3px solid ${b.col}">
+      <span class="bm-app-badge">${status}</span>
+      <div class="bm-app-lbl">${b.icon} ${b.lbl}</div>
+      <div class="bm-app-val" style="color:${b.col}">${b.val} <span style="font-size:14px;font-weight:600;opacity:.7">${b.unit}</span></div>
+      ${!b.hideBar ? `
+      <div class="bm-app-bar"><div class="bm-app-fill" style="width:${b.barW}%;background:${b.col}"></div></div>
+      <div class="bm-app-refs"><span>Ref: ${b.ref}${b.unit}</span><span>Meta: ${b.meta}${b.unit}</span></div>` : ''}
+    </div>`;
+  });
+
+  wrap.innerHTML = html;
 }
 
 function showToast(msg, err=false) {
