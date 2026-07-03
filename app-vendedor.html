@@ -102,6 +102,9 @@ body{font-family:Inter,sans-serif;background:var(--bg);color:var(--text);height:
 /* BENCHMARK CARDS */
 /* Benchmarks — estilo idêntico ao Painel */
 .bm-grid-app{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:14px}
+/* Cards de custo — texto não espremido */
+.bm .bm-lbl{font-size:9px;line-height:1.2;word-break:break-word}
+.bm .bm-val{font-size:22px;font-weight:900;line-height:1.1;word-break:break-all}
 .bm-scale{display:flex;justify-content:space-between;font-size:9px;color:var(--dim);margin-top:3px}
 .bm{background:white;border:1px solid var(--border);border-radius:14px;padding:16px;box-shadow:var(--shadow);position:relative;overflow:hidden}
 .bm-top{display:flex;align-items:center;gap:10px;margin-bottom:10px}
@@ -170,6 +173,11 @@ body{font-family:Inter,sans-serif;background:var(--bg);color:var(--text);height:
 .v-score-btn.on-med{background:#fffbeb;border-color:#fcd34d;color:#92400e}
 .v-score-btn.on-rui{background:#fef2f2;border-color:#fca5a5;color:#dc2626}
 .v-score-btn.on-na{background:#f1f5f9;border-color:#cbd5e1;color:#64748b}
+.check-item{display:flex;align-items:center;gap:10px;background:#f8fafc;border:1.5px solid var(--border);border-radius:10px;padding:10px 12px;cursor:pointer;transition:all .15s;}
+.check-item.checked{background:#f0fdf4;border-color:#16a34a;}
+.check-box{width:22px;height:22px;border-radius:6px;border:2px solid #cbd5e1;display:flex;align-items:center;justify-content:center;font-size:11px;background:white;transition:all .2s;}
+.check-item.checked .check-box{background:#16a34a;border-color:#16a34a;color:white;}
+.check-label{font-size:12px;font-weight:600;}
 .vsave{width:100%;background:linear-gradient(135deg,var(--G),var(--GD));color:white;border:none;border-radius:12px;padding:14px;font-size:15px;font-weight:700;font-family:Inter,sans-serif;cursor:pointer;margin-top:4px}
 /* DIETA */
 .dt-card{background:white;border:1px solid var(--border);border-radius:14px;padding:16px;box-shadow:var(--shadow);margin-bottom:12px}
@@ -785,33 +793,32 @@ async function salvarCliente() {
   const prodDia = num('c-prod-dia') || (vacas * media) || 0;
 
   const dados = {
-    produtor: produtor.toUpperCase(),
-    propriedade: str('c-propriedade').toUpperCase(),
-    situacao: str('c-situacao'),
-    produto: str('c-produto'),
-    cidade: cidade.toUpperCase(),
-    estado: str('c-estado'),
-    regiao: str('c-regiao'),
-    vacas: vacas,
-    lactacao: num('c-lactacao'),
-    secas: num('c-secas'),
-    novilhas: num('c-novilhas'),
-    bezerras: num('c-bezerras'),
-    media_prod: media,
-    prod_diaria: prodDia,
-    sistema: str('c-sistema'),
-    ordenha: str('c-ordenha'),
-    del: num('c-del'),
-    gordura: num('c-gordura'),
-    proteina: num('c-proteina'),
-    ccs: num('c-ccs'),
-    cbt: num('c-cbt'),
-    est: num('c-est'),
-    obs: str('c-obs'),
-    data_visita: str('c-data-visita'),
-    vendedor: usuarioAtual.email,
-    nome_vendedor: nomeVendedor,
+    produtor:     produtor.toUpperCase(),
+    propriedade:  str('c-propriedade').toUpperCase(),
+    situacao:     str('c-situacao'),
+    produto:      str('c-produto'),
+    cidade:       cidade.toUpperCase(),
+    estado:       str('c-estado'),
+    regiao:       str('c-regiao'),
+    vacas:        vacas,
+    lactacao:     num('c-lactacao'),
+    secas:        num('c-secas') || 0,
+    novilhas:     num('c-novilhas'),
+    bezerras:     num('c-bezerras'),
+    media_prod:   media,
+    prod_diaria:  num('c-prod-total') || prodDia,
+    del:          num('c-del'),
+    gordura:      num('c-gordura'),
+    proteina:     num('c-proteina'),
+    ccs:          num('c-ccs'),
+    cbt:          num('c-cbt'),
+    nul:          num('c-nul'),
+    obs:          str('c-obs'),
+    data_visita:  str('c-data-visita'),
+    vendedor:     usuarioAtual.email,
+    nome_vendedor: nomeVendedor.toUpperCase(),
     atualizado_em: new Date().toISOString(),
+    atualizado_por: nomeVendedor.toUpperCase(),
   };
 
   const dot = document.getElementById('sync-dot');
@@ -821,6 +828,7 @@ async function salvarCliente() {
     const btn = document.getElementById('btn-salvar');
     btn.textContent = 'Salvando...'; btn.disabled = true;
 
+    let savedId = editandoId;
     if (editandoId) {
       await db.ref('propriedades/' + editandoId).update(dados);
       // Save snapshot to history
@@ -857,10 +865,22 @@ async function salvarCliente() {
       await db.ref('historico/' + ref.key).push(snapshot);
     }
 
+    // Histórico no painel
+    const snapshot2 = {
+      data: new Date().toISOString(),
+      vacas: dados.vacas, lactacao: dados.lactacao, secas: dados.secas||0,
+      novilhas: dados.novilhas, bezerras: dados.bezerras||0,
+      media_prod: dados.media_prod, prod_diaria: dados.prod_diaria||0,
+      del: dados.del, gordura: dados.gordura, proteina: dados.proteina,
+      ccs: dados.ccs, cbt: dados.cbt, nul: dados.nul||0, obs: dados.obs||'',
+      vendedor: nomeVendedor.toUpperCase(),
+      origem: 'app_vendedor',
+    };
+    try { await db.ref('historico/' + savedId).push(snapshot2); } catch(he){}
     limparForm();
     editandoId = null;
-    showToast(editandoId ? '✅ Atualizado!' : '✅ Propriedade salva!');
-    showScreen('lista');
+    showToast('✅ Salvo e histórico registrado!');
+    navTo('lista', 'Propriedades');
   } catch(e) {
     showToast('❌ Erro ao salvar. Verifique a conexão.', true);
   } finally {
@@ -876,7 +896,7 @@ async function excluirCliente(id, nome) {
   try {
     await db.ref('propriedades/' + id).remove();
     showToast('🗑️ Excluído com sucesso');
-    showScreen('lista');
+    navTo('lista','Propriedades');
   } catch(e) {
     showToast('Erro ao excluir', true);
   }
@@ -889,66 +909,130 @@ async function excluirCliente(id, nome) {
 function abrirVisita() {
   if (!clienteAtual) return;
   prevScreen = 'detail';
+  const d = clienteAtual;
   const body = document.getElementById('visita-body');
-  if (body) {
-    body.innerHTML = `
-    <div style="font-size:16px;font-weight:800;margin-bottom:16px">📋 Ficha de Visita<br><span style="font-size:12px;font-weight:400;color:var(--muted)">${clienteAtual.produtor||''}</span></div>
-    <div class="v-section">
-      <div class="v-section-title">📅 Identificação</div>
-      <div class="v-field"><div class="v-label">Data da visita</div><input class="v-input" type="date" id="v-data" value="${new Date().toISOString().split('T')[0]}"></div>
+  if (!body) return;
+  body.innerHTML = `
+  <div style="font-size:16px;font-weight:800;margin-bottom:4px">📋 Ficha de Visita</div>
+  <div style="font-size:12px;color:var(--muted);margin-bottom:16px">${d.produtor||''} · ${d.cidade||''}</div>
+
+  <div class="v-section">
+    <div class="v-section-title">📅 Identificação</div>
+    <div class="v-field"><div class="v-label">Técnico responsável</div>
+      <input class="v-input" id="v-tecnico" placeholder="Nome do técnico" value="${d.tecnico_titular||''}">
     </div>
-    <div class="v-section">
-      <div class="v-section-title">🥛 Dados Produtivos</div>
-      <div class="v-field"><div class="v-label">Produção total (L/dia)</div><input class="v-input" type="number" id="v-prod-total" placeholder="0"></div>
-      <div class="v-field"><div class="v-label">Vacas em lactação</div><input class="v-input" type="number" id="v-lactacao" placeholder="0"></div>
-      <div class="v-field"><div class="v-label">Média L/vaca/dia</div><input class="v-input" type="number" step="0.1" id="v-media-prod" placeholder="0"></div>
-      <div class="v-field"><div class="v-label">DEL médio (dias)</div><input class="v-input" type="number" id="v-del" placeholder="150"></div>
+    <div class="v-field"><div class="v-label">Data da visita</div>
+      <input class="v-input" type="date" id="v-data" value="${new Date().toISOString().split('T')[0]}">
     </div>
-    <div class="v-section">
-      <div class="v-section-title">🧪 Qualidade do Leite</div>
-      <div class="v-field"><div class="v-label">Gordura %</div><input class="v-input" type="number" step="0.01" id="v-gordura" placeholder="3.5"></div>
-      <div class="v-field"><div class="v-label">Proteína %</div><input class="v-input" type="number" step="0.01" id="v-proteina" placeholder="3.1"></div>
-      <div class="v-field"><div class="v-label">CCS (×1000)</div><input class="v-input" type="number" id="v-ccs" placeholder="200"></div>
-      <div class="v-field"><div class="v-label">CBT (×1000)</div><input class="v-input" type="number" id="v-cbt" placeholder="50"></div>
-      <div class="v-field"><div class="v-label">NUL mg/dL</div><input class="v-input" type="number" step="0.1" id="v-nul" placeholder="12"></div>
+  </div>
+
+  <div class="v-section">
+    <div class="v-section-title">🥛 Dados Produtivos</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;padding:10px 14px">
+      <div class="v-field" style="padding:0"><div class="v-label">Prod. total (L/dia)</div><input class="v-input" type="number" id="v-prod-total" placeholder="0"></div>
+      <div class="v-field" style="padding:0"><div class="v-label">Vacas em lactação</div><input class="v-input" type="number" id="v-lactacao" placeholder="0"></div>
+      <div class="v-field" style="padding:0"><div class="v-label">Média L/vaca/dia</div><input class="v-input" type="number" step="0.1" id="v-media-prod" placeholder="0"></div>
+      <div class="v-field" style="padding:0"><div class="v-label">DEL médio (dias)</div><input class="v-input" type="number" id="v-del" placeholder="150"></div>
+      <div class="v-field" style="padding:0"><div class="v-label">Vacas secas</div><input class="v-input" type="number" id="v-secas" placeholder="0"></div>
+      <div class="v-field" style="padding:0"><div class="v-label">Estoque silagem (dias)</div><input class="v-input" type="number" id="v-est-silagem" placeholder="0"></div>
     </div>
-    <div class="v-section">
-      <div class="v-section-title">🌽 Nutrição</div>
-      <div class="v-field"><div class="v-label">Silagem — Avaliação</div>
-        <div class="v-score" id="sc-silagem">
-          <button class="v-score-btn" onclick="setScore('silagem','bom',this)">✅ Bom</button>
-          <button class="v-score-btn" onclick="setScore('silagem','med',this)">⚠️ Médio</button>
-          <button class="v-score-btn" onclick="setScore('silagem','rui',this)">❌ Ruim</button>
-          <button class="v-score-btn" onclick="setScore('silagem','na',this)">N/A</button>
-        </div>
+  </div>
+
+  <div class="v-section">
+    <div class="v-section-title">🧪 Qualidade do Leite</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;padding:10px 14px">
+      <div class="v-field" style="padding:0"><div class="v-label">Gordura %</div><input class="v-input" type="number" step="0.01" id="v-gordura" placeholder="3.5"></div>
+      <div class="v-field" style="padding:0"><div class="v-label">Proteína %</div><input class="v-input" type="number" step="0.01" id="v-proteina" placeholder="3.1"></div>
+      <div class="v-field" style="padding:0"><div class="v-label">CCS (×1000)</div><input class="v-input" type="number" id="v-ccs" placeholder="200"></div>
+      <div class="v-field" style="padding:0"><div class="v-label">CBT (×1000)</div><input class="v-input" type="number" id="v-cbt" placeholder="50"></div>
+      <div class="v-field" style="padding:0"><div class="v-label">NUL mg/dL</div><input class="v-input" type="number" step="0.1" id="v-nul" placeholder="12"></div>
+      <div class="v-field" style="padding:0"><div class="v-label">ECC médio</div><input class="v-input" type="number" step="0.25" id="v-ecc" placeholder="3.5"></div>
+    </div>
+  </div>
+
+  <div class="v-section">
+    <div class="v-section-title">🌡️ Conforto Animal</div>
+    <div class="v-field"><div class="v-label">Estresse térmico</div>
+      <div class="v-score" id="sc-termal">
+        <button class="v-score-btn" onclick="setScore('termal','bom',this)">😊 Confortável</button>
+        <button class="v-score-btn" onclick="setScore('termal','med',this)">😓 Leve (ITU 72-80)</button>
+        <button class="v-score-btn" onclick="setScore('termal','rui',this)">🥵 Severo (ITU>80)</button>
       </div>
-      <div class="v-field"><div class="v-label">Mistura — Avaliação</div>
-        <div class="v-score" id="sc-mistura">
-          <button class="v-score-btn" onclick="setScore('mistura','bom',this)">✅ Bom</button>
-          <button class="v-score-btn" onclick="setScore('mistura','med',this)">⚠️ Médio</button>
-          <button class="v-score-btn" onclick="setScore('mistura','rui',this)">❌ Ruim</button>
-          <button class="v-score-btn" onclick="setScore('mistura','na',this)">N/A</button>
-        </div>
+    </div>
+  </div>
+
+  <div class="v-section">
+    <div class="v-section-title">🌽 Nutrição</div>
+    <div class="v-field"><div class="v-label">Silagem — Avaliação</div>
+      <div class="v-score" id="sc-silagem">
+        <button class="v-score-btn" onclick="setScore('silagem','bom',this)">✅ Bom</button>
+        <button class="v-score-btn" onclick="setScore('silagem','med',this)">⚠️ Regular</button>
+        <button class="v-score-btn" onclick="setScore('silagem','rui',this)">❌ Ruim</button>
+        <button class="v-score-btn" onclick="setScore('silagem','na',this)">N/A</button>
       </div>
     </div>
-    <div class="v-section">
-      <div class="v-section-title">📝 Observações</div>
-      <div class="v-field"><textarea class="v-input" id="v-obs" rows="3" placeholder="Anotações da visita..."></textarea></div>
-      <div class="v-field"><div class="v-label">Próxima visita</div><input class="v-input" type="date" id="v-proxima"></div>
+    <div class="v-field"><div class="v-label">Mistura (TMR) — Avaliação</div>
+      <div class="v-score" id="sc-mistura">
+        <button class="v-score-btn" onclick="setScore('mistura','bom',this)">✅ Bom (homogênea)</button>
+        <button class="v-score-btn" onclick="setScore('mistura','med',this)">⚠️ Regular</button>
+        <button class="v-score-btn" onclick="setScore('mistura','rui',this)">❌ Ruim (separação)</button>
+      </div>
     </div>
-    <button class="vsave" onclick="salvarVisita()">💾 Salvar Ficha de Visita</button>`;
-  }
-  showScreen('visita','Ficha de Visita');
+    <div class="v-field"><div class="v-label">Score Fecal</div>
+      <div class="v-score" id="sc-fecal">
+        <button class="v-score-btn" onclick="setScore('fecal','3-Ideal',this)">✅ 3-Ideal</button>
+        <button class="v-score-btn" onclick="setScore('fecal','2-Fluido',this)">⚠️ 2-Fluido</button>
+        <button class="v-score-btn" onclick="setScore('fecal','4-Firme',this)">🟠 4-Firme</button>
+        <button class="v-score-btn" onclick="setScore('fecal','1-Muito fluido',this)">❌ 1-Líquido</button>
+        <button class="v-score-btn" onclick="setScore('fecal','5-Seco',this)">🔴 5-Seco</button>
+      </div>
+    </div>
+    <div class="v-field"><div class="v-label">Consumo aparente</div>
+      <div class="v-score" id="sc-consumo">
+        <button class="v-score-btn" onclick="setScore('consumo','bom',this)">😊 Bom</button>
+        <button class="v-score-btn" onclick="setScore('consumo','med',this)">😐 Médio</button>
+        <button class="v-score-btn" onclick="setScore('consumo','rui',this)">😟 Ruim</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="v-section">
+    <div class="v-section-title">✅ Checklist Manejo</div>
+    <div style="padding:10px 14px;display:flex;flex-direction:column;gap:6px" id="checklist-wrap">
+      ${['Higiene e Rotina de Ordenha Correta','Água limpa e fresca disponível','Limpeza dos cochos (mínimo 1x/dia)','Descarte de vacas acima de 750k CCS','Manejo de bezerreiro adequado','Registro e controle reprodutivo atualizado','Protocolo sanitário em dia'].map((item,i)=>`
+      <div class="check-item" id="chk-${i}" onclick="toggleCheck(this,'chk-${i}')">
+        <div class="check-box" id="chkbox-${i}">✓</div>
+        <div><div class="check-label">${item}</div></div>
+      </div>`).join('')}
+    </div>
+  </div>
+
+  <div class="v-section">
+    <div class="v-section-title">📝 Observações & Plano</div>
+    <div class="v-field"><textarea class="v-input" id="v-obs" rows="3" placeholder="Anotações da visita, problemas identificados, ações recomendadas..."></textarea></div>
+    <div class="v-field"><div class="v-label">Ações para próxima visita</div>
+      <textarea class="v-input" id="v-acoes" rows="2" placeholder="O que deve ser feito até a próxima visita..."></textarea>
+    </div>
+    <div class="v-field"><div class="v-label">Próxima visita</div>
+      <input class="v-input" type="date" id="v-proxima">
+    </div>
+  </div>
+
+  <button class="vsave" onclick="salvarVisita()">💾 Salvar Ficha de Visita</button>`;
+  showScreen('visita', 'Ficha de Visita — '+d.produtor);
 }
 
-const scores = {};
+
 function setScore(campo, val, btn) {
   scores[campo] = val;
   const grp = btn.closest('.v-score');
-  grp.querySelectorAll('.v-score-btn').forEach(b => {
-    b.className = 'v-score-btn';
-  });
-  btn.className = 'v-score-btn on-'+val;
+  grp.querySelectorAll('.v-score-btn').forEach(b => { b.className = 'v-score-btn'; });
+  btn.className = 'v-score-btn on-'+(['bom','ok'].includes(val)?'bom':['med','medio','regular'].includes(val)?'med':'rui');
+}
+const checks = new Set();
+function toggleCheck(el, id) {
+  if (checks.has(id)) { checks.delete(id); el.classList.remove('checked'); }
+  else { checks.add(id); el.classList.add('checked'); }
 }
 
 async function salvarVisita() {
@@ -964,18 +1048,43 @@ async function salvarVisita() {
     data: gv('v-data'), data_visita: gv('v-data'),
     prod_total: prodTotal, lactacao: lac, media_prod: mediaProd,
     del: parseFloat(gv('v-del'))||0,
+    secas: parseFloat(gv('v-secas'))||0,
     gordura: parseFloat(gv('v-gordura'))||0,
     proteina: parseFloat(gv('v-proteina'))||0,
     ccs: parseFloat(gv('v-ccs'))||0,
     cbt: parseFloat(gv('v-cbt'))||0,
     nul: parseFloat(gv('v-nul'))||0,
-    obs: gv('v-obs'), proxima_visita: gv('v-proxima'),
+    ecc: parseFloat(gv('v-ecc'))||0,
+    est_silagem: parseFloat(gv('v-est-silagem'))||0,
+    tecnico: gv('v-tecnico'),
+    obs: gv('v-obs'),
+    acoes: gv('v-acoes'),
+    proxima_visita: gv('v-proxima'),
     silagem: scores.silagem||'', mistura: scores.mistura||'',
-    vendedor: nomeVendedor, farm_id: farmId, produtor: clienteAtual.produtor,
+    fecal: scores.fecal||'', consumo: scores.consumo||'',
+    termal: scores.termal||'',
+    checklist: Array.from(checks),
+    vendedor: nomeVendedor.toUpperCase(),
+    farm_id: farmId, produtor: clienteAtual.produtor,
     salvo_em: new Date().toISOString(),
+    origem: 'app_vendedor',
   };
   try {
+    // Salva visita (mesmo nó que o painel lê)
     await db.ref('visitas/'+farmId).push(dados);
+    // Registra no histórico do painel
+    const histEntry = {
+      data: dados.data,
+      vacas: parseFloat(document.getElementById('v-lactacao')?.value)||clienteAtual.vacas||0,
+      lactacao: parseFloat(document.getElementById('v-lactacao')?.value)||0,
+      media_prod: dados.media_prod,
+      del: dados.del, gordura: dados.gordura, proteina: dados.proteina,
+      ccs: dados.ccs, cbt: dados.cbt, nul: dados.nul||0,
+      obs: dados.obs,
+      vendedor: nomeVendedor.toUpperCase(),
+      origem: 'app_vendedor_visita',
+    };
+    await db.ref('historico/'+farmId).push(histEntry);
     const upd = { data_visita: dados.data };
     if (mediaProd>0) upd.media_prod = mediaProd;
     if (dados.gordura>0) upd.gordura = dados.gordura;
