@@ -101,10 +101,11 @@ body{font-family:Inter,sans-serif;background:var(--bg);color:var(--text);height:
 .dash-lista-item:hover{background:var(--surface2)}
 /* BENCHMARK CARDS */
 /* Benchmarks — estilo idêntico ao Painel */
-.bm-grid-app{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:14px}
-/* Cards de custo — texto não espremido */
-.bm .bm-lbl{font-size:9px;line-height:1.2;word-break:break-word}
-.bm .bm-val{font-size:22px;font-weight:900;line-height:1.1;word-break:break-all}
+.bm-grid-app{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margin-bottom:14px}
+/* Em telas maiores, 3 colunas */
+@media(min-width:900px){.bm-grid-app{grid-template-columns:repeat(3,1fr)}}
+.bm .bm-lbl{font-size:10px;line-height:1.3;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.bm .bm-val{font-size:22px;font-weight:900;line-height:1.1;white-space:nowrap}
 .bm-scale{display:flex;justify-content:space-between;font-size:9px;color:var(--dim);margin-top:3px}
 .bm{background:white;border:1px solid var(--border);border-radius:14px;padding:16px;box-shadow:var(--shadow);position:relative;overflow:hidden}
 .bm-top{display:flex;align-items:center;gap:10px;margin-bottom:10px}
@@ -182,12 +183,35 @@ body{font-family:Inter,sans-serif;background:var(--bg);color:var(--text);height:
 /* DIETA */
 .dt-card{background:white;border:1px solid var(--border);border-radius:14px;padding:16px;box-shadow:var(--shadow);margin-bottom:12px}
 .dt-hero{background:linear-gradient(135deg,var(--GD),var(--G));border-radius:14px;padding:16px;margin-bottom:12px;color:white}
+.dt-hero-title{font-size:12px;font-weight:700;opacity:.8;text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px}
 .dt-kpi-row{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px}
 .dt-kpi{background:rgba(255,255,255,.12);border-radius:10px;padding:10px 12px;text-align:center}
-.dt-kpi-val{font-size:20px;font-weight:900}
-.dt-kpi-lbl{font-size:9px;opacity:.75;font-weight:600;text-transform:uppercase;margin-top:3px}
-.dt-alimento-row{display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid var(--border)}
+.dt-kpi-val{font-size:20px;font-weight:900;line-height:1}
+.dt-kpi-lbl{font-size:9px;opacity:.75;font-weight:600;text-transform:uppercase;margin-top:4px}
+.dt-lote{background:white;border:1px solid var(--border);border-radius:14px;margin-bottom:12px;overflow:hidden;box-shadow:var(--shadow)}
+.dt-lote-hdr{background:linear-gradient(90deg,#f8fafc,#f1f5f9);padding:12px 14px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+.dt-lote-nome{font-size:13px;font-weight:800;color:var(--text)}
+.dt-lote-sub{font-size:11px;color:var(--muted);margin-top:2px}
+.dt-lote-rmca{font-size:12px;font-weight:700;padding:3px 10px;border-radius:20px}
+.dt-metricas{display:grid;grid-template-columns:1fr 1fr;gap:8px;padding:12px 14px;border-bottom:1px solid var(--border)}
+.dt-metrica{background:#f8fafc;border-radius:10px;padding:10px;text-align:center}
+.dt-metrica-val{font-size:18px;font-weight:900;line-height:1}
+.dt-metrica-lbl{font-size:9px;color:var(--muted);font-weight:600;text-transform:uppercase;margin-top:3px}
+.dt-alimentos{padding:12px 14px}
+.dt-alimentos-title{font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px}
+.dt-alimento-row{display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid #f1f5f9}
 .dt-alimento-row:last-child{border-bottom:none}
+.dt-ali-dot{width:8px;height:8px;border-radius:50%;background:var(--G);flex-shrink:0}
+.dt-ali-nome{flex:1;font-size:12px;font-weight:600}
+.dt-ali-kg{font-size:11px;color:var(--muted)}
+.dt-ali-pct{font-size:10px;font-weight:700;padding:1px 6px;border-radius:8px;background:#f1f5f9;color:var(--muted)}
+.dt-ali-custo{font-size:12px;font-weight:700;color:var(--G)}
+.dt-semdieta{text-align:center;padding:48px 20px}
+.dt-semdieta-icon{font-size:40px;margin-bottom:12px}
+.dt-semdieta-title{font-size:15px;font-weight:700;color:var(--text);margin-bottom:6px}
+.dt-custos-mes{background:#f0fdf4;border:1px solid #86efac;border-radius:12px;padding:14px;margin-bottom:12px}
+.dt-custo-row{display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid #dcfce7;font-size:12px}
+.dt-custo-row:last-child{border-bottom:none}
 </style>
 </head>
 <body>
@@ -781,112 +805,83 @@ function cancelarEdicao() {
 
 
 async function salvarCliente() {
-  const produtor = document.getElementById('c-produtor').value.trim();
-  const cidade = document.getElementById('c-cidade').value.trim();
+  const produtor = (document.getElementById('c-produtor')?.value||'').trim();
   if (!produtor) { showToast('⚠️ Informe o nome do produtor', true); return; }
 
-  const num = id => parseFloat(document.getElementById(id).value) || 0;
-  const str = id => document.getElementById(id).value.trim();
+  const num = id => parseFloat(document.getElementById(id)?.value||0) || 0;
+  const str = id => (document.getElementById(id)?.value||'').trim();
 
-  const vacas = num('c-vacas');
-  const media = num('c-media-prod');
-  const prodDia = num('c-prod-dia') || (vacas * media) || 0;
-
+  const vacas = num('c-vacas'), media = num('c-media-prod');
   const dados = {
-    produtor:     produtor.toUpperCase(),
-    propriedade:  str('c-propriedade').toUpperCase(),
-    situacao:     str('c-situacao'),
-    produto:      str('c-produto'),
-    cidade:       cidade.toUpperCase(),
-    estado:       str('c-estado'),
-    regiao:       str('c-regiao'),
-    vacas:        vacas,
-    lactacao:     num('c-lactacao'),
-    secas:        num('c-secas') || 0,
-    novilhas:     num('c-novilhas'),
-    bezerras:     num('c-bezerras'),
-    media_prod:   media,
-    prod_diaria:  num('c-prod-total') || prodDia,
-    del:          num('c-del'),
-    gordura:      num('c-gordura'),
-    proteina:     num('c-proteina'),
-    ccs:          num('c-ccs'),
-    cbt:          num('c-cbt'),
-    nul:          num('c-nul'),
-    obs:          str('c-obs'),
-    data_visita:  str('c-data-visita'),
-    vendedor:     usuarioAtual.email,
+    produtor:      produtor.toUpperCase(),
+    propriedade:   str('c-propriedade').toUpperCase(),
+    situacao:      str('c-situacao') || 'ATIVO',
+    produto:       str('c-produto'),
+    cidade:        str('c-cidade').toUpperCase(),
+    estado:        str('c-estado') || 'PR',
+    regiao:        str('c-regiao'),
+    vacas,
+    lactacao:      num('c-lactacao'),
+    secas:         num('c-secas'),
+    novilhas:      num('c-novilhas'),
+    bezerras:      num('c-bezerras'),
+    media_prod:    media,
+    prod_diaria:   num('c-prod-total') || (vacas * media) || 0,
+    del:           num('c-del'),
+    gordura:       num('c-gordura'),
+    proteina:      num('c-proteina'),
+    ccs:           num('c-ccs'),
+    cbt:           num('c-cbt'),
+    nul:           num('c-nul'),
+    obs:           str('c-obs'),
+    data_visita:   str('c-data-visita'),
+    vendedor:      (usuarioAtual?.email||'').toLowerCase(),
     nome_vendedor: nomeVendedor.toUpperCase(),
     atualizado_em: new Date().toISOString(),
     atualizado_por: nomeVendedor.toUpperCase(),
   };
 
-  const dot = document.getElementById('sync-dot');
-  dot.className = 'sync-dot syncing';
+  const btn = document.getElementById('btn-salvar');
+  if(btn){ btn.textContent = 'Salvando...'; btn.disabled = true; }
 
   try {
-    const btn = document.getElementById('btn-salvar');
-    btn.textContent = 'Salvando...'; btn.disabled = true;
-
     let savedId = editandoId;
+
     if (editandoId) {
+      // Atualização
       await db.ref('propriedades/' + editandoId).update(dados);
-      // Save snapshot to history
-      const snapshot = {
-        data: new Date().toISOString(),
-        vacas: dados.vacas,
-        lactacao: dados.lactacao,
-        secas: dados.secas || 0,
-        novilhas: dados.novilhas,
-        bezerras: dados.bezerras || 0,
-        media_prod: dados.media_prod,
-        prod_diaria: dados.prod_diaria,
-        del: dados.del || 0,
-        gordura: dados.gordura || 0,
-        proteina: dados.proteina || 0,
-        ccs: dados.ccs || 0,
-        cbt: dados.cbt || 0,
-        obs: dados.obs || '',
-        vendedor: nomeVendedor,
-      };
-      await db.ref('historico/' + editandoId).push(snapshot);
     } else {
+      // Novo cadastro
       dados.criado_em = new Date().toISOString();
       const ref = await db.ref('propriedades').push(dados);
-      // First history entry
-      const snapshot = {
-        data: new Date().toISOString(),
-        vacas: dados.vacas, lactacao: dados.lactacao, secas: dados.secas || 0,
-        novilhas: dados.novilhas, bezerras: dados.bezerras || 0,
-        media_prod: dados.media_prod, prod_diaria: dados.prod_diaria,
-        del: dados.del || 0, gordura: dados.gordura || 0, proteina: dados.proteina || 0,
-        ccs: dados.ccs || 0, cbt: dados.cbt || 0, obs: dados.obs || '', vendedor: nomeVendedor,
-      };
-      await db.ref('historico/' + ref.key).push(snapshot);
+      savedId = ref.key;
     }
 
-    // Histórico no painel
-    const snapshot2 = {
-      data: new Date().toISOString(),
-      vacas: dados.vacas, lactacao: dados.lactacao, secas: dados.secas||0,
-      novilhas: dados.novilhas, bezerras: dados.bezerras||0,
-      media_prod: dados.media_prod, prod_diaria: dados.prod_diaria||0,
-      del: dados.del, gordura: dados.gordura, proteina: dados.proteina,
-      ccs: dados.ccs, cbt: dados.cbt, nul: dados.nul||0, obs: dados.obs||'',
-      vendedor: nomeVendedor.toUpperCase(),
-      origem: 'app_vendedor',
-    };
-    try { await db.ref('historico/' + savedId).push(snapshot2); } catch(he){}
+    // Registra no histórico (aparece no painel)
+    if (savedId) {
+      const hist = {
+        data: new Date().toISOString(),
+        vacas: dados.vacas, lactacao: dados.lactacao, secas: dados.secas||0,
+        novilhas: dados.novilhas, bezerras: dados.bezerras||0,
+        media_prod: dados.media_prod, prod_diaria: dados.prod_diaria||0,
+        del: dados.del, gordura: dados.gordura, proteina: dados.proteina,
+        ccs: dados.ccs, cbt: dados.cbt, nul: dados.nul||0, obs: dados.obs||'',
+        vendedor: nomeVendedor.toUpperCase(),
+        origem: 'app_vendedor',
+      };
+      await db.ref('historico/' + savedId).push(hist).catch(()=>{});
+    }
+
     limparForm();
     editandoId = null;
-    showToast('✅ Salvo e histórico registrado!');
+    showToast(savedId === editandoId ? '✅ Atualizado!' : '✅ Propriedade cadastrada!');
     navTo('lista', 'Propriedades');
+
   } catch(e) {
-    showToast('❌ Erro ao salvar. Verifique a conexão.', true);
+    console.error('salvarCliente erro:', e);
+    showToast('❌ Erro: ' + (e.message||'verifique a conexão'), true);
   } finally {
-    const btn = document.getElementById('btn-salvar');
-    btn.textContent = editandoId ? '💾 Atualizar' : '💾 Salvar Propriedade';
-    btn.disabled = false;
+    if(btn){ btn.disabled = false; btn.textContent = editandoId ? '💾 Atualizar' : '💾 Salvar Propriedade'; }
   }
 }
 
@@ -910,116 +905,111 @@ function abrirVisita() {
   if (!clienteAtual) return;
   prevScreen = 'detail';
   const d = clienteAtual;
+  // Renderiza na tela e abre
+  showScreen('visita', 'Ficha de Visita');
   const body = document.getElementById('visita-body');
   if (!body) return;
-  body.innerHTML = `
-  <div style="font-size:16px;font-weight:800;margin-bottom:4px">📋 Ficha de Visita</div>
-  <div style="font-size:12px;color:var(--muted);margin-bottom:16px">${d.produtor||''} · ${d.cidade||''}</div>
 
-  <div class="v-section">
-    <div class="v-section-title">📅 Identificação</div>
-    <div class="v-field"><div class="v-label">Técnico responsável</div>
-      <input class="v-input" id="v-tecnico" placeholder="Nome do técnico" value="${d.tecnico_titular||''}">
-    </div>
-    <div class="v-field"><div class="v-label">Data da visita</div>
-      <input class="v-input" type="date" id="v-data" value="${new Date().toISOString().split('T')[0]}">
-    </div>
-  </div>
+  const checkItems = [
+    'Higiene e Rotina de Ordenha Correta',
+    'Água limpa e fresca disponível',
+    'Limpeza dos cochos (mínimo 1x/dia)',
+    'Descarte de vacas acima de 750k CCS',
+    'Manejo de bezerreiro adequado',
+    'Registro e controle reprodutivo atualizado',
+    'Protocolo sanitário em dia'
+  ];
 
-  <div class="v-section">
-    <div class="v-section-title">🥛 Dados Produtivos</div>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;padding:10px 14px">
-      <div class="v-field" style="padding:0"><div class="v-label">Prod. total (L/dia)</div><input class="v-input" type="number" id="v-prod-total" placeholder="0"></div>
-      <div class="v-field" style="padding:0"><div class="v-label">Vacas em lactação</div><input class="v-input" type="number" id="v-lactacao" placeholder="0"></div>
-      <div class="v-field" style="padding:0"><div class="v-label">Média L/vaca/dia</div><input class="v-input" type="number" step="0.1" id="v-media-prod" placeholder="0"></div>
-      <div class="v-field" style="padding:0"><div class="v-label">DEL médio (dias)</div><input class="v-input" type="number" id="v-del" placeholder="150"></div>
-      <div class="v-field" style="padding:0"><div class="v-label">Vacas secas</div><input class="v-input" type="number" id="v-secas" placeholder="0"></div>
-      <div class="v-field" style="padding:0"><div class="v-label">Estoque silagem (dias)</div><input class="v-input" type="number" id="v-est-silagem" placeholder="0"></div>
-    </div>
-  </div>
+  let html = '';
+  html += '<div style="font-size:16px;font-weight:800;margin-bottom:4px">📋 Ficha de Visita</div>';
+  html += '<div style="font-size:12px;color:var(--muted);margin-bottom:16px">'+(d.produtor||'')+' · '+(d.cidade||'')+'</div>';
 
-  <div class="v-section">
-    <div class="v-section-title">🧪 Qualidade do Leite</div>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;padding:10px 14px">
-      <div class="v-field" style="padding:0"><div class="v-label">Gordura %</div><input class="v-input" type="number" step="0.01" id="v-gordura" placeholder="3.5"></div>
-      <div class="v-field" style="padding:0"><div class="v-label">Proteína %</div><input class="v-input" type="number" step="0.01" id="v-proteina" placeholder="3.1"></div>
-      <div class="v-field" style="padding:0"><div class="v-label">CCS (×1000)</div><input class="v-input" type="number" id="v-ccs" placeholder="200"></div>
-      <div class="v-field" style="padding:0"><div class="v-label">CBT (×1000)</div><input class="v-input" type="number" id="v-cbt" placeholder="50"></div>
-      <div class="v-field" style="padding:0"><div class="v-label">NUL mg/dL</div><input class="v-input" type="number" step="0.1" id="v-nul" placeholder="12"></div>
-      <div class="v-field" style="padding:0"><div class="v-label">ECC médio</div><input class="v-input" type="number" step="0.25" id="v-ecc" placeholder="3.5"></div>
-    </div>
-  </div>
+  // Identificação
+  html += '<div class="v-section"><div class="v-section-title">📅 Identificação</div>';
+  html += '<div class="v-field"><div class="v-label">Técnico responsável</div><input class="v-input" id="v-tecnico" placeholder="Nome do técnico" value="'+(d.tecnico_titular||'')+'"></div>';
+  html += '<div class="v-field"><div class="v-label">Data da visita</div><input class="v-input" type="date" id="v-data" value="'+new Date().toISOString().split('T')[0]+'"></div>';
+  html += '</div>';
 
-  <div class="v-section">
-    <div class="v-section-title">🌡️ Conforto Animal</div>
-    <div class="v-field"><div class="v-label">Estresse térmico</div>
-      <div class="v-score" id="sc-termal">
-        <button class="v-score-btn" onclick="setScore('termal','bom',this)">😊 Confortável</button>
-        <button class="v-score-btn" onclick="setScore('termal','med',this)">😓 Leve (ITU 72-80)</button>
-        <button class="v-score-btn" onclick="setScore('termal','rui',this)">🥵 Severo (ITU>80)</button>
-      </div>
-    </div>
-  </div>
+  // Produção
+  html += '<div class="v-section"><div class="v-section-title">🥛 Dados Produtivos</div>';
+  html += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;padding:10px 14px">';
+  html += '<div><div class="v-label">Prod. total (L/dia)</div><input class="v-input" type="number" id="v-prod-total" placeholder="0"></div>';
+  html += '<div><div class="v-label">Vacas em lactação</div><input class="v-input" type="number" id="v-lactacao" placeholder="0"></div>';
+  html += '<div><div class="v-label">Média L/vaca/dia</div><input class="v-input" type="number" step="0.1" id="v-media-prod" placeholder="0"></div>';
+  html += '<div><div class="v-label">DEL médio (dias)</div><input class="v-input" type="number" id="v-del" placeholder="150"></div>';
+  html += '<div><div class="v-label">Vacas secas</div><input class="v-input" type="number" id="v-secas" placeholder="0"></div>';
+  html += '<div><div class="v-label">Estoque silagem (dias)</div><input class="v-input" type="number" id="v-est-silagem" placeholder="0"></div>';
+  html += '</div></div>';
 
-  <div class="v-section">
-    <div class="v-section-title">🌽 Nutrição</div>
-    <div class="v-field"><div class="v-label">Silagem — Avaliação</div>
-      <div class="v-score" id="sc-silagem">
-        <button class="v-score-btn" onclick="setScore('silagem','bom',this)">✅ Bom</button>
-        <button class="v-score-btn" onclick="setScore('silagem','med',this)">⚠️ Regular</button>
-        <button class="v-score-btn" onclick="setScore('silagem','rui',this)">❌ Ruim</button>
-        <button class="v-score-btn" onclick="setScore('silagem','na',this)">N/A</button>
-      </div>
-    </div>
-    <div class="v-field"><div class="v-label">Mistura (TMR) — Avaliação</div>
-      <div class="v-score" id="sc-mistura">
-        <button class="v-score-btn" onclick="setScore('mistura','bom',this)">✅ Bom (homogênea)</button>
-        <button class="v-score-btn" onclick="setScore('mistura','med',this)">⚠️ Regular</button>
-        <button class="v-score-btn" onclick="setScore('mistura','rui',this)">❌ Ruim (separação)</button>
-      </div>
-    </div>
-    <div class="v-field"><div class="v-label">Score Fecal</div>
-      <div class="v-score" id="sc-fecal">
-        <button class="v-score-btn" onclick="setScore('fecal','3-Ideal',this)">✅ 3-Ideal</button>
-        <button class="v-score-btn" onclick="setScore('fecal','2-Fluido',this)">⚠️ 2-Fluido</button>
-        <button class="v-score-btn" onclick="setScore('fecal','4-Firme',this)">🟠 4-Firme</button>
-        <button class="v-score-btn" onclick="setScore('fecal','1-Muito fluido',this)">❌ 1-Líquido</button>
-        <button class="v-score-btn" onclick="setScore('fecal','5-Seco',this)">🔴 5-Seco</button>
-      </div>
-    </div>
-    <div class="v-field"><div class="v-label">Consumo aparente</div>
-      <div class="v-score" id="sc-consumo">
-        <button class="v-score-btn" onclick="setScore('consumo','bom',this)">😊 Bom</button>
-        <button class="v-score-btn" onclick="setScore('consumo','med',this)">😐 Médio</button>
-        <button class="v-score-btn" onclick="setScore('consumo','rui',this)">😟 Ruim</button>
-      </div>
-    </div>
-  </div>
+  // Qualidade
+  html += '<div class="v-section"><div class="v-section-title">🧪 Qualidade do Leite</div>';
+  html += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;padding:10px 14px">';
+  html += '<div><div class="v-label">Gordura %</div><input class="v-input" type="number" step="0.01" id="v-gordura" placeholder="3.5"></div>';
+  html += '<div><div class="v-label">Proteína %</div><input class="v-input" type="number" step="0.01" id="v-proteina" placeholder="3.1"></div>';
+  html += '<div><div class="v-label">CCS (×1000)</div><input class="v-input" type="number" id="v-ccs" placeholder="200"></div>';
+  html += '<div><div class="v-label">CBT (×1000)</div><input class="v-input" type="number" id="v-cbt" placeholder="50"></div>';
+  html += '<div><div class="v-label">NUL mg/dL</div><input class="v-input" type="number" step="0.1" id="v-nul" placeholder="12"></div>';
+  html += '<div><div class="v-label">ECC médio</div><input class="v-input" type="number" step="0.25" id="v-ecc" placeholder="3.5"></div>';
+  html += '</div></div>';
 
-  <div class="v-section">
-    <div class="v-section-title">✅ Checklist Manejo</div>
-    <div style="padding:10px 14px;display:flex;flex-direction:column;gap:6px" id="checklist-wrap">
-      ${['Higiene e Rotina de Ordenha Correta','Água limpa e fresca disponível','Limpeza dos cochos (mínimo 1x/dia)','Descarte de vacas acima de 750k CCS','Manejo de bezerreiro adequado','Registro e controle reprodutivo atualizado','Protocolo sanitário em dia'].map((item,i)=>`
-      <div class="check-item" id="chk-${i}" onclick="toggleCheck(this,'chk-${i}')">
-        <div class="check-box" id="chkbox-${i}">✓</div>
-        <div><div class="check-label">${item}</div></div>
-      </div>`).join('')}
-    </div>
-  </div>
+  // Conforto
+  html += '<div class="v-section"><div class="v-section-title">🌡️ Conforto Animal</div>';
+  html += '<div class="v-field"><div class="v-label">Estresse térmico</div><div class="v-score" id="sc-termal">';
+  html += '<button class="v-score-btn" data-c="termal" data-v="bom" onclick="setScore(this.dataset.c,this.dataset.v,this)">😊 Confortável</button>';
+  html += '<button class="v-score-btn" data-c="termal" data-v="med" onclick="setScore(this.dataset.c,this.dataset.v,this)">😓 Leve (ITU 72-80)</button>';
+  html += '<button class="v-score-btn" data-c="termal" data-v="rui" onclick="setScore(this.dataset.c,this.dataset.v,this)">🥵 Severo (ITU>80)</button>';
+  html += '</div></div></div>';
 
-  <div class="v-section">
-    <div class="v-section-title">📝 Observações & Plano</div>
-    <div class="v-field"><textarea class="v-input" id="v-obs" rows="3" placeholder="Anotações da visita, problemas identificados, ações recomendadas..."></textarea></div>
-    <div class="v-field"><div class="v-label">Ações para próxima visita</div>
-      <textarea class="v-input" id="v-acoes" rows="2" placeholder="O que deve ser feito até a próxima visita..."></textarea>
-    </div>
-    <div class="v-field"><div class="v-label">Próxima visita</div>
-      <input class="v-input" type="date" id="v-proxima">
-    </div>
-  </div>
+  // Nutrição
+  html += '<div class="v-section"><div class="v-section-title">🌽 Nutrição</div>';
+  html += '<div class="v-field"><div class="v-label">Silagem — Avaliação</div><div class="v-score" id="sc-silagem">';
+  html += '<button class="v-score-btn" onclick="setScore(this.dataset.c,this.dataset.v,this)" data-c="silagem" data-v="bom">✅ Bom</button>';
+  html += '<button class="v-score-btn" data-c="silagem" data-v="med" onclick="setScore(this.dataset.c,this.dataset.v,this)">⚠️ Regular</button>';
+  html += '<button class="v-score-btn" data-c="silagem" data-v="rui" onclick="setScore(this.dataset.c,this.dataset.v,this)">❌ Ruim</button>';
+  html += '<button class="v-score-btn" data-c="silagem" data-v="na" onclick="setScore(this.dataset.c,this.dataset.v,this)">N/A</button>';
+  html += '</div></div>';
+  html += '<div class="v-field"><div class="v-label">Mistura (TMR) — Avaliação</div><div class="v-score" id="sc-mistura">';
+  html += '<button class="v-score-btn" data-c="mistura" data-v="bom" onclick="setScore(this.dataset.c,this.dataset.v,this)">✅ Bom (homogênea)</button>';
+  html += '<button class="v-score-btn" data-c="mistura" data-v="med" onclick="setScore(this.dataset.c,this.dataset.v,this)">⚠️ Regular</button>';
+  html += '<button class="v-score-btn" data-c="mistura" data-v="rui" onclick="setScore(this.dataset.c,this.dataset.v,this)">❌ Ruim (separação)</button>';
+  html += '</div></div>';
+  html += '<div class="v-field"><div class="v-label">Score Fecal</div><div class="v-score" id="sc-fecal">';
+  html += '<button class="v-score-btn" data-c="fecal" data-v="3-Ideal" onclick="setScore(this.dataset.c,this.dataset.v,this)">✅ 3-Ideal</button>';
+  html += '<button class="v-score-btn" data-c="fecal" data-v="2-Fluido" onclick="setScore(this.dataset.c,this.dataset.v,this)">⚠️ 2-Fluido</button>';
+  html += '<button class="v-score-btn" data-c="fecal" data-v="4-Firme" onclick="setScore(this.dataset.c,this.dataset.v,this)">🟠 4-Firme</button>';
+  html += '<button class="v-score-btn" data-c="fecal" data-v="1-Liquido" onclick="setScore(this.dataset.c,this.dataset.v,this)">❌ 1-Líquido</button>';
+  html += '</div></div>';
+  html += '<div class="v-field"><div class="v-label">Consumo aparente</div><div class="v-score" id="sc-consumo">';
+  html += '<button class="v-score-btn" data-c="consumo" data-v="bom" onclick="setScore(this.dataset.c,this.dataset.v,this)">😊 Bom</button>';
+  html += '<button class="v-score-btn" data-c="consumo" data-v="med" onclick="setScore(this.dataset.c,this.dataset.v,this)">😐 Médio</button>';
+  html += '<button class="v-score-btn" data-c="consumo" data-v="rui" onclick="setScore(this.dataset.c,this.dataset.v,this)">😟 Ruim</button>';
+  html += '</div></div></div>';
 
-  <button class="vsave" onclick="salvarVisita()">💾 Salvar Ficha de Visita</button>`;
-  showScreen('visita', 'Ficha de Visita — '+d.produtor);
+  // Checklist
+  html += '<div class="v-section"><div class="v-section-title">✅ Checklist Manejo</div>';
+  html += '<div style="padding:10px 14px;display:flex;flex-direction:column;gap:6px">';
+  checkItems.forEach(function(item, i) {
+    html += '<div class="check-item" id="chk-'+i+'" data-id="chk-'+i+'" onclick="toggleCheck(this,this.dataset.id)">';
+    html += '<div class="check-box">✓</div>';
+    html += '<div class="check-label">'+item+'</div></div>';
+  });
+  html += '</div></div>';
+
+  // Obs e próxima visita
+  html += '<div class="v-section"><div class="v-section-title">📝 Observações & Plano</div>';
+  html += '<div class="v-field"><textarea class="v-input" id="v-obs" rows="3" placeholder="Anotações da visita, problemas identificados, ações recomendadas..."></textarea></div>';
+  html += '<div class="v-field"><div class="v-label">Ações para próxima visita</div><textarea class="v-input" id="v-acoes" rows="2" placeholder="O que deve ser feito até a próxima visita..."></textarea></div>';
+  html += '<div class="v-field"><div class="v-label">Próxima visita</div><input class="v-input" type="date" id="v-proxima"></div>';
+  html += '</div>';
+
+  html += '<button class="vsave" onclick="salvarVisita()">💾 Salvar Ficha de Visita</button>';
+  html += '<div style="height:20px"></div>';
+
+  // Reseta scores e checklist
+  Object.keys(scores).forEach(k => delete scores[k]);
+  checks.clear();
+
+  body.innerHTML = html;
 }
 
 
@@ -1446,8 +1436,27 @@ function renderBench() {
     ];
 
     let html = '<div style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin:16px 0 10px">💰 Custos Alimentares ('+countDietas+' fazendas com dieta)</div>';
-    html += '<div class="bm-grid-app">';
-    dietaRefs.forEach(r => { html += bmCard(r); });
+    // Custos em layout de lista (não grid) para não espremir
+    html += '<div style="display:flex;flex-direction:column;gap:10px">';
+    dietaRefs.forEach(r => {
+      const val=r.val||0; if(!val) return;
+      const ok=r.lower?val<=r.meta:val>=r.meta, warn=r.lower?val<=r.ref:val>=r.ref;
+      const col=ok?'#16a34a':warn?'#d97706':'#dc2626';
+      const status=ok?'✅':warn?'⚠️':'❌';
+      const fv = r.u===' R$'?'R$ '+(val>=1000?(val/1000).toFixed(1)+'k':val.toFixed(r.dec)):val.toFixed(r.dec)+r.u;
+      const pct=r.meta>0?Math.min(100,r.lower?(1-(val-r.meta)/Math.max(r.ref-r.meta,.001))*100:(val/r.meta)*100):50;
+      html += '<div class="bm" style="display:flex;align-items:center;gap:12px">'
+        +'<div style="font-size:24px">'+r.icon+'</div>'
+        +'<div style="flex:1;min-width:0">'
+        +'<div style="font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:3px">'+r.l+'</div>'
+        +'<div style="font-size:22px;font-weight:900;color:'+col+'">'+fv+'</div>'
+        +'<div style="font-size:10px;color:var(--dim);margin-top:2px">'+r.desc+'</div>'
+        +'<div class="bm-bar" style="margin-top:6px"><div class="bm-fill" style="width:'+Math.max(0,pct).toFixed(0)+'%;background:'+col+'"></div></div>'
+        +'<div class="bm-refs-row"><span>'+( r.lower?'Ref: R$'+r.ref:'Ref: '+r.ref+r.u)+'</span><span>Meta: '+(r.lower?'R$'+r.meta:r.meta+r.u)+'</span></div>'
+        +'</div>'
+        +'<div style="font-size:22px">'+status+'</div>'
+        +'</div>';
+    });
     html += '</div>';
     document.getElementById('bench-dieta-cards').innerHTML = html;
   });
