@@ -383,6 +383,9 @@ tbody td{padding:10px 14px;font-size:12px;}.badge{display:inline-flex;align-item
     <span class="tb-badge">ADMIN</span>
     <div class="tb-r">
       <div class="tb-sync"><span class="tb-dot" id="tdot"></span><span id="tstat">Online</span></div>
+      <button style="background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);color:white;border-radius:8px;padding:4px 10px;font-size:11px;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:4px" onclick="abrirPainelVisitas()" id="btn-visitas-recentes" title="Visitas registradas pelo app">
+        📋 <span id="visitas-badge" style="background:#f59e0b;color:#1e293b;border-radius:8px;padding:1px 6px;font-size:10px;display:none">0</span>
+      </button>
       <span class="tb-user" id="tbuser"></span>
       <button class="tb-btn" onclick="doLogout()">Sair</button>
     </div>
@@ -2164,6 +2167,21 @@ tbody td{padding:10px 14px;font-size:12px;}.badge{display:inline-flex;align-item
     </div>
   </div>
 </div>
+
+<!-- PAINEL DE VISITAS RECENTES -->
+<div id="visitas-panel-overlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.4);z-index:4000;display:none;justify-content:flex-end;backdrop-filter:blur(2px)" onclick="if(event.target===this)document.getElementById('visitas-panel-overlay').style.display='none'">
+  <div style="background:white;width:100%;max-width:480px;height:100vh;display:flex;flex-direction:column;box-shadow:-8px 0 40px rgba(0,0,0,0.2)">
+    <div style="background:linear-gradient(135deg,#0891b2,#0e7490);color:white;padding:16px 20px;display:flex;align-items:center;gap:12px;flex-shrink:0">
+      <span style="font-size:20px">📋</span>
+      <div style="font-size:15px;font-weight:800;flex:1">Visitas Recentes — App</div>
+      <button onclick="document.getElementById('visitas-panel-overlay').style.display='none'" style="background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.3);color:white;width:30px;height:30px;border-radius:8px;font-size:16px;cursor:pointer">✕</button>
+    </div>
+    <div style="flex:1;overflow-y:auto;padding:12px" id="visitas-recentes-list">
+      <div style="text-align:center;padding:40px;color:#64748b">Carregando...</div>
+    </div>
+  </div>
+</div>
+
 <div class="toast" id="toast"></div>
 <script>const firebaseConfig = {
 apiKey: "AIzaSyClpsHjO8OLThD--hDOfg7Fg3t6hhuM-To",
@@ -2337,6 +2355,7 @@ console.log('Loaded:', fb.length, 'from Firebase +', (ALL.length-fb.length), 'fr
 ['fs','fv','fr','fp','fsi'].forEach(id=>document.getElementById(id).addEventListener('change',()=>{PG=1;applyF();renderAll();}));
 loadTecFromFirebase();
 initNotificacoes();
+iniciarMonitorVisitas();
 });
 }
 
@@ -2348,6 +2367,71 @@ function getNotifRead(){try{return JSON.parse(localStorage.getItem('meta_notif_r
 function setNotifRead(obj){try{localStorage.setItem('meta_notif_read',JSON.stringify(obj));}catch{}}
 
 let NOTIF_ITEMS = []; // {id, data, lido}
+
+
+// ════════ VISITAS RECENTES DO APP ════════
+let VISITAS_RECENTES = [];
+function iniciarMonitorVisitas() {
+  // Monitora as últimas visitas de todas as fazendas
+  db.ref('visitas').on('value', snap => {
+    VISITAS_RECENTES = [];
+    snap.forEach(farmSnap => {
+      const farmId = farmSnap.key;
+      const farm = ALL.find(d => d.id === farmId) || {};
+      farmSnap.forEach(visitSnap => {
+        const v = visitSnap.val();
+        if(v && v.data) VISITAS_RECENTES.push({...v, farmId, produtor: farm.produtor||v.produtor||'—', visitId: visitSnap.key});
+      });
+    });
+    // Ordena por data desc
+    VISITAS_RECENTES.sort((a,b) => (b.data||'') > (a.data||'') ? 1 : -1);
+    // Conta visitas dos últimos 7 dias
+    const recentes = VISITAS_RECENTES.filter(v => {
+      if(!v.data) return false;
+      return (Date.now() - new Date(v.data).getTime()) < 7*86400000;
+    });
+    const badge = document.getElementById('visitas-badge');
+    if(badge) {
+      if(recentes.length > 0) { badge.textContent = recentes.length; badge.style.display='inline'; }
+      else badge.style.display='none';
+    }
+  });
+}
+
+function abrirPainelVisitas() {
+  const overlay = document.getElementById('visitas-panel-overlay');
+  if(overlay) overlay.style.display='flex';
+  renderVisitasRecentes();
+}
+
+function renderVisitasRecentes() {
+  const list = document.getElementById('visitas-recentes-list');
+  if(!list) return;
+  const visitas = VISITAS_RECENTES.slice(0,30);
+  if(!visitas.length) {
+    list.innerHTML='<div style="text-align:center;padding:40px;color:#64748b">Nenhuma visita registrada ainda</div>';
+    return;
+  }
+  const pad = n=>String(n).padStart(2,'0');
+  list.innerHTML = visitas.map(v => {
+    const d = new Date(v.data);
+    const dt = pad(d.getDate())+'/'+pad(d.getMonth()+1)+'/'+d.getFullYear();
+    const ms = Date.now()-d.getTime();
+    const age = ms<3600000?Math.floor(ms/60000)+'min':ms<86400000?Math.floor(ms/3600000)+'h':Math.floor(ms/86400000)+'d atrás';
+    const prod = v.media_prod?v.media_prod.toFixed(1)+' L':'—';
+    const pCol = v.media_prod>=37?'#15803d':v.media_prod>=28?'#d97706':'#64748b';
+    const div = document.createElement('div');
+    div.style.cssText='background:white;border:1px solid #e2e8f0;border-left:4px solid #0891b2;border-radius:12px;padding:12px 14px;margin-bottom:8px;cursor:pointer';
+    div.dataset.farmId = v.farmId||'';
+    div.onclick = function(){ openFarmModal(this.dataset.farmId); };
+    div.innerHTML = '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">'
+      +'<div style="font-size:13px;font-weight:800">'+(v.produtor||'—')+'</div>'
+      +'<div style="font-size:13px;font-weight:800;color:'+pCol+'">'+prod+'</div></div>'
+      +'<div style="font-size:11px;color:#64748b">📅 '+dt+' · há '+age+' · '+(v.vendedor||'—')+'</div>'
+      +(v.obs?'<div style="font-size:11px;color:#94a3b8;font-style:italic;margin-top:4px">"'+v.obs+'"</div>':'');
+    return div.outerHTML;
+  }).join('');
+}
 
 function initNotificacoes() {
   const seen = getNotifSeen();
