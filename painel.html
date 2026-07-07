@@ -1518,6 +1518,9 @@ Maria Souza;;Realeza;PR;PROSPECTO;VAGNER;80;28"></textarea>
       <div class="sc" id="sc-dieta">
         <div class="ph">
           <div><h2>🌽 Dieta & Custos por Lote</h2><p>Calcule o custo/vaca/dia e o RMCA (Retorno Menos Custo Alimentar) de cada lote</p></div>
+          <div style="display:flex;gap:8px;flex-shrink:0">
+            <button onclick="salvarDietaFirebase()" style="background:#7c3aed;color:white;border:none;border-radius:8px;padding:9px 16px;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap">💾 Salvar</button>
+          </div>
           <button class="dt-save-btn" onclick="salvarDietaFirebase()">💾 Salvar no Firebase</button>
         </div>
 
@@ -1613,6 +1616,9 @@ Ração;5;1.80"></textarea>
       <div class="sc" id="sc-leiteiro">
         <div class="ph">
           <div><h2>🥛 Controle Leiteiro</h2><p>Importe a medição individual de vacas (DEL, litros) e veja a dispersão, curva de lactação e histogramas</p></div>
+          <div style="display:flex;gap:8px;flex-shrink:0">
+            <button onclick="salvarControleLeiteiro()" style="background:#7c3aed;color:white;border:none;border-radius:8px;padding:9px 16px;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap">💾 Salvar</button>
+          </div>
         </div>
 
         <!-- Seleção de fazenda + data -->
@@ -1715,6 +1721,10 @@ Ração;5;1.80"></textarea>
       <div class="sc" id="sc-forragem">
         <div class="ph">
           <div><h2>🌾 Forragem: Estoque &amp; Custo de Produção</h2><p>Custo de produção da silagem/pré-secado e quantos dias de estoque ainda restam</p></div>
+          <div style="display:flex;gap:8px;flex-shrink:0">
+            <button onclick="salvarForragem()" style="background:#7c3aed;color:white;border:none;border-radius:8px;padding:9px 16px;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap">💾 Salvar</button>
+            <button onclick="gerarPDFForragem()" style="background:#dc2626;color:white;border:none;border-radius:8px;padding:9px 16px;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap">📄 PDF</button>
+          </div>
         </div>
 
         <div class="dt-card" style="padding:14px 20px">
@@ -1742,6 +1752,9 @@ Ração;5;1.80"></textarea>
       <div class="sc" id="sc-bromatologia">
         <div class="ph">
           <div><h2>🔬 Qualidade da Forragem</h2><p>Laudos bromatológicos, leitura automática por IA e potencial de produção de leite (MLK2024)</p></div>
+          <div style="display:flex;gap:8px;flex-shrink:0">
+            <button onclick="salvarBromatologia()" style="background:#7c3aed;color:white;border:none;border-radius:8px;padding:9px 16px;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap">💾 Salvar</button>
+          </div>
         </div>
 
         <div class="dt-card" style="padding:14px 20px">
@@ -1769,6 +1782,10 @@ Ração;5;1.80"></textarea>
       <div class="sc" id="sc-financeiro">
         <div class="ph">
           <div><h2>💵 Painel Financeiro da Propriedade</h2><p>Custo total, receita, lucro e ponto de equilíbrio — cruzando com a Dieta &amp; Custos já cadastrada</p></div>
+          <div style="display:flex;gap:8px;flex-shrink:0">
+            <button onclick="salvarFinanceiro()" style="background:#7c3aed;color:white;border:none;border-radius:8px;padding:9px 16px;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap">💾 Salvar</button>
+            <button onclick="gerarPDFFinanceiro()" style="background:#dc2626;color:white;border:none;border-radius:8px;padding:9px 16px;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap">📄 PDF</button>
+          </div>
         </div>
 
         <div class="dt-card" style="padding:14px 20px">
@@ -1789,6 +1806,10 @@ Ração;5;1.80"></textarea>
       <div class="sc" id="sc-reproducao">
         <div class="ph">
           <div><h2>🐄 Eficiência Reprodutiva</h2><p>Diagnóstico rápido de prenhez e o impacto econômico oculto do atraso reprodutivo</p></div>
+          <div style="display:flex;gap:8px;flex-shrink:0">
+            <button onclick="salvarReproducao()" style="background:#7c3aed;color:white;border:none;border-radius:8px;padding:9px 16px;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap">💾 Salvar</button>
+            <button onclick="gerarPDFReproducao()" style="background:#dc2626;color:white;border:none;border-radius:8px;padding:9px 16px;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap">📄 PDF</button>
+          </div>
         </div>
 
         <div class="dt-card" style="padding:14px 20px">
@@ -1809,6 +1830,9 @@ Ração;5;1.80"></textarea>
       <div class="sc" id="sc-rebanho">
         <div class="ph">
           <div><h2>📈 Calculadora de Crescimento de Rebanho</h2><p>Projeção do crescimento do rebanho para os próximos anos com base nos parâmetros produtivos e reprodutivos</p></div>
+          <div style="display:flex;gap:8px;flex-shrink:0">
+            <button onclick="salvarRebanho()" style="background:#7c3aed;color:white;border:none;border-radius:8px;padding:9px 16px;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap">💾 Salvar Projeção</button>
+          </div>
           <button class="rb-run-btn" style="width:auto;padding:9px 24px;font-size:13px" onclick="calcRebanho()">▶ Calcular Projeção</button>
         </div>
 
