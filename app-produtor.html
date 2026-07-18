@@ -152,6 +152,21 @@ button:active{transform:scale(.96)}
       <div id="forragem-body"></div>
     </div>
 
+    <!-- QUALIDADE DA FORRAGEM -->
+    <div class="screen" id="screen-bromatologia">
+      <div id="bromatologia-body"></div>
+    </div>
+
+    <!-- EFICIÊNCIA REPRODUTIVA -->
+    <div class="screen" id="screen-reproducao">
+      <div id="reproducao-body"></div>
+    </div>
+
+    <!-- RECRIA -->
+    <div class="screen" id="screen-recria">
+      <div id="recria-body"></div>
+    </div>
+
     <!-- EVOLUÇÃO -->
     <div class="screen" id="screen-evolucao">
       <div id="evolucao-body"></div>
@@ -263,7 +278,7 @@ function navScreen(name){
   if(navBtn)navBtn.classList.add("active");
   else{
     // secondary screens (consumo, forragem, evolucao, edit) reached via "Mais" — highlight Mais
-    if(["consumo","forragem","evolucao","edit"].includes(name)){
+    if(["consumo","forragem","evolucao","edit","bromatologia","reproducao","recria"].includes(name)){
       const maisBtn=document.getElementById("nav-mais");
       if(maisBtn)maisBtn.classList.add("active");
     }
@@ -277,6 +292,9 @@ function navScreen(name){
   if(name==="forragem")renderForragemScreen();
   if(name==="evolucao")renderEvolucaoScreen();
   if(name==="mais")renderMaisMenu();
+  if(name==="bromatologia")renderBromatologiaScreen();
+  if(name==="reproducao")renderReproducaoScreen();
+  if(name==="recria")renderRecriaScreen();
   window.scrollTo(0,0);
 }
 
@@ -287,6 +305,9 @@ function renderMaisMenu(){
     <div style="font-size:17px;font-weight:800;margin-bottom:16px">⋯ Mais</div>
     <button class="btn-action btn-secondary" onclick="navScreen('consumo')">📊 Monitoramento de Consumo</button>
     <button class="btn-action btn-secondary" onclick="navScreen('forragem')">🌾 Forragem: Estoque &amp; Custo</button>
+    <button class="btn-action btn-secondary" onclick="navScreen('bromatologia')">🔬 Qualidade da Forragem</button>
+    <button class="btn-action btn-secondary" onclick="navScreen('reproducao')">🐄 Eficiência Reprodutiva</button>
+    <button class="btn-action btn-secondary" onclick="navScreen('recria')">🐮 Recria</button>
     <button class="btn-action btn-secondary" onclick="navScreen('evolucao')">📈 Evolução Mês a Mês</button>
     <button class="btn-action btn-primary" style="margin-top:14px" onclick="navScreen('edit')">✏️ Atualizar Meus Dados</button>
   `;
@@ -956,6 +977,161 @@ async function renderForragemScreen(){
   }catch(e){
     console.error("Erro ao carregar forragem:",e);
     document.getElementById("forragem-content").innerHTML=`<div class="chart-card" style="text-align:center;color:#dc2626">Erro ao carregar dados.</div>`;
+  }
+}
+
+// ═══ QUALIDADE DA FORRAGEM (BROMATOLOGIA) ═══
+async function renderBromatologiaScreen(){
+  const body=document.getElementById("bromatologia-body");
+  if(!body)return;
+  body.innerHTML=`
+    <div style="font-size:17px;font-weight:800;margin-bottom:4px">🔬 Qualidade da Forragem</div>
+    <div style="font-size:12px;color:var(--muted);margin-bottom:14px">Resultado dos últimos laudos bromatológicos</div>
+    <div id="bromatologia-content"><div style="text-align:center;padding:40px"><div class="mg-spinner"></div></div></div>
+  `;
+  try{
+    const snap=await db.ref("bromatologia/"+farmId).once("value");
+    const bruto=snap.val()||{};
+    const tipos=Object.keys(bruto).map(k=>{
+      const dadosTipo=bruto[k];
+      const datas=Object.keys(dadosTipo).filter(dk=>/^\d{4}-\d{2}-\d{2}$/.test(dk)).sort();
+      return datas.length?dadosTipo[datas[datas.length-1]]:null;
+    }).filter(Boolean);
+    const cont=document.getElementById("bromatologia-content");
+    if(!tipos.length){
+      cont.innerHTML=`<div class="chart-card" style="text-align:center;color:var(--muted);padding:30px 16px">Nenhum laudo bromatológico registrado ainda.</div>`;
+      return;
+    }
+    cont.innerHTML=tipos.map(t=>`<div class="chart-card">
+      <div class="chart-card-title">${t.tipo||"Laudo"}</div>
+      <div class="chart-card-sub">${t.data?new Date(t.data+"T12:00:00").toLocaleDateString("pt-BR"):""}</div>
+      <div class="qual-grid" style="grid-template-columns:repeat(3,1fr);gap:10px">
+        ${t.ms!=null?`<div class="qual-item"><div class="qual-val" style="color:#0891b2">${t.ms.toFixed(1)}%</div><div class="qual-lbl">MS</div></div>`:""}
+        ${t.pb!=null?`<div class="qual-item"><div class="qual-val" style="color:#1d4ed8">${t.pb.toFixed(1)}%</div><div class="qual-lbl">PB</div></div>`:""}
+        ${t.fdn!=null?`<div class="qual-item"><div class="qual-val" style="color:#b45309">${t.fdn.toFixed(1)}%</div><div class="qual-lbl">FDN</div></div>`:""}
+        ${t.ndt!=null?`<div class="qual-item"><div class="qual-val" style="color:#15803d">${t.ndt.toFixed(1)}%</div><div class="qual-lbl">NDT</div></div>`:""}
+        ${t.amido!=null?`<div class="qual-item"><div class="qual-val" style="color:#7c3aed">${t.amido.toFixed(1)}%</div><div class="qual-lbl">Amido</div></div>`:""}
+        ${t.mlk2024!=null?`<div class="qual-item"><div class="qual-val" style="color:#0891b2">${t.mlk2024.toFixed(1)}</div><div class="qual-lbl">MLK2024</div></div>`:""}
+      </div>
+    </div>`).join("");
+  }catch(e){
+    console.error("Erro ao carregar bromatologia:",e);
+    document.getElementById("bromatologia-content").innerHTML=`<div class="chart-card" style="text-align:center;color:#dc2626">Erro ao carregar dados.</div>`;
+  }
+}
+
+// ═══ EFICIÊNCIA REPRODUTIVA ═══
+async function renderReproducaoScreen(){
+  const body=document.getElementById("reproducao-body");
+  if(!body)return;
+  body.innerHTML=`
+    <div style="font-size:17px;font-weight:800;margin-bottom:4px">🐄 Eficiência Reprodutiva</div>
+    <div style="font-size:12px;color:var(--muted);margin-bottom:14px">Diagnóstico reprodutivo mais recente</div>
+    <div id="reproducao-content"><div style="text-align:center;padding:40px"><div class="mg-spinner"></div></div></div>
+  `;
+  try{
+    const snap=await db.ref("reproducao/"+farmId).once("value");
+    const bruto=snap.val()||{};
+    const datas=Object.keys(bruto).filter(k=>/^\d{4}-\d{2}-\d{2}$/.test(k)).sort();
+    const cont=document.getElementById("reproducao-content");
+    if(!datas.length){
+      cont.innerHTML=`<div class="chart-card" style="text-align:center;color:var(--muted);padding:30px 16px">Nenhum registro de eficiência reprodutiva ainda.</div>`;
+      return;
+    }
+    const reg=bruto[datas[datas.length-1]];
+    const score=reg.score_reprodutivo_integrado;
+    const scoreColor=score>=80?"#15803d":score>=60?"#2563eb":score>=40?"#d97706":"#dc2626";
+    const quadranteMap={
+      cruzeiro:{lbl:"🚢 Estável",desc:"Reprodução no ritmo certo."},
+      primavera:{lbl:"🌸 Alerta de Inércia",desc:"Sinal de atenção antes de virar problema maior."},
+      recuperacao:{lbl:"🔄 Recuperação Ativa",desc:"Saindo de uma fase difícil, no caminho certo."},
+      perigo:{lbl:"⚠️ Crítico",desc:"Precisa de atenção prioritária do técnico."}
+    };
+    const qInfo=quadranteMap[reg.quadrante]||{lbl:"—",desc:""};
+    cont.innerHTML=`
+      <div class="hero-card" style="text-align:center">
+        <div class="hero-sub" style="opacity:.85">Score Reprodutivo</div>
+        <div style="font-size:44px;font-weight:900;margin-top:4px">${score!=null?score:"—"}<span style="font-size:16px;opacity:.7">/100</span></div>
+        <div style="font-size:13px;font-weight:700;margin-top:6px">${qInfo.lbl}</div>
+        <div style="font-size:11px;opacity:.75;margin-top:2px">${qInfo.desc}</div>
+      </div>
+      <div class="kpi-grid">
+        <div class="kpi-card" style="--kpi-color:#d97706">
+          <div class="kpi-icon">📅</div>
+          <div class="kpi-val">${reg.del_real>0?reg.del_real:"—"}</div>
+          <div class="kpi-lbl">DEL médio</div>
+        </div>
+        <div class="kpi-card" style="--kpi-color:#2563eb">
+          <div class="kpi-icon">🍼</div>
+          <div class="kpi-val">${reg.pct_vacas_prenhas!=null?reg.pct_vacas_prenhas.toFixed(0)+"%":"—"}</div>
+          <div class="kpi-lbl">Vacas prenhas</div>
+        </div>
+        <div class="kpi-card" style="--kpi-color:#15803d">
+          <div class="kpi-icon">🎯</div>
+          <div class="kpi-val">${reg.taxa_prenhez!=null?reg.taxa_prenhez.toFixed(0)+"%":"—"}</div>
+          <div class="kpi-lbl">Taxa de prenhez</div>
+        </div>
+        <div class="kpi-card" style="--kpi-color:#7c3aed">
+          <div class="kpi-icon">📊</div>
+          <div class="kpi-val">${reg.ier!=null?reg.ier.toFixed(0):"—"}</div>
+          <div class="kpi-lbl">IER</div>
+        </div>
+      </div>
+      <div class="chart-card" style="text-align:center;color:var(--muted);font-size:11.5px">Última atualização: ${new Date(datas[datas.length-1]+"T12:00:00").toLocaleDateString("pt-BR")}</div>
+    `;
+  }catch(e){
+    console.error("Erro ao carregar reprodução:",e);
+    document.getElementById("reproducao-content").innerHTML=`<div class="chart-card" style="text-align:center;color:#dc2626">Erro ao carregar dados.</div>`;
+  }
+}
+
+// ═══ RECRIA ═══
+function calcGmdAnimalSimples(a){
+  const pesagens=Object.values(a.pesagens||{}).sort((x,y)=>(x.data||"")>(y.data||"")?1:-1);
+  const ultima=pesagens[pesagens.length-1];
+  const pesoAtual=ultima?ultima.peso:a.peso_nascimento;
+  const diasVida=a.nascimento?Math.floor((Date.now()-new Date(a.nascimento+"T12:00:00").getTime())/864e5):0;
+  const gmdGeral=diasVida>0&&pesoAtual!=null&&a.peso_nascimento!=null?(pesoAtual-a.peso_nascimento)/diasVida*1000:null;
+  return{gmdGeral,pesoAtual};
+}
+async function renderRecriaScreen(){
+  const body=document.getElementById("recria-body");
+  if(!body)return;
+  body.innerHTML=`
+    <div style="font-size:17px;font-weight:800;margin-bottom:4px">🐮 Recria</div>
+    <div style="font-size:12px;color:var(--muted);margin-bottom:14px">Ganho de peso das novilhas em recria</div>
+    <div id="recria-content"><div style="text-align:center;padding:40px"><div class="mg-spinner"></div></div></div>
+  `;
+  try{
+    const snap=await db.ref("recria/"+farmId).once("value");
+    const bruto=snap.val()||{};
+    const animais=Object.values(bruto).filter(a=>a&&a.status!=="encerrado");
+    const cont=document.getElementById("recria-content");
+    if(!animais.length){
+      cont.innerHTML=`<div class="chart-card" style="text-align:center;color:var(--muted);padding:30px 16px">Nenhum animal em recria registrado ainda.</div>`;
+      return;
+    }
+    const comGmd=animais.map(a=>calcGmdAnimalSimples(a)).filter(r=>r.gmdGeral!=null);
+    const gmdMedio=comGmd.length?comGmd.reduce((s,r)=>s+r.gmdGeral,0)/comGmd.length:null;
+    const gmdCor=gmdMedio==null?"#64748b":gmdMedio>=750?"#15803d":gmdMedio>=600?"#d97706":"#dc2626";
+    cont.innerHTML=`
+      <div class="kpi-grid">
+        <div class="kpi-card" style="--kpi-color:#0891b2">
+          <div class="kpi-icon">🐮</div>
+          <div class="kpi-val">${animais.length}</div>
+          <div class="kpi-lbl">Animais em recria</div>
+        </div>
+        <div class="kpi-card" style="--kpi-color:${gmdCor}">
+          <div class="kpi-icon">⚖️</div>
+          <div class="kpi-val">${gmdMedio!=null?gmdMedio.toFixed(0):"—"}</div>
+          <div class="kpi-lbl">GMD médio (g/dia)</div>
+        </div>
+      </div>
+      <div class="chart-card" style="text-align:center;color:var(--muted);font-size:11.5px">Meta de referência: 700–800 g/dia</div>
+    `;
+  }catch(e){
+    console.error("Erro ao carregar recria:",e);
+    document.getElementById("recria-content").innerHTML=`<div class="chart-card" style="text-align:center;color:#dc2626">Erro ao carregar dados.</div>`;
   }
 }
 
