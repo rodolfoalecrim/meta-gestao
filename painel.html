@@ -1831,6 +1831,26 @@ Ração;5;1.80"></textarea>
               <select id="ml-periodo-sel" class="fsel" style="width:auto" onchange="onLeiteiroPeriodoChange()">
                 <option value="todos">Todo o período</option>
                 <option value="30d">Últimos 30 dias</option>
+                <option value="90d">Últimos 90 dias</option>
+                <option value="6m">Últimos 6 meses</option>
+                <option value="ano_atual">Este ano</option>
+                <option value="ano_passado">Ano passado</option>
+                <option value="custom">Período personalizado</option>
+              </select>
+              <div id="ml-periodo-custom-wrap" style="display:none;gap:8px;align-items:center">
+                <input type="date" id="ml-periodo-inicio" class="fsel" style="width:auto" onchange="carregarResumoGeralLeiteiro()">
+                <span style="font-size:11px;color:var(--muted)">até</span>
+                <input type="date" id="ml-periodo-fim" class="fsel" style="width:auto" onchange="carregarResumoGeralLeiteiro()">
+              </div>
+            </div>
+            <div id="ml-kpis-geral" style="display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin-bottom:16px">
+              <div style="grid-column:1/-1;text-align:center;padding:20px;color:var(--muted)">Carregando...</div>
+            </div>
+            <canvas id="ml-ch-scatter-geral" height="380"></canvas>
+            <div id="ml-scatter-geral-info" style="font-size:11px;color:var(--muted);margin-top:8px;text-align:center"></div>
+          </div>
+        </div>
+
         <div class="dt-card" style="padding:14px 20px">
           <div style="display:flex;align-items:center;gap:16px;flex-wrap:wrap">
             <div style="font-size:11px;font-weight:700;color:var(--muted);white-space:nowrap">🏡 Fazenda / Propriedade</div>
