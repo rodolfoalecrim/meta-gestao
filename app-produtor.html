@@ -31,18 +31,21 @@ body{font-family:Inter,sans-serif;background:var(--bg);color:var(--text);min-hei
 .btn-pin{width:100%;background:linear-gradient(135deg,var(--G),var(--GD));color:#fff;border:none;border-radius:12px;padding:14px;font-size:15px;font-weight:700;font-family:Inter,sans-serif;cursor:pointer}
 .pin-err{color:var(--red);font-size:12px;font-weight:600;margin-top:10px;min-height:16px}
 #app{display:none;flex-direction:column;min-height:100dvh}
-.topbar{background:#fff;border-bottom:1px solid var(--border);padding:0 16px;height:56px;display:flex;align-items:center;gap:10px;flex-shrink:0;padding-top:var(--safe-top)}
+.topbar{background:#fff;border-bottom:1px solid var(--border);padding:0 18px;height:60px;display:flex;align-items:center;gap:10px;flex-shrink:0;padding-top:var(--safe-top);box-shadow:0 1px 3px rgba(15,23,42,.04)}
+.topbar-logo-img{height:32px;width:auto;object-fit:contain}
+.topbar-title{font-size:12.5px;font-weight:700;color:var(--muted);background:var(--surface2);padding:5px 12px;border-radius:20px}
 .topbar-logo{display:flex;align-items:center;gap:8px;font-size:14px;font-weight:800;color:var(--GD)}
-.topbar-title{font-size:13px;font-weight:700;color:var(--text)}
 .content{flex:1;padding:16px 16px 40px;max-width:560px;margin:0 auto;width:100%}
 .screen{display:none}
 .screen.active{display:block;animation:screenIn .28s cubic-bezier(.16,1,.3,1)}
 @keyframes screenIn{0%{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
-.hero-card{background:linear-gradient(135deg,var(--GD),var(--G));border-radius:18px;padding:22px;color:#fff;margin-bottom:16px}
+.hero-card{background:linear-gradient(135deg,var(--GD),var(--G) 70%,#22c55e);border-radius:20px;padding:24px;color:#fff;margin-bottom:16px;box-shadow:0 8px 24px rgba(5,46,22,.25);position:relative;overflow:hidden}
+.hero-card:before{content:"";position:absolute;top:-40px;right:-40px;width:140px;height:140px;border-radius:50%;background:rgba(255,255,255,.08)}
 .hero-title{font-size:19px;font-weight:800}
 .hero-sub{font-size:12px;opacity:.8;margin-top:3px}
 .kpi-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px}
-.kpi-card{background:#fff;border:1px solid var(--border);border-radius:14px;padding:16px;box-shadow:var(--shadow);position:relative;overflow:hidden}
+.kpi-card{background:#fff;border:1px solid var(--border);border-radius:16px;padding:16px;box-shadow:var(--shadow);position:relative;overflow:hidden;transition:box-shadow .2s ease,transform .2s ease}
+.kpi-card:active{transform:scale(.97)}
 .kpi-card:before{content:"";position:absolute;top:0;left:0;right:0;height:3px;background:var(--kpi-color,var(--G))}
 .kpi-icon{font-size:20px;margin-bottom:6px}
 .kpi-val{font-size:24px;font-weight:900;color:var(--kpi-color,var(--text));line-height:1}
@@ -78,6 +81,8 @@ button:active{transform:scale(.96)}
 .bottom-nav{background:#fff;border-top:1.5px solid var(--border);display:flex;padding-bottom:var(--safe-bot);flex-shrink:0;position:sticky;bottom:0}
 .nav-btn{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;padding:9px 0;background:none;border:none;color:var(--muted);font-size:9.5px;font-family:Inter,sans-serif;cursor:pointer;font-weight:600}
 .nav-btn.active{color:var(--GD)}
+.nav-btn.active .ico{background:var(--GL);border-radius:10px;padding:2px 10px;transform:translateY(-1px)}
+.nav-btn{transition:color .15s ease}
 .nav-btn .ico{font-size:19px;line-height:1}
 .chart-card{background:#fff;border:1px solid var(--border);border-radius:14px;padding:14px;box-shadow:var(--shadow);margin-bottom:14px}
 .chart-card-title{font-size:12.5px;font-weight:800;margin-bottom:2px}
@@ -87,7 +92,7 @@ button:active{transform:scale(.96)}
 <body>
 
 <div id="loading-screen">
-  <svg width="52" height="52" viewBox="0 0 32 32" fill="none"><circle cx="16" cy="16" r="16" fill="white" fill-opacity=".1"/><path d="M8 22 L13 10 L16 17 L19 10 L24 22" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+  <img src="meta_logo.jpg" alt="Meta Gestão" style="width:64px;height:64px;object-fit:contain;filter:brightness(0) invert(1);opacity:.95">
   <div style="color:white;font-size:15px;font-weight:700;margin-top:12px">Meta Gestão</div>
   <div style="color:rgba(255,255,255,.6);font-size:12px;margin-top:4px">Carregando...</div>
 </div>
@@ -100,7 +105,7 @@ button:active{transform:scale(.96)}
 
 <div id="pin-screen">
   <div class="pin-box">
-    <div style="font-size:36px;margin-bottom:10px">🐄</div>
+    <img src="meta_logo.jpg" alt="Meta Gestão" style="width:56px;height:56px;object-fit:contain;margin-bottom:10px">
     <div class="pin-title" id="pin-farm-name">Sua Fazenda</div>
     <div class="pin-sub">Digite o PIN de 4 dígitos que seu técnico te passou</div>
     <input type="tel" inputmode="numeric" maxlength="4" class="pin-input" id="pin-input" placeholder="••••" autofocus>
@@ -111,10 +116,8 @@ button:active{transform:scale(.96)}
 
 <div id="app">
   <div class="topbar">
-    <div class="topbar-logo">
-      <svg width="26" height="26" viewBox="0 0 32 32" fill="none"><circle cx="16" cy="16" r="16" fill="#052e16"/><path d="M8 22 L13 10 L16 17 L19 10 L24 22" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
-      Meta Gestão
-    </div>
+    <img src="meta_logo.jpg" alt="Meta Gestão" class="topbar-logo-img">
+    <div class="topbar-logo">Meta Gestão</div>
     <div class="topbar-title" id="topbar-fazenda-nome" style="margin-left:auto"></div>
   </div>
 
@@ -305,11 +308,15 @@ function renderDashboard(){
   if(!body)return;
   const vacas=parseFloat(d.vacas)||0;
   const secas=parseFloat(d.secas)||0;
+  const novilhas=parseFloat(d.novilhas)||0;
+  const bezerras=parseFloat(d.bezerras)||0;
   const mediaProd=parseFloat(d.media_prod)||0;
   const del=parseFloat(d.del)||0;
   const gordura=parseFloat(d.gordura)||0;
   const proteina=parseFloat(d.proteina)||0;
   const ccs=parseFloat(d.ccs)||0;
+  const nul=parseFloat(d.nul)||0;
+  const cbt=parseFloat(d.cbt)||0;
   const prodCol=mediaProd>=37?"#15803d":mediaProd>=28?"#d97706":"#dc2626";
 
   let html=`<div class="hero-card">
@@ -342,13 +349,30 @@ function renderDashboard(){
     </div>
   </div>`;
 
-  if(gordura>0||proteina>0||ccs>0){
+  if(novilhas>0||bezerras>0){
+    html+=`<div class="kpi-grid" style="grid-template-columns:1fr 1fr">
+      <div class="kpi-card" style="--kpi-color:#0891b2">
+        <div class="kpi-icon">🐮</div>
+        <div class="kpi-val">${novilhas>0?novilhas:"—"}</div>
+        <div class="kpi-lbl">Novilhas</div>
+      </div>
+      <div class="kpi-card" style="--kpi-color:#ca8a04">
+        <div class="kpi-icon">🍼</div>
+        <div class="kpi-val">${bezerras>0?bezerras:"—"}</div>
+        <div class="kpi-lbl">Bezerras</div>
+      </div>
+    </div>`;
+  }
+
+  if(gordura>0||proteina>0||ccs>0||nul>0||cbt>0){
     html+=`<div class="qual-card">
       <div class="qual-title">🔬 Qualidade do Leite</div>
-      <div class="qual-grid">
-        <div class="qual-item"><div class="qual-val" style="color:#b45309">${gordura>0?gordura.toFixed(2)+"%":"—"}</div><div class="qual-lbl">Gordura</div></div>
-        <div class="qual-item"><div class="qual-val" style="color:#1d4ed8">${proteina>0?proteina.toFixed(2)+"%":"—"}</div><div class="qual-lbl">Proteína</div></div>
-        <div class="qual-item"><div class="qual-val" style="color:${ccs>0&&ccs<300?"#15803d":"#dc2626"}">${ccs>0?ccs.toFixed(0)+"k":"—"}</div><div class="qual-lbl">CCS</div></div>
+      <div class="qual-grid" style="grid-template-columns:repeat(${[gordura,proteina,ccs,nul,cbt].filter(v=>v>0).length>3?3:[gordura,proteina,ccs,nul,cbt].filter(v=>v>0).length},1fr)">
+        ${gordura>0?`<div class="qual-item"><div class="qual-val" style="color:#b45309">${gordura.toFixed(2)}%</div><div class="qual-lbl">Gordura</div></div>`:""}
+        ${proteina>0?`<div class="qual-item"><div class="qual-val" style="color:#1d4ed8">${proteina.toFixed(2)}%</div><div class="qual-lbl">Proteína</div></div>`:""}
+        ${ccs>0?`<div class="qual-item"><div class="qual-val" style="color:${ccs<300?"#15803d":"#dc2626"}">${ccs.toFixed(0)}k</div><div class="qual-lbl">CCS</div></div>`:""}
+        ${nul>0?`<div class="qual-item"><div class="qual-val" style="color:${nul>=12&&nul<=18?"#15803d":"#d97706"}">${nul.toFixed(1)}</div><div class="qual-lbl">NUL</div></div>`:""}
+        ${cbt>0?`<div class="qual-item"><div class="qual-val" style="color:${cbt<100?"#15803d":"#dc2626"}">${cbt.toFixed(0)}k</div><div class="qual-lbl">CBT</div></div>`:""}
       </div>
     </div>`;
   }
@@ -509,6 +533,34 @@ async function salvarDadosProdutor(){
 }
 
 let chartInstances={};
+let TEMP_CACHE={};
+function calcTHI(t,rh){if(t==null||rh==null)return null;return(1.8*t+32)-((.55-.0055*rh)*(1.8*t-26))}
+async function fetchTemperaturaHistorica(lat,lng,startDate,endDate){
+  const cacheKey=lat.toFixed(2)+","+lng.toFixed(2)+","+startDate+","+endDate;
+  if(TEMP_CACHE[cacheKey])return TEMP_CACHE[cacheKey];
+  try{
+    const url="https://archive-api.open-meteo.com/v1/archive?latitude="+lat+"&longitude="+lng+"&start_date="+startDate+"&end_date="+endDate+"&daily=temperature_2m_mean,relative_humidity_2m_mean&timezone=America%2FSao_Paulo";
+    const res=await fetch(url);
+    const json=await res.json();
+    const tempMap={},humidMap={},thiMap={};
+    if(json&&json.daily&&json.daily.time){
+      json.daily.time.forEach((d,i)=>{
+        const t=json.daily.temperature_2m_mean[i];
+        const rh=json.daily.relative_humidity_2m_mean?json.daily.relative_humidity_2m_mean[i]:null;
+        if(t!=null)tempMap[d]=t;
+        if(rh!=null)humidMap[d]=rh;
+        const thi=calcTHI(t,rh);
+        if(thi!=null)thiMap[d]=thi;
+      });
+    }
+    const result={temp:tempMap,humidity:humidMap,thi:thiMap};
+    TEMP_CACHE[cacheKey]=result;
+    return result;
+  }catch(e){
+    console.error("Erro ao buscar dados climáticos:",e);
+    return{temp:{},humidity:{},thi:{}};
+  }
+}
 function destroyChart(id){if(chartInstances[id]){chartInstances[id].destroy();delete chartInstances[id]}}
 function mkChart(id,type,data,options){
   destroyChart(id);
@@ -570,6 +622,56 @@ async function renderLeiteiroScreen(){
         y:{title:{display:true,text:"Litros/dia",font:{size:10}}}
       }
     });
+
+    // Gráfico de Produção × THI (clima)
+    const lat=parseFloat(farmData.lat);
+    const lng=parseFloat(farmData.lng);
+    if(lat&&lng){
+      cont.insertAdjacentHTML("beforeend",`<div class="chart-card" id="thi-card">
+        <div class="chart-card-title">Produção × THI (Índice de Temperatura e Umidade)</div>
+        <div class="chart-card-sub" id="thi-sub">Calculando...</div>
+        <div style="height:260px"><canvas id="ch-leiteiro-thi"></canvas></div>
+      </div>`);
+      try{
+        const porData={};
+        datas.forEach(dt=>{
+          const reg=data[dt];
+          const comLeite=(reg.vacas||[]).filter(v=>v.litros>0);
+          if(comLeite.length)porData[dt]=comLeite.reduce((s,v)=>s+v.litros,0)/comLeite.length;
+        });
+        const datasComProd=Object.keys(porData).sort();
+        if(datasComProd.length>=3){
+          const clima=await fetchTemperaturaHistorica(lat,lng,datasComProd[0],datasComProd[datasComProd.length-1]);
+          const labels=datasComProd.map(d=>new Date(d+"T12:00:00").toLocaleDateString("pt-BR",{day:"2-digit",month:"2-digit"}));
+          const prodVals=datasComProd.map(d=>+porData[d].toFixed(1));
+          const thiVals=datasComProd.map(d=>clima.thi[d]!=null?+clima.thi[d].toFixed(1):null);
+          const thiValidos=thiVals.filter(v=>v!=null);
+          const diasCriticos=thiValidos.filter(v=>v>=72).length;
+          const subEl=document.getElementById("thi-sub");
+          if(subEl)subEl.textContent=thiValidos.length?diasCriticos+" dia(s) em estresse térmico (THI≥72) nos controles do período":"Sem dado climático disponível pro período";
+          mkChart("ch-leiteiro-thi","line",{
+            labels,
+            datasets:[
+              {label:"Produção Média (L)",data:prodVals,borderColor:"#2563eb",backgroundColor:"rgba(37,99,235,.08)",borderWidth:2,tension:.3,yAxisID:"y"},
+              {label:"THI",data:thiVals,borderColor:"#dc2626",backgroundColor:"rgba(220,38,38,.06)",borderWidth:2,borderDash:[4,2],tension:.3,spanGaps:true,yAxisID:"y1"}
+            ]
+          },{
+            plugins:{legend:{labels:{boxWidth:10,font:{size:10}}}},
+            scales:{
+              y:{position:"left",title:{display:true,text:"Produção (L)",font:{size:9}}},
+              y1:{position:"right",title:{display:true,text:"THI",font:{size:9}},grid:{display:false}}
+            }
+          });
+        }else{
+          const thiCard=document.getElementById("thi-card");
+          if(thiCard)thiCard.innerHTML=`<div style="text-align:center;color:var(--muted);padding:20px 0;font-size:12px">Precisa de pelo menos 3 controles em datas diferentes pra montar esse gráfico.</div>`;
+        }
+      }catch(e2){
+        console.error("Erro ao montar gráfico de THI:",e2);
+        const thiCard=document.getElementById("thi-card");
+        if(thiCard)thiCard.innerHTML=`<div style="text-align:center;color:#dc2626;padding:20px 0;font-size:12px">Erro ao buscar dados climáticos.</div>`;
+      }
+    }
   }catch(e){
     console.error("Erro ao carregar controle leiteiro:",e);
     document.getElementById("leiteiro-content").innerHTML=`<div class="chart-card" style="text-align:center;color:#dc2626">Erro ao carregar dados.</div>`;
