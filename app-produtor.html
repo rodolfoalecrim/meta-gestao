@@ -1,0 +1,864 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Meta Gestão — Minha Fazenda</title>
+<meta name="theme-color" content="#15803d">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Minha Fazenda">
+<link rel="manifest" href="manifest-produtor.json">
+<link rel="apple-touch-icon" href="meta_logo.jpg">
+<link rel="icon" href="meta_logo.jpg">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+:root{--bg:#f3f6f3;--surface:#fff;--surface2:#f8fafc;--border:#e2e8f0;--text:#0f172a;--muted:#64748b;--dim:#94a3b8;--G:#15803d;--GD:#052e16;--GM:#16a34a;--GL:#f0fdf4;--yellow:#d97706;--red:#dc2626;--blue:#2563eb;--shadow:0 2px 8px rgba(15,23,42,.06);--safe-top:env(safe-area-inset-top,0px);--safe-bot:env(safe-area-inset-bottom,0px)}
+body{font-family:Inter,sans-serif;background:var(--bg);color:var(--text);min-height:100dvh}
+#loading-screen{position:fixed;inset:0;background:var(--GD);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:999}
+#erro-screen{position:fixed;inset:0;background:var(--bg);display:none;flex-direction:column;align-items:center;justify-content:center;padding:24px;z-index:998;text-align:center}
+#pin-screen{position:fixed;inset:0;background:linear-gradient(135deg,var(--GD),var(--G));display:none;flex-direction:column;align-items:center;justify-content:center;padding:24px;z-index:997}
+.pin-box{background:#fff;border-radius:20px;padding:32px 28px;width:100%;max-width:380px;box-shadow:0 20px 60px #0000004d;text-align:center}
+.pin-title{font-size:19px;font-weight:800;color:var(--text);margin-bottom:6px}
+.pin-sub{font-size:13px;color:var(--muted);margin-bottom:22px;line-height:1.5}
+.pin-input{width:100%;border:1.5px solid var(--border);border-radius:12px;padding:16px;font-size:26px;text-align:center;letter-spacing:10px;font-family:'Inter',monospace;outline:none;margin-bottom:14px}
+.pin-input:focus{border-color:var(--G)}
+.btn-pin{width:100%;background:linear-gradient(135deg,var(--G),var(--GD));color:#fff;border:none;border-radius:12px;padding:14px;font-size:15px;font-weight:700;font-family:Inter,sans-serif;cursor:pointer}
+.pin-err{color:var(--red);font-size:12px;font-weight:600;margin-top:10px;min-height:16px}
+#app{display:none;flex-direction:column;min-height:100dvh}
+.topbar{background:#fff;border-bottom:1px solid var(--border);padding:0 16px;height:56px;display:flex;align-items:center;gap:10px;flex-shrink:0;padding-top:var(--safe-top)}
+.topbar-logo{display:flex;align-items:center;gap:8px;font-size:14px;font-weight:800;color:var(--GD)}
+.topbar-title{font-size:13px;font-weight:700;color:var(--text)}
+.content{flex:1;padding:16px 16px 40px;max-width:560px;margin:0 auto;width:100%}
+.screen{display:none}
+.screen.active{display:block;animation:screenIn .28s cubic-bezier(.16,1,.3,1)}
+@keyframes screenIn{0%{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+.hero-card{background:linear-gradient(135deg,var(--GD),var(--G));border-radius:18px;padding:22px;color:#fff;margin-bottom:16px}
+.hero-title{font-size:19px;font-weight:800}
+.hero-sub{font-size:12px;opacity:.8;margin-top:3px}
+.kpi-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px}
+.kpi-card{background:#fff;border:1px solid var(--border);border-radius:14px;padding:16px;box-shadow:var(--shadow);position:relative;overflow:hidden}
+.kpi-card:before{content:"";position:absolute;top:0;left:0;right:0;height:3px;background:var(--kpi-color,var(--G))}
+.kpi-icon{font-size:20px;margin-bottom:6px}
+.kpi-val{font-size:24px;font-weight:900;color:var(--kpi-color,var(--text));line-height:1}
+.kpi-lbl{font-size:11px;color:var(--muted);margin-top:4px;font-weight:600}
+.qual-card{background:#fff;border:1px solid var(--border);border-radius:14px;padding:16px;box-shadow:var(--shadow);margin-bottom:16px}
+.qual-title{font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:12px}
+.qual-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}
+.qual-item{text-align:center}
+.qual-val{font-size:19px;font-weight:900}
+.qual-lbl{font-size:9.5px;color:var(--muted);margin-top:2px}
+.visita-card{background:#fff;border:1px solid var(--border);border-radius:14px;overflow:hidden;box-shadow:var(--shadow);margin-bottom:16px}
+.visita-hdr{background:var(--surface2);padding:12px 16px;border-bottom:1px solid var(--border);font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px}
+.visita-body{padding:14px 16px}
+.visita-data{font-size:13px;font-weight:800;color:var(--text)}
+.visita-tec{font-size:11px;color:var(--muted);margin-top:2px}
+.visita-txt-lbl{font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;margin-top:12px;margin-bottom:4px}
+.visita-txt{font-size:12.5px;color:var(--text);line-height:1.5;background:var(--surface2);border-radius:8px;padding:10px 12px}
+.visita-acoes{color:#0891b2;font-weight:600}
+.btn-action{width:100%;border:none;border-radius:14px;padding:15px;font-size:14px;font-weight:700;font-family:Inter,sans-serif;cursor:pointer;margin-bottom:10px;display:flex;align-items:center;justify-content:center;gap:8px}
+.btn-primary{background:linear-gradient(135deg,var(--G),var(--GD));color:#fff}
+.btn-secondary{background:#fff;border:1.5px solid var(--border)!important;color:var(--text)}
+.form-field{margin-bottom:14px}
+.form-label{font-size:12.5px;font-weight:600;color:var(--muted);display:block;margin-bottom:6px}
+.form-input{width:100%;border:1.5px solid var(--border);border-radius:10px;padding:12px 14px;font-size:15px;font-family:Inter,sans-serif;outline:none;background:#fff;color:var(--text)}
+.form-input:focus{border-color:var(--G)}
+.form-section{font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin:18px 0 10px}
+.toast{position:fixed;bottom:30px;left:50%;transform:translate(-50%) translateY(20px);background:#1e293b;color:#fff;padding:11px 22px;border-radius:12px;font-size:13px;font-weight:600;opacity:0;transition:all .3s;pointer-events:none;z-index:9999;white-space:nowrap;max-width:90vw;text-align:center}
+.toast.show{opacity:1;transform:translate(-50%) translateY(0)}
+@keyframes spin{to{transform:rotate(360deg)}}
+.mg-spinner{width:24px;height:24px;border:3px solid #e2e8f0;border-top-color:var(--G);border-radius:50%;animation:spin .7s linear infinite;display:inline-block}
+button{transition:transform .12s ease}
+button:active{transform:scale(.96)}
+.bottom-nav{background:#fff;border-top:1.5px solid var(--border);display:flex;padding-bottom:var(--safe-bot);flex-shrink:0;position:sticky;bottom:0}
+.nav-btn{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;padding:9px 0;background:none;border:none;color:var(--muted);font-size:9.5px;font-family:Inter,sans-serif;cursor:pointer;font-weight:600}
+.nav-btn.active{color:var(--GD)}
+.nav-btn .ico{font-size:19px;line-height:1}
+.chart-card{background:#fff;border:1px solid var(--border);border-radius:14px;padding:14px;box-shadow:var(--shadow);margin-bottom:14px}
+.chart-card-title{font-size:12.5px;font-weight:800;margin-bottom:2px}
+.chart-card-sub{font-size:10.5px;color:var(--muted);margin-bottom:10px;line-height:1.4}
+</style>
+</head>
+<body>
+
+<div id="loading-screen">
+  <svg width="52" height="52" viewBox="0 0 32 32" fill="none"><circle cx="16" cy="16" r="16" fill="white" fill-opacity=".1"/><path d="M8 22 L13 10 L16 17 L19 10 L24 22" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+  <div style="color:white;font-size:15px;font-weight:700;margin-top:12px">Meta Gestão</div>
+  <div style="color:rgba(255,255,255,.6);font-size:12px;margin-top:4px">Carregando...</div>
+</div>
+
+<div id="erro-screen">
+  <div style="font-size:44px;margin-bottom:10px">🔒</div>
+  <div style="font-size:17px;font-weight:800;color:var(--text);margin-bottom:6px">Link inválido</div>
+  <div style="font-size:13px;color:var(--muted);max-width:320px">Esse link de acesso não é válido ou expirou. Fale com seu técnico da Meta pra receber o link certo.</div>
+</div>
+
+<div id="pin-screen">
+  <div class="pin-box">
+    <div style="font-size:36px;margin-bottom:10px">🐄</div>
+    <div class="pin-title" id="pin-farm-name">Sua Fazenda</div>
+    <div class="pin-sub">Digite o PIN de 4 dígitos que seu técnico te passou</div>
+    <input type="tel" inputmode="numeric" maxlength="4" class="pin-input" id="pin-input" placeholder="••••" autofocus>
+    <button class="btn-pin" onclick="verificarPin()">Entrar</button>
+    <div class="pin-err" id="pin-err"></div>
+  </div>
+</div>
+
+<div id="app">
+  <div class="topbar">
+    <div class="topbar-logo">
+      <svg width="26" height="26" viewBox="0 0 32 32" fill="none"><circle cx="16" cy="16" r="16" fill="#052e16"/><path d="M8 22 L13 10 L16 17 L19 10 L24 22" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      Meta Gestão
+    </div>
+    <div class="topbar-title" id="topbar-fazenda-nome" style="margin-left:auto"></div>
+  </div>
+
+  <div class="content">
+    <!-- DASHBOARD -->
+    <div class="screen active" id="screen-dash">
+      <div id="dash-body"></div>
+    </div>
+
+    <!-- CONTROLE LEITEIRO -->
+    <div class="screen" id="screen-leiteiro">
+      <div id="leiteiro-body"></div>
+    </div>
+
+    <!-- DIETA & CUSTOS -->
+    <div class="screen" id="screen-dieta">
+      <div id="dieta-body"></div>
+    </div>
+
+    <!-- FINANCEIRO -->
+    <div class="screen" id="screen-financeiro">
+      <div id="financeiro-body"></div>
+    </div>
+
+    <!-- CONSUMO -->
+    <div class="screen" id="screen-consumo">
+      <div id="consumo-body"></div>
+    </div>
+
+    <!-- FORRAGEM -->
+    <div class="screen" id="screen-forragem">
+      <div id="forragem-body"></div>
+    </div>
+
+    <!-- EVOLUÇÃO -->
+    <div class="screen" id="screen-evolucao">
+      <div id="evolucao-body"></div>
+    </div>
+
+    <!-- MAIS (menu) -->
+    <div class="screen" id="screen-mais">
+      <div id="mais-body"></div>
+    </div>
+
+    <!-- EDITAR -->
+    <div class="screen" id="screen-edit">
+      <div id="edit-body"></div>
+    </div>
+  </div>
+
+  <div class="bottom-nav">
+    <button class="nav-btn active" id="nav-dash" onclick="navScreen('dash')"><span class="ico">🏠</span>Início</button>
+    <button class="nav-btn" id="nav-leiteiro" onclick="navScreen('leiteiro')"><span class="ico">🥛</span>Leiteiro</button>
+    <button class="nav-btn" id="nav-dieta" onclick="navScreen('dieta')"><span class="ico">🌽</span>Dieta</button>
+    <button class="nav-btn" id="nav-financeiro" onclick="navScreen('financeiro')"><span class="ico">💰</span>Financeiro</button>
+    <button class="nav-btn" id="nav-mais" onclick="navScreen('mais')"><span class="ico">⋯</span>Mais</button>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const firebaseConfig={apiKey:"AIzaSyClpsHjO8OLThD--hDOfg7Fg3t6hhuM-To",authDomain:"meta-gestao-608d7.firebaseapp.com",databaseURL:"https://meta-gestao-608d7-default-rtdb.firebaseio.com",projectId:"meta-gestao-608d7",storageBucket:"meta-gestao-608d7.firebasestorage.app",messagingSenderId:"318618053627",appId:"1:318618053627:web:ae289200bd1e87be29395e"};
+firebase.initializeApp(firebaseConfig);
+const db=firebase.database();
+
+let farmId=null;
+let farmData=null;
+
+function showToast(msg,err){const t=document.getElementById("toast");t.textContent=msg;t.style.background=err?"#dc2626":"#15803d";t.classList.add("show");setTimeout(()=>t.classList.remove("show"),3000)}
+
+function getTokenFromUrl(){
+  const params=new URLSearchParams(location.search);
+  return params.get("f")||"";
+}
+
+async function iniciar(){
+  let token=getTokenFromUrl();
+  if(!token)token=localStorage.getItem("meta_produtor_token")||"";
+  if(!token){mostrarErro();return}
+  try{
+    const snap=await db.ref("propriedades").orderByChild("produtor_token").equalTo(token).once("value");
+    const val=snap.val();
+    if(!val){mostrarErro();return}
+    const keys=Object.keys(val);
+    farmId=keys[0];
+    farmData=val[farmId];
+    localStorage.setItem("meta_produtor_token",token);
+    document.getElementById("loading-screen").style.display="none";
+    const jaVerificado=localStorage.getItem("meta_produtor_ok_"+farmId)==="1";
+    if(jaVerificado){
+      abrirApp();
+    }else{
+      document.getElementById("pin-farm-name").textContent=farmData.produtor||"Sua Fazenda";
+      document.getElementById("pin-screen").style.display="flex";
+      document.getElementById("pin-input").focus();
+    }
+  }catch(e){
+    console.error("Erro ao validar acesso:",e);
+    mostrarErro();
+  }
+}
+
+function mostrarErro(){
+  document.getElementById("loading-screen").style.display="none";
+  document.getElementById("erro-screen").style.display="flex";
+}
+
+function verificarPin(){
+  const val=(document.getElementById("pin-input").value||"").trim();
+  const errEl=document.getElementById("pin-err");
+  if(val===String(farmData.produtor_pin||"")){
+    localStorage.setItem("meta_produtor_ok_"+farmId,"1");
+    document.getElementById("pin-screen").style.display="none";
+    abrirApp();
+  }else{
+    errEl.textContent="PIN incorreto. Confere com seu técnico.";
+    document.getElementById("pin-input").value="";
+    document.getElementById("pin-input").focus();
+  }
+}
+document.addEventListener("DOMContentLoaded",()=>{
+  const pinInput=document.getElementById("pin-input");
+  if(pinInput)pinInput.addEventListener("keyup",e=>{if(e.key==="Enter")verificarPin()});
+});
+
+function abrirApp(){
+  document.getElementById("app").style.display="flex";
+  document.getElementById("topbar-fazenda-nome").textContent=farmData.produtor||"";
+  db.ref("propriedades/"+farmId).on("value",snap=>{
+    farmData=snap.val()||farmData;
+    if(document.getElementById("screen-dash").classList.contains("active"))renderDashboard();
+  });
+  carregarUltimaVisita();
+  renderDashboard();
+}
+
+function navScreen(name){
+  document.querySelectorAll(".screen").forEach(s=>s.classList.remove("active"));
+  document.getElementById("screen-"+name).classList.add("active");
+  document.querySelectorAll(".nav-btn").forEach(b=>b.classList.remove("active"));
+  const navBtn=document.getElementById("nav-"+name);
+  if(navBtn)navBtn.classList.add("active");
+  else{
+    // secondary screens (consumo, forragem, evolucao, edit) reached via "Mais" — highlight Mais
+    if(["consumo","forragem","evolucao","edit"].includes(name)){
+      const maisBtn=document.getElementById("nav-mais");
+      if(maisBtn)maisBtn.classList.add("active");
+    }
+  }
+  if(name==="dash")renderDashboard();
+  if(name==="edit")renderEditForm();
+  if(name==="leiteiro")renderLeiteiroScreen();
+  if(name==="dieta")renderDietaScreen();
+  if(name==="financeiro")renderFinanceiroScreen();
+  if(name==="consumo")renderConsumoScreen();
+  if(name==="forragem")renderForragemScreen();
+  if(name==="evolucao")renderEvolucaoScreen();
+  if(name==="mais")renderMaisMenu();
+  window.scrollTo(0,0);
+}
+
+function renderMaisMenu(){
+  const body=document.getElementById("mais-body");
+  if(!body)return;
+  body.innerHTML=`
+    <div style="font-size:17px;font-weight:800;margin-bottom:16px">⋯ Mais</div>
+    <button class="btn-action btn-secondary" onclick="navScreen('consumo')">📊 Monitoramento de Consumo</button>
+    <button class="btn-action btn-secondary" onclick="navScreen('forragem')">🌾 Forragem: Estoque &amp; Custo</button>
+    <button class="btn-action btn-secondary" onclick="navScreen('evolucao')">📈 Evolução Mês a Mês</button>
+    <button class="btn-action btn-primary" style="margin-top:14px" onclick="navScreen('edit')">✏️ Atualizar Meus Dados</button>
+  `;
+}
+
+let ultimaVisita=null;
+function carregarUltimaVisita(){
+  db.ref("visitas/"+farmId).orderByChild("data").limitToLast(1).once("value",snap=>{
+    let v=null;
+    snap.forEach(child=>{v=child.val()});
+    ultimaVisita=v;
+    if(document.getElementById("screen-dash").classList.contains("active"))renderDashboard();
+  }).catch(e=>console.error("Erro ao carregar última visita:",e));
+}
+
+function renderDashboard(){
+  const d=farmData||{};
+  const body=document.getElementById("dash-body");
+  if(!body)return;
+  const vacas=parseFloat(d.vacas)||0;
+  const secas=parseFloat(d.secas)||0;
+  const mediaProd=parseFloat(d.media_prod)||0;
+  const del=parseFloat(d.del)||0;
+  const gordura=parseFloat(d.gordura)||0;
+  const proteina=parseFloat(d.proteina)||0;
+  const ccs=parseFloat(d.ccs)||0;
+  const prodCol=mediaProd>=37?"#15803d":mediaProd>=28?"#d97706":"#dc2626";
+
+  let html=`<div class="hero-card">
+    <div class="hero-title">👋 Olá, ${d.produtor||"produtor"}!</div>
+    <div class="hero-sub">${d.cidade?d.cidade+" · ":""}${d.tecnico_titular?"Técnico: "+d.tecnico_titular:""}</div>
+  </div>`;
+
+  html+=`<div id="alertas-consolidados-wrap"></div>`;
+
+  html+=`<div class="kpi-grid">
+    <div class="kpi-card" style="--kpi-color:${prodCol}">
+      <div class="kpi-icon">🥛</div>
+      <div class="kpi-val">${mediaProd>0?mediaProd.toFixed(1):"—"}</div>
+      <div class="kpi-lbl">L/vaca/dia</div>
+    </div>
+    <div class="kpi-card" style="--kpi-color:#2563eb">
+      <div class="kpi-icon">🐄</div>
+      <div class="kpi-val">${vacas>0?vacas:"—"}</div>
+      <div class="kpi-lbl">Vacas em lactação</div>
+    </div>
+    <div class="kpi-card" style="--kpi-color:#7c3aed">
+      <div class="kpi-icon">🌙</div>
+      <div class="kpi-val">${secas>0?secas:"—"}</div>
+      <div class="kpi-lbl">Vacas secas</div>
+    </div>
+    <div class="kpi-card" style="--kpi-color:#d97706">
+      <div class="kpi-icon">📅</div>
+      <div class="kpi-val">${del>0?del:"—"}</div>
+      <div class="kpi-lbl">DEL médio (dias)</div>
+    </div>
+  </div>`;
+
+  if(gordura>0||proteina>0||ccs>0){
+    html+=`<div class="qual-card">
+      <div class="qual-title">🔬 Qualidade do Leite</div>
+      <div class="qual-grid">
+        <div class="qual-item"><div class="qual-val" style="color:#b45309">${gordura>0?gordura.toFixed(2)+"%":"—"}</div><div class="qual-lbl">Gordura</div></div>
+        <div class="qual-item"><div class="qual-val" style="color:#1d4ed8">${proteina>0?proteina.toFixed(2)+"%":"—"}</div><div class="qual-lbl">Proteína</div></div>
+        <div class="qual-item"><div class="qual-val" style="color:${ccs>0&&ccs<300?"#15803d":"#dc2626"}">${ccs>0?ccs.toFixed(0)+"k":"—"}</div><div class="qual-lbl">CCS</div></div>
+      </div>
+    </div>`;
+  }
+
+  html+=renderUltimaVisitaHtml();
+
+  html+=`<button class="btn-action btn-primary" onclick="navScreen('edit')">✏️ Atualizar Meus Dados</button>`;
+
+  body.innerHTML=html;
+  carregarAlertasConsolidados();
+}
+
+async function carregarAlertasConsolidados(){
+  const wrap=document.getElementById("alertas-consolidados-wrap");
+  if(!wrap)return;
+  const alertas=[];
+  try{
+    const fnSnap=await db.ref("financeiro/"+farmId).once("value");
+    const fnData=fnSnap.val()||{};
+    const fnDatas=Object.keys(fnData).filter(k=>/^\d{4}-\d{2}-\d{2}$/.test(k)).sort();
+    if(fnDatas.length){
+      const reg=fnData[fnDatas[fnDatas.length-1]];
+      if(reg.receita_bruta_mensal>0){
+        if(reg.lucro_mensal<0)alertas.push({icone:"📉",texto:"Prejuízo identificado no mês — fale com seu técnico"});
+        else if(reg.rentabilidade_pct!=null&&reg.rentabilidade_pct<10)alertas.push({icone:"💰",texto:"Rentabilidade abaixo de 10% no último cálculo"});
+      }
+    }
+  }catch(e){console.error("Erro ao checar financeiro para alertas:",e)}
+  try{
+    const fgSnap=await db.ref("forragem/"+farmId).once("value");
+    const fgData=fgSnap.val()||{};
+    Object.keys(fgData).forEach(k=>{
+      const dadosTipo=fgData[k];
+      let ultimo=dadosTipo;
+      if(!(dadosTipo.tipo||dadosTipo.estoque_ton!=null)){
+        const datas=Object.keys(dadosTipo).filter(dk=>/^\d{4}-\d{2}-\d{2}$/.test(dk)).sort();
+        ultimo=datas.length?dadosTipo[datas[datas.length-1]]:null;
+      }
+      if(!ultimo)return;
+      const estoqueTon=ultimo.estoque_ton||0;
+      const consumoDia=ultimo.consumo_dia_manual||0;
+      if(consumoDia>0){
+        const dias=estoqueTon*1000/consumoDia;
+        if(dias<15)alertas.push({icone:"🌾",texto:"Estoque de "+(ultimo.tipo||"forragem")+" acabando em "+dias.toFixed(0)+" dias"});
+      }
+    });
+  }catch(e){console.error("Erro ao checar forragem para alertas:",e)}
+  try{
+    const cmSnap=await db.ref("consumo_ms/"+farmId).once("value");
+    const porLote=cmSnap.val()||{};
+    const cutoff=Date.now()-14*864e5;
+    let somaSobra=0,nSobra=0;
+    Object.values(porLote).forEach(entradas=>{
+      Object.values(entradas||{}).forEach(e=>{
+        if(!e.data||new Date(e.data+"T12:00:00").getTime()<cutoff)return;
+        if(e.pct_sobra!=null){somaSobra+=e.pct_sobra;nSobra++}
+      });
+    });
+    if(nSobra){
+      const media=somaSobra/nSobra;
+      if(media>10)alertas.push({icone:"🗑️",texto:"Sobra do cocho alta ("+media.toFixed(1)+"%) — desperdício de dieta"});
+      else if(media<2)alertas.push({icone:"⚠️",texto:"Sobra do cocho muito baixa ("+media.toFixed(1)+"%) — risco de restrição alimentar"});
+    }
+  }catch(e){console.error("Erro ao checar consumo para alertas:",e)}
+  if(!alertas.length){wrap.innerHTML="";return}
+  wrap.innerHTML=`<div class="chart-card" style="background:#fffbeb;border-color:#fcd34d;margin-bottom:16px">
+    <div style="font-size:11px;font-weight:800;color:#92400e;text-transform:uppercase;margin-bottom:8px">⚡ Vale sua atenção</div>
+    ${alertas.map(a=>`<div style="display:flex;gap:8px;align-items:flex-start;padding:5px 0;font-size:12.5px;color:#78350f"><span>${a.icone}</span><span>${a.texto}</span></div>`).join("")}
+  </div>`;
+}
+
+function renderUltimaVisitaHtml(){
+  if(!ultimaVisita){
+    return `<div class="visita-card"><div class="visita-hdr">📋 Última Visita Técnica</div><div class="visita-body" style="color:var(--muted);font-size:12.5px">Nenhuma visita registrada ainda.</div></div>`;
+  }
+  const v=ultimaVisita;
+  const dataFmt=v.data?new Date(v.data+"T12:00:00").toLocaleDateString("pt-BR"):"—";
+  let html=`<div class="visita-card"><div class="visita-hdr">📋 Última Visita Técnica</div><div class="visita-body">
+    <div class="visita-data">📅 ${dataFmt}</div>
+    <div class="visita-tec">${v.tecnico?"Técnico: "+v.tecnico:""}</div>`;
+  if(v.obs){
+    html+=`<div class="visita-txt-lbl">Observações</div><div class="visita-txt">${v.obs}</div>`;
+  }
+  if(v.acoes){
+    html+=`<div class="visita-txt-lbl">Ações Recomendadas</div><div class="visita-txt visita-acoes">${v.acoes}</div>`;
+  }
+  if(v.proxima_visita){
+    html+=`<div class="visita-txt-lbl">Próxima Visita</div><div class="visita-txt">${new Date(v.proxima_visita+"T12:00:00").toLocaleDateString("pt-BR")}</div>`;
+  }
+  html+=`</div></div>`;
+  return html;
+}
+
+function renderEditForm(){
+  const d=farmData||{};
+  const body=document.getElementById("edit-body");
+  if(!body)return;
+  body.innerHTML=`
+    <div style="font-size:17px;font-weight:800;margin-bottom:4px">✏️ Atualizar Meus Dados</div>
+    <div style="font-size:12px;color:var(--muted);margin-bottom:18px">Preencha só o que você tiver de novo hoje — o resto continua como estava.</div>
+
+    <div class="form-section">🐄 Rebanho</div>
+    <div class="form-field"><label class="form-label">Vacas em lactação</label><input type="number" class="form-input" id="pf-vacas" value="${d.vacas||""}"></div>
+    <div class="form-field"><label class="form-label">Vacas secas</label><input type="number" class="form-input" id="pf-secas" value="${d.secas||""}"></div>
+
+    <div class="form-section">🥛 Produção</div>
+    <div class="form-field"><label class="form-label">Média de produção (L/vaca/dia)</label><input type="number" step="0.1" class="form-input" id="pf-media-prod" value="${d.media_prod||""}"></div>
+    <div class="form-field"><label class="form-label">DEL médio (dias em lactação)</label><input type="number" class="form-input" id="pf-del" value="${d.del||""}"></div>
+
+    <div class="form-section">🔬 Qualidade do Leite</div>
+    <div class="form-field"><label class="form-label">Gordura (%)</label><input type="number" step="0.01" class="form-input" id="pf-gordura" value="${d.gordura||""}"></div>
+    <div class="form-field"><label class="form-label">Proteína (%)</label><input type="number" step="0.01" class="form-input" id="pf-proteina" value="${d.proteina||""}"></div>
+    <div class="form-field"><label class="form-label">CCS (×1000)</label><input type="number" class="form-input" id="pf-ccs" value="${d.ccs||""}"></div>
+
+    <button class="btn-action btn-primary" id="pf-save-btn" onclick="salvarDadosProdutor()">💾 Salvar Atualização</button>
+    <button class="btn-action btn-secondary" onclick="navScreen('dash')">◀ Voltar</button>
+  `;
+}
+
+async function salvarDadosProdutor(){
+  const num=id=>{const v=parseFloat(document.getElementById(id)?.value);return isNaN(v)?null:v};
+  const vacas=num("pf-vacas");
+  const secas=num("pf-secas");
+  const mediaProd=num("pf-media-prod");
+  const del=num("pf-del");
+  const gordura=num("pf-gordura");
+  const proteina=num("pf-proteina");
+  const ccs=num("pf-ccs");
+
+  const upd={ultima_atualizacao_por:"produtor",atualizado_em:new Date().toISOString()};
+  if(vacas!=null){upd.vacas=vacas;upd.lactacao=vacas}
+  if(secas!=null)upd.secas=secas;
+  if(mediaProd!=null){
+    upd.media_prod=mediaProd;
+    const vacasParaCalculo=vacas!=null?vacas:(parseFloat(farmData.vacas)||0);
+    if(vacasParaCalculo>0)upd.prod_diaria=+(mediaProd*vacasParaCalculo).toFixed(1);
+  }
+  if(del!=null)upd.del=del;
+  if(gordura!=null)upd.gordura=gordura;
+  if(proteina!=null)upd.proteina=proteina;
+  if(ccs!=null)upd.ccs=ccs;
+
+  const btn=document.getElementById("pf-save-btn");
+  btn.disabled=true;
+  btn.textContent="Salvando...";
+  try{
+    await db.ref("propriedades/"+farmId).update(upd);
+    farmData={...farmData,...upd};
+    showToast("✅ Dados atualizados!");
+    navScreen("dash");
+  }catch(e){
+    console.error("Erro ao salvar:",e);
+    showToast("❌ Erro ao salvar: "+e.message,true);
+  }finally{
+    btn.disabled=false;
+    btn.textContent="💾 Salvar Atualização";
+  }
+}
+
+let chartInstances={};
+function destroyChart(id){if(chartInstances[id]){chartInstances[id].destroy();delete chartInstances[id]}}
+function mkChart(id,type,data,options){
+  destroyChart(id);
+  const ctx=document.getElementById(id);
+  if(!ctx)return;
+  chartInstances[id]=new Chart(ctx,{type,data,options:{responsive:true,maintainAspectRatio:false,...options}});
+}
+
+// ═══ CONTROLE LEITEIRO ═══
+async function renderLeiteiroScreen(){
+  const body=document.getElementById("leiteiro-body");
+  if(!body)return;
+  body.innerHTML=`
+    <div style="font-size:17px;font-weight:800;margin-bottom:4px">🥛 Controle Leiteiro</div>
+    <div style="font-size:12px;color:var(--muted);margin-bottom:14px">Produção × DEL do último controle registrado, por lote</div>
+    <div id="leiteiro-content"><div style="text-align:center;padding:40px"><div class="mg-spinner"></div></div></div>
+  `;
+  try{
+    const snap=await db.ref("controle_leiteiro/"+farmId).once("value");
+    const data=snap.val()||{};
+    const datas=Object.keys(data).filter(k=>/^\d{4}-\d{2}-\d{2}$/.test(k)).sort();
+    const cont=document.getElementById("leiteiro-content");
+    if(!datas.length){
+      cont.innerHTML=`<div class="chart-card" style="text-align:center;color:var(--muted);padding:30px 16px">Nenhum controle leiteiro registrado ainda pra essa fazenda.</div>`;
+      return;
+    }
+    const ultimaData=datas[datas.length-1];
+    const registro=data[ultimaData];
+    const vacas=(registro.vacas||[]).filter(v=>v.litros>0&&v.del>0);
+    if(!vacas.length){
+      cont.innerHTML=`<div class="chart-card" style="text-align:center;color:var(--muted);padding:30px 16px">O último controle (${new Date(ultimaData+"T12:00:00").toLocaleDateString("pt-BR")}) não tem dados de produção suficientes pra montar o gráfico.</div>`;
+      return;
+    }
+    const mediaGeral=vacas.reduce((s,v)=>s+v.litros,0)/vacas.length;
+    const lotes=[...new Set(vacas.map(v=>v.lote||1))].sort((a,b)=>a-b);
+    const cores=["#15803d","#0891b2","#7c3aed","#d97706","#dc2626","#db2777"];
+    const datasets=lotes.map((lote,i)=>({
+      label:"Lote "+lote,
+      data:vacas.filter(v=>(v.lote||1)===lote).map(v=>({x:v.del,y:v.litros})),
+      backgroundColor:cores[i%cores.length]+"cc",
+      borderColor:"white",
+      borderWidth:1,
+      pointRadius:6
+    }));
+    cont.innerHTML=`
+      <div class="chart-card">
+        <div class="chart-card-title">Dispersão — Produção (L) × DEL (dias)</div>
+        <div class="chart-card-sub">Controle de ${new Date(ultimaData+"T12:00:00").toLocaleDateString("pt-BR")} · ${vacas.length} vacas · média ${mediaGeral.toFixed(1)} L</div>
+        <div style="height:280px"><canvas id="ch-leiteiro-scatter"></canvas></div>
+      </div>
+    `;
+    mkChart("ch-leiteiro-scatter","scatter",{datasets},{
+      plugins:{
+        legend:{labels:{boxWidth:10,font:{size:10}}},
+        tooltip:{callbacks:{label:c=>"DEL "+c.raw.x+" · "+c.raw.y.toFixed(1)+" L"}}
+      },
+      scales:{
+        x:{title:{display:true,text:"DEL (dias)",font:{size:10}}},
+        y:{title:{display:true,text:"Litros/dia",font:{size:10}}}
+      }
+    });
+  }catch(e){
+    console.error("Erro ao carregar controle leiteiro:",e);
+    document.getElementById("leiteiro-content").innerHTML=`<div class="chart-card" style="text-align:center;color:#dc2626">Erro ao carregar dados.</div>`;
+  }
+}
+
+// ═══ CONSUMO ═══
+async function renderConsumoScreen(){
+  const body=document.getElementById("consumo-body");
+  if(!body)return;
+  body.innerHTML=`
+    <div style="font-size:17px;font-weight:800;margin-bottom:4px">📊 Monitoramento de Consumo</div>
+    <div style="font-size:12px;color:var(--muted);margin-bottom:14px">% de sobra do cocho e matéria seca ingerida, últimos 60 dias</div>
+    <div id="consumo-content"><div style="text-align:center;padding:40px"><div class="mg-spinner"></div></div></div>
+  `;
+  try{
+    const snap=await db.ref("consumo_ms/"+farmId).once("value");
+    const porLote=snap.val()||{};
+    const cutoff=Date.now()-60*864e5;
+    const porData={};
+    Object.values(porLote).forEach(entradas=>{
+      Object.values(entradas||{}).forEach(e=>{
+        if(!e.data||new Date(e.data+"T12:00:00").getTime()<cutoff)return;
+        if(!porData[e.data])porData[e.data]={somaSobra:0,nSobra:0,somaMs:0,nMs:0};
+        if(e.pct_sobra!=null){porData[e.data].somaSobra+=e.pct_sobra;porData[e.data].nSobra++}
+        const msVal=e.ms_total_animal!=null?e.ms_total_animal:e.ms_ingerida_animal;
+        if(msVal!=null){porData[e.data].somaMs+=msVal;porData[e.data].nMs++}
+      });
+    });
+    const datas=Object.keys(porData).sort();
+    const cont=document.getElementById("consumo-content");
+    if(!datas.length){
+      cont.innerHTML=`<div class="chart-card" style="text-align:center;color:var(--muted);padding:30px 16px">Nenhum lançamento de consumo nos últimos 60 dias.</div>`;
+      return;
+    }
+    const sobraVals=datas.map(d=>porData[d].nSobra?porData[d].somaSobra/porData[d].nSobra:null);
+    const msVals=datas.map(d=>porData[d].nMs?porData[d].somaMs/porData[d].nMs:null);
+    const sobraValidos=sobraVals.filter(v=>v!=null);
+    const msValidos=msVals.filter(v=>v!=null);
+    const avgSobra=sobraValidos.length?sobraValidos.reduce((a,b)=>a+b,0)/sobraValidos.length:0;
+    const avgMs=msValidos.length?msValidos.reduce((a,b)=>a+b,0)/msValidos.length:0;
+    const labels=datas.map(d=>new Date(d+"T12:00:00").toLocaleDateString("pt-BR",{day:"2-digit",month:"2-digit"}));
+    cont.innerHTML=`
+      <div class="chart-card">
+        <div class="chart-card-title">Resumo da Fazenda — Todos os Lotes</div>
+        <div class="chart-card-sub">% Sobra média: <b style="color:#d97706">${avgSobra.toFixed(1)}%</b> · MS/Animal média: <b style="color:#15803d">${avgMs.toFixed(1)} kg</b></div>
+        <div style="height:260px"><canvas id="ch-consumo"></canvas></div>
+      </div>
+    `;
+    mkChart("ch-consumo","line",{
+      labels,
+      datasets:[
+        {label:"% Sobra",data:sobraVals,borderColor:"#d97706",backgroundColor:"rgba(217,119,6,.08)",borderWidth:2,tension:.3,spanGaps:true,yAxisID:"y"},
+        {label:"MS Ingerida/Animal (kg)",data:msVals,borderColor:"#15803d",backgroundColor:"rgba(21,128,61,.08)",borderWidth:2,tension:.3,spanGaps:true,yAxisID:"y1"}
+      ]
+    },{
+      plugins:{legend:{labels:{boxWidth:10,font:{size:10}}}},
+      scales:{
+        y:{position:"left",title:{display:true,text:"% Sobra",font:{size:9}}},
+        y1:{position:"right",title:{display:true,text:"MS kg/animal",font:{size:9}},grid:{display:false}}
+      }
+    });
+  }catch(e){
+    console.error("Erro ao carregar consumo:",e);
+    document.getElementById("consumo-content").innerHTML=`<div class="chart-card" style="text-align:center;color:#dc2626">Erro ao carregar dados.</div>`;
+  }
+}
+
+// ═══ EVOLUÇÃO MÊS A MÊS ═══
+async function renderEvolucaoScreen(){
+  const body=document.getElementById("evolucao-body");
+  if(!body)return;
+  body.innerHTML=`
+    <div style="font-size:17px;font-weight:800;margin-bottom:4px">📈 Evolução Mês a Mês</div>
+    <div style="font-size:12px;color:var(--muted);margin-bottom:14px">Histórico de produção e qualidade do leite ao longo do tempo</div>
+    <div id="evolucao-content"><div style="text-align:center;padding:40px"><div class="mg-spinner"></div></div></div>
+  `;
+  try{
+    const snap=await db.ref("historico/"+farmId).once("value");
+    const entradas=[];
+    snap.forEach(child=>entradas.push(child.val()));
+    const cont=document.getElementById("evolucao-content");
+    if(entradas.length<2){
+      cont.innerHTML=`<div class="chart-card" style="text-align:center;color:var(--muted);padding:30px 16px">Ainda não há histórico suficiente (precisa de pelo menos 2 registros em datas diferentes).</div>`;
+      return;
+    }
+    const porMes={};
+    entradas.forEach(e=>{
+      if(!e.data)return;
+      const mes=String(e.data).slice(0,7);
+      if(!/^\d{4}-\d{2}$/.test(mes))return;
+      if(!porMes[mes])porMes[mes]={somaProd:0,nProd:0,somaGord:0,nGord:0,somaProt:0,nProt:0};
+      if(e.media_prod>0){porMes[mes].somaProd+=parseFloat(e.media_prod);porMes[mes].nProd++}
+      if(e.gordura>0){porMes[mes].somaGord+=parseFloat(e.gordura);porMes[mes].nGord++}
+      if(e.proteina>0){porMes[mes].somaProt+=parseFloat(e.proteina);porMes[mes].nProt++}
+    });
+    const meses=Object.keys(porMes).sort();
+    if(meses.length<2){
+      cont.innerHTML=`<div class="chart-card" style="text-align:center;color:var(--muted);padding:30px 16px">Ainda não há registros em pelo menos 2 meses diferentes.</div>`;
+      return;
+    }
+    const nomesMes=["Jan","Fev","Mar","Abr","Mai","Jun","Jul","Ago","Set","Out","Nov","Dez"];
+    const labels=meses.map(m=>nomesMes[parseInt(m.slice(5,7),10)-1]+"/"+m.slice(2,4));
+    const prodData=meses.map(m=>porMes[m].nProd?+(porMes[m].somaProd/porMes[m].nProd).toFixed(1):null);
+    const gordData=meses.map(m=>porMes[m].nGord?+(porMes[m].somaGord/porMes[m].nGord).toFixed(2):null);
+    const protData=meses.map(m=>porMes[m].nProt?+(porMes[m].somaProt/porMes[m].nProt).toFixed(2):null);
+    cont.innerHTML=`
+      <div class="chart-card">
+        <div class="chart-card-title">Produção Média (L/vaca/dia)</div>
+        <div class="chart-card-sub">Média mensal, mês a mês</div>
+        <div style="height:220px"><canvas id="ch-evol-prod"></canvas></div>
+      </div>
+      <div class="chart-card">
+        <div class="chart-card-title">Qualidade do Leite</div>
+        <div class="chart-card-sub">Gordura e proteína médias, mês a mês</div>
+        <div style="height:220px"><canvas id="ch-evol-qual"></canvas></div>
+      </div>
+    `;
+    mkChart("ch-evol-prod","bar",{
+      labels,
+      datasets:[{label:"L/vaca/dia",data:prodData,backgroundColor:"#15803d",borderRadius:5}]
+    },{plugins:{legend:{display:false}}});
+    mkChart("ch-evol-qual","line",{
+      labels,
+      datasets:[
+        {label:"Gordura %",data:gordData,borderColor:"#b45309",backgroundColor:"rgba(180,83,9,.06)",borderWidth:2,pointRadius:4,tension:.3,spanGaps:true},
+        {label:"Proteína %",data:protData,borderColor:"#1d4ed8",backgroundColor:"rgba(29,78,216,.06)",borderWidth:2,pointRadius:4,tension:.3,spanGaps:true}
+      ]
+    },{plugins:{legend:{labels:{boxWidth:10,font:{size:10}}}}});
+  }catch(e){
+    console.error("Erro ao carregar evolução:",e);
+    document.getElementById("evolucao-content").innerHTML=`<div class="chart-card" style="text-align:center;color:#dc2626">Erro ao carregar dados.</div>`;
+  }
+}
+
+// ═══ DIETA & CUSTOS ═══
+async function renderDietaScreen(){
+  const body=document.getElementById("dieta-body");
+  if(!body)return;
+  body.innerHTML=`
+    <div style="font-size:17px;font-weight:800;margin-bottom:4px">🌽 Dieta &amp; Custos</div>
+    <div style="font-size:12px;color:var(--muted);margin-bottom:14px">O que está sendo alimentado hoje, por lote</div>
+    <div id="dieta-content"><div style="text-align:center;padding:40px"><div class="mg-spinner"></div></div></div>
+  `;
+  try{
+    const snap=await db.ref("dietas/"+farmId).once("value");
+    const data=snap.val();
+    const cont=document.getElementById("dieta-content");
+    const lotes=data&&data.lotes?Object.values(data.lotes).filter(l=>l&&(l.alimentos||[]).length>0):[];
+    if(!lotes.length){
+      cont.innerHTML=`<div class="chart-card" style="text-align:center;color:var(--muted);padding:30px 16px">Nenhuma dieta cadastrada ainda pra essa fazenda.</div>`;
+      return;
+    }
+    let totalCusto=0,totalVacas=0;
+    let html="";
+    lotes.forEach(lote=>{
+      const vacas=parseFloat(lote.vacas)||0;
+      const cvd=(lote.alimentos||[]).reduce((s,a)=>s+(parseFloat(a.kg)||0)*(parseFloat(a.custo)||0),0);
+      totalCusto+=cvd*vacas;
+      totalVacas+=vacas;
+      html+=`<div class="chart-card">
+        <div class="chart-card-title">${lote.nomeDieta||lote.nome||"Lote"}</div>
+        <div class="chart-card-sub">${vacas} vacas · ${(parseFloat(lote.prod)||0).toFixed(1)} L/vaca/dia</div>
+        ${(lote.alimentos||[]).filter(a=>(parseFloat(a.kg)||0)>0).map(a=>{
+          const kg=parseFloat(a.kg)||0,custo=parseFloat(a.custo)||0,sub=kg*custo;
+          return `<div style="display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:1px solid #f1f5f9">
+            <div style="flex:1;font-size:12.5px;font-weight:600">${a.nome||"Alimento"}</div>
+            <div style="font-size:11.5px;color:var(--muted);min-width:60px;text-align:right">${kg.toFixed(1)} kg</div>
+            <div style="font-size:12px;font-weight:700;color:#15803d;min-width:70px;text-align:right">R$${sub.toFixed(2)}</div>
+          </div>`;
+        }).join("")}
+        <div style="text-align:right;margin-top:10px;font-size:13px;font-weight:800;color:#15803d">CVD: R$ ${cvd.toFixed(2)}/vaca/dia</div>
+      </div>`;
+    });
+    const cvdGeral=totalVacas>0?totalCusto/totalVacas:0;
+    cont.innerHTML=`
+      <div class="hero-card" style="margin-bottom:16px">
+        <div class="hero-sub" style="opacity:.85">Custo médio de alimentação</div>
+        <div style="font-size:26px;font-weight:900;margin-top:4px">R$ ${cvdGeral.toFixed(2)} <span style="font-size:13px;font-weight:600;opacity:.8">/ vaca / dia</span></div>
+        <div style="font-size:11px;opacity:.75;margin-top:4px">R$ ${totalCusto.toFixed(0)}/dia no total · ${totalVacas} vacas</div>
+      </div>
+      ${html}
+    `;
+  }catch(e){
+    console.error("Erro ao carregar dieta:",e);
+    document.getElementById("dieta-content").innerHTML=`<div class="chart-card" style="text-align:center;color:#dc2626">Erro ao carregar dados.</div>`;
+  }
+}
+
+// ═══ PAINEL FINANCEIRO ═══
+async function renderFinanceiroScreen(){
+  const body=document.getElementById("financeiro-body");
+  if(!body)return;
+  body.innerHTML=`
+    <div style="font-size:17px;font-weight:800;margin-bottom:4px">💰 Painel Financeiro</div>
+    <div style="font-size:12px;color:var(--muted);margin-bottom:14px">Custo, receita e lucro da sua fazenda</div>
+    <div id="financeiro-content"><div style="text-align:center;padding:40px"><div class="mg-spinner"></div></div></div>
+  `;
+  try{
+    const snap=await db.ref("financeiro/"+farmId).once("value");
+    const bruto=snap.val()||{};
+    const datas=Object.keys(bruto).filter(k=>/^\d{4}-\d{2}-\d{2}$/.test(k)).sort();
+    const cont=document.getElementById("financeiro-content");
+    if(!datas.length){
+      cont.innerHTML=`<div class="chart-card" style="text-align:center;color:var(--muted);padding:30px 16px">O Painel Financeiro dessa fazenda ainda não foi calculado.</div>`;
+      return;
+    }
+    const d=bruto[datas[datas.length-1]];
+    const precoNaoInformado=!(d.preco_litro>0);
+    const rentColor=d.rentabilidade_pct>=20?"#15803d":d.rentabilidade_pct>=10?"#2563eb":d.rentabilidade_pct>=0?"#d97706":"#dc2626";
+    cont.innerHTML=`
+      <div class="kpi-grid">
+        <div class="kpi-card" style="--kpi-color:#15803d">
+          <div class="kpi-icon">🥛</div>
+          <div class="kpi-val">${d.custo_por_litro>0?"R$"+d.custo_por_litro.toFixed(2):"—"}</div>
+          <div class="kpi-lbl">Custo p/ produzir 1L</div>
+        </div>
+        <div class="kpi-card" style="--kpi-color:${rentColor}">
+          <div class="kpi-icon">📊</div>
+          <div class="kpi-val">${!precoNaoInformado&&d.rentabilidade_pct!=null?d.rentabilidade_pct.toFixed(1)+"%":"—"}</div>
+          <div class="kpi-lbl">Rentabilidade</div>
+        </div>
+        <div class="kpi-card" style="--kpi-color:#2563eb">
+          <div class="kpi-icon">💵</div>
+          <div class="kpi-val">${!precoNaoInformado&&d.receita_bruta_mensal>0?"R$"+(d.receita_bruta_mensal/1000).toFixed(1)+"k":"—"}</div>
+          <div class="kpi-lbl">Receita/mês</div>
+        </div>
+        <div class="kpi-card" style="--kpi-color:${d.lucro_mensal>=0?"#15803d":"#dc2626"}">
+          <div class="kpi-icon">${d.lucro_mensal>=0?"📈":"📉"}</div>
+          <div class="kpi-val">${!precoNaoInformado&&d.lucro_mensal!=null?(d.lucro_mensal>=0?"+":"")+"R$"+(d.lucro_mensal/1000).toFixed(1)+"k":"—"}</div>
+          <div class="kpi-lbl">Lucro/mês</div>
+        </div>
+      </div>
+      ${precoNaoInformado?'<div class="chart-card" style="background:#fffbeb;border-color:#fcd34d;color:#92400e;font-size:12px">⚠️ O preço do litro do leite ainda não foi informado — por isso receita, lucro e rentabilidade não aparecem. Fale com seu técnico pra atualizar.</div>':""}
+      <div class="chart-card">
+        <div class="chart-card-sub" style="margin-bottom:0">Última atualização: ${new Date(datas[datas.length-1]+"T12:00:00").toLocaleDateString("pt-BR")}</div>
+      </div>
+    `;
+  }catch(e){
+    console.error("Erro ao carregar financeiro:",e);
+    document.getElementById("financeiro-content").innerHTML=`<div class="chart-card" style="text-align:center;color:#dc2626">Erro ao carregar dados.</div>`;
+  }
+}
+
+// ═══ FORRAGEM: ESTOQUE & CUSTO ═══
+async function renderForragemScreen(){
+  const body=document.getElementById("forragem-body");
+  if(!body)return;
+  body.innerHTML=`
+    <div style="font-size:17px;font-weight:800;margin-bottom:4px">🌾 Forragem: Estoque &amp; Custo</div>
+    <div style="font-size:12px;color:var(--muted);margin-bottom:14px">Quanto tempo de estoque resta e quanto custou produzir</div>
+    <div id="forragem-content"><div style="text-align:center;padding:40px"><div class="mg-spinner"></div></div></div>
+  `;
+  try{
+    const snap=await db.ref("forragem/"+farmId).once("value");
+    const bruto=snap.val()||{};
+    const tipos=Object.keys(bruto).map(k=>{
+      const dadosTipo=bruto[k];
+      if(dadosTipo.tipo||dadosTipo.custo_total!=null||dadosTipo.estoque_ton!=null)return dadosTipo;
+      const datas=Object.keys(dadosTipo).filter(dk=>/^\d{4}-\d{2}-\d{2}$/.test(dk)).sort();
+      return datas.length?dadosTipo[datas[datas.length-1]]:null;
+    }).filter(Boolean);
+    const cont=document.getElementById("forragem-content");
+    if(!tipos.length){
+      cont.innerHTML=`<div class="chart-card" style="text-align:center;color:var(--muted);padding:30px 16px">Nenhum registro de forragem ainda pra essa fazenda.</div>`;
+      return;
+    }
+    cont.innerHTML=tipos.map(t=>{
+      const estoqueTon=t.estoque_ton||0;
+      const consumoDia=t.consumo_dia_manual||0;
+      const dias=consumoDia>0?estoqueTon*1000/consumoDia:null;
+      const cor=dias==null?"#64748b":dias>=60?"#15803d":dias>=30?"#d97706":"#dc2626";
+      return `<div class="chart-card">
+        <div class="chart-card-title">${t.tipo||"Forragem"}</div>
+        <div class="kpi-grid" style="margin-top:10px;margin-bottom:0">
+          <div class="kpi-card" style="--kpi-color:#0891b2"><div class="kpi-icon">📦</div><div class="kpi-val">${estoqueTon.toFixed(0)}</div><div class="kpi-lbl">Toneladas em estoque</div></div>
+          <div class="kpi-card" style="--kpi-color:${cor}"><div class="kpi-icon">📅</div><div class="kpi-val">${dias!=null?dias.toFixed(0):"—"}</div><div class="kpi-lbl">Dias de autonomia</div></div>
+        </div>
+        ${t.custo_por_ton_ms>0?`<div style="margin-top:10px;font-size:12.5px;color:var(--muted)">Custo de produção: <b style="color:var(--text)">R$ ${t.custo_por_ton_ms.toFixed(2)}/ton MS</b></div>`:""}
+      </div>`;
+    }).join("");
+  }catch(e){
+    console.error("Erro ao carregar forragem:",e);
+    document.getElementById("forragem-content").innerHTML=`<div class="chart-card" style="text-align:center;color:#dc2626">Erro ao carregar dados.</div>`;
+  }
+}
+
+iniciar();
+if("serviceWorker" in navigator){window.addEventListener("load",function(){navigator.serviceWorker.register("sw-produtor.js").catch(function(e){console.log("SW registration failed:",e)})})}
+</script>
+</body>
+</html>

@@ -1,0 +1,15 @@
+{
+  "name": "Meta Gestão - Minha Fazenda",
+  "short_name": "Minha Fazenda",
+  "description": "Acompanhe os números da sua fazenda — Meta Nutrição e Saúde Animal",
+  "start_url": "./app-produtor.html",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#f3f6f3",
+  "theme_color": "#15803d",
+  "orientation": "portrait-primary",
+  "icons": [
+    { "src": "meta_logo.jpg", "sizes": "192x192", "type": "image/jpeg", "purpose": "any" },
+    { "src": "meta_logo.jpg", "sizes": "512x512", "type": "image/jpeg", "purpose": "any" }
+  ]
+}
