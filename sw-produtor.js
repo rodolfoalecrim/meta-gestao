@@ -6,7 +6,9 @@ const CACHE_NAME = "meta-produtor-v1";
 const ARQUIVOS_ESSENCIAIS = [
   "./app-produtor.html",
   "./manifest-produtor.json",
-  "./meta_logo.jpg"
+  "./meta_logo.jpg",
+  "./meta_icon_192.png",
+  "./meta_icon_512.png"
 ];
 
 self.addEventListener("install", (event) => {
