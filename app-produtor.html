@@ -652,8 +652,8 @@ async function carregarComparativoMensal(){
 
 function renderScoreRingHtml(score,gradeLabel,subtitle){
   if(score==null)return"";
-  const cor=score>=90?"#15803d":score>=75?"#16a34a":score>=60?"#2563eb":score>=40?"#d97706":"#dc2626";
-  const label=gradeLabel||(score>=90?"excelente":score>=75?"muito bom":score>=60?"bom":score>=40?"regular":"crítico");
+  const cor=score>=80?"#4ade80":score>=60?"#60a5fa":score>=40?"#fbbf24":"#f87171";
+  const label=gradeLabel||(score>=80?"excelente":score>=60?"bom":score>=40?"regular":"atenção");
   const raio=32,circ=2*Math.PI*raio,offset=circ*(1-score/100);
   return `<div class="chart-card" style="display:flex;align-items:center;gap:16px;margin-bottom:16px">
     <svg width="76" height="76" viewBox="0 0 76 76" style="flex-shrink:0">
@@ -1729,7 +1729,10 @@ async function renderFinanceiroScreen(){
     }
     const d=bruto[datas[datas.length-1]];
     const precoNaoInformado=!(d.preco_litro>0);
-    const rentColor=d.rentabilidade_pct>=20?"#15803d":d.rentabilidade_pct>=10?"#2563eb":d.rentabilidade_pct>=0?"#d97706":"#dc2626";
+    const temRentabilidade=!precoNaoInformado&&d.rentabilidade_pct!=null;
+    const temLucro=!precoNaoInformado&&d.lucro_mensal!=null;
+    const rentColor=!temRentabilidade?"#94a3b8":d.rentabilidade_pct>=20?"#15803d":d.rentabilidade_pct>=10?"#2563eb":d.rentabilidade_pct>=0?"#d97706":"#dc2626";
+    const lucroColor=!temLucro?"#94a3b8":d.lucro_mensal>=0?"#15803d":"#dc2626";
     cont.innerHTML=`
       <div class="kpi-grid">
         <div class="kpi-card" style="--kpi-color:#15803d">
@@ -1739,18 +1742,18 @@ async function renderFinanceiroScreen(){
         </div>
         <div class="kpi-card" style="--kpi-color:${rentColor}">
           <div class="kpi-icon">📊</div>
-          <div class="kpi-val">${!precoNaoInformado&&d.rentabilidade_pct!=null?d.rentabilidade_pct.toFixed(1)+"%":"—"}</div>
-          <div class="kpi-lbl">Rentabilidade</div>
+          <div class="kpi-val">${temRentabilidade?d.rentabilidade_pct.toFixed(1)+"%":"—"}</div>
+          <div class="kpi-lbl">Rentabilidade${!temRentabilidade?" (sem dado)":""}</div>
         </div>
         <div class="kpi-card" style="--kpi-color:#2563eb">
           <div class="kpi-icon">💵</div>
           <div class="kpi-val">${!precoNaoInformado&&d.receita_bruta_mensal>0?"R$"+(d.receita_bruta_mensal/1000).toFixed(1)+"k":"—"}</div>
           <div class="kpi-lbl">Receita/mês</div>
         </div>
-        <div class="kpi-card" style="--kpi-color:${d.lucro_mensal>=0?"#15803d":"#dc2626"}">
-          <div class="kpi-icon">${d.lucro_mensal>=0?"📈":"📉"}</div>
-          <div class="kpi-val">${!precoNaoInformado&&d.lucro_mensal!=null?(d.lucro_mensal>=0?"+":"")+"R$"+(d.lucro_mensal/1000).toFixed(1)+"k":"—"}</div>
-          <div class="kpi-lbl">Lucro/mês</div>
+        <div class="kpi-card" style="--kpi-color:${lucroColor}">
+          <div class="kpi-icon">${!temLucro?"➖":d.lucro_mensal>=0?"📈":"📉"}</div>
+          <div class="kpi-val">${temLucro?(d.lucro_mensal>=0?"+":"")+"R$"+(d.lucro_mensal/1000).toFixed(1)+"k":"—"}</div>
+          <div class="kpi-lbl">Lucro/mês${!temLucro?" (sem dado)":""}</div>
         </div>
       </div>
       ${precoNaoInformado?'<div class="chart-card" style="background:#fffbeb;border-color:#fcd34d;color:#92400e;font-size:12px">⚠️ O preço do litro do leite ainda não foi informado — por isso receita, lucro e rentabilidade não aparecem. Fale com seu técnico pra atualizar.</div>':""}
