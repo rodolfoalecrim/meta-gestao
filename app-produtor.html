@@ -448,7 +448,6 @@ function renderDashboard(){
   const scoreSaude=calcScoreSaude(ccs>0?ccs:null,mediaProd>0?mediaProd:null);
   html+=`<div id="score-saude-wrap">${renderScoreRingHtml(scoreSaude,null,"Combina CCS e produ\xE7\xE3o m\xE9dia")}</div>`;
   html+=`<div id="radar-carteira-wrap"></div>`;
-  html+=`<div id="visao5anos-wrap"></div>`;
   html+=`<div id="top5carteira-wrap"></div>`;
 
   html+=`<div id="alertas-consolidados-wrap"></div>`;
@@ -574,13 +573,15 @@ async function carregarPerdasOcultas(){
   if(ccs!=null&&mediaProd>0){
     const pct=pctPerdaPorCCS(ccs);
     if(pct>0){
-      const litrosDia=mediaProd*vacas*pct;
-      itens.push({icone:"🩸",titulo:"Perda estimada por CCS alta ("+ccs.toFixed(0)+"k)",litrosDia});
+      const litrosPorVacaDia=mediaProd*pct;
+      const litrosDia=litrosPorVacaDia*vacas;
+      itens.push({icone:"🩸",titulo:"Perda estimada por CCS alta ("+ccs.toFixed(0)+"k)",litrosPorVacaDia,litrosDia});
     }
   }
   if(del!=null&&del>DEL_REFERENCIA_PERDA){
-    const litrosDia=(del-DEL_REFERENCIA_PERDA)*(PERDA_ML_POR_DIA_DEL/1000)*vacas;
-    itens.push({icone:"📅",titulo:"Perda estimada por DEL acima de "+DEL_REFERENCIA_PERDA+"d",litrosDia});
+    const litrosPorVacaDia=(del-DEL_REFERENCIA_PERDA)*(PERDA_ML_POR_DIA_DEL/1000);
+    const litrosDia=litrosPorVacaDia*vacas;
+    itens.push({icone:"📅",titulo:"Perda estimada por DEL acima de "+DEL_REFERENCIA_PERDA+"d",litrosPorVacaDia,litrosDia});
   }
   if(!itens.length){wrap.innerHTML="";return}
   wrap.innerHTML=`<div class="chart-card" style="background:#fef2f2;border-color:#fecaca;margin-bottom:16px">
@@ -588,7 +589,14 @@ async function carregarPerdasOcultas(){
     ${itens.map(it=>{
       const litrosMes=it.litrosDia*30;
       const valorTxt=precoLitro>0?" · R$ "+(it.litrosDia*precoLitro).toFixed(0)+"/dia (≈R$ "+(litrosMes*precoLitro).toFixed(0)+"/mês)":"";
-      return `<div style="padding:6px 0;font-size:12.5px;color:#7f1d1d"><b>${it.icone} ${it.titulo}:</b> ${it.litrosDia.toFixed(1)} L/dia${valorTxt}</div>`;
+      return `<div style="padding:8px 0;border-bottom:1px solid #fecaca;font-size:12.5px;color:#7f1d1d">
+        <b>${it.icone} ${it.titulo}</b>
+        <div style="display:flex;gap:14px;margin-top:4px;flex-wrap:wrap">
+          <div><span style="font-size:15px;font-weight:900">${it.litrosPorVacaDia.toFixed(2)}L</span> <span style="font-size:10px">/vaca/dia</span></div>
+          <div><span style="font-size:15px;font-weight:900">${it.litrosDia.toFixed(0)}L</span> <span style="font-size:10px">/dia no rebanho</span></div>
+        </div>
+        ${valorTxt?`<div style="font-size:11px;margin-top:2px;font-weight:700">${valorTxt.replace(" · ","")}</div>`:""}
+      </div>`;
     }).join("")}
     <div style="font-size:9.5px;color:#991b1b;opacity:.75;margin-top:6px">Estimativa baseada em referência técnica pública — não substitui o diagnóstico do seu técnico.</div>
   </div>`;
@@ -728,29 +736,6 @@ async function carregarRadarCarteira(){
       if(!r.destaques.length&&!r.fracos.length)htmlD='<div style="color:var(--muted)">Desempenho próximo da média da carteira em todos os indicadores.</div>';
       destEl.innerHTML=htmlD;
     }
-    const visao5Wrap=document.getElementById("visao5anos-wrap");
-    if(visao5Wrap&&r.visao5anos&&r.visao5anos.length){
-      visao5Wrap.innerHTML=`<div class="chart-card">
-        <div class="chart-card-title">🔭 Visão 5 Anos</div>
-        <div class="chart-card-sub">Se sua fazenda seguisse na direção das top 5 fazendas da carteira em cada indicador</div>
-        ${r.visao5anos.map(m=>{
-          const pct=Math.min(100,Math.max(0,(m.current/m.meta5anos)*100));
-          const pctInverso=Math.min(100,Math.max(0,(m.meta5anos/m.current)*100));
-          const progresso=m.label.includes("Custo")?pctInverso:pct;
-          return `<div style="padding:10px 0;border-bottom:1px solid #f1f5f9">
-            <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;flex-wrap:wrap">
-              <span style="font-size:15px">${m.icon}</span>
-              <span style="font-size:12px;font-weight:700;flex:1;min-width:120px">${m.label}</span>
-              <span style="font-size:10.5px;color:var(--muted)">Hoje: <b style="color:var(--text)">${m.current.toFixed(m.dec)}</b> → Meta 5 anos: <b style="color:#15803d">${m.meta5anos.toFixed(m.dec)}</b></span>
-            </div>
-            <div style="background:#f1f5f9;border-radius:6px;height:9px;overflow:hidden">
-              <div style="width:${progresso.toFixed(0)}%;height:100%;background:linear-gradient(90deg,#0891b2,#15803d);border-radius:6px"></div>
-            </div>
-          </div>`;
-        }).join("")}
-        <div style="font-size:9.5px;color:var(--muted);margin-top:8px">📌 "Top 5" é a média das 5 fazendas com melhor desempenho nesse indicador na carteira Meta — sem expor quem são.</div>
-      </div>`;
-    }
     const top5Wrap=document.getElementById("top5carteira-wrap");
     if(top5Wrap&&r.top5Carteira&&r.top5Carteira.length){
       top5Wrap.innerHTML=`<div class="chart-card">
@@ -758,15 +743,24 @@ async function carregarRadarCarteira(){
         <div class="chart-card-sub">O que as 5 melhores fazendas da carteira estão alcançando em cada indicador, comparado com você</div>
         ${r.top5Carteira.map(m=>{
           const temFazenda=m.valorFazenda!=null&&m.valorFazenda>0;
-          return `<div style="display:flex;justify-content:space-between;align-items:center;padding:9px 0;border-bottom:1px solid #f1f5f9">
-            <div style="display:flex;align-items:center;gap:8px">
-              <span style="font-size:15px">${m.icon}</span>
-              <span style="font-size:12px;font-weight:700">${m.label}</span>
+          let progresso=null;
+          if(temFazenda){
+            progresso=m.lowerIsBetter?Math.min(100,Math.max(0,(m.valor/m.valorFazenda)*100)):Math.min(100,Math.max(0,(m.valorFazenda/m.valor)*100));
+          }
+          return `<div style="padding:10px 0;border-bottom:1px solid #f1f5f9">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:${temFazenda?"6px":"0"}">
+              <div style="display:flex;align-items:center;gap:8px">
+                <span style="font-size:15px">${m.icon}</span>
+                <span style="font-size:12px;font-weight:700">${m.label}</span>
+              </div>
+              <div style="text-align:right">
+                <div style="font-size:14px;font-weight:900;color:#15803d">${m.valor.toFixed(m.dec)}</div>
+                ${temFazenda?`<div style="font-size:9.5px;color:var(--muted)">você: ${m.valorFazenda.toFixed(m.dec)}</div>`:`<div style="font-size:9.5px;color:var(--muted)">sem seu dado</div>`}
+              </div>
             </div>
-            <div style="text-align:right">
-              <div style="font-size:14px;font-weight:900;color:#15803d">${m.valor.toFixed(m.dec)}</div>
-              ${temFazenda?`<div style="font-size:9.5px;color:var(--muted)">você: ${m.valorFazenda.toFixed(m.dec)}</div>`:`<div style="font-size:9.5px;color:var(--muted)">sem seu dado</div>`}
-            </div>
+            ${temFazenda?`<div style="background:#f1f5f9;border-radius:6px;height:8px;overflow:hidden">
+              <div style="width:${progresso.toFixed(0)}%;height:100%;background:linear-gradient(90deg,#0891b2,#15803d);border-radius:6px"></div>
+            </div>`:""}
           </div>`;
         }).join("")}
         <div style="font-size:9.5px;color:var(--muted);margin-top:8px">📌 Média das 5 fazendas com melhor desempenho em cada indicador — sem expor quem são.</div>
@@ -1272,33 +1266,18 @@ async function renderInsumosScreen(){
       const{atual,diasRestantes}=calcEstoqueAtualInsumo(insumo,consumoDiario);
       return{id,insumo,consumoDiario,atual,diasRestantes};
     }));
-    linhas.sort((a,b)=>{
-      const da=a.diasRestantes==null?Infinity:a.diasRestantes;
-      const db_=b.diasRestantes==null?Infinity:b.diasRestantes;
-      return da-db_;
-    });
     cont.innerHTML=linhas.map(({id,insumo,consumoDiario,atual,diasRestantes})=>{
       const cor=diasRestantes==null?"#64748b":diasRestantes<=7?"#dc2626":diasRestantes<=15?"#d97706":"#15803d";
-      const refCheio=insumo.saldo_kg>0?insumo.saldo_kg:atual;
-      const pctBarra=refCheio>0?Math.max(0,Math.min(100,atual/refCheio*100)):0;
-      const historico=Object.entries(insumo.historico||{}).map(([hid,h])=>({hid,...h})).sort((a,b)=>(b.data||"").localeCompare(a.data||""));
-      const histId="ins-hist-"+id;
       return `<div class="chart-card" style="border-left:4px solid ${cor}">
-        <div style="display:flex;justify-content:space-between;align-items:flex-start;cursor:pointer" onclick="toggleInsumoHistorico('${id}')">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start">
           <div style="font-size:13px;font-weight:800">${insumo.nome}</div>
-          <span onclick="event.stopPropagation();excluirInsumo('${id}')" style="cursor:pointer;color:#dc2626;font-size:11px">🗑️</span>
+          <span onclick="excluirInsumo('${id}')" style="cursor:pointer;color:#dc2626;font-size:11px">🗑️</span>
         </div>
         <div class="kpi-grid" style="margin-top:8px;margin-bottom:0">
           <div class="kpi-card" style="--kpi-color:#0891b2"><div class="kpi-icon">📦</div><div class="kpi-val">${(atual/1000).toFixed(2)}t</div><div class="kpi-lbl">Estoque atual</div></div>
           <div class="kpi-card" style="--kpi-color:${cor}"><div class="kpi-icon">📅</div><div class="kpi-val">${diasRestantes!=null?diasRestantes.toFixed(0):"—"}</div><div class="kpi-lbl">Dias restantes</div></div>
         </div>
-        <div style="background:#f1f5f9;border-radius:6px;height:7px;margin-top:10px;overflow:hidden">
-          <div style="background:${cor};height:100%;width:${pctBarra.toFixed(0)}%;border-radius:6px"></div>
-        </div>
-        <div style="font-size:10.5px;color:var(--muted);margin-top:8px;cursor:pointer" onclick="toggleInsumoHistorico('${id}')">Consumo: ${consumoDiario>0?consumoDiario.toFixed(1)+" kg/dia (dieta atual)":"não identificado na dieta atual"} · Última entrada: ${new Date(insumo.data_registro+"T12:00:00").toLocaleDateString("pt-BR")} · <span style="color:#0891b2;font-weight:700">ver histórico ▾</span></div>
-        <div id="${histId}" style="display:none;margin-top:8px;border-top:1px solid #f1f5f9;padding-top:8px">
-          ${historico.length?historico.map(h=>`<div style="display:flex;justify-content:space-between;font-size:11px;padding:4px 0;border-bottom:1px solid #f8fafc"><span>${h.data?new Date(h.data+"T12:00:00").toLocaleDateString("pt-BR"):"—"}</span><span style="font-weight:700">+${(parseFloat(h.quantidade_kg)||0).toLocaleString("pt-BR")} kg</span></div>`).join(""):`<div style="font-size:11px;color:var(--muted);text-align:center;padding:6px">Sem histórico de entradas registrado.</div>`}
-        </div>
+        <div style="font-size:10.5px;color:var(--muted);margin-top:8px">Consumo: ${consumoDiario>0?consumoDiario.toFixed(1)+" kg/dia (dieta atual)":"não identificado na dieta atual"} · Última entrada: ${new Date(insumo.data_registro+"T12:00:00").toLocaleDateString("pt-BR")}</div>
       </div>`;
     }).join("");
   }catch(e){
@@ -1308,11 +1287,6 @@ async function renderInsumosScreen(){
 }
 
 let _insumosCache={};
-function toggleInsumoHistorico(id){
-  const el=document.getElementById("ins-hist-"+id);
-  if(!el)return;
-  el.style.display=el.style.display==="none"?"block":"none";
-}
 function toggleFormInsumo(){
   const wrap=document.getElementById("form-insumo-wrap");
   if(!wrap)return;
@@ -2061,6 +2035,101 @@ async function renderEvolucaoCombinada(){
   }
 }
 
+async function renderMediaAnual(){
+  const wrap=document.getElementById("media-anual-wrap");
+  if(!wrap)return;
+  try{
+    const pontosProd=[],pontosDel=[];
+
+    const histSnap=await db.ref("historico/"+farmId).once("value");
+    histSnap.forEach(child=>{
+      const e=child.val();
+      if(!e.data)return;
+      if(e.media_prod>0)pontosProd.push({data:e.data,valor:parseFloat(e.media_prod)});
+      if(e.del>0)pontosDel.push({data:e.data,valor:parseFloat(e.del)});
+    });
+
+    const logSnap=await db.ref("propriedades/"+farmId+"/log_atualizacoes").once("value");
+    logSnap.forEach(child=>{
+      const e=child.val();
+      if(!e.data||!e.campos)return;
+      const dt=e.data.slice(0,10);
+      if(e.campos.media_prod>0)pontosProd.push({data:dt,valor:parseFloat(e.campos.media_prod)});
+      if(e.campos.del>0)pontosDel.push({data:dt,valor:parseFloat(e.campos.del)});
+    });
+
+    const clSnap=await db.ref("controle_leiteiro/"+farmId).once("value");
+    const clData=clSnap.val()||{};
+    Object.keys(clData).filter(k=>/^\d{4}-\d{2}-\d{2}$/.test(k)).forEach(dt=>{
+      const vacas=clData[dt].vacas||[];
+      const comLeite=vacas.filter(v=>v.litros>0);
+      if(comLeite.length)pontosProd.push({data:dt,valor:comLeite.reduce((s,v)=>s+v.litros,0)/comLeite.length});
+      const comDel=vacas.filter(v=>v.del>0);
+      if(comDel.length)pontosDel.push({data:dt,valor:comDel.reduce((s,v)=>s+v.del,0)/comDel.length});
+    });
+
+    const agruparPorAno=pontos=>{
+      const porAno={};
+      pontos.forEach(p=>{
+        const ano=p.data.slice(0,4);
+        if(!porAno[ano])porAno[ano]={soma:0,n:0};
+        porAno[ano].soma+=p.valor;
+        porAno[ano].n++;
+      });
+      return porAno;
+    };
+    const prodPorAno=agruparPorAno(pontosProd);
+    const delPorAno=agruparPorAno(pontosDel);
+    const anos=[...new Set([...Object.keys(prodPorAno),...Object.keys(delPorAno)])].sort();
+
+    if(anos.length<1){wrap.innerHTML="";return}
+
+    const anoAtual=new Date().getFullYear().toString();
+    const mediaProdAnoAtual=prodPorAno[anoAtual]?prodPorAno[anoAtual].soma/prodPorAno[anoAtual].n:null;
+    const mediaDelAnoAtual=delPorAno[anoAtual]?delPorAno[anoAtual].soma/delPorAno[anoAtual].n:null;
+
+    let html=`<div class="chart-card">
+      <div class="chart-card-title">📅 Média do Ano</div>
+      <div class="chart-card-sub">Médias de ${anoAtual} até agora</div>
+      <div class="kpi-grid" style="margin-top:6px;margin-bottom:0">
+        <div class="kpi-card" style="--kpi-color:#15803d"><div class="kpi-icon">🥛</div><div class="kpi-val">${mediaProdAnoAtual!=null?mediaProdAnoAtual.toFixed(1):"—"}</div><div class="kpi-lbl">L/vaca/dia (média ${anoAtual})</div></div>
+        <div class="kpi-card" style="--kpi-color:#d97706"><div class="kpi-icon">📅</div><div class="kpi-val">${mediaDelAnoAtual!=null?mediaDelAnoAtual.toFixed(0):"—"}</div><div class="kpi-lbl">DEL médio (média ${anoAtual})</div></div>
+      </div>
+    </div>`;
+
+    if(anos.length>=2){
+      html+=`<div class="chart-card">
+        <div class="chart-card-title">Médias por Ano</div>
+        <div class="chart-card-sub">Produção e DEL médios, ano a ano</div>
+        <div style="height:220px"><canvas id="ch-media-anual"></canvas></div>
+      </div>`;
+    }
+
+    wrap.innerHTML=html;
+
+    if(anos.length>=2){
+      const prodVals=anos.map(a=>prodPorAno[a]?+(prodPorAno[a].soma/prodPorAno[a].n).toFixed(1):null);
+      const delVals=anos.map(a=>delPorAno[a]?+(delPorAno[a].soma/delPorAno[a].n).toFixed(0):null);
+      mkChart("ch-media-anual","bar",{
+        labels:anos,
+        datasets:[
+          {label:"Produção Média (L/vaca/dia)",data:prodVals,backgroundColor:"#15803d",borderRadius:5,yAxisID:"y"},
+          {label:"DEL Médio",data:delVals,type:"line",borderColor:"#d97706",backgroundColor:"#d97706",borderWidth:2.5,pointRadius:5,tension:.2,yAxisID:"y1"}
+        ]
+      },{
+        plugins:{legend:{labels:{boxWidth:10,font:{size:10}}}},
+        scales:{
+          y:{position:"left",title:{display:true,text:"L/vaca/dia",font:{size:9}}},
+          y1:{position:"right",title:{display:true,text:"DEL (dias)",font:{size:9}},grid:{display:false}}
+        }
+      });
+    }
+  }catch(e){
+    console.error("Erro ao montar média anual:",e);
+    wrap.innerHTML="";
+  }
+}
+
 async function renderEvolucaoScreen(){
   const body=document.getElementById("evolucao-body");
   if(!body)return;
@@ -2068,9 +2137,11 @@ async function renderEvolucaoScreen(){
     <div style="font-size:17px;font-weight:800;margin-bottom:4px">📈 Evolução Mês a Mês</div>
     <div style="font-size:12px;color:var(--muted);margin-bottom:14px">Histórico de produção e qualidade do leite ao longo do tempo</div>
     <div id="evolucao-combinada-wrap"></div>
+    <div id="media-anual-wrap"></div>
     <div id="evolucao-content"><div style="text-align:center;padding:40px"><div class="mg-spinner"></div></div></div>
   `;
   renderEvolucaoCombinada();
+  renderMediaAnual();
   try{
     const snap=await db.ref("historico/"+farmId).once("value");
     const entradas=[];
@@ -2255,62 +2326,33 @@ async function renderForragemScreen(){
     const bruto=snap.val()||{};
     const tipos=Object.keys(bruto).map(k=>{
       const dadosTipo=bruto[k];
-      if(dadosTipo.tipo||dadosTipo.custo_total!=null||dadosTipo.estoque_ton!=null){
-        return{atual:dadosTipo,historicoRegistros:[]};
-      }
+      if(dadosTipo.tipo||dadosTipo.custo_total!=null||dadosTipo.estoque_ton!=null)return dadosTipo;
       const datas=Object.keys(dadosTipo).filter(dk=>/^\d{4}-\d{2}-\d{2}$/.test(dk)).sort();
-      if(!datas.length)return null;
-      return{atual:dadosTipo[datas[datas.length-1]],historicoRegistros:datas.map(dt=>({data:dt,...dadosTipo[dt]}))};
+      return datas.length?dadosTipo[datas[datas.length-1]]:null;
     }).filter(Boolean);
     const cont=document.getElementById("forragem-content");
     if(!tipos.length){
       cont.innerHTML=`<div class="chart-card" style="text-align:center;color:var(--muted);padding:30px 16px">Nenhum registro de forragem ainda pra essa fazenda.</div>`;
       return;
     }
-    const linhas=tipos.map(({atual:t,historicoRegistros})=>{
+    cont.innerHTML=tipos.map(t=>{
       const estoqueTon=t.estoque_ton||0;
       const consumoDia=t.consumo_dia_manual||0;
       const dias=consumoDia>0?estoqueTon*1000/consumoDia:null;
-      return{t,historicoRegistros,estoqueTon,consumoDia,dias};
-    });
-    linhas.sort((a,b)=>{
-      const da=a.dias==null?Infinity:a.dias;
-      const db_=b.dias==null?Infinity:b.dias;
-      return da-db_;
-    });
-    cont.innerHTML=linhas.map(({t,historicoRegistros,estoqueTon,dias},idx)=>{
       const cor=dias==null?"#64748b":dias>=60?"#15803d":dias>=30?"#d97706":"#dc2626";
-      const maxEstoque=Math.max(estoqueTon,...historicoRegistros.map(h=>h.estoque_ton||0));
-      const pctBarra=maxEstoque>0?Math.max(0,Math.min(100,estoqueTon/maxEstoque*100)):0;
-      const histId="fg-hist-"+idx;
-      const registrosOrdenados=historicoRegistros.slice().reverse();
       return `<div class="chart-card">
-        <div style="cursor:pointer" onclick="toggleForragemHistorico(${idx})">
-          <div class="chart-card-title">${t.tipo||"Forragem"}</div>
-        </div>
+        <div class="chart-card-title">${t.tipo||"Forragem"}</div>
         <div class="kpi-grid" style="margin-top:10px;margin-bottom:0">
           <div class="kpi-card" style="--kpi-color:#0891b2"><div class="kpi-icon">📦</div><div class="kpi-val">${estoqueTon.toFixed(0)}</div><div class="kpi-lbl">Toneladas em estoque</div></div>
           <div class="kpi-card" style="--kpi-color:${cor}"><div class="kpi-icon">📅</div><div class="kpi-val">${dias!=null?dias.toFixed(0):"—"}</div><div class="kpi-lbl">Dias de autonomia</div></div>
         </div>
-        <div style="background:#f1f5f9;border-radius:6px;height:7px;margin-top:10px;overflow:hidden">
-          <div style="background:${cor};height:100%;width:${pctBarra.toFixed(0)}%;border-radius:6px"></div>
-        </div>
         ${t.custo_por_ton_ms>0?`<div style="margin-top:10px;font-size:12.5px;color:var(--muted)">Custo de produção: <b style="color:var(--text)">R$ ${t.custo_por_ton_ms.toFixed(2)}/ton MS</b></div>`:""}
-        ${registrosOrdenados.length>1?`<div style="font-size:10.5px;margin-top:8px;cursor:pointer;color:#0891b2;font-weight:700" onclick="toggleForragemHistorico(${idx})">ver histórico ▾</div>
-        <div id="${histId}" style="display:none;margin-top:8px;border-top:1px solid #f1f5f9;padding-top:8px">
-          ${registrosOrdenados.map(h=>`<div style="display:flex;justify-content:space-between;font-size:11px;padding:4px 0;border-bottom:1px solid #f8fafc"><span>${h.data?new Date(h.data+"T12:00:00").toLocaleDateString("pt-BR"):"—"}</span><span style="font-weight:700">${(h.estoque_ton||0).toFixed(0)} ton</span></div>`).join("")}
-        </div>`:""}
       </div>`;
     }).join("");
   }catch(e){
     console.error("Erro ao carregar forragem:",e);
     document.getElementById("forragem-content").innerHTML=`<div class="chart-card" style="text-align:center;color:#dc2626">Erro ao carregar dados.</div>`;
   }
-}
-function toggleForragemHistorico(idx){
-  const el=document.getElementById("fg-hist-"+idx);
-  if(!el)return;
-  el.style.display=el.style.display==="none"?"block":"none";
 }
 
 // ═══ QUALIDADE DA FORRAGEM (BROMATOLOGIA) ═══
