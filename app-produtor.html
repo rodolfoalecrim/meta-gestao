@@ -15,6 +15,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-functions-compat.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/chartjs-plugin-annotation/3.0.1/chartjs-plugin-annotation.min.js"></script>
 <style>
@@ -212,6 +213,7 @@ button:active{transform:scale(.96)}
 const firebaseConfig={apiKey:"AIzaSyClpsHjO8OLThD--hDOfg7Fg3t6hhuM-To",authDomain:"meta-gestao-608d7.firebaseapp.com",databaseURL:"https://meta-gestao-608d7-default-rtdb.firebaseio.com",projectId:"meta-gestao-608d7",storageBucket:"meta-gestao-608d7.firebasestorage.app",messagingSenderId:"318618053627",appId:"1:318618053627:web:ae289200bd1e87be29395e"};
 firebase.initializeApp(firebaseConfig);
 const db=firebase.database();
+const fns=firebase.app().functions("southamerica-east1");
 
 let farmId=null;
 let farmData=null;
@@ -401,6 +403,9 @@ function renderDashboard(){
 
   html+=`<div id="alertas-consolidados-wrap"></div>`;
   html+=`<div id="perdas-ocultas-wrap"></div>`;
+  html+=`<div id="comparativo-mensal-wrap"></div>`;
+  html+=`<div id="colocacao-meta-wrap"></div>`;
+  html+=`<div id="meta-pessoal-wrap"></div>`;
 
   html+=`<div class="kpi-grid">
     <div class="kpi-card" style="--kpi-color:${prodCol}">
@@ -461,6 +466,9 @@ function renderDashboard(){
   carregarAlertasConsolidados();
   verificarTHIPrevisao();
   carregarPerdasOcultas();
+  carregarComparativoMensal();
+  carregarColocacaoMeta();
+  renderMetaPessoal();
 }
 
 function calcScoreSaude(ccs,mediaProd){
@@ -567,6 +575,110 @@ async function verificarTHIPrevisao(){
     console.error("Erro ao buscar previsão de THI:",e);
     wrap.innerHTML="";
   }
+}
+
+async function carregarComparativoMensal(){
+  const wrap=document.getElementById("comparativo-mensal-wrap");
+  if(!wrap)return;
+  try{
+    const snap=await db.ref("historico/"+farmId).once("value");
+    const entradas=[];
+    snap.forEach(child=>entradas.push(child.val()));
+    const hoje=new Date();
+    const mesAtual=hoje.toISOString().slice(0,7);
+    const mesPassadoDate=new Date(hoje.getFullYear(),hoje.getMonth()-1,1);
+    const mesPassado=mesPassadoDate.toISOString().slice(0,7);
+    const porMes={};
+    entradas.forEach(e=>{
+      if(!e.data||!e.media_prod)return;
+      const mes=String(e.data).slice(0,7);
+      if(mes!==mesAtual&&mes!==mesPassado)return;
+      if(!porMes[mes])porMes[mes]={soma:0,n:0};
+      porMes[mes].soma+=parseFloat(e.media_prod);
+      porMes[mes].n++;
+    });
+    const atual=porMes[mesAtual];
+    const passado=porMes[mesPassado];
+    if(!atual||!passado){wrap.innerHTML="";return}
+    const mediaAtual=atual.soma/atual.n;
+    const mediaPassada=passado.soma/passado.n;
+    const diffPct=mediaPassada>0?(mediaAtual-mediaPassada)/mediaPassada*100:0;
+    const cor=diffPct>=0?"#15803d":"#dc2626";
+    const seta=diffPct>=0?"↑":"↓";
+    wrap.innerHTML=`<div class="chart-card" style="margin-bottom:16px">
+      <div class="chart-card-title">📊 Este Mês vs Mês Passado</div>
+      <div style="display:flex;align-items:center;justify-content:center;gap:16px;margin-top:6px">
+        <div style="text-align:center"><div style="font-size:20px;font-weight:900">${mediaAtual.toFixed(1)}L</div><div style="font-size:9.5px;color:var(--muted)">Este mês</div></div>
+        <div style="font-size:18px;font-weight:900;color:${cor}">${seta} ${Math.abs(diffPct).toFixed(0)}%</div>
+        <div style="text-align:center"><div style="font-size:20px;font-weight:900;color:var(--muted)">${mediaPassada.toFixed(1)}L</div><div style="font-size:9.5px;color:var(--muted)">Mês passado</div></div>
+      </div>
+    </div>`;
+  }catch(e){
+    console.error("Erro ao carregar comparativo mensal:",e);
+    wrap.innerHTML="";
+  }
+}
+
+async function carregarColocacaoMeta(){
+  const wrap=document.getElementById("colocacao-meta-wrap");
+  if(!wrap)return;
+  try{
+    const call=fns.httpsCallable("calcularPercentilFazenda");
+    const res=await call({farmId});
+    const r=res.data;
+    if(!r||!r.disponivel){wrap.innerHTML="";return}
+    const cor=r.percentil>=75?"#15803d":r.percentil>=50?"#2563eb":r.percentil>=25?"#d97706":"#dc2626";
+    wrap.innerHTML=`<div class="chart-card" style="text-align:center;background:${cor}0d;border-color:${cor}55;margin-bottom:16px">
+      <div style="font-size:11px;font-weight:800;color:${cor};text-transform:uppercase;margin-bottom:4px">🏆 Sua Colocação na Meta</div>
+      <div style="font-size:15px;font-weight:800;color:var(--text)">${r.categoria}</div>
+      <div style="font-size:10.5px;color:var(--muted);margin-top:2px">Percentil ${r.percentil} entre ${r.totalFazendas} fazendas ativas — sem expor dados de ninguém</div>
+    </div>`;
+  }catch(e){
+    console.error("Erro ao carregar colocação na Meta:",e);
+    wrap.innerHTML="";
+  }
+}
+
+function renderMetaPessoal(){
+  const wrap=document.getElementById("meta-pessoal-wrap");
+  if(!wrap)return;
+  const metaProducao=parseFloat(farmData.meta_producao_pessoal)||null;
+  const mediaProd=parseFloat(farmData.media_prod)||0;
+  if(!metaProducao){
+    wrap.innerHTML=`<div class="chart-card" style="text-align:center;margin-bottom:16px;cursor:pointer" onclick="abrirEditorMetaPessoal()">
+      <div style="font-size:12.5px;font-weight:700;color:var(--muted)">🎯 Você ainda não definiu uma meta pessoal</div>
+      <div style="font-size:11px;color:#2563eb;font-weight:700;margin-top:4px">Toque aqui pra definir uma</div>
+    </div>`;
+    return;
+  }
+  const progresso=Math.min(100,Math.max(0,mediaProd/metaProducao*100));
+  const atingiu=mediaProd>=metaProducao;
+  wrap.innerHTML=`<div class="chart-card" style="margin-bottom:16px">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+      <div class="chart-card-title" style="margin-bottom:0">🎯 Minha Meta: ${metaProducao.toFixed(1)}L/vaca</div>
+      <span style="font-size:10px;color:#2563eb;font-weight:700;cursor:pointer" onclick="abrirEditorMetaPessoal()">editar</span>
+    </div>
+    <div style="background:#f1f5f9;border-radius:20px;height:14px;overflow:hidden">
+      <div style="background:${atingiu?"#15803d":"#2563eb"};height:100%;width:${progresso.toFixed(0)}%;border-radius:20px;transition:width .5s ease"></div>
+    </div>
+    <div style="font-size:11px;color:var(--muted);margin-top:6px">${atingiu?"🎉 Meta atingida! Você está em "+mediaProd.toFixed(1)+"L":mediaProd.toFixed(1)+"L de "+metaProducao.toFixed(1)+"L ("+progresso.toFixed(0)+"% do caminho)"}</div>
+  </div>`;
+}
+
+function abrirEditorMetaPessoal(){
+  const atual=parseFloat(farmData.meta_producao_pessoal)||"";
+  const valor=prompt("Qual sua meta de produção (L/vaca/dia)?",atual);
+  if(valor===null)return;
+  const num=parseFloat(valor.replace(",","."));
+  if(isNaN(num)||num<=0){showToast("❌ Digite um número válido",true);return}
+  db.ref("propriedades/"+farmId).update({meta_producao_pessoal:num}).then(()=>{
+    farmData.meta_producao_pessoal=num;
+    showToast("✅ Meta salva!");
+    renderMetaPessoal();
+  }).catch(e=>{
+    console.error("Erro ao salvar meta:",e);
+    showToast("❌ Erro ao salvar meta",true);
+  });
 }
 
 async function carregarAlertasConsolidados(){
@@ -1375,31 +1487,35 @@ function calcGmdAnimalSimples(a){
   const gmdGeral=diasVida>0&&pesoAtual!=null&&a.peso_nascimento!=null?(pesoAtual-a.peso_nascimento)/diasVida*1000:null;
   return{gmdGeral,pesoAtual};
 }
+let _recriaAnimaisCache={};
 async function renderRecriaScreen(){
   const body=document.getElementById("recria-body");
   if(!body)return;
   body.innerHTML=`
     <div style="font-size:17px;font-weight:800;margin-bottom:4px">🐮 Recria</div>
     <div style="font-size:12px;color:var(--muted);margin-bottom:14px">Ganho de peso das novilhas em recria</div>
+    <button class="btn-action btn-secondary" onclick="toggleFormRecria()">➕ Lançar Animal ou Pesagem</button>
+    <div id="form-recria-wrap" style="display:none;margin-bottom:14px"></div>
     <div id="recria-content"><div style="text-align:center;padding:40px"><div class="mg-spinner"></div></div></div>
   `;
   try{
     const snap=await db.ref("recria/"+farmId).once("value");
     const bruto=snap.val()||{};
-    const animais=Object.values(bruto).filter(a=>a&&a.status!=="encerrado");
+    _recriaAnimaisCache=bruto;
+    const animaisEntries=Object.entries(bruto).filter(([id,a])=>a&&a.status!=="encerrado");
     const cont=document.getElementById("recria-content");
-    if(!animais.length){
-      cont.innerHTML=`<div class="chart-card" style="text-align:center;color:var(--muted);padding:30px 16px">Nenhum animal em recria registrado ainda.</div>`;
+    if(!animaisEntries.length){
+      cont.innerHTML=`<div class="chart-card" style="text-align:center;color:var(--muted);padding:30px 16px">Nenhum animal em recria registrado ainda. Toque em "Lançar Animal ou Pesagem" acima pra começar.</div>`;
       return;
     }
-    const comGmd=animais.map(a=>calcGmdAnimalSimples(a)).filter(r=>r.gmdGeral!=null);
+    const comGmd=animaisEntries.map(([id,a])=>calcGmdAnimalSimples(a)).filter(r=>r.gmdGeral!=null);
     const gmdMedio=comGmd.length?comGmd.reduce((s,r)=>s+r.gmdGeral,0)/comGmd.length:null;
     const gmdCor=gmdMedio==null?"#64748b":gmdMedio>=750?"#15803d":gmdMedio>=600?"#d97706":"#dc2626";
     cont.innerHTML=`
       <div class="kpi-grid">
         <div class="kpi-card" style="--kpi-color:#0891b2">
           <div class="kpi-icon">🐮</div>
-          <div class="kpi-val">${animais.length}</div>
+          <div class="kpi-val">${animaisEntries.length}</div>
           <div class="kpi-lbl">Animais em recria</div>
         </div>
         <div class="kpi-card" style="--kpi-color:${gmdCor}">
@@ -1408,11 +1524,101 @@ async function renderRecriaScreen(){
           <div class="kpi-lbl">GMD médio (g/dia)</div>
         </div>
       </div>
-      <div class="chart-card" style="text-align:center;color:var(--muted);font-size:11.5px">Meta de referência: 700–800 g/dia</div>
+      <div class="chart-card" style="text-align:center;color:var(--muted);font-size:11.5px;margin-bottom:14px">Meta de referência: 700–800 g/dia</div>
+      <div class="chart-card">
+        <div class="chart-card-title">Animais</div>
+        ${animaisEntries.map(([id,a])=>{
+          const r=calcGmdAnimalSimples(a);
+          return `<div style="display:flex;justify-content:space-between;align-items:center;padding:7px 0;border-bottom:1px solid #f1f5f9">
+            <div style="font-size:12.5px;font-weight:600">${a.numero||"?"}</div>
+            <div style="font-size:11.5px;color:var(--muted)">${r.pesoAtual!=null?r.pesoAtual.toFixed(0)+"kg":"—"}${r.gmdGeral!=null?" · GMD "+r.gmdGeral.toFixed(0)+"g/d":""}</div>
+          </div>`;
+        }).join("")}
+      </div>
     `;
   }catch(e){
     console.error("Erro ao carregar recria:",e);
     document.getElementById("recria-content").innerHTML=`<div class="chart-card" style="text-align:center;color:#dc2626">Erro ao carregar dados.</div>`;
+  }
+}
+
+function toggleFormRecria(){
+  const wrap=document.getElementById("form-recria-wrap");
+  if(!wrap)return;
+  const abrindo=wrap.style.display==="none";
+  wrap.style.display=abrindo?"block":"none";
+  if(abrindo)renderFormRecria();
+}
+
+function renderFormRecria(){
+  const wrap=document.getElementById("form-recria-wrap");
+  if(!wrap)return;
+  wrap.innerHTML=`
+    <div class="chart-card">
+      <div class="form-label">Tipo de lançamento</div>
+      <select class="form-input" id="rec-tipo" onchange="atualizarFormRecriaTipo()" style="margin-bottom:12px">
+        <option value="pesagem">⚖️ Pesagem de animal existente</option>
+        <option value="novo">🐮 Novo animal (entrada na recria)</option>
+      </select>
+      <div id="rec-campos-dinamicos"></div>
+      <button class="btn-action btn-primary" style="margin-top:12px" onclick="salvarLancamentoRecria()">💾 Salvar</button>
+    </div>
+  `;
+  atualizarFormRecriaTipo();
+}
+
+function atualizarFormRecriaTipo(){
+  const tipo=document.getElementById("rec-tipo")?.value||"pesagem";
+  const wrap=document.getElementById("rec-campos-dinamicos");
+  if(!wrap)return;
+  const hoje=new Date().toISOString().slice(0,10);
+  if(tipo==="pesagem"){
+    const animaisEntries=Object.entries(_recriaAnimaisCache).filter(([id,a])=>a&&a.status!=="encerrado");
+    if(!animaisEntries.length){
+      wrap.innerHTML=`<div style="font-size:12px;color:var(--muted);padding:8px 0">Nenhum animal cadastrado ainda — lance um "Novo animal" primeiro.</div>`;
+      return;
+    }
+    wrap.innerHTML=`
+      <div class="form-field"><label class="form-label">Animal</label>
+        <select class="form-input" id="rec-animal-sel">
+          ${animaisEntries.map(([id,a])=>`<option value="${id}">${a.numero||"?"}</option>`).join("")}
+        </select>
+      </div>
+      <div class="form-field"><label class="form-label">Data da pesagem</label><input type="date" class="form-input" id="rec-pesagem-data" value="${hoje}"></div>
+      <div class="form-field"><label class="form-label">Peso (kg)</label><input type="number" step="0.1" class="form-input" id="rec-pesagem-peso" placeholder="Ex: 145"></div>
+    `;
+  }else{
+    wrap.innerHTML=`
+      <div class="form-field"><label class="form-label">Número/identificação do animal</label><input type="text" class="form-input" id="rec-novo-numero" placeholder="Ex: 512"></div>
+      <div class="form-field"><label class="form-label">Data de nascimento</label><input type="date" class="form-input" id="rec-novo-nascimento" value="${hoje}"></div>
+      <div class="form-field"><label class="form-label">Peso ao nascer (kg)</label><input type="number" step="0.1" class="form-input" id="rec-novo-peso" placeholder="Ex: 38"></div>
+    `;
+  }
+}
+
+async function salvarLancamentoRecria(){
+  const tipo=document.getElementById("rec-tipo")?.value||"pesagem";
+  try{
+    if(tipo==="pesagem"){
+      const animalId=document.getElementById("rec-animal-sel")?.value;
+      const data=document.getElementById("rec-pesagem-data")?.value;
+      const peso=parseFloat(document.getElementById("rec-pesagem-peso")?.value);
+      if(!animalId||!data||isNaN(peso)||peso<=0){showToast("❌ Preencha animal, data e peso",true);return}
+      await db.ref("recria/"+farmId+"/"+animalId+"/pesagens").push({data,peso});
+      showToast("✅ Pesagem lançada!");
+    }else{
+      const numero=document.getElementById("rec-novo-numero")?.value.trim();
+      const nascimento=document.getElementById("rec-novo-nascimento")?.value;
+      const pesoNasc=parseFloat(document.getElementById("rec-novo-peso")?.value);
+      if(!numero||!nascimento||isNaN(pesoNasc)||pesoNasc<=0){showToast("❌ Preencha número, nascimento e peso",true);return}
+      await db.ref("recria/"+farmId).push({numero,nascimento,peso_nascimento:pesoNasc,status:"ativo",origem:"produtor"});
+      showToast("✅ Animal cadastrado na recria!");
+    }
+    document.getElementById("form-recria-wrap").style.display="none";
+    renderRecriaScreen();
+  }catch(e){
+    console.error("Erro ao salvar lançamento de recria:",e);
+    showToast("❌ Erro ao salvar: "+e.message,true);
   }
 }
 
