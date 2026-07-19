@@ -445,17 +445,6 @@ function renderDashboard(){
     <div class="hero-sub">${d.cidade?d.cidade+" · ":""}${d.tecnico_titular?"Técnico: "+d.tecnico_titular:""}</div>
   </div>`;
 
-  const scoreSaude=calcScoreSaude(ccs>0?ccs:null,mediaProd>0?mediaProd:null);
-  html+=`<div id="score-saude-wrap">${renderScoreRingHtml(scoreSaude,null,"Combina CCS e produ\xE7\xE3o m\xE9dia")}</div>`;
-  html+=`<div id="radar-carteira-wrap"></div>`;
-  html+=`<div id="top5carteira-wrap"></div>`;
-
-  html+=`<div id="alertas-consolidados-wrap"></div>`;
-  html+=`<div id="perdas-ocultas-wrap"></div>`;
-  html+=`<div id="comparativo-mensal-wrap"></div>`;
-  html+=`<div id="colocacao-meta-wrap"></div>`;
-  html+=`<div id="meta-pessoal-wrap"></div>`;
-
   html+=`<div class="kpi-grid">
     <div class="kpi-card" style="--kpi-color:${prodCol}">
       <div class="kpi-icon">🥛</div>
@@ -506,6 +495,17 @@ function renderDashboard(){
       </div>
     </div>`;
   }
+
+  const scoreSaude=calcScoreSaude(ccs>0?ccs:null,mediaProd>0?mediaProd:null);
+  html+=`<div id="score-saude-wrap">${renderScoreRingHtml(scoreSaude,null,"Combina CCS e produ\xE7\xE3o m\xE9dia")}</div>`;
+  html+=`<div id="radar-carteira-wrap"></div>`;
+
+  html+=`<div id="alertas-consolidados-wrap"></div>`;
+  html+=`<div id="perdas-ocultas-wrap"></div>`;
+  html+=`<div id="comparativo-mensal-wrap"></div>`;
+  html+=`<div id="colocacao-meta-wrap"></div>`;
+  html+=`<div id="meta-pessoal-wrap"></div>`;
+  html+=`<div id="top5carteira-wrap"></div>`;
 
   html+=renderUltimaVisitaHtml();
   html+=`<div id="whatsapp-tecnico-wrap"></div>`;
