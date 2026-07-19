@@ -169,9 +169,19 @@ button:active{transform:scale(.96)}
       <div id="forragem-body"></div>
     </div>
 
+    <!-- ESTOQUE DE INSUMOS -->
+    <div class="screen" id="screen-insumos">
+      <div id="insumos-body"></div>
+    </div>
+
     <!-- QUALIDADE DA FORRAGEM -->
     <div class="screen" id="screen-bromatologia">
       <div id="bromatologia-body"></div>
+    </div>
+
+    <!-- CONFORTO TÉRMICO -->
+    <div class="screen" id="screen-conforto">
+      <div id="conforto-body"></div>
     </div>
 
     <!-- EFICIÊNCIA REPRODUTIVA -->
@@ -187,6 +197,11 @@ button:active{transform:scale(.96)}
     <!-- MEU HISTÓRICO -->
     <div class="screen" id="screen-meuhistorico">
       <div id="meuhistorico-body"></div>
+    </div>
+
+    <!-- LINHA DO TEMPO -->
+    <div class="screen" id="screen-timeline">
+      <div id="timeline-body"></div>
     </div>
 
     <!-- CENTRAL DE AVISOS -->
@@ -332,7 +347,7 @@ function navScreen(name){
   if(navBtn)navBtn.classList.add("active");
   else{
     // secondary screens (consumo, forragem, evolucao, edit) reached via "Mais" — highlight Mais
-    if(["consumo","forragem","evolucao","edit","bromatologia","reproducao","recria","meuhistorico","avisos"].includes(name)){
+    if(["consumo","forragem","evolucao","edit","bromatologia","reproducao","recria","meuhistorico","avisos","insumos","conforto","timeline"].includes(name)){
       const maisBtn=document.getElementById("nav-mais");
       if(maisBtn)maisBtn.classList.add("active");
     }
@@ -353,6 +368,9 @@ function navScreen(name){
   if(name==="recria")renderRecriaScreen();
   if(name==="meuhistorico")renderMeuHistoricoScreen();
   if(name==="avisos")renderAvisosScreen();
+  if(name==="insumos")renderInsumosScreen();
+  if(name==="conforto")renderConfortoScreen();
+  if(name==="timeline")renderTimelineScreen();
   window.scrollTo(0,0);
 }
 
@@ -367,7 +385,9 @@ function renderMaisMenu(){
     <div class="form-section" style="margin-top:18px">📊 Monitoramento</div>
     <button class="btn-action btn-secondary" onclick="navScreen('consumo')">📊 Monitoramento de Consumo</button>
     <button class="btn-action btn-secondary" onclick="navScreen('forragem')">🌾 Forragem: Estoque &amp; Custo</button>
+    <button class="btn-action btn-secondary" onclick="navScreen('insumos')">📦 Estoque de Insumos</button>
     <button class="btn-action btn-secondary" onclick="navScreen('bromatologia')">🔬 Qualidade da Forragem</button>
+    <button class="btn-action btn-secondary" onclick="navScreen('conforto')">🌡️ Conforto Térmico</button>
     <button class="btn-action btn-secondary" onclick="navScreen('evolucao')">📈 Evolução Mês a Mês</button>
 
     <div class="form-section">🐄 Zootecnia</div>
@@ -375,6 +395,7 @@ function renderMaisMenu(){
     <button class="btn-action btn-secondary" onclick="navScreen('recria')">🐮 Recria</button>
 
     <div class="form-section">📋 Meus Dados</div>
+    <button class="btn-action btn-secondary" onclick="navScreen('timeline')">🗓️ Linha do Tempo</button>
     <button class="btn-action btn-secondary" onclick="navScreen('meuhistorico')">📋 Meu Histórico de Atualizações</button>
     <button class="btn-action btn-primary" style="margin-top:6px" onclick="navScreen('edit')">✏️ Atualizar Meus Dados</button>
   `;
@@ -427,6 +448,8 @@ function renderDashboard(){
   const scoreSaude=calcScoreSaude(ccs>0?ccs:null,mediaProd>0?mediaProd:null);
   html+=`<div id="score-saude-wrap">${renderScoreRingHtml(scoreSaude,null,"Combina CCS e produ\xE7\xE3o m\xE9dia")}</div>`;
   html+=`<div id="radar-carteira-wrap"></div>`;
+  html+=`<div id="visao5anos-wrap"></div>`;
+  html+=`<div id="top5carteira-wrap"></div>`;
 
   html+=`<div id="alertas-consolidados-wrap"></div>`;
   html+=`<div id="perdas-ocultas-wrap"></div>`;
@@ -705,6 +728,50 @@ async function carregarRadarCarteira(){
       if(!r.destaques.length&&!r.fracos.length)htmlD='<div style="color:var(--muted)">Desempenho próximo da média da carteira em todos os indicadores.</div>';
       destEl.innerHTML=htmlD;
     }
+    const visao5Wrap=document.getElementById("visao5anos-wrap");
+    if(visao5Wrap&&r.visao5anos&&r.visao5anos.length){
+      visao5Wrap.innerHTML=`<div class="chart-card">
+        <div class="chart-card-title">🔭 Visão 5 Anos</div>
+        <div class="chart-card-sub">Se sua fazenda seguisse na direção das top 5 fazendas da carteira em cada indicador</div>
+        ${r.visao5anos.map(m=>{
+          const pct=Math.min(100,Math.max(0,(m.current/m.meta5anos)*100));
+          const pctInverso=Math.min(100,Math.max(0,(m.meta5anos/m.current)*100));
+          const progresso=m.label.includes("Custo")?pctInverso:pct;
+          return `<div style="padding:10px 0;border-bottom:1px solid #f1f5f9">
+            <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;flex-wrap:wrap">
+              <span style="font-size:15px">${m.icon}</span>
+              <span style="font-size:12px;font-weight:700;flex:1;min-width:120px">${m.label}</span>
+              <span style="font-size:10.5px;color:var(--muted)">Hoje: <b style="color:var(--text)">${m.current.toFixed(m.dec)}</b> → Meta 5 anos: <b style="color:#15803d">${m.meta5anos.toFixed(m.dec)}</b></span>
+            </div>
+            <div style="background:#f1f5f9;border-radius:6px;height:9px;overflow:hidden">
+              <div style="width:${progresso.toFixed(0)}%;height:100%;background:linear-gradient(90deg,#0891b2,#15803d);border-radius:6px"></div>
+            </div>
+          </div>`;
+        }).join("")}
+        <div style="font-size:9.5px;color:var(--muted);margin-top:8px">📌 "Top 5" é a média das 5 fazendas com melhor desempenho nesse indicador na carteira Meta — sem expor quem são.</div>
+      </div>`;
+    }
+    const top5Wrap=document.getElementById("top5carteira-wrap");
+    if(top5Wrap&&r.top5Carteira&&r.top5Carteira.length){
+      top5Wrap.innerHTML=`<div class="chart-card">
+        <div class="chart-card-title">🏆 Top 5 da Carteira Meta</div>
+        <div class="chart-card-sub">O que as 5 melhores fazendas da carteira estão alcançando em cada indicador, comparado com você</div>
+        ${r.top5Carteira.map(m=>{
+          const temFazenda=m.valorFazenda!=null&&m.valorFazenda>0;
+          return `<div style="display:flex;justify-content:space-between;align-items:center;padding:9px 0;border-bottom:1px solid #f1f5f9">
+            <div style="display:flex;align-items:center;gap:8px">
+              <span style="font-size:15px">${m.icon}</span>
+              <span style="font-size:12px;font-weight:700">${m.label}</span>
+            </div>
+            <div style="text-align:right">
+              <div style="font-size:14px;font-weight:900;color:#15803d">${m.valor.toFixed(m.dec)}</div>
+              ${temFazenda?`<div style="font-size:9.5px;color:var(--muted)">você: ${m.valorFazenda.toFixed(m.dec)}</div>`:`<div style="font-size:9.5px;color:var(--muted)">sem seu dado</div>`}
+            </div>
+          </div>`;
+        }).join("")}
+        <div style="font-size:9.5px;color:var(--muted);margin-top:8px">📌 Média das 5 fazendas com melhor desempenho em cada indicador — sem expor quem são.</div>
+      </div>`;
+    }
   }catch(e){
     console.error("Erro ao carregar radar da carteira:",e);
   }
@@ -807,6 +874,18 @@ async function carregarAlertasConsolidados(){
       }
     });
   }catch(e){console.error("Erro ao checar forragem para alertas:",e)}
+  try{
+    const insSnap=await db.ref("estoque_insumos/"+farmId).once("value");
+    const insData=insSnap.val()||{};
+    for(const id of Object.keys(insData)){
+      const insumo=insData[id];
+      const consumoDiario=await calcConsumoDiarioInsumo(insumo.nome);
+      const{diasRestantes}=calcEstoqueAtualInsumo(insumo,consumoDiario);
+      if(diasRestantes!=null&&diasRestantes<=7){
+        alertas.push({icone:"📦",texto:"Estoque de "+insumo.nome+" acaba em "+Math.max(0,Math.round(diasRestantes))+" dia(s) — hora de pedir mais"});
+      }
+    }
+  }catch(e){console.error("Erro ao checar estoque de insumos para alertas:",e)}
   try{
     const cmSnap=await db.ref("consumo_ms/"+farmId).once("value");
     const porLote=cmSnap.val()||{};
@@ -1132,6 +1211,240 @@ async function atualizarBadgeAvisos(){
   }
 }
 
+function normalizarNomeInsumo(s){
+  return (s||"").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"").trim();
+}
+
+async function calcConsumoDiarioInsumo(nomeInsumo){
+  try{
+    const snap=await db.ref("dietas/"+farmId).once("value");
+    const data=snap.val();
+    const lotes=data&&data.lotes?Object.values(data.lotes):[];
+    const alvo=normalizarNomeInsumo(nomeInsumo);
+    let totalKgDia=0;
+    lotes.forEach(l=>{
+      const vacas=parseFloat(l.vacas)||0;
+      (l.alimentos||[]).forEach(a=>{
+        if(normalizarNomeInsumo(a.nome)===alvo){
+          totalKgDia+=(parseFloat(a.kg)||0)*vacas;
+        }
+      });
+    });
+    return totalKgDia;
+  }catch(e){
+    console.error("Erro ao calcular consumo diário do insumo:",e);
+    return 0;
+  }
+}
+
+function calcEstoqueAtualInsumo(insumo,consumoDiario){
+  const diasDesde=Math.max(0,Math.floor((Date.now()-new Date(insumo.data_registro+"T12:00:00").getTime())/864e5));
+  const consumido=diasDesde*consumoDiario;
+  const atual=Math.max(0,(insumo.saldo_kg||0)-consumido);
+  const diasRestantes=consumoDiario>0?atual/consumoDiario:null;
+  return{atual,diasRestantes};
+}
+
+async function renderInsumosScreen(){
+  const body=document.getElementById("insumos-body");
+  if(!body)return;
+  body.innerHTML=`
+    <div style="font-size:17px;font-weight:800;margin-bottom:4px">📦 Estoque de Insumos</div>
+    <div style="font-size:12px;color:var(--muted);margin-bottom:14px">Concentrados e núcleos comprados (não inclui silagem/volumoso — isso fica em "Forragem")</div>
+    <button class="btn-action btn-secondary" onclick="toggleFormInsumo()">➕ Registrar Entrada de Insumo</button>
+    <div id="form-insumo-wrap" style="display:none;margin-bottom:14px"></div>
+    <div id="insumos-content"><div style="text-align:center;padding:40px"><div class="mg-spinner"></div></div></div>
+  `;
+  try{
+    const snap=await db.ref("estoque_insumos/"+farmId).once("value");
+    const bruto=snap.val()||{};
+    _insumosCache=bruto;
+    const ids=Object.keys(bruto);
+    const cont=document.getElementById("insumos-content");
+    if(!ids.length){
+      cont.innerHTML=`<div class="chart-card" style="text-align:center;color:var(--muted);padding:30px 16px">Nenhum insumo cadastrado ainda. Toque em "Registrar Entrada" acima pra começar.</div>`;
+      return;
+    }
+    cont.innerHTML='<div style="text-align:center;padding:20px"><div class="mg-spinner"></div></div>';
+    const linhas=await Promise.all(ids.map(async(id)=>{
+      const insumo=bruto[id];
+      const consumoDiario=await calcConsumoDiarioInsumo(insumo.nome);
+      const{atual,diasRestantes}=calcEstoqueAtualInsumo(insumo,consumoDiario);
+      return{id,insumo,consumoDiario,atual,diasRestantes};
+    }));
+    cont.innerHTML=linhas.map(({id,insumo,consumoDiario,atual,diasRestantes})=>{
+      const cor=diasRestantes==null?"#64748b":diasRestantes<=7?"#dc2626":diasRestantes<=15?"#d97706":"#15803d";
+      return `<div class="chart-card" style="border-left:4px solid ${cor}">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start">
+          <div style="font-size:13px;font-weight:800">${insumo.nome}</div>
+          <span onclick="excluirInsumo('${id}')" style="cursor:pointer;color:#dc2626;font-size:11px">🗑️</span>
+        </div>
+        <div class="kpi-grid" style="margin-top:8px;margin-bottom:0">
+          <div class="kpi-card" style="--kpi-color:#0891b2"><div class="kpi-icon">📦</div><div class="kpi-val">${(atual/1000).toFixed(2)}t</div><div class="kpi-lbl">Estoque atual</div></div>
+          <div class="kpi-card" style="--kpi-color:${cor}"><div class="kpi-icon">📅</div><div class="kpi-val">${diasRestantes!=null?diasRestantes.toFixed(0):"—"}</div><div class="kpi-lbl">Dias restantes</div></div>
+        </div>
+        <div style="font-size:10.5px;color:var(--muted);margin-top:8px">Consumo: ${consumoDiario>0?consumoDiario.toFixed(1)+" kg/dia (dieta atual)":"não identificado na dieta atual"} · Última entrada: ${new Date(insumo.data_registro+"T12:00:00").toLocaleDateString("pt-BR")}</div>
+      </div>`;
+    }).join("");
+  }catch(e){
+    console.error("Erro ao carregar estoque de insumos:",e);
+    document.getElementById("insumos-content").innerHTML=`<div class="chart-card" style="text-align:center;color:#dc2626">Erro ao carregar dados.</div>`;
+  }
+}
+
+let _insumosCache={};
+function toggleFormInsumo(){
+  const wrap=document.getElementById("form-insumo-wrap");
+  if(!wrap)return;
+  const abrindo=wrap.style.display==="none";
+  wrap.style.display=abrindo?"block":"none";
+  if(abrindo)renderFormInsumo();
+}
+
+async function renderFormInsumo(){
+  const wrap=document.getElementById("form-insumo-wrap");
+  if(!wrap)return;
+  wrap.innerHTML='<div class="chart-card" style="text-align:center;padding:20px"><div class="mg-spinner"></div></div>';
+  const hoje=new Date().toISOString().slice(0,10);
+  let alimentosDieta=[];
+  try{
+    const snap=await db.ref("dietas/"+farmId).once("value");
+    const data=snap.val();
+    const lotes=data&&data.lotes?Object.values(data.lotes):[];
+    const nomesSet=new Set();
+    lotes.forEach(l=>(l.alimentos||[]).forEach(a=>{if(a.nome)nomesSet.add(a.nome)}));
+    alimentosDieta=[...nomesSet];
+  }catch(e){console.error("Erro ao buscar alimentos da dieta:",e)}
+  wrap.innerHTML=`
+    <div class="chart-card">
+      <div class="form-field"><label class="form-label">Qual alimento da dieta?</label>
+        <select class="form-input" id="ins-nome-sel" onchange="atualizarCampoNovoInsumo()">
+          ${alimentosDieta.length?alimentosDieta.map(n=>`<option value="${n}">${n}</option>`).join(""):""}
+          <option value="__outro__">Outro (não está na dieta atual)</option>
+        </select>
+      </div>
+      <div id="ins-nome-outro-wrap" style="display:${alimentosDieta.length?"none":"block"}">
+        <div class="form-field"><label class="form-label">Nome do insumo</label><input type="text" class="form-input" id="ins-nome-outro" placeholder="Ex: Núcleo Mineral"></div>
+        <div style="font-size:10.5px;color:var(--muted);margin-top:-6px;margin-bottom:12px">⚠️ Como não está na dieta atual, não vai ser possível calcular consumo diário nem dias restantes automaticamente pra esse insumo.</div>
+      </div>
+      <div class="form-field"><label class="form-label">Quantidade recebida (kg)</label><input type="number" step="0.1" class="form-input" id="ins-qtd" placeholder="Ex: 5000"></div>
+      <div class="form-field"><label class="form-label">Data do recebimento</label><input type="date" class="form-input" id="ins-data" value="${hoje}"></div>
+      <button class="btn-action btn-primary" style="margin-top:10px" onclick="salvarEntradaInsumo()">💾 Salvar Entrada</button>
+    </div>
+  `;
+}
+
+function atualizarCampoNovoInsumo(){
+  const sel=document.getElementById("ins-nome-sel");
+  const outroWrap=document.getElementById("ins-nome-outro-wrap");
+  if(sel&&outroWrap)outroWrap.style.display=sel.value==="__outro__"?"block":"none";
+}
+
+
+async function salvarEntradaInsumo(){
+  const sel=document.getElementById("ins-nome-sel")?.value;
+  const nome=sel==="__outro__"?document.getElementById("ins-nome-outro")?.value.trim():sel;
+  const qtd=parseFloat(document.getElementById("ins-qtd")?.value);
+  const data=document.getElementById("ins-data")?.value;
+  if(!nome||isNaN(qtd)||qtd<=0||!data){showToast("❌ Preencha nome, quantidade e data",true);return}
+  try{
+    const idExistente=Object.keys(_insumosCache).find(id=>normalizarNomeInsumo(_insumosCache[id].nome)===normalizarNomeInsumo(nome));
+    if(idExistente){
+      const insumoAtual=_insumosCache[idExistente];
+      const consumoDiario=await calcConsumoDiarioInsumo(insumoAtual.nome);
+      const{atual}=calcEstoqueAtualInsumo(insumoAtual,consumoDiario);
+      const novoSaldo=atual+qtd;
+      await db.ref("estoque_insumos/"+farmId+"/"+idExistente).update({saldo_kg:novoSaldo,data_registro:data,nome});
+      await db.ref("estoque_insumos/"+farmId+"/"+idExistente+"/historico").push({data,tipo:"entrada",quantidade_kg:qtd});
+    }else{
+      const novoRef=db.ref("estoque_insumos/"+farmId).push();
+      await novoRef.set({nome,saldo_kg:qtd,data_registro:data});
+      await novoRef.child("historico").push({data,tipo:"entrada",quantidade_kg:qtd});
+    }
+    showToast("✅ Entrada registrada!");
+    document.getElementById("form-insumo-wrap").style.display="none";
+    renderInsumosScreen();
+  }catch(e){
+    console.error("Erro ao salvar entrada de insumo:",e);
+    showToast("❌ Erro ao salvar: "+e.message,true);
+  }
+}
+
+async function excluirInsumo(id){
+  if(!confirm("Excluir esse insumo do controle de estoque? Isso não afeta a dieta, só para de rastrear o estoque dele."))return;
+  try{
+    await db.ref("estoque_insumos/"+farmId+"/"+id).remove();
+    showToast("✅ Removido do controle de estoque");
+    renderInsumosScreen();
+  }catch(e){
+    console.error("Erro ao excluir insumo:",e);
+    showToast("❌ Erro ao excluir",true);
+  }
+}
+
+async function renderTimelineScreen(){
+  const body=document.getElementById("timeline-body");
+  if(!body)return;
+  body.innerHTML=`
+    <div style="font-size:17px;font-weight:800;margin-bottom:4px">🗓️ Linha do Tempo</div>
+    <div style="font-size:12px;color:var(--muted);margin-bottom:14px">Tudo que aconteceu na sua fazenda, em ordem</div>
+    <div id="timeline-content"><div style="text-align:center;padding:40px"><div class="mg-spinner"></div></div></div>
+  `;
+  try{
+    const eventos=[];
+
+    const visSnap=await db.ref("visitas/"+farmId).once("value");
+    visSnap.forEach(child=>{
+      const v=child.val();
+      if(v.data)eventos.push({data:v.data,icone:"📋",titulo:"Visita técnica"+(v.tecnico?" — "+v.tecnico:""),detalhe:v.obs||""});
+    });
+
+    const logSnap=await db.ref("propriedades/"+farmId+"/log_atualizacoes").once("value");
+    logSnap.forEach(child=>{
+      const e=child.val();
+      if(!e.data)return;
+      const campos=Object.keys(e.campos||{}).filter(k=>k!=="ultima_atualizacao_por"&&k!=="atualizado_em");
+      if(campos.length)eventos.push({data:e.data.slice(0,10),icone:"✏️",titulo:"Você atualizou dados",detalhe:campos.join(", ")});
+    });
+
+    const bromSnap=await db.ref("bromatologia/"+farmId).once("value");
+    const bromData=bromSnap.val()||{};
+    Object.keys(bromData).forEach(tipoKey=>{
+      Object.keys(bromData[tipoKey]||{}).filter(k=>/^\d{4}-\d{2}-\d{2}$/.test(k)).forEach(dt=>{
+        eventos.push({data:dt,icone:"🔬",titulo:"Novo laudo de forragem",detalhe:bromData[tipoKey][dt].tipo||tipoKey});
+      });
+    });
+
+    const clSnap=await db.ref("controle_leiteiro/"+farmId).once("value");
+    const clData=clSnap.val()||{};
+    Object.keys(clData).filter(k=>/^\d{4}-\d{2}-\d{2}$/.test(k)).forEach(dt=>{
+      const n=(clData[dt].vacas||[]).length;
+      eventos.push({data:dt,icone:"🥛",titulo:"Controle leiteiro registrado",detalhe:n+" vaca(s)"});
+    });
+
+    const cont=document.getElementById("timeline-content");
+    if(!eventos.length){
+      cont.innerHTML=`<div class="chart-card" style="text-align:center;color:var(--muted);padding:30px 16px">Ainda não há atividade registrada.</div>`;
+      return;
+    }
+    eventos.sort((a,b)=>b.data.localeCompare(a.data));
+    const top=eventos.slice(0,40);
+    cont.innerHTML=`<div class="chart-card" style="padding:6px 16px">
+      ${top.map((e,i)=>`<div style="display:flex;gap:10px;padding:12px 0;${i<top.length-1?"border-bottom:1px solid #f1f5f9":""}">
+        <div style="font-size:18px">${e.icone}</div>
+        <div style="flex:1">
+          <div style="font-size:12.5px;font-weight:700">${e.titulo}</div>
+          ${e.detalhe?`<div style="font-size:11px;color:var(--muted);margin-top:2px">${e.detalhe}</div>`:""}
+        </div>
+        <div style="font-size:10.5px;color:var(--muted);white-space:nowrap">${new Date(e.data+"T12:00:00").toLocaleDateString("pt-BR")}</div>
+      </div>`).join("")}
+    </div>`;
+  }catch(e){
+    console.error("Erro ao montar linha do tempo:",e);
+    document.getElementById("timeline-content").innerHTML=`<div class="chart-card" style="text-align:center;color:#dc2626">Erro ao carregar dados.</div>`;
+  }
+}
+
 async function renderMeuHistoricoScreen(){
   const body=document.getElementById("meuhistorico-body");
   if(!body)return;
@@ -1371,15 +1684,19 @@ async function renderLeiteiroScreen(){
     cont.innerHTML=`
       ${datas.length>1?`<div class="chart-card" style="padding:12px 14px">
         <label class="form-label" style="margin-bottom:6px">📅 Ver controle de outra data</label>
-        <select class="form-input" id="leiteiro-data-sel" onchange="renderLeiteiroDispersao(this.value)">
+        <select class="form-input" id="leiteiro-data-sel" onchange="renderLeiteiroDispersao(this.value);renderLeiteiroTop5(this.value)">
           ${[...datas].reverse().map(d=>`<option value="${d}"${d===ultimaData?" selected":""}>${new Date(d+"T12:00:00").toLocaleDateString("pt-BR")}${d===ultimaData?" (mais recente)":""}</option>`).join("")}
         </select>
       </div>`:""}
       <div id="leiteiro-dispersao-wrap"></div>
+      <div id="leiteiro-top5-wrap"></div>
+      <div id="leiteiro-busca-wrap"></div>
       <div id="leiteiro-evolucao-wrap"></div>
       <div id="thi-wrap"></div>
     `;
     renderLeiteiroDispersao(ultimaData);
+    renderLeiteiroTop5(ultimaData);
+    renderLeiteiroBuscaForm();
     renderLeiteiroEvolucao();
     renderLeiteiroTHI();
   }catch(e){
@@ -1431,6 +1748,72 @@ function renderLeiteiroDispersao(dataEscolhida){
       y:{title:{display:true,text:"Litros/dia",font:{size:10}}}
     }
   });
+}
+
+function renderLeiteiroTop5(dataEscolhida){
+  const wrap=document.getElementById("leiteiro-top5-wrap");
+  if(!wrap||!_leiteiroDataCache)return;
+  const{data}=_leiteiroDataCache;
+  const registro=data[dataEscolhida];
+  const vacas=(registro.vacas||[]).filter(v=>v.litros>0);
+  if(vacas.length<3){wrap.innerHTML="";return}
+  const top5=[...vacas].sort((a,b)=>b.litros-a.litros).slice(0,5);
+  const medalhas=["🥇","🥈","🥉","4º","5º"];
+  wrap.innerHTML=`<div class="chart-card">
+    <div class="chart-card-title">🏆 Top 5 Vacas Mais Produtivas</div>
+    <div class="chart-card-sub">Do controle de ${new Date(dataEscolhida+"T12:00:00").toLocaleDateString("pt-BR")}</div>
+    ${top5.map((v,i)=>`<div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid #f1f5f9">
+      <div style="font-size:16px;width:26px;text-align:center">${medalhas[i]}</div>
+      <div style="flex:1"><div style="font-size:13px;font-weight:700">Vaca ${v.vaca}</div><div style="font-size:10.5px;color:var(--muted)">Lote ${v.lote||1}${v.del>0?" · DEL "+v.del+"d":""}</div></div>
+      <div style="font-size:15px;font-weight:900;color:#15803d">${v.litros.toFixed(1)}L</div>
+    </div>`).join("")}
+  </div>`;
+}
+
+function renderLeiteiroBuscaForm(){
+  const wrap=document.getElementById("leiteiro-busca-wrap");
+  if(!wrap)return;
+  wrap.innerHTML=`<div class="chart-card">
+    <div class="chart-card-title">🔍 Buscar Vaca</div>
+    <div class="chart-card-sub">Veja o histórico de produção de um animal específico</div>
+    <div style="display:flex;gap:8px">
+      <input type="text" class="form-input" id="leiteiro-busca-input" placeholder="Número da vaca" style="flex:1" onkeyup="if(event.key==='Enter')buscarVacaLeiteiro()">
+      <button onclick="buscarVacaLeiteiro()" style="background:#0891b2;color:white;border:none;border-radius:10px;padding:0 16px;font-weight:700;font-size:13px;cursor:pointer">Buscar</button>
+    </div>
+    <div id="leiteiro-busca-resultado" style="margin-top:10px"></div>
+  </div>`;
+}
+
+function buscarVacaLeiteiro(){
+  const input=document.getElementById("leiteiro-busca-input");
+  const resultWrap=document.getElementById("leiteiro-busca-resultado");
+  if(!input||!resultWrap||!_leiteiroDataCache)return;
+  const numeroBusca=input.value.trim();
+  if(!numeroBusca){resultWrap.innerHTML="";return}
+  const{data,datas}=_leiteiroDataCache;
+  const historico=[];
+  datas.forEach(dt=>{
+    const reg=data[dt];
+    const v=(reg.vacas||[]).find(x=>String(x.vaca).trim()===numeroBusca);
+    if(v)historico.push({data:dt,...v});
+  });
+  if(!historico.length){
+    resultWrap.innerHTML=`<div style="text-align:center;color:var(--muted);font-size:12px;padding:12px 0">Vaca ${numeroBusca} não encontrada em nenhum controle registrado.</div>`;
+    return;
+  }
+  const ultima=historico[historico.length-1];
+  const mediaHist=historico.filter(h=>h.litros>0).reduce((s,h,_,arr)=>s+h.litros/arr.length,0);
+  resultWrap.innerHTML=`
+    <div style="background:var(--surface2);border-radius:10px;padding:12px;margin-bottom:8px">
+      <div style="font-size:13px;font-weight:800">Vaca ${numeroBusca}</div>
+      <div style="font-size:11px;color:var(--muted);margin-top:2px">${historico.length} registro(s) · Lactação ${ultima.lactacao||"—"} · Média histórica: ${mediaHist>0?mediaHist.toFixed(1)+"L":"—"}</div>
+    </div>
+    ${[...historico].reverse().map(h=>`<div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid #f1f5f9;font-size:12px">
+      <span style="color:var(--muted)">${new Date(h.data+"T12:00:00").toLocaleDateString("pt-BR")}</span>
+      <span>${h.del>0?"DEL "+h.del+"d":""}</span>
+      <span style="font-weight:700">${h.litros>0?h.litros.toFixed(1)+"L":(h.obs||"sem produção")}</span>
+    </div>`).join("")}
+  `;
 }
 
 function renderLeiteiroEvolucao(){
@@ -1589,14 +1972,85 @@ async function renderConsumoScreen(){
 }
 
 // ═══ EVOLUÇÃO MÊS A MÊS ═══
+async function renderEvolucaoCombinada(){
+  const wrap=document.getElementById("evolucao-combinada-wrap");
+  if(!wrap)return;
+  try{
+    const pontos=[];
+    // Fonte 1: histórico de visitas técnicas
+    const histSnap=await db.ref("historico/"+farmId).once("value");
+    histSnap.forEach(child=>{
+      const e=child.val();
+      if(e.data&&e.media_prod>0)pontos.push({data:e.data,valor:parseFloat(e.media_prod),origem:"tecnico"});
+    });
+    // Fonte 2: lançamentos do próprio produtor
+    const logSnap=await db.ref("propriedades/"+farmId+"/log_atualizacoes").once("value");
+    logSnap.forEach(child=>{
+      const e=child.val();
+      if(e.data&&e.campos&&e.campos.media_prod>0)pontos.push({data:e.data.slice(0,10),valor:parseFloat(e.campos.media_prod),origem:"produtor"});
+    });
+    // Fonte 3: controles leiteiros (média do dia)
+    const clSnap=await db.ref("controle_leiteiro/"+farmId).once("value");
+    const clData=clSnap.val()||{};
+    Object.keys(clData).filter(k=>/^\d{4}-\d{2}-\d{2}$/.test(k)).forEach(dt=>{
+      const comLeite=(clData[dt].vacas||[]).filter(v=>v.litros>0);
+      if(comLeite.length)pontos.push({data:dt,valor:comLeite.reduce((s,v)=>s+v.litros,0)/comLeite.length,origem:"controle"});
+    });
+
+    if(pontos.length<2){wrap.innerHTML="";return}
+    pontos.sort((a,b)=>a.data.localeCompare(b.data));
+
+    const labels=pontos.map(p=>new Date(p.data+"T12:00:00").toLocaleDateString("pt-BR",{day:"2-digit",month:"2-digit",year:"2-digit"}));
+    const valores=pontos.map(p=>+p.valor.toFixed(1));
+    const coresPorOrigem={tecnico:"#2563eb",produtor:"#15803d",controle:"#7c3aed"};
+    const pointColors=pontos.map(p=>coresPorOrigem[p.origem]);
+
+    wrap.innerHTML=`<div class="chart-card">
+      <div class="chart-card-title">📊 Produção — Todos os Lançamentos e Controles</div>
+      <div class="chart-card-sub">🔵 Visita técnica · 🟢 Você mesmo atualizou · 🟣 Controle leiteiro</div>
+      <div style="height:240px"><canvas id="ch-evol-combinada"></canvas></div>
+    </div>`;
+    mkChart("ch-evol-combinada","line",{
+      labels,
+      datasets:[{
+        label:"Produção Média (L/vaca/dia)",
+        data:valores,
+        borderColor:"#94a3b8",
+        backgroundColor:"rgba(148,163,184,.06)",
+        borderWidth:2,
+        tension:.25,
+        pointRadius:5,
+        pointBackgroundColor:pointColors,
+        pointBorderColor:pointColors,
+        spanGaps:true
+      }]
+    },{
+      plugins:{
+        legend:{display:false},
+        tooltip:{callbacks:{label:ctx=>{
+          const p=pontos[ctx.dataIndex];
+          const origemLabel=p.origem==="tecnico"?"Visita técnica":p.origem==="produtor"?"Você atualizou":"Controle leiteiro";
+          return origemLabel+": "+p.valor.toFixed(1)+"L";
+        }}}
+      },
+      scales:{x:{ticks:{maxRotation:45,minRotation:45,font:{size:8}}},y:{title:{display:true,text:"L/vaca/dia",font:{size:9}}}}
+    });
+  }catch(e){
+    console.error("Erro ao montar evolução combinada:",e);
+    wrap.innerHTML="";
+  }
+}
+
 async function renderEvolucaoScreen(){
   const body=document.getElementById("evolucao-body");
   if(!body)return;
   body.innerHTML=`
     <div style="font-size:17px;font-weight:800;margin-bottom:4px">📈 Evolução Mês a Mês</div>
     <div style="font-size:12px;color:var(--muted);margin-bottom:14px">Histórico de produção e qualidade do leite ao longo do tempo</div>
+    <div id="evolucao-combinada-wrap"></div>
     <div id="evolucao-content"><div style="text-align:center;padding:40px"><div class="mg-spinner"></div></div></div>
   `;
+  renderEvolucaoCombinada();
   try{
     const snap=await db.ref("historico/"+farmId).once("value");
     const entradas=[];
@@ -1811,6 +2265,66 @@ async function renderForragemScreen(){
 }
 
 // ═══ QUALIDADE DA FORRAGEM (BROMATOLOGIA) ═══
+// ═══ CONFORTO TÉRMICO ═══
+async function renderConfortoScreen(){
+  const body=document.getElementById("conforto-body");
+  if(!body)return;
+  body.innerHTML=`
+    <div style="font-size:17px;font-weight:800;margin-bottom:4px">🌡️ Conforto Térmico</div>
+    <div style="font-size:12px;color:var(--muted);margin-bottom:14px">Último diagnóstico de conforto das instalações</div>
+    <div id="conforto-content"><div style="text-align:center;padding:40px"><div class="mg-spinner"></div></div></div>
+  `;
+  try{
+    const snap=await db.ref("conforto_termico/"+farmId).once("value");
+    const bruto=snap.val()||{};
+    const datas=Object.keys(bruto).filter(k=>/^\d{4}-\d{2}-\d{2}$/.test(k)).sort();
+    const cont=document.getElementById("conforto-content");
+    if(!datas.length){
+      cont.innerHTML=`<div class="chart-card" style="text-align:center;color:var(--muted);padding:30px 16px">Nenhum diagnóstico de conforto térmico registrado ainda.</div>`;
+      return;
+    }
+    const d=bruto[datas[datas.length-1]];
+    const climatizado=d.tipo_instalacao==="climatizado";
+    const ofegCor=d.pct_ofegante==null?"#94a3b8":d.pct_ofegante<10?"#15803d":d.pct_ofegante<25?"#d97706":"#dc2626";
+    const lotacaoPct=d.lotacao_vagas>0?(d.lotacao_vacas/d.lotacao_vagas*100):null;
+    const lotacaoCor=lotacaoPct==null?"#94a3b8":lotacaoPct<=100?"#15803d":lotacaoPct<=115?"#d97706":"#dc2626";
+    const empeCor=d.comportamento_pct_em_pe==null?"#94a3b8":d.comportamento_pct_em_pe<20?"#15803d":d.comportamento_pct_em_pe<35?"#d97706":"#dc2626";
+    cont.innerHTML=`
+      <div class="chart-card">
+        <div class="chart-card-title">${climatizado?"❄️ Instalação Climatizada":"🌬️ Instalação Aberta (Natural)"}</div>
+        <div class="chart-card-sub">Último diagnóstico: ${new Date(datas[datas.length-1]+"T12:00:00").toLocaleDateString("pt-BR")}</div>
+      </div>
+      <div class="kpi-grid">
+        <div class="kpi-card" style="--kpi-color:${ofegCor}">
+          <div class="kpi-icon">🫁</div>
+          <div class="kpi-val">${d.pct_ofegante!=null?d.pct_ofegante.toFixed(0)+"%":"—"}</div>
+          <div class="kpi-lbl">Vacas ofegantes</div>
+        </div>
+        <div class="kpi-card" style="--kpi-color:${lotacaoCor}">
+          <div class="kpi-icon">🐄</div>
+          <div class="kpi-val">${lotacaoPct!=null?lotacaoPct.toFixed(0)+"%":"—"}</div>
+          <div class="kpi-lbl">Lotação (vacas/vagas)</div>
+        </div>
+        <div class="kpi-card" style="--kpi-color:${empeCor}">
+          <div class="kpi-icon">🧍</div>
+          <div class="kpi-val">${d.comportamento_pct_em_pe!=null?d.comportamento_pct_em_pe.toFixed(0)+"%":"—"}</div>
+          <div class="kpi-lbl">Vacas em pé (descanso)</div>
+        </div>
+        <div class="kpi-card" style="--kpi-color:#0891b2">
+          <div class="kpi-icon">${climatizado?"🌡️":"💨"}</div>
+          <div class="kpi-val">${climatizado?(d.temp_interna_c!=null?d.temp_interna_c.toFixed(0)+"°C":"—"):(d.vento_ms!=null?d.vento_ms.toFixed(1)+"m/s":"—")}</div>
+          <div class="kpi-lbl">${climatizado?"Temperatura interna":"Ventilação"}</div>
+        </div>
+      </div>
+      <div class="chart-card" style="font-size:10.5px;color:var(--muted)">📌 % ofegante acima de 25% e vacas em pé acima de 35% do tempo são sinais de estresse térmico — vale conversar com seu técnico se estiver nessa faixa.</div>
+      ${d.observacoes?`<div class="chart-card"><div class="chart-card-title">Observações do Técnico</div><div style="font-size:12.5px;line-height:1.5">${d.observacoes}</div></div>`:""}
+    `;
+  }catch(e){
+    console.error("Erro ao carregar conforto térmico:",e);
+    document.getElementById("conforto-content").innerHTML=`<div class="chart-card" style="text-align:center;color:#dc2626">Erro ao carregar dados.</div>`;
+  }
+}
+
 async function renderBromatologiaScreen(){
   const body=document.getElementById("bromatologia-body");
   if(!body)return;
