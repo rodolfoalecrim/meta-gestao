@@ -18,6 +18,8 @@
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-functions-compat.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/chartjs-plugin-annotation/3.0.1/chartjs-plugin-annotation.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
 <style>
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
 :root{--bg:#f3f6f3;--surface:#fff;--surface2:#f8fafc;--border:#e2e8f0;--text:#0f172a;--muted:#64748b;--dim:#94a3b8;--G:#15803d;--GD:#052e16;--GM:#16a34a;--GL:#f0fdf4;--yellow:#d97706;--red:#dc2626;--blue:#2563eb;--shadow:0 2px 8px rgba(15,23,42,.06);--safe-top:env(safe-area-inset-top,0px);--safe-bot:env(safe-area-inset-bottom,0px)}
@@ -182,6 +184,11 @@ button:active{transform:scale(.96)}
       <div id="recria-body"></div>
     </div>
 
+    <!-- MEU HISTÓRICO -->
+    <div class="screen" id="screen-meuhistorico">
+      <div id="meuhistorico-body"></div>
+    </div>
+
     <!-- EVOLUÇÃO -->
     <div class="screen" id="screen-evolucao">
       <div id="evolucao-body"></div>
@@ -242,7 +249,7 @@ async function iniciar(){
     if(jaVerificado){
       abrirApp();
     }else{
-      document.getElementById("pin-farm-name").textContent=farmData.produtor||"Sua Fazenda";
+      document.getElementById("pin-farm-name").textContent=farmData.propriedade||farmData.produtor||"Sua Fazenda";
       document.getElementById("pin-screen").style.display="flex";
       document.getElementById("pin-input").focus();
     }
@@ -277,11 +284,12 @@ document.addEventListener("DOMContentLoaded",()=>{
 
 function abrirApp(){
   document.getElementById("app").style.display="flex";
-  document.getElementById("topbar-fazenda-nome").textContent=farmData.produtor||"";
+  document.getElementById("topbar-fazenda-nome").textContent=farmData.propriedade||farmData.produtor||"";
   db.ref("propriedades/"+farmId).on("value",snap=>{
     farmData=snap.val()||farmData;
     if(document.getElementById("screen-dash").classList.contains("active"))renderDashboard();
   });
+  db.ref("propriedades/"+farmId+"/produtor_acessos").push({data:new Date().toISOString()}).catch(e=>console.error("Erro ao registrar acesso:",e));
   carregarUltimaVisita();
   renderDashboard();
   sincronizarFilaOffline();
@@ -318,7 +326,7 @@ function navScreen(name){
   if(navBtn)navBtn.classList.add("active");
   else{
     // secondary screens (consumo, forragem, evolucao, edit) reached via "Mais" — highlight Mais
-    if(["consumo","forragem","evolucao","edit","bromatologia","reproducao","recria"].includes(name)){
+    if(["consumo","forragem","evolucao","edit","bromatologia","reproducao","recria","meuhistorico"].includes(name)){
       const maisBtn=document.getElementById("nav-mais");
       if(maisBtn)maisBtn.classList.add("active");
     }
@@ -337,6 +345,7 @@ function navScreen(name){
   if(name==="bromatologia")renderBromatologiaScreen();
   if(name==="reproducao")renderReproducaoScreen();
   if(name==="recria")renderRecriaScreen();
+  if(name==="meuhistorico")renderMeuHistoricoScreen();
   window.scrollTo(0,0);
 }
 
@@ -350,6 +359,7 @@ function renderMaisMenu(){
     <button class="btn-action btn-secondary" onclick="navScreen('bromatologia')">🔬 Qualidade da Forragem</button>
     <button class="btn-action btn-secondary" onclick="navScreen('reproducao')">🐄 Eficiência Reprodutiva</button>
     <button class="btn-action btn-secondary" onclick="navScreen('recria')">🐮 Recria</button>
+    <button class="btn-action btn-secondary" onclick="navScreen('meuhistorico')">📋 Meu Histórico de Atualizações</button>
     <button class="btn-action btn-secondary" onclick="navScreen('evolucao')">📈 Evolução Mês a Mês</button>
     <button class="btn-action btn-primary" style="margin-top:14px" onclick="navScreen('edit')">✏️ Atualizar Meus Dados</button>
   `;
@@ -385,7 +395,7 @@ function renderDashboard(){
   let html=`<div id="thi-previsao-wrap"></div>`;
 
   html+=`<div class="hero-card">
-    <div class="hero-title">👋 Olá, ${d.produtor||"produtor"}!</div>
+    <div class="hero-title">👋 Olá, ${d.propriedade||d.produtor||"produtor"}!</div>
     <div class="hero-sub">${d.cidade?d.cidade+" · ":""}${d.tecnico_titular?"Técnico: "+d.tecnico_titular:""}</div>
   </div>`;
 
@@ -426,7 +436,7 @@ function renderDashboard(){
     <div class="kpi-card" style="--kpi-color:#d97706">
       <div class="kpi-icon">📅</div>
       <div class="kpi-val">${del>0?del:"—"}</div>
-      <div class="kpi-lbl">DEL médio (dias)</div>
+      <div class="kpi-lbl">DEL médio (dias) <span onclick="explicarTermo('del')" style="cursor:pointer;color:#93c5fd">ⓘ</span></div>
     </div>
   </div>`;
 
@@ -449,18 +459,20 @@ function renderDashboard(){
     html+=`<div class="qual-card">
       <div class="qual-title">🔬 Qualidade do Leite</div>
       <div class="qual-grid" style="grid-template-columns:repeat(${[gordura,proteina,ccs,nul,cbt].filter(v=>v>0).length>3?3:[gordura,proteina,ccs,nul,cbt].filter(v=>v>0).length},1fr)">
-        ${gordura>0?`<div class="qual-item"><div class="qual-val" style="color:#b45309">${gordura.toFixed(2)}%</div><div class="qual-lbl">Gordura</div></div>`:""}
-        ${proteina>0?`<div class="qual-item"><div class="qual-val" style="color:#1d4ed8">${proteina.toFixed(2)}%</div><div class="qual-lbl">Proteína</div></div>`:""}
-        ${ccs>0?`<div class="qual-item"><div class="qual-val" style="color:${ccs<300?"#15803d":"#dc2626"}">${ccs.toFixed(0)}k</div><div class="qual-lbl">CCS</div></div>`:""}
-        ${nul>0?`<div class="qual-item"><div class="qual-val" style="color:${nul>=12&&nul<=18?"#15803d":"#d97706"}">${nul.toFixed(1)}</div><div class="qual-lbl">NUL</div></div>`:""}
-        ${cbt>0?`<div class="qual-item"><div class="qual-val" style="color:${cbt<100?"#15803d":"#dc2626"}">${cbt.toFixed(0)}k</div><div class="qual-lbl">CBT</div></div>`:""}
+        ${gordura>0?`<div class="qual-item"><div class="qual-val" style="color:#b45309">${gordura.toFixed(2)}%</div><div class="qual-lbl">Gordura <span onclick="explicarTermo('gordura')" style="cursor:pointer;color:#93c5fd">ⓘ</span></div></div>`:""}
+        ${proteina>0?`<div class="qual-item"><div class="qual-val" style="color:#1d4ed8">${proteina.toFixed(2)}%</div><div class="qual-lbl">Proteína <span onclick="explicarTermo('proteina')" style="cursor:pointer;color:#93c5fd">ⓘ</span></div></div>`:""}
+        ${ccs>0?`<div class="qual-item"><div class="qual-val" style="color:${ccs<300?"#15803d":"#dc2626"}">${ccs.toFixed(0)}k</div><div class="qual-lbl">CCS <span onclick="explicarTermo('ccs')" style="cursor:pointer;color:#93c5fd">ⓘ</span></div></div>`:""}
+        ${nul>0?`<div class="qual-item"><div class="qual-val" style="color:${nul>=12&&nul<=18?"#15803d":"#d97706"}">${nul.toFixed(1)}</div><div class="qual-lbl">NUL <span onclick="explicarTermo('nul')" style="cursor:pointer;color:#93c5fd">ⓘ</span></div></div>`:""}
+        ${cbt>0?`<div class="qual-item"><div class="qual-val" style="color:${cbt<100?"#15803d":"#dc2626"}">${cbt.toFixed(0)}k</div><div class="qual-lbl">CBT <span onclick="explicarTermo('cbt')" style="cursor:pointer;color:#93c5fd">ⓘ</span></div></div>`:""}
       </div>
     </div>`;
   }
 
   html+=renderUltimaVisitaHtml();
+  html+=`<div id="whatsapp-tecnico-wrap"></div>`;
 
   html+=`<button class="btn-action btn-primary" onclick="navScreen('edit')">✏️ Atualizar Meus Dados</button>`;
+  html+=`<button class="btn-action btn-secondary" onclick="gerarPDFResumoProdutor()">📄 Baixar Relatório em PDF</button>`;
 
   body.innerHTML=html;
   carregarAlertasConsolidados();
@@ -469,6 +481,7 @@ function renderDashboard(){
   carregarComparativoMensal();
   carregarColocacaoMeta();
   renderMetaPessoal();
+  carregarBotaoWhatsapp();
 }
 
 function calcScoreSaude(ccs,mediaProd){
@@ -631,7 +644,7 @@ async function carregarColocacaoMeta(){
     wrap.innerHTML=`<div class="chart-card" style="text-align:center;background:${cor}0d;border-color:${cor}55;margin-bottom:16px">
       <div style="font-size:11px;font-weight:800;color:${cor};text-transform:uppercase;margin-bottom:4px">🏆 Sua Colocação na Meta</div>
       <div style="font-size:15px;font-weight:800;color:var(--text)">${r.categoria}</div>
-      <div style="font-size:10.5px;color:var(--muted);margin-top:2px">Percentil ${r.percentil} entre ${r.totalFazendas} fazendas ativas — sem expor dados de ninguém</div>
+      <div style="font-size:10.5px;color:var(--muted);margin-top:2px">Percentil ${r.percentil} entre ${r.totalFazendas} fazendas da carteira com dados comparáveis</div>
     </div>`;
   }catch(e){
     console.error("Erro ao carregar colocação na Meta:",e);
@@ -740,6 +753,290 @@ async function carregarAlertasConsolidados(){
   </div>`;
 }
 
+function carregarLogoPDF(){return new Promise(resolve=>{const img=new Image;img.onload=()=>resolve(img);img.onerror=()=>resolve(null);img.src="meta_logo.jpg"})}
+
+async function gerarPDFResumoProdutor(){
+  showToast("📄 Gerando PDF...");
+  try{
+    const d=farmData;
+    const {jsPDF}=window.jspdf;
+    const doc=new jsPDF({unit:"mm",format:"a4"});
+    const pageW=doc.internal.pageSize.getWidth();
+    const margin=14;
+    let y=0;
+
+    const logoImg=await carregarLogoPDF();
+    if(logoImg){
+      try{doc.addImage(logoImg,"JPEG",margin,4,17,17)}catch(e){console.error(e)}
+    }
+    const textoX=logoImg?margin+20:margin;
+    doc.setTextColor(5,46,22);
+    doc.setFont("helvetica","bold");
+    doc.setFontSize(15);
+    doc.text("Meta Nutrição e Saúde Animal",textoX,11);
+    doc.setTextColor(89,89,89);
+    doc.setFont("helvetica","normal");
+    doc.setFontSize(10);
+    doc.text("Resumo da Propriedade",textoX,18);
+    const hoje=new Date().toLocaleDateString("pt-BR");
+    doc.setFontSize(8.5);
+    doc.text("Gerado em "+hoje,pageW-margin,25,{align:"right"});
+    doc.setDrawColor(21,128,61);
+    doc.setLineWidth(0.7);
+    doc.line(margin,28,pageW-margin,28);
+    y=36;
+
+    doc.setTextColor(20,20,20);
+    doc.setFont("helvetica","bold");
+    doc.setFontSize(13);
+    doc.text(d.propriedade||d.produtor||"—",margin,y);
+    y+=6;
+    doc.setFont("helvetica","normal");
+    doc.setFontSize(10);
+    const linha2=[d.produtor,d.cidade].filter(Boolean).join(" · ");
+    doc.text(linha2||"—",margin,y);
+    y+=8;
+    doc.setDrawColor(220,220,220);
+    doc.line(margin,y,pageW-margin,y);
+    y+=6;
+
+    doc.setFont("helvetica","bold");
+    doc.setFontSize(11);
+    doc.text("Situação Atual do Rebanho",margin,y);
+    y+=3;
+    const kpiRows=[
+      ["Vacas em Lactação",d.vacas||"—","Vacas Secas",d.secas||"—"],
+      ["Produção Média",d.media_prod>0?parseFloat(d.media_prod).toFixed(1)+" L":"—","DEL Médio",d.del||"—"],
+      ["Gordura",d.gordura>0?parseFloat(d.gordura).toFixed(2)+"%":"—","Proteína",d.proteina>0?parseFloat(d.proteina).toFixed(2)+"%":"—"],
+      ["CCS",d.ccs>0?d.ccs+" mil/mL":"—","NUL",d.nul>0?parseFloat(d.nul).toFixed(1)+" mg/dL":"—"]
+    ];
+    doc.autoTable({
+      startY:y,margin:{left:margin,right:margin},theme:"plain",
+      styles:{fontSize:9,cellPadding:1.8,textColor:[30,30,30]},
+      columnStyles:{0:{fontStyle:"bold",textColor:[80,80,80],cellWidth:38},2:{fontStyle:"bold",textColor:[80,80,80],cellWidth:38}},
+      body:kpiRows
+    });
+    y=doc.lastAutoTable.finalY+8;
+
+    let v=null;
+    try{
+      const snap=await db.ref("visitas/"+farmId).orderByChild("data").limitToLast(1).once("value");
+      snap.forEach(child=>v=child.val());
+    }catch(e){console.error("Erro ao buscar última visita para o PDF:",e)}
+
+    if(v){
+      if(y>230){doc.addPage();y=20}
+      doc.setFont("helvetica","bold");
+      doc.setFontSize(11);
+      doc.text("Última Visita Técnica",margin,y);
+      y+=5;
+      doc.setFont("helvetica","normal");
+      doc.setFontSize(9);
+      doc.setTextColor(90,90,90);
+      const dataVisita=v.data?new Date(v.data+"T12:00:00").toLocaleDateString("pt-BR"):"—";
+      doc.text("Data: "+dataVisita+"   |   Técnico: "+(v.tecnico||"—"),margin,y);
+      doc.setTextColor(20,20,20);
+      y+=6;
+
+      if(v.obs){
+        doc.setFont("helvetica","bold");
+        doc.setFontSize(9);
+        doc.text("Observações",margin,y);
+        y+=5;
+        doc.setFont("helvetica","normal");
+        doc.setFontSize(8.5);
+        const txt=doc.splitTextToSize(v.obs,pageW-margin*2);
+        doc.text(txt,margin,y);
+        y+=txt.length*4+5;
+      }
+      if(v.acoes){
+        if(y>260){doc.addPage();y=20}
+        doc.setFont("helvetica","bold");
+        doc.setFontSize(9);
+        doc.setTextColor(8,145,178);
+        doc.text("Ações para Próxima Visita",margin,y);
+        y+=5;
+        doc.setFont("helvetica","normal");
+        doc.setFontSize(8.5);
+        doc.setTextColor(20,20,20);
+        const txt=doc.splitTextToSize(v.acoes,pageW-margin*2);
+        doc.text(txt,margin,y);
+        y+=txt.length*4+5;
+      }
+      if(v.proxima_visita){
+        doc.setFont("helvetica","normal");
+        doc.setFontSize(8.5);
+        doc.text("Próxima visita prevista: "+new Date(v.proxima_visita+"T12:00:00").toLocaleDateString("pt-BR"),margin,y);
+        y+=8;
+      }
+
+      if(v.peneira&&v.peneira.pontosValidos>=2){
+        if(y>240){doc.addPage();y=20}
+        doc.setFont("helvetica","bold");
+        doc.setFontSize(10);
+        doc.text("Peneira Penn State — TMR",margin,y);
+        y+=3;
+        doc.autoTable({
+          startY:y,margin:{left:margin,right:margin},theme:"grid",
+          headStyles:{fillColor:[21,128,61],fontSize:8.5},
+          styles:{fontSize:8.5,cellPadding:2},
+          head:[["Camada","Média (%)","CV (%)","Situação"]],
+          body:[
+            ["Topo (19mm)",v.peneira.mediaTopo+"%","—","—"],
+            ["Meio (8mm)",v.peneira.mediaMeio+"%",v.peneira.cvMeio+"%",v.peneira.cvMeio>5?"Acima da meta":"Dentro da meta"],
+            ["Fundo",v.peneira.mediaFundo+"%",v.peneira.cvFundo+"%",v.peneira.cvFundo>5?"Acima da meta":"Dentro da meta"]
+          ]
+        });
+        y=doc.lastAutoTable.finalY+8;
+      }
+    }else{
+      doc.setFont("helvetica","italic");
+      doc.setFontSize(9);
+      doc.setTextColor(140,140,140);
+      doc.text("Nenhuma visita técnica registrada ainda.",margin,y);
+      doc.setTextColor(20,20,20);
+      y+=10;
+    }
+
+    try{
+      const dietaSnap=await db.ref("dietas/"+farmId).once("value");
+      const dietaData=dietaSnap.val();
+      const lotes=dietaData&&dietaData.lotes?Object.values(dietaData.lotes):[];
+      if(lotes.length){
+        if(y>220){doc.addPage();y=20}
+        doc.setFont("helvetica","bold");
+        doc.setFontSize(11);
+        doc.text("Dieta & Custos",margin,y);
+        y+=8;
+        let totalCusto=0,totalVacasD=0;
+        lotes.forEach(l=>{
+          const vacasL=parseFloat(l.vacas)||0;
+          const prodL=parseFloat(l.prod)||0;
+          const custoPorVaca=(l.alimentos||[]).reduce((s,a)=>s+(parseFloat(a.kg)||0)*(parseFloat(a.custo)||0),0);
+          totalCusto+=custoPorVaca*vacasL;
+          totalVacasD+=vacasL;
+          if(y>250){doc.addPage();y=20}
+          doc.setFont("helvetica","bold");
+          doc.setFontSize(9.5);
+          doc.text((l.nomeDieta||l.nome||"Lote")+" — "+vacasL+" vacas · "+prodL+" L/vaca/dia",margin,y);
+          y+=3;
+          const alimRows=(l.alimentos||[]).filter(a=>parseFloat(a.kg)>0).map(a=>[
+            a.nome||"—",
+            (parseFloat(a.kg)||0).toFixed(2)+" kg",
+            "R$ "+(parseFloat(a.custo)||0).toFixed(2),
+            "R$ "+((parseFloat(a.kg)||0)*(parseFloat(a.custo)||0)).toFixed(2)
+          ]);
+          if(alimRows.length){
+            doc.autoTable({
+              startY:y,margin:{left:margin,right:margin},theme:"striped",
+              headStyles:{fillColor:[21,128,61],fontSize:8},
+              styles:{fontSize:8,cellPadding:1.6},
+              head:[["Alimento","Kg/vaca/dia","R$/kg","Custo/vaca/dia"]],
+              body:alimRows,
+              foot:[["Custo/vaca/dia total","","","R$ "+custoPorVaca.toFixed(2)]],
+              footStyles:{fillColor:[240,253,244],textColor:[21,128,61],fontStyle:"bold",fontSize:8}
+            });
+            y=doc.lastAutoTable.finalY+8;
+          }
+        });
+        const cvd=totalVacasD>0?totalCusto/totalVacasD:0;
+        if(y>250){doc.addPage();y=20}
+        doc.setFillColor(240,253,244);
+        doc.roundedRect(margin,y,pageW-margin*2,12,2,2,"F");
+        doc.setFont("helvetica","bold");
+        doc.setFontSize(9.5);
+        doc.setTextColor(21,128,61);
+        doc.text("Custo Médio da Dieta: R$ "+cvd.toFixed(2)+" / vaca / dia",margin+4,y+7.5);
+        doc.setTextColor(20,20,20);
+        y+=18;
+      }
+    }catch(e){console.error("Erro ao carregar dieta para o PDF:",e)}
+
+    doc.setFont("helvetica","italic");
+    doc.setFontSize(7.5);
+    doc.setTextColor(140,140,140);
+    doc.text("Meta Gestão — Nutrição e Saúde Animal",margin,290);
+
+    doc.save("Resumo_"+(d.propriedade||d.produtor||"Fazenda").replace(/[^a-zA-Z0-9]/g,"_")+"_"+new Date().toISOString().slice(0,10)+".pdf");
+    showToast("✅ PDF gerado!");
+  }catch(e){
+    console.error("Erro ao gerar PDF:",e);
+    showToast("❌ Erro ao gerar PDF: "+e.message,true);
+  }
+}
+
+async function carregarBotaoWhatsapp(){
+  const wrap=document.getElementById("whatsapp-tecnico-wrap");
+  if(!wrap)return;
+  const tecnico=farmData.tecnico_titular;
+  if(!tecnico){wrap.innerHTML="";return}
+  try{
+    const snap=await db.ref("tecnicos_config/"+tecnico).once("value");
+    const cfg=snap.val()||{};
+    const fone=(cfg.telefone||"").replace(/\D/g,"");
+    if(!fone){wrap.innerHTML="";return}
+    const msg=encodeURIComponent("Olá "+tecnico+"! Aqui é "+(farmData.produtor||"produtor")+" da fazenda "+(farmData.propriedade||"")+".");
+    wrap.innerHTML=`<a href="https://wa.me/${fone}?text=${msg}" target="_blank" class="btn-action" style="background:#25D366;color:white;text-decoration:none;box-sizing:border-box">💬 Falar com ${tecnico} no WhatsApp</a>`;
+  }catch(e){
+    console.error("Erro ao carregar contato do técnico:",e);
+    wrap.innerHTML="";
+  }
+}
+
+function explicarTermo(termo){
+  const explicacoes={
+    ccs:"CCS (Contagem de Células Somáticas) mede a saúde da glândula mamária. Quanto menor, melhor — valores altos indicam risco de mastite subclínica.",
+    nul:"NUL (Nitrogênio Ureico no Leite) mostra o aproveitamento de proteína da dieta. Faixa ideal costuma ficar entre 12 e 18.",
+    cbt:"CBT (Contagem Bacteriana Total) mede a limpeza da ordenha e do resfriamento do leite. Quanto menor, melhor.",
+    gordura:"% de gordura do leite — junto com a proteína, define a qualidade do leite entregue e pode influenciar o preço pago.",
+    proteina:"% de proteína do leite — indicador de qualidade nutricional e também pode influenciar o preço pago pelo laticínio.",
+    del:"DEL (Dias em Lactação) é há quantos dias a vaca pariu. Vacas com DEL muito alto (bem acima de 180-200 dias) já deveriam estar sendo preparadas pra secagem.",
+    gmd:"GMD (Ganho Médio Diário) é o quanto o animal está ganhando de peso por dia, em gramas. Ajuda a acompanhar se a recria está indo bem."
+  };
+  const texto=explicacoes[termo]||"Sem explicação disponível pra esse termo.";
+  alert(texto);
+}
+
+async function renderMeuHistoricoScreen(){
+  const body=document.getElementById("meuhistorico-body");
+  if(!body)return;
+  body.innerHTML=`
+    <div style="font-size:17px;font-weight:800;margin-bottom:4px">📋 Meu Histórico de Atualizações</div>
+    <div style="font-size:12px;color:var(--muted);margin-bottom:14px">O que você já lançou por aqui e quando</div>
+    <div id="meuhistorico-content"><div style="text-align:center;padding:40px"><div class="mg-spinner"></div></div></div>
+  `;
+  const camposLabel={
+    vacas:"Vacas em lactação",secas:"Vacas secas",media_prod:"Produção média",
+    del:"DEL médio",gordura:"Gordura",proteina:"Proteína",ccs:"CCS"
+  };
+  try{
+    const snap=await db.ref("propriedades/"+farmId+"/log_atualizacoes").limitToLast(30).once("value");
+    const entradas=[];
+    snap.forEach(child=>entradas.push(child.val()));
+    entradas.reverse();
+    const cont=document.getElementById("meuhistorico-content");
+    if(!entradas.length){
+      cont.innerHTML=`<div class="chart-card" style="text-align:center;color:var(--muted);padding:30px 16px">Você ainda não lançou nenhuma atualização por aqui.</div>`;
+      return;
+    }
+    cont.innerHTML=entradas.map(e=>{
+      const dt=new Date(e.data);
+      const dataFmt=dt.toLocaleDateString("pt-BR")+" às "+dt.toLocaleTimeString("pt-BR",{hour:"2-digit",minute:"2-digit"});
+      const camposTxt=Object.keys(e.campos||{})
+        .filter(k=>camposLabel[k])
+        .map(k=>camposLabel[k]+": "+e.campos[k])
+        .join(" · ");
+      return `<div class="chart-card" style="padding:12px 14px">
+        <div style="font-size:11px;color:var(--muted);font-weight:700">${dataFmt}</div>
+        <div style="font-size:12.5px;margin-top:4px">${camposTxt||"Atualização registrada"}</div>
+      </div>`;
+    }).join("");
+  }catch(e){
+    console.error("Erro ao carregar meu histórico:",e);
+    document.getElementById("meuhistorico-content").innerHTML=`<div class="chart-card" style="text-align:center;color:#dc2626">Erro ao carregar dados.</div>`;
+  }
+}
+
 function renderUltimaVisitaHtml(){
   if(!ultimaVisita){
     return `<div class="visita-card"><div class="visita-hdr">📋 Última Visita Técnica</div><div class="visita-body" style="color:var(--muted);font-size:12.5px">Nenhuma visita registrada ainda.</div></div>`;
@@ -829,6 +1126,7 @@ async function salvarDadosProdutor(){
 
   try{
     await db.ref("propriedades/"+farmId).update(upd);
+    db.ref("propriedades/"+farmId+"/log_atualizacoes").push({data:new Date().toISOString(),campos:upd}).catch(e=>console.error("Erro ao registrar log de atualização:",e));
     farmData={...farmData,...upd};
     showToast("✅ Dados atualizados!");
     navScreen("dash");
@@ -864,6 +1162,7 @@ async function sincronizarFilaOffline(){
   for(const item of fila){
     try{
       await db.ref("propriedades/"+item.farmId).update(item.upd);
+      db.ref("propriedades/"+item.farmId+"/log_atualizacoes").push({data:new Date().toISOString(),campos:item.upd}).catch(e=>console.error("Erro ao registrar log de atualização:",e));
     }catch(e){
       console.error("Erro ao sincronizar item da fila offline:",e);
       restantes.push(item);
@@ -1521,7 +1820,7 @@ async function renderRecriaScreen(){
         <div class="kpi-card" style="--kpi-color:${gmdCor}">
           <div class="kpi-icon">⚖️</div>
           <div class="kpi-val">${gmdMedio!=null?gmdMedio.toFixed(0):"—"}</div>
-          <div class="kpi-lbl">GMD médio (g/dia)</div>
+          <div class="kpi-lbl">GMD médio (g/dia) <span onclick="explicarTermo('gmd')" style="cursor:pointer;color:#93c5fd">ⓘ</span></div>
         </div>
       </div>
       <div class="chart-card" style="text-align:center;color:var(--muted);font-size:11.5px;margin-bottom:14px">Meta de referência: 700–800 g/dia</div>
