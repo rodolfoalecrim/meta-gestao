@@ -16,6 +16,7 @@
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/chartjs-plugin-annotation/3.0.1/chartjs-plugin-annotation.min.js"></script>
 <style>
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
 :root{--bg:#f3f6f3;--surface:#fff;--surface2:#f8fafc;--border:#e2e8f0;--text:#0f172a;--muted:#64748b;--dim:#94a3b8;--G:#15803d;--GD:#052e16;--GM:#16a34a;--GL:#f0fdf4;--yellow:#d97706;--red:#dc2626;--blue:#2563eb;--shadow:0 2px 8px rgba(15,23,42,.06);--safe-top:env(safe-area-inset-top,0px);--safe-bot:env(safe-area-inset-bottom,0px)}
@@ -268,6 +269,8 @@ function abrirApp(){
   });
   carregarUltimaVisita();
   renderDashboard();
+  sincronizarFilaOffline();
+  atualizarBadgeFilaOffline();
 }
 
 function navScreen(name){
@@ -340,12 +343,27 @@ function renderDashboard(){
   const cbt=parseFloat(d.cbt)||0;
   const prodCol=mediaProd>=37?"#15803d":mediaProd>=28?"#d97706":"#dc2626";
 
-  let html=`<div class="hero-card">
+  let html=`<div id="thi-previsao-wrap"></div>`;
+
+  html+=`<div class="hero-card">
     <div class="hero-title">👋 Olá, ${d.produtor||"produtor"}!</div>
     <div class="hero-sub">${d.cidade?d.cidade+" · ":""}${d.tecnico_titular?"Técnico: "+d.tecnico_titular:""}</div>
   </div>`;
 
+  const scoreSaude=calcScoreSaude(ccs>0?ccs:null,mediaProd>0?mediaProd:null);
+  if(scoreSaude!=null){
+    const scCor=scoreSaude>=80?"#15803d":scoreSaude>=60?"#2563eb":"#d97706";
+    html+=`<div class="chart-card" style="border-left:5px solid ${scCor};display:flex;align-items:center;gap:14px;margin-bottom:16px">
+      <div style="font-size:34px;font-weight:900;color:${scCor}">${scoreSaude}<span style="font-size:14px;color:var(--muted);font-weight:700">/100</span></div>
+      <div>
+        <div style="font-size:12.5px;font-weight:800">Score de Saúde Meta</div>
+        <div style="font-size:10.5px;color:var(--muted)">Combina CCS e produção média</div>
+      </div>
+    </div>`;
+  }
+
   html+=`<div id="alertas-consolidados-wrap"></div>`;
+  html+=`<div id="perdas-ocultas-wrap"></div>`;
 
   html+=`<div class="kpi-grid">
     <div class="kpi-card" style="--kpi-color:${prodCol}">
@@ -404,6 +422,114 @@ function renderDashboard(){
 
   body.innerHTML=html;
   carregarAlertasConsolidados();
+  verificarTHIPrevisao();
+  carregarPerdasOcultas();
+}
+
+function calcScoreSaude(ccs,mediaProd){
+  if(ccs==null&&mediaProd==null)return null;
+  let score=100;
+  if(ccs!=null){
+    if(ccs>400)score-=30;
+    else if(ccs>200)score-=15;
+  }
+  if(mediaProd!=null){
+    if(mediaProd<25)score-=20;
+    else if(mediaProd>=35)score+=10;
+  }
+  return Math.max(0,Math.min(100,Math.round(score)));
+}
+
+// Tabela de perda por CCS — referência pública consolidada (baseada em Hortet & Seegers 1998
+// e material técnico usado amplamente no setor leiteiro brasileiro). Ajustável se a Meta tiver
+// uma tabela própria.
+function pctPerdaPorCCS(ccs){
+  if(ccs==null||ccs<=200)return 0;
+  if(ccs<=400)return .06;
+  if(ccs<=800)return .09;
+  if(ccs<=1600)return .12;
+  return .15;
+}
+// Perda por DEL — 85 mL/dia (ponto médio de 80–90 mL) por dia acima de 180 dias em lactação.
+const PERDA_ML_POR_DIA_DEL=85;
+const DEL_REFERENCIA_PERDA=180;
+
+async function carregarPerdasOcultas(){
+  const wrap=document.getElementById("perdas-ocultas-wrap");
+  if(!wrap)return;
+  const d=farmData||{};
+  const ccs=parseFloat(d.ccs)||null;
+  const del=parseFloat(d.del)||null;
+  const vacas=parseFloat(d.vacas)||0;
+  const mediaProd=parseFloat(d.media_prod)||0;
+  if(!vacas||(!ccs&&!del)){wrap.innerHTML="";return}
+  let precoLitro=null;
+  try{
+    const fnSnap=await db.ref("financeiro/"+farmId).once("value");
+    const fnData=fnSnap.val()||{};
+    const fnDatas=Object.keys(fnData).filter(k=>/^\d{4}-\d{2}-\d{2}$/.test(k)).sort();
+    if(fnDatas.length)precoLitro=parseFloat(fnData[fnDatas[fnDatas.length-1]].preco_litro)||null;
+  }catch(e){console.error("Erro ao buscar preço do litro para estimativa de perdas:",e)}
+
+  const itens=[];
+  if(ccs!=null&&mediaProd>0){
+    const pct=pctPerdaPorCCS(ccs);
+    if(pct>0){
+      const litrosDia=mediaProd*vacas*pct;
+      itens.push({icone:"🩸",titulo:"Perda estimada por CCS alta ("+ccs.toFixed(0)+"k)",litrosDia});
+    }
+  }
+  if(del!=null&&del>DEL_REFERENCIA_PERDA){
+    const litrosDia=(del-DEL_REFERENCIA_PERDA)*(PERDA_ML_POR_DIA_DEL/1000)*vacas;
+    itens.push({icone:"📅",titulo:"Perda estimada por DEL acima de "+DEL_REFERENCIA_PERDA+"d",litrosDia});
+  }
+  if(!itens.length){wrap.innerHTML="";return}
+  wrap.innerHTML=`<div class="chart-card" style="background:#fef2f2;border-color:#fecaca;margin-bottom:16px">
+    <div style="font-size:11px;font-weight:800;color:#991b1b;text-transform:uppercase;margin-bottom:8px">💸 Perdas Ocultas Estimadas</div>
+    ${itens.map(it=>{
+      const litrosMes=it.litrosDia*30;
+      const valorTxt=precoLitro>0?" · R$ "+(it.litrosDia*precoLitro).toFixed(0)+"/dia (≈R$ "+(litrosMes*precoLitro).toFixed(0)+"/mês)":"";
+      return `<div style="padding:6px 0;font-size:12.5px;color:#7f1d1d"><b>${it.icone} ${it.titulo}:</b> ${it.litrosDia.toFixed(1)} L/dia${valorTxt}</div>`;
+    }).join("")}
+    <div style="font-size:9.5px;color:#991b1b;opacity:.75;margin-top:6px">Estimativa baseada em referência técnica pública — não substitui o diagnóstico do seu técnico.</div>
+  </div>`;
+}
+
+async function verificarTHIPrevisao(){
+  const wrap=document.getElementById("thi-previsao-wrap");
+  if(!wrap)return;
+  const lat=parseFloat(farmData.lat);
+  const lng=parseFloat(farmData.lng);
+  if(!lat||!lng){wrap.innerHTML="";return}
+  try{
+    const url="https://api.open-meteo.com/v1/forecast?latitude="+lat+"&longitude="+lng+"&daily=temperature_2m_mean,relative_humidity_2m_mean&forecast_days=3&timezone=America%2FSao_Paulo";
+    const res=await fetch(url);
+    const json=await res.json();
+    if(!json||!json.daily||!json.daily.time){wrap.innerHTML="";return}
+    let maxThi=0,diaMax="";
+    json.daily.time.forEach((dt,i)=>{
+      const t=json.daily.temperature_2m_mean[i];
+      const rh=json.daily.relative_humidity_2m_mean?json.daily.relative_humidity_2m_mean[i]:null;
+      const thi=calcTHI(t,rh);
+      if(thi!=null&&thi>maxThi){maxThi=thi;diaMax=dt}
+    });
+    if(maxThi>=72){
+      wrap.innerHTML=`<div class="chart-card" style="background:#fff7ed;border-color:#fdba74;margin-bottom:16px">
+        <div style="display:flex;gap:10px;align-items:flex-start">
+          <div style="font-size:22px">🌡️</div>
+          <div>
+            <div style="font-size:12.5px;font-weight:800;color:#9a3412">Estresse térmico previsto — ${new Date(diaMax+"T12:00:00").toLocaleDateString("pt-BR",{weekday:"long"})}</div>
+            <div style="font-size:11.5px;color:#9a3412;margin-top:2px">THI previsto de ${maxThi.toFixed(0)} — vale ativar aspersão/ventilação preventivamente antes do calor chegar.</div>
+          </div>
+        </div>
+      </div>`;
+    }else{
+      wrap.innerHTML="";
+    }
+  }catch(e){
+    console.error("Erro ao buscar previsão de THI:",e);
+    wrap.innerHTML="";
+  }
 }
 
 async function carregarAlertasConsolidados(){
@@ -493,7 +619,8 @@ function renderEditForm(){
   if(!body)return;
   body.innerHTML=`
     <div style="font-size:17px;font-weight:800;margin-bottom:4px">✏️ Atualizar Meus Dados</div>
-    <div style="font-size:12px;color:var(--muted);margin-bottom:18px">Preencha só o que você tiver de novo hoje — o resto continua como estava.</div>
+    <div style="font-size:12px;color:var(--muted);margin-bottom:10px">Preencha só o que você tiver de novo hoje — o resto continua como estava.</div>
+    <div id="fila-offline-badge" style="font-size:11px;font-weight:700;color:#d97706;margin-bottom:14px"></div>
 
     <div class="form-section">🐄 Rebanho</div>
     <div class="form-field"><label class="form-label">Vacas em lactação</label><input type="number" class="form-input" id="pf-vacas" value="${d.vacas||""}"></div>
@@ -511,6 +638,7 @@ function renderEditForm(){
     <button class="btn-action btn-primary" id="pf-save-btn" onclick="salvarDadosProdutor()">💾 Salvar Atualização</button>
     <button class="btn-action btn-secondary" onclick="navScreen('dash')">◀ Voltar</button>
   `;
+  atualizarBadgeFilaOffline();
 }
 
 async function salvarDadosProdutor(){
@@ -539,19 +667,64 @@ async function salvarDadosProdutor(){
   const btn=document.getElementById("pf-save-btn");
   btn.disabled=true;
   btn.textContent="Salvando...";
+
+  if(!navigator.onLine){
+    guardarNaFilaOffline(upd);
+    farmData={...farmData,...upd};
+    showToast("📶 Sem internet — salvo no celular, será enviado quando voltar o sinal");
+    btn.disabled=false;
+    btn.textContent="💾 Salvar Atualização";
+    navScreen("dash");
+    return;
+  }
+
   try{
     await db.ref("propriedades/"+farmId).update(upd);
     farmData={...farmData,...upd};
     showToast("✅ Dados atualizados!");
     navScreen("dash");
   }catch(e){
-    console.error("Erro ao salvar:",e);
-    showToast("❌ Erro ao salvar: "+e.message,true);
+    console.error("Erro ao salvar, guardando na fila offline:",e);
+    guardarNaFilaOffline(upd);
+    farmData={...farmData,...upd};
+    showToast("📶 Não consegui enviar agora — salvo no celular, tento de novo automaticamente");
+    navScreen("dash");
   }finally{
     btn.disabled=false;
     btn.textContent="💾 Salvar Atualização";
   }
 }
+
+const FILA_OFFLINE_KEY="meta_produtor_fila_offline";
+function guardarNaFilaOffline(upd){
+  const fila=JSON.parse(localStorage.getItem(FILA_OFFLINE_KEY)||"[]");
+  fila.push({farmId,upd,ts:Date.now()});
+  localStorage.setItem(FILA_OFFLINE_KEY,JSON.stringify(fila));
+  atualizarBadgeFilaOffline();
+}
+function atualizarBadgeFilaOffline(){
+  const fila=JSON.parse(localStorage.getItem(FILA_OFFLINE_KEY)||"[]").filter(item=>item.farmId===farmId);
+  const badge=document.getElementById("fila-offline-badge");
+  if(badge)badge.textContent=fila.length?fila.length+" atualização(ões) aguardando envio":"";
+}
+async function sincronizarFilaOffline(){
+  if(!navigator.onLine)return;
+  let fila=JSON.parse(localStorage.getItem(FILA_OFFLINE_KEY)||"[]");
+  if(!fila.length)return;
+  const restantes=[];
+  for(const item of fila){
+    try{
+      await db.ref("propriedades/"+item.farmId).update(item.upd);
+    }catch(e){
+      console.error("Erro ao sincronizar item da fila offline:",e);
+      restantes.push(item);
+    }
+  }
+  localStorage.setItem(FILA_OFFLINE_KEY,JSON.stringify(restantes));
+  atualizarBadgeFilaOffline();
+  if(restantes.length<fila.length&&restantes.length===0)showToast("✅ Atualizações pendentes enviadas com sucesso!");
+}
+window.addEventListener("online",sincronizarFilaOffline);
 
 let chartInstances={};
 let TEMP_CACHE={};
@@ -591,114 +764,183 @@ function mkChart(id,type,data,options){
 }
 
 // ═══ CONTROLE LEITEIRO ═══
+let _leiteiroDataCache=null;
 async function renderLeiteiroScreen(){
   const body=document.getElementById("leiteiro-body");
   if(!body)return;
   body.innerHTML=`
     <div style="font-size:17px;font-weight:800;margin-bottom:4px">🥛 Controle Leiteiro</div>
-    <div style="font-size:12px;color:var(--muted);margin-bottom:14px">Produção × DEL do último controle registrado, por lote</div>
+    <div style="font-size:12px;color:var(--muted);margin-bottom:14px">Produção × DEL, por lote, com as médias da fazenda</div>
     <div id="leiteiro-content"><div style="text-align:center;padding:40px"><div class="mg-spinner"></div></div></div>
   `;
   try{
     const snap=await db.ref("controle_leiteiro/"+farmId).once("value");
     const data=snap.val()||{};
     const datas=Object.keys(data).filter(k=>/^\d{4}-\d{2}-\d{2}$/.test(k)).sort();
+    _leiteiroDataCache={data,datas};
     const cont=document.getElementById("leiteiro-content");
     if(!datas.length){
       cont.innerHTML=`<div class="chart-card" style="text-align:center;color:var(--muted);padding:30px 16px">Nenhum controle leiteiro registrado ainda pra essa fazenda.</div>`;
       return;
     }
     const ultimaData=datas[datas.length-1];
-    const registro=data[ultimaData];
-    const vacas=(registro.vacas||[]).filter(v=>v.litros>0&&v.del>0);
-    if(!vacas.length){
-      cont.innerHTML=`<div class="chart-card" style="text-align:center;color:var(--muted);padding:30px 16px">O último controle (${new Date(ultimaData+"T12:00:00").toLocaleDateString("pt-BR")}) não tem dados de produção suficientes pra montar o gráfico.</div>`;
-      return;
-    }
-    const mediaGeral=vacas.reduce((s,v)=>s+v.litros,0)/vacas.length;
-    const lotes=[...new Set(vacas.map(v=>v.lote||1))].sort((a,b)=>a-b);
-    const cores=["#15803d","#0891b2","#7c3aed","#d97706","#dc2626","#db2777"];
-    const datasets=lotes.map((lote,i)=>({
-      label:"Lote "+lote,
-      data:vacas.filter(v=>(v.lote||1)===lote).map(v=>({x:v.del,y:v.litros})),
-      backgroundColor:cores[i%cores.length]+"cc",
-      borderColor:"white",
-      borderWidth:1,
-      pointRadius:6
-    }));
     cont.innerHTML=`
-      <div class="chart-card">
-        <div class="chart-card-title">Dispersão — Produção (L) × DEL (dias)</div>
-        <div class="chart-card-sub">Controle de ${new Date(ultimaData+"T12:00:00").toLocaleDateString("pt-BR")} · ${vacas.length} vacas · média ${mediaGeral.toFixed(1)} L</div>
-        <div style="height:280px"><canvas id="ch-leiteiro-scatter"></canvas></div>
-      </div>
+      ${datas.length>1?`<div class="chart-card" style="padding:12px 14px">
+        <label class="form-label" style="margin-bottom:6px">📅 Ver controle de outra data</label>
+        <select class="form-input" id="leiteiro-data-sel" onchange="renderLeiteiroDispersao(this.value)">
+          ${[...datas].reverse().map(d=>`<option value="${d}"${d===ultimaData?" selected":""}>${new Date(d+"T12:00:00").toLocaleDateString("pt-BR")}${d===ultimaData?" (mais recente)":""}</option>`).join("")}
+        </select>
+      </div>`:""}
+      <div id="leiteiro-dispersao-wrap"></div>
+      <div id="leiteiro-evolucao-wrap"></div>
+      <div id="thi-wrap"></div>
     `;
-    mkChart("ch-leiteiro-scatter","scatter",{datasets},{
-      plugins:{
-        legend:{labels:{boxWidth:10,font:{size:10}}},
-        tooltip:{callbacks:{label:c=>"DEL "+c.raw.x+" · "+c.raw.y.toFixed(1)+" L"}}
-      },
-      scales:{
-        x:{title:{display:true,text:"DEL (dias)",font:{size:10}}},
-        y:{title:{display:true,text:"Litros/dia",font:{size:10}}}
-      }
-    });
-
-    // Gráfico de Produção × THI (clima)
-    const lat=parseFloat(farmData.lat);
-    const lng=parseFloat(farmData.lng);
-    if(lat&&lng){
-      cont.insertAdjacentHTML("beforeend",`<div class="chart-card" id="thi-card">
-        <div class="chart-card-title">Produção × THI (Índice de Temperatura e Umidade)</div>
-        <div class="chart-card-sub" id="thi-sub">Calculando...</div>
-        <div style="height:260px"><canvas id="ch-leiteiro-thi"></canvas></div>
-      </div>`);
-      try{
-        const porData={};
-        datas.forEach(dt=>{
-          const reg=data[dt];
-          const comLeite=(reg.vacas||[]).filter(v=>v.litros>0);
-          if(comLeite.length)porData[dt]=comLeite.reduce((s,v)=>s+v.litros,0)/comLeite.length;
-        });
-        const datasComProd=Object.keys(porData).sort();
-        if(datasComProd.length>=3){
-          const clima=await fetchTemperaturaHistorica(lat,lng,datasComProd[0],datasComProd[datasComProd.length-1]);
-          const labels=datasComProd.map(d=>new Date(d+"T12:00:00").toLocaleDateString("pt-BR",{day:"2-digit",month:"2-digit"}));
-          const prodVals=datasComProd.map(d=>+porData[d].toFixed(1));
-          const thiVals=datasComProd.map(d=>clima.thi[d]!=null?+clima.thi[d].toFixed(1):null);
-          const thiValidos=thiVals.filter(v=>v!=null);
-          const diasCriticos=thiValidos.filter(v=>v>=72).length;
-          const subEl=document.getElementById("thi-sub");
-          if(subEl)subEl.textContent=thiValidos.length?diasCriticos+" dia(s) em estresse térmico (THI≥72) nos controles do período":"Sem dado climático disponível pro período";
-          mkChart("ch-leiteiro-thi","line",{
-            labels,
-            datasets:[
-              {label:"Produção Média (L)",data:prodVals,borderColor:"#2563eb",backgroundColor:"rgba(37,99,235,.08)",borderWidth:2,tension:.3,yAxisID:"y"},
-              {label:"THI",data:thiVals,borderColor:"#dc2626",backgroundColor:"rgba(220,38,38,.06)",borderWidth:2,borderDash:[4,2],tension:.3,spanGaps:true,yAxisID:"y1"}
-            ]
-          },{
-            plugins:{legend:{labels:{boxWidth:10,font:{size:10}}}},
-            scales:{
-              y:{position:"left",title:{display:true,text:"Produção (L)",font:{size:9}}},
-              y1:{position:"right",title:{display:true,text:"THI",font:{size:9}},grid:{display:false}}
-            }
-          });
-        }else{
-          const thiCard=document.getElementById("thi-card");
-          if(thiCard)thiCard.innerHTML=`<div style="text-align:center;color:var(--muted);padding:20px 0;font-size:12px">Precisa de pelo menos 3 controles em datas diferentes pra montar esse gráfico.</div>`;
-        }
-      }catch(e2){
-        console.error("Erro ao montar gráfico de THI:",e2);
-        const thiCard=document.getElementById("thi-card");
-        if(thiCard)thiCard.innerHTML=`<div style="text-align:center;color:#dc2626;padding:20px 0;font-size:12px">Erro ao buscar dados climáticos.</div>`;
-      }
-    }
+    renderLeiteiroDispersao(ultimaData);
+    renderLeiteiroEvolucao();
+    renderLeiteiroTHI();
   }catch(e){
     console.error("Erro ao carregar controle leiteiro:",e);
     document.getElementById("leiteiro-content").innerHTML=`<div class="chart-card" style="text-align:center;color:#dc2626">Erro ao carregar dados.</div>`;
   }
 }
 
+function renderLeiteiroDispersao(dataEscolhida){
+  const wrap=document.getElementById("leiteiro-dispersao-wrap");
+  if(!wrap||!_leiteiroDataCache)return;
+  const {data}=_leiteiroDataCache;
+  const registro=data[dataEscolhida];
+  const vacas=(registro.vacas||[]).filter(v=>v.litros>0&&v.del>0);
+  if(!vacas.length){
+    wrap.innerHTML=`<div class="chart-card" style="text-align:center;color:var(--muted);padding:30px 16px">Esse controle (${new Date(dataEscolhida+"T12:00:00").toLocaleDateString("pt-BR")}) não tem dados de produção suficientes pra montar o gráfico.</div>`;
+    return;
+  }
+  const mediaProd=vacas.reduce((s,v)=>s+v.litros,0)/vacas.length;
+  const mediaDel=vacas.reduce((s,v)=>s+v.del,0)/vacas.length;
+  const lotes=[...new Set(vacas.map(v=>v.lote||1))].sort((a,b)=>a-b);
+  const cores=["#15803d","#0891b2","#7c3aed","#d97706","#dc2626","#db2777"];
+  const datasets=lotes.map((lote,i)=>({
+    label:"Lote "+lote,
+    data:vacas.filter(v=>(v.lote||1)===lote).map(v=>({x:v.del,y:v.litros})),
+    backgroundColor:cores[i%cores.length]+"cc",
+    borderColor:"white",
+    borderWidth:1,
+    pointRadius:6
+  }));
+  wrap.innerHTML=`
+    <div class="chart-card">
+      <div class="chart-card-title">Dispersão — Produção (L) × DEL (dias)</div>
+      <div class="chart-card-sub">Controle de ${new Date(dataEscolhida+"T12:00:00").toLocaleDateString("pt-BR")} · ${vacas.length} vacas · média ${mediaProd.toFixed(1)} L · DEL médio ${mediaDel.toFixed(0)}d</div>
+      <div style="height:280px"><canvas id="ch-leiteiro-scatter"></canvas></div>
+    </div>
+  `;
+  mkChart("ch-leiteiro-scatter","scatter",{datasets},{
+    plugins:{
+      legend:{labels:{boxWidth:10,font:{size:10}}},
+      tooltip:{callbacks:{label:c=>"DEL "+c.raw.x+" · "+c.raw.y.toFixed(1)+" L"}},
+      annotation:{annotations:{
+        mediaProdLine:{type:"line",yMin:mediaProd,yMax:mediaProd,borderColor:"#dc2626",borderWidth:1.5,borderDash:[6,4],label:{display:true,content:"Média "+mediaProd.toFixed(1)+"L",color:"#dc2626",font:{size:8,weight:"bold"},position:"end",backgroundColor:"rgba(254,242,242,.9)",padding:{x:4,y:2},borderRadius:4}},
+        mediaDelLine:{type:"line",xMin:mediaDel,xMax:mediaDel,borderColor:"#7c3aed",borderWidth:1.5,borderDash:[6,4],label:{display:true,content:"DEL médio "+mediaDel.toFixed(0)+"d",color:"#7c3aed",font:{size:8,weight:"bold"},position:"start",backgroundColor:"rgba(245,243,255,.9)",padding:{x:4,y:2},borderRadius:4}}
+      }}
+    },
+    scales:{
+      x:{title:{display:true,text:"DEL (dias)",font:{size:10}}},
+      y:{title:{display:true,text:"Litros/dia",font:{size:10}}}
+    }
+  });
+}
+
+function renderLeiteiroEvolucao(){
+  const wrap=document.getElementById("leiteiro-evolucao-wrap");
+  if(!wrap||!_leiteiroDataCache)return;
+  const {data,datas}=_leiteiroDataCache;
+  if(datas.length<2){wrap.innerHTML="";return}
+  const pontos=datas.map(dt=>{
+    const reg=data[dt];
+    const comLeite=(reg.vacas||[]).filter(v=>v.litros>0);
+    const comDel=(reg.vacas||[]).filter(v=>v.del>0);
+    return{
+      data:dt,
+      media:comLeite.length?comLeite.reduce((s,v)=>s+v.litros,0)/comLeite.length:null,
+      delMedio:comDel.length?comDel.reduce((s,v)=>s+v.del,0)/comDel.length:null
+    };
+  });
+  const labels=pontos.map(p=>new Date(p.data+"T12:00:00").toLocaleDateString("pt-BR",{day:"2-digit",month:"2-digit"}));
+  wrap.innerHTML=`
+    <div class="chart-card">
+      <div class="chart-card-title">Evolução do Leite nos Controles</div>
+      <div class="chart-card-sub">Média de produção e DEL médio a cada controle registrado</div>
+      <div style="height:240px"><canvas id="ch-leiteiro-evolucao"></canvas></div>
+    </div>
+  `;
+  mkChart("ch-leiteiro-evolucao","line",{
+    labels,
+    datasets:[
+      {label:"Produção Média (L)",data:pontos.map(p=>p.media!=null?+p.media.toFixed(1):null),borderColor:"#15803d",backgroundColor:"rgba(21,128,61,.08)",borderWidth:2.5,tension:.3,pointRadius:5,spanGaps:true,yAxisID:"y"},
+      {label:"DEL Médio",data:pontos.map(p=>p.delMedio!=null?+p.delMedio.toFixed(0):null),borderColor:"#b45309",backgroundColor:"rgba(180,83,9,.08)",borderWidth:2.5,borderDash:[6,3],tension:.3,pointRadius:5,spanGaps:true,yAxisID:"y1"}
+    ]
+  },{
+    plugins:{legend:{labels:{boxWidth:10,font:{size:10}}}},
+    scales:{
+      y:{position:"left",title:{display:true,text:"Litros/dia",font:{size:9}}},
+      y1:{position:"right",title:{display:true,text:"DEL (dias)",font:{size:9}},grid:{display:false}}
+    }
+  });
+}
+
+async function renderLeiteiroTHI(){
+  const wrap=document.getElementById("thi-wrap");
+  if(!wrap||!_leiteiroDataCache)return;
+  const {data,datas}=_leiteiroDataCache;
+  const lat=parseFloat(farmData.lat);
+  const lng=parseFloat(farmData.lng);
+  if(!lat||!lng){wrap.innerHTML="";return}
+  wrap.innerHTML=`<div class="chart-card" id="thi-card">
+    <div class="chart-card-title">Produção × THI (Índice de Temperatura e Umidade)</div>
+    <div class="chart-card-sub" id="thi-sub">Calculando...</div>
+    <div style="height:260px"><canvas id="ch-leiteiro-thi"></canvas></div>
+  </div>`;
+  try{
+    const porData={};
+    datas.forEach(dt=>{
+      const reg=data[dt];
+      const comLeite=(reg.vacas||[]).filter(v=>v.litros>0);
+      if(comLeite.length)porData[dt]=comLeite.reduce((s,v)=>s+v.litros,0)/comLeite.length;
+    });
+    const datasComProd=Object.keys(porData).sort();
+    if(datasComProd.length>=3){
+      const clima=await fetchTemperaturaHistorica(lat,lng,datasComProd[0],datasComProd[datasComProd.length-1]);
+      const labels=datasComProd.map(d=>new Date(d+"T12:00:00").toLocaleDateString("pt-BR",{day:"2-digit",month:"2-digit"}));
+      const prodVals=datasComProd.map(d=>+porData[d].toFixed(1));
+      const thiVals=datasComProd.map(d=>clima.thi[d]!=null?+clima.thi[d].toFixed(1):null);
+      const thiValidos=thiVals.filter(v=>v!=null);
+      const diasCriticos=thiValidos.filter(v=>v>=72).length;
+      const subEl=document.getElementById("thi-sub");
+      if(subEl)subEl.textContent=thiValidos.length?diasCriticos+" dia(s) em estresse térmico (THI≥72) nos controles do período":"Sem dado climático disponível pro período";
+      mkChart("ch-leiteiro-thi","line",{
+        labels,
+        datasets:[
+          {label:"Produção Média (L)",data:prodVals,borderColor:"#2563eb",backgroundColor:"rgba(37,99,235,.08)",borderWidth:2,tension:.3,yAxisID:"y"},
+          {label:"THI",data:thiVals,borderColor:"#dc2626",backgroundColor:"rgba(220,38,38,.06)",borderWidth:2,borderDash:[4,2],tension:.3,spanGaps:true,yAxisID:"y1"}
+        ]
+      },{
+        plugins:{legend:{labels:{boxWidth:10,font:{size:10}}}},
+        scales:{
+          y:{position:"left",title:{display:true,text:"Produção (L)",font:{size:9}}},
+          y1:{position:"right",title:{display:true,text:"THI",font:{size:9}},grid:{display:false}}
+        }
+      });
+    }else{
+      const thiCard=document.getElementById("thi-card");
+      if(thiCard)thiCard.innerHTML=`<div style="text-align:center;color:var(--muted);padding:20px 0;font-size:12px">Precisa de pelo menos 3 controles em datas diferentes pra montar esse gráfico.</div>`;
+    }
+  }catch(e2){
+    console.error("Erro ao montar gráfico de THI:",e2);
+    const thiCard=document.getElementById("thi-card");
+    if(thiCard)thiCard.innerHTML=`<div style="text-align:center;color:#dc2626;padding:20px 0;font-size:12px">Erro ao buscar dados climáticos.</div>`;
+  }
+}
+
+// ═══ CONSUMO ═══
 // ═══ CONSUMO ═══
 async function renderConsumoScreen(){
   const body=document.getElementById("consumo-body");
