@@ -189,6 +189,11 @@ button:active{transform:scale(.96)}
       <div id="meuhistorico-body"></div>
     </div>
 
+    <!-- CENTRAL DE AVISOS -->
+    <div class="screen" id="screen-avisos">
+      <div id="avisos-body"></div>
+    </div>
+
     <!-- EVOLUÇÃO -->
     <div class="screen" id="screen-evolucao">
       <div id="evolucao-body"></div>
@@ -294,6 +299,7 @@ function abrirApp(){
   renderDashboard();
   sincronizarFilaOffline();
   atualizarBadgeFilaOffline();
+  atualizarBadgeAvisos();
 }
 
 async function tentarTravarPaisagem(){
@@ -326,7 +332,7 @@ function navScreen(name){
   if(navBtn)navBtn.classList.add("active");
   else{
     // secondary screens (consumo, forragem, evolucao, edit) reached via "Mais" — highlight Mais
-    if(["consumo","forragem","evolucao","edit","bromatologia","reproducao","recria","meuhistorico"].includes(name)){
+    if(["consumo","forragem","evolucao","edit","bromatologia","reproducao","recria","meuhistorico","avisos"].includes(name)){
       const maisBtn=document.getElementById("nav-mais");
       if(maisBtn)maisBtn.classList.add("active");
     }
@@ -346,6 +352,7 @@ function navScreen(name){
   if(name==="reproducao")renderReproducaoScreen();
   if(name==="recria")renderRecriaScreen();
   if(name==="meuhistorico")renderMeuHistoricoScreen();
+  if(name==="avisos")renderAvisosScreen();
   window.scrollTo(0,0);
 }
 
@@ -354,15 +361,24 @@ function renderMaisMenu(){
   if(!body)return;
   body.innerHTML=`
     <div style="font-size:17px;font-weight:800;margin-bottom:16px">⋯ Mais</div>
+    <div id="avisos-badge-wrap"></div>
+    <button class="btn-action btn-secondary" onclick="navScreen('avisos')">📢 Central de Avisos</button>
+
+    <div class="form-section" style="margin-top:18px">📊 Monitoramento</div>
     <button class="btn-action btn-secondary" onclick="navScreen('consumo')">📊 Monitoramento de Consumo</button>
     <button class="btn-action btn-secondary" onclick="navScreen('forragem')">🌾 Forragem: Estoque &amp; Custo</button>
     <button class="btn-action btn-secondary" onclick="navScreen('bromatologia')">🔬 Qualidade da Forragem</button>
+    <button class="btn-action btn-secondary" onclick="navScreen('evolucao')">📈 Evolução Mês a Mês</button>
+
+    <div class="form-section">🐄 Zootecnia</div>
     <button class="btn-action btn-secondary" onclick="navScreen('reproducao')">🐄 Eficiência Reprodutiva</button>
     <button class="btn-action btn-secondary" onclick="navScreen('recria')">🐮 Recria</button>
+
+    <div class="form-section">📋 Meus Dados</div>
     <button class="btn-action btn-secondary" onclick="navScreen('meuhistorico')">📋 Meu Histórico de Atualizações</button>
-    <button class="btn-action btn-secondary" onclick="navScreen('evolucao')">📈 Evolução Mês a Mês</button>
-    <button class="btn-action btn-primary" style="margin-top:14px" onclick="navScreen('edit')">✏️ Atualizar Meus Dados</button>
+    <button class="btn-action btn-primary" style="margin-top:6px" onclick="navScreen('edit')">✏️ Atualizar Meus Dados</button>
   `;
+  atualizarBadgeAvisos();
 }
 
 let ultimaVisita=null;
@@ -391,8 +407,17 @@ function renderDashboard(){
   const nul=parseFloat(d.nul)||0;
   const cbt=parseFloat(d.cbt)||0;
   const prodCol=mediaProd>=37?"#15803d":mediaProd>=28?"#d97706":"#dc2626";
+  const datasAtualizacao=[d.atualizado_em,d.data_visita].filter(Boolean).map(x=>new Date(x).getTime()).filter(t=>!isNaN(t));
+  const ultimaAtualizacao=datasAtualizacao.length?Math.max(...datasAtualizacao):null;
+  const diasDesdeAtualizacao=ultimaAtualizacao?Math.floor((Date.now()-ultimaAtualizacao)/864e5):null;
 
   let html=`<div id="thi-previsao-wrap"></div>`;
+
+  if(diasDesdeAtualizacao!=null&&diasDesdeAtualizacao>45){
+    html+=`<div class="chart-card" style="background:#fffbeb;border-color:#fcd34d;margin-bottom:14px;text-align:center">
+      <div style="font-size:12px;font-weight:700;color:#92400e">⏰ Esses números são de ${diasDesdeAtualizacao} dias atrás — vale atualizar ou pedir uma visita</div>
+    </div>`;
+  }
 
   html+=`<div class="hero-card">
     <div class="hero-title">👋 Olá, ${d.propriedade||d.produtor||"produtor"}!</div>
@@ -400,16 +425,8 @@ function renderDashboard(){
   </div>`;
 
   const scoreSaude=calcScoreSaude(ccs>0?ccs:null,mediaProd>0?mediaProd:null);
-  if(scoreSaude!=null){
-    const scCor=scoreSaude>=80?"#15803d":scoreSaude>=60?"#2563eb":"#d97706";
-    html+=`<div class="chart-card" style="border-left:5px solid ${scCor};display:flex;align-items:center;gap:14px;margin-bottom:16px">
-      <div style="font-size:34px;font-weight:900;color:${scCor}">${scoreSaude}<span style="font-size:14px;color:var(--muted);font-weight:700">/100</span></div>
-      <div>
-        <div style="font-size:12.5px;font-weight:800">Score de Saúde Meta</div>
-        <div style="font-size:10.5px;color:var(--muted)">Combina CCS e produção média</div>
-      </div>
-    </div>`;
-  }
+  html+=`<div id="score-saude-wrap">${renderScoreRingHtml(scoreSaude,null,"Combina CCS e produ\xE7\xE3o m\xE9dia")}</div>`;
+  html+=`<div id="radar-carteira-wrap"></div>`;
 
   html+=`<div id="alertas-consolidados-wrap"></div>`;
   html+=`<div id="perdas-ocultas-wrap"></div>`;
@@ -482,6 +499,7 @@ function renderDashboard(){
   carregarColocacaoMeta();
   renderMetaPessoal();
   carregarBotaoWhatsapp();
+  carregarRadarCarteira();
 }
 
 function calcScoreSaude(ccs,mediaProd){
@@ -629,6 +647,66 @@ async function carregarComparativoMensal(){
   }catch(e){
     console.error("Erro ao carregar comparativo mensal:",e);
     wrap.innerHTML="";
+  }
+}
+
+function renderScoreRingHtml(score,gradeLabel,subtitle){
+  if(score==null)return"";
+  const cor=score>=90?"#15803d":score>=75?"#16a34a":score>=60?"#2563eb":score>=40?"#d97706":"#dc2626";
+  const label=gradeLabel||(score>=90?"excelente":score>=75?"muito bom":score>=60?"bom":score>=40?"regular":"crítico");
+  const raio=32,circ=2*Math.PI*raio,offset=circ*(1-score/100);
+  return `<div class="chart-card" style="display:flex;align-items:center;gap:16px;margin-bottom:16px">
+    <svg width="76" height="76" viewBox="0 0 76 76" style="flex-shrink:0">
+      <circle cx="38" cy="38" r="${raio}" fill="none" stroke="#f1f5f9" stroke-width="7"/>
+      <circle cx="38" cy="38" r="${raio}" fill="none" stroke="${cor}" stroke-width="7" stroke-linecap="round"
+        stroke-dasharray="${circ.toFixed(1)}" stroke-dashoffset="${offset.toFixed(1)}"
+        transform="rotate(-90 38 38)" style="transition:stroke-dashoffset 1s ease"/>
+      <text x="38" y="34" text-anchor="middle" font-size="20" font-weight="900" fill="${cor}" font-family="Inter,sans-serif">${score}</text>
+      <text x="38" y="48" text-anchor="middle" font-size="8" fill="${cor}" font-family="Inter,sans-serif" font-weight="700">${label}</text>
+    </svg>
+    <div>
+      <div style="font-size:12.5px;font-weight:800">Nota de Saúde da Fazenda</div>
+      <div style="font-size:10.5px;color:var(--muted)">${subtitle||""}</div>
+    </div>
+  </div>`;
+}
+
+async function carregarRadarCarteira(){
+  const scoreWrap=document.getElementById("score-saude-wrap");
+  const radarWrap=document.getElementById("radar-carteira-wrap");
+  if(!scoreWrap||!radarWrap)return;
+  try{
+    const call=fns.httpsCallable("calcularRadarCarteira");
+    const res=await call({farmId});
+    const r=res.data;
+    if(!r||!r.disponivel)return;
+    scoreWrap.innerHTML=renderScoreRingHtml(r.scoreGeral,r.gradeLabel,"Comparado com "+r.totalFazendas+" fazendas ativas da carteira Meta");
+    radarWrap.innerHTML=`<div class="chart-card">
+      <div class="chart-card-title">📡 Comparativo vs Carteira</div>
+      <div class="chart-card-sub">Como sua fazenda se compara com a média das fazendas Meta, indicador por indicador</div>
+      <div style="height:280px"><canvas id="ch-radar-carteira"></canvas></div>
+      <div id="radar-destaques" style="margin-top:10px;font-size:11.5px"></div>
+    </div>`;
+    mkChart("ch-radar-carteira","radar",{
+      labels:r.labels,
+      datasets:[
+        {label:"Sua Fazenda",data:r.farmScores,backgroundColor:"rgba(8,145,178,0.2)",borderColor:"#0891b2",borderWidth:2.5,pointBackgroundColor:"#0891b2",pointRadius:4},
+        {label:"Média da Carteira",data:r.carteiraScores,backgroundColor:"rgba(148,163,184,0.08)",borderColor:"rgba(148,163,184,0.6)",borderWidth:1.5,borderDash:[5,5],pointBackgroundColor:"#94a3b8",pointRadius:3}
+      ]
+    },{
+      plugins:{legend:{labels:{color:"#64748b",font:{size:10},boxWidth:10}}},
+      scales:{r:{beginAtZero:true,max:100,ticks:{display:false},grid:{color:"rgba(0,0,0,0.05)"},pointLabels:{font:{size:9,weight:"600"},color:"#64748b"}}}
+    });
+    const destEl=document.getElementById("radar-destaques");
+    if(destEl){
+      let htmlD="";
+      if(r.destaques.length)htmlD+=`<div style="color:#15803d;font-weight:700;margin-bottom:4px">🏆 Destaque em: ${r.destaques.join(", ")}</div>`;
+      if(r.fracos.length)htmlD+=`<div style="color:#b45309;font-weight:700">⚠️ Abaixo da carteira em: ${r.fracos.join(", ")}</div>`;
+      if(!r.destaques.length&&!r.fracos.length)htmlD='<div style="color:var(--muted)">Desempenho próximo da média da carteira em todos os indicadores.</div>';
+      destEl.innerHTML=htmlD;
+    }
+  }catch(e){
+    console.error("Erro ao carregar radar da carteira:",e);
   }
 }
 
@@ -995,6 +1073,63 @@ function explicarTermo(termo){
   };
   const texto=explicacoes[termo]||"Sem explicação disponível pra esse termo.";
   alert(texto);
+}
+
+async function renderAvisosScreen(){
+  const body=document.getElementById("avisos-body");
+  if(!body)return;
+  body.innerHTML=`
+    <div style="font-size:17px;font-weight:800;margin-bottom:4px">📢 Central de Avisos</div>
+    <div style="font-size:12px;color:var(--muted);margin-bottom:14px">Comunicados da Meta pra todos os produtores</div>
+    <div id="avisos-content"><div style="text-align:center;padding:40px"><div class="mg-spinner"></div></div></div>
+  `;
+  try{
+    const snap=await db.ref("avisos_produtores").orderByChild("data").limitToLast(20).once("value");
+    const avisos=[];
+    snap.forEach(child=>avisos.push({id:child.key,...child.val()}));
+    avisos.reverse();
+    const cont=document.getElementById("avisos-content");
+    if(!avisos.length){
+      cont.innerHTML=`<div class="chart-card" style="text-align:center;color:var(--muted);padding:30px 16px">Nenhum aviso publicado ainda.</div>`;
+      return;
+    }
+    const lidos=JSON.parse(localStorage.getItem("meta_avisos_lidos")||"[]");
+    cont.innerHTML=avisos.map(a=>{
+      const dataFmt=a.data?new Date(a.data).toLocaleDateString("pt-BR"):"";
+      const novo=!lidos.includes(a.id);
+      return `<div class="chart-card" style="${novo?"border-left:4px solid #2563eb":""}">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px">
+          <div style="font-size:13px;font-weight:800">${a.titulo||"Aviso"}</div>
+          ${novo?'<span style="background:#eff6ff;color:#2563eb;font-size:9px;font-weight:800;padding:2px 8px;border-radius:10px;white-space:nowrap">NOVO</span>':""}
+        </div>
+        <div style="font-size:11px;color:var(--muted);margin:4px 0 8px">${dataFmt}</div>
+        <div style="font-size:12.5px;color:var(--text);line-height:1.5">${(a.mensagem||"").replace(/\n/g,"<br>")}</div>
+      </div>`;
+    }).join("");
+    localStorage.setItem("meta_avisos_lidos",JSON.stringify(avisos.map(a=>a.id)));
+    atualizarBadgeAvisos();
+  }catch(e){
+    console.error("Erro ao carregar avisos:",e);
+    document.getElementById("avisos-content").innerHTML=`<div class="chart-card" style="text-align:center;color:#dc2626">Erro ao carregar avisos.</div>`;
+  }
+}
+
+async function atualizarBadgeAvisos(){
+  const wrap=document.getElementById("avisos-badge-wrap");
+  try{
+    const snap=await db.ref("avisos_produtores").orderByChild("data").limitToLast(20).once("value");
+    const ids=[];
+    snap.forEach(child=>ids.push(child.key));
+    const lidos=JSON.parse(localStorage.getItem("meta_avisos_lidos")||"[]");
+    const naoLidos=ids.filter(id=>!lidos.includes(id)).length;
+    if(wrap){
+      wrap.innerHTML=naoLidos>0?`<div style="background:#eff6ff;border:1px solid #93c5fd;border-radius:10px;padding:8px 12px;margin-bottom:10px;font-size:11.5px;font-weight:700;color:#1d4ed8">📢 ${naoLidos} aviso(s) novo(s) da Meta</div>`:"";
+    }
+    return naoLidos;
+  }catch(e){
+    console.error("Erro ao checar avisos novos:",e);
+    return 0;
+  }
 }
 
 async function renderMeuHistoricoScreen(){
