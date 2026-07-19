@@ -86,6 +86,19 @@ button:active{transform:scale(.96)}
 .nav-btn{transition:color .15s ease}
 .nav-btn .ico{font-size:19px;line-height:1}
 .chart-card{background:#fff;border:1px solid var(--border);border-radius:14px;padding:14px;box-shadow:var(--shadow);margin-bottom:14px}
+.rotate-hint{display:none;background:linear-gradient(135deg,#eff6ff,#dbeafe);border:1.5px dashed #93c5fd;border-radius:14px;padding:16px;margin-bottom:14px;text-align:center;color:#1d4ed8;font-size:12.5px;font-weight:700}
+.rotate-hint .ico{font-size:26px;display:block;margin-bottom:6px;animation:rotateHintPulse 1.8s ease-in-out infinite}
+@keyframes rotateHintPulse{0%,100%{transform:rotate(0deg)}50%{transform:rotate(-90deg)}}
+@media (orientation:portrait){
+  .tela-grafico-landscape .rotate-hint{display:block}
+}
+@media (orientation:landscape){
+  .tela-grafico-landscape .content{max-width:920px}
+  .tela-grafico-landscape .chart-card canvas{min-height:340px!important}
+  .tela-grafico-landscape .bottom-nav{display:none}
+  .tela-grafico-landscape .topbar{height:44px}
+  body:has(.tela-grafico-landscape){padding-bottom:0}
+}
 .chart-card-title{font-size:12.5px;font-weight:800;margin-bottom:2px}
 .chart-card-sub{font-size:10.5px;color:var(--muted);margin-bottom:10px;line-height:1.4}
 </style>
@@ -129,7 +142,7 @@ button:active{transform:scale(.96)}
     </div>
 
     <!-- CONTROLE LEITEIRO -->
-    <div class="screen" id="screen-leiteiro">
+    <div class="screen tela-grafico-landscape" id="screen-leiteiro">
       <div id="leiteiro-body"></div>
     </div>
 
@@ -144,7 +157,7 @@ button:active{transform:scale(.96)}
     </div>
 
     <!-- CONSUMO -->
-    <div class="screen" id="screen-consumo">
+    <div class="screen tela-grafico-landscape" id="screen-consumo">
       <div id="consumo-body"></div>
     </div>
 
@@ -273,6 +286,19 @@ function abrirApp(){
   atualizarBadgeFilaOffline();
 }
 
+function tentarTravarPaisagem(){
+  try{
+    if(screen.orientation&&screen.orientation.lock){
+      screen.orientation.lock("landscape").catch(()=>{/* navegador não permitiu fora de tela cheia — tudo bem, o aviso de girar continua funcionando */});
+    }
+  }catch(e){/* API não suportada nesse navegador — sem problema */}
+}
+function liberarOrientacao(){
+  try{
+    if(screen.orientation&&screen.orientation.unlock)screen.orientation.unlock();
+  }catch(e){}
+}
+
 function navScreen(name){
   document.querySelectorAll(".screen").forEach(s=>s.classList.remove("active"));
   document.getElementById("screen-"+name).classList.add("active");
@@ -286,6 +312,8 @@ function navScreen(name){
       if(maisBtn)maisBtn.classList.add("active");
     }
   }
+  if(["leiteiro","consumo"].includes(name))tentarTravarPaisagem();
+  else liberarOrientacao();
   if(name==="dash")renderDashboard();
   if(name==="edit")renderEditForm();
   if(name==="leiteiro")renderLeiteiroScreen();
@@ -771,6 +799,7 @@ async function renderLeiteiroScreen(){
   body.innerHTML=`
     <div style="font-size:17px;font-weight:800;margin-bottom:4px">🥛 Controle Leiteiro</div>
     <div style="font-size:12px;color:var(--muted);margin-bottom:14px">Produção × DEL, por lote, com as médias da fazenda</div>
+    <div class="rotate-hint"><span class="ico">📱</span>Gire o celular de lado pra ver os gráficos maiores</div>
     <div id="leiteiro-content"><div style="text-align:center;padding:40px"><div class="mg-spinner"></div></div></div>
   `;
   try{
@@ -948,6 +977,7 @@ async function renderConsumoScreen(){
   body.innerHTML=`
     <div style="font-size:17px;font-weight:800;margin-bottom:4px">📊 Monitoramento de Consumo</div>
     <div style="font-size:12px;color:var(--muted);margin-bottom:14px">% de sobra do cocho e matéria seca ingerida, últimos 60 dias</div>
+    <div class="rotate-hint"><span class="ico">📱</span>Gire o celular de lado pra ver os gráficos maiores</div>
     <div id="consumo-content"><div style="text-align:center;padding:40px"><div class="mg-spinner"></div></div></div>
   `;
   try{
