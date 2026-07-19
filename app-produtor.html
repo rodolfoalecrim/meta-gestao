@@ -286,16 +286,25 @@ function abrirApp(){
   atualizarBadgeFilaOffline();
 }
 
-function tentarTravarPaisagem(){
+async function tentarTravarPaisagem(){
   try{
-    if(screen.orientation&&screen.orientation.lock){
-      screen.orientation.lock("landscape").catch(()=>{/* navegador não permitiu fora de tela cheia — tudo bem, o aviso de girar continua funcionando */});
+    const elem=document.documentElement;
+    if(!document.fullscreenElement&&elem.requestFullscreen){
+      await elem.requestFullscreen();
     }
-  }catch(e){/* API não suportada nesse navegador — sem problema */}
+    if(screen.orientation&&screen.orientation.lock){
+      await screen.orientation.lock("landscape");
+    }
+  }catch(e){
+    console.log("Não foi possível forçar a orientação automaticamente (normal em alguns navegadores, ex: iPhone) — o aviso de girar manual continua ativo:",e);
+  }
 }
 function liberarOrientacao(){
   try{
     if(screen.orientation&&screen.orientation.unlock)screen.orientation.unlock();
+  }catch(e){}
+  try{
+    if(document.fullscreenElement&&document.exitFullscreen)document.exitFullscreen();
   }catch(e){}
 }
 
