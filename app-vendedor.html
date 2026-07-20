@@ -540,7 +540,7 @@ ${sit!=="ATIVO"?'<div class="action-tile" onclick="abrirPropostaCliente()"><div 
 <div class="action-tile" onclick="abrirRecria()"><div class="action-tile-icon" style="background:#fef3c7">\u{1F42E}</div><div class="action-tile-label">Recria</div></div>
 <div class="action-tile" onclick="abrirForragem()"><div class="action-tile-icon" style="background:#ecfccb">\u{1F33E}</div><div class="action-tile-label">Forragem</div></div>
 <div class="action-tile" onclick="abrirInsumosVendedor()"><div class="action-tile-icon" style="background:#e0f2fe">\u{1F4E6}</div><div class="action-tile-label">Estoque de Insumos</div></div>
-<div class="action-tile" onclick="abrirPrePartoVendedor()"><div class="action-tile-icon" style="background:#fce7f3">\u{1FA7A}</div><div class="action-tile-label">Pré-Parto</div></div>
+<div class="action-tile" onclick="abrirPrePartoVendedor()"><div class="action-tile-icon" style="background:#fce7f3">\u{1FA7A}</div><div class="action-tile-label">Período de Transição</div></div>
 <div class="action-tile" onclick="abrirBromatologiaVendedor()"><div class="action-tile-icon" style="background:#f5f3ff">\u{1F52C}</div><div class="action-tile-label">Qualidade da Forragem</div></div>
 <div class="action-tile" id="btn-pdf-completo" onclick="abrirSelecaoPDFVendedor()"><div class="action-tile-icon" style="background:#fee2e2">\u{1F4C4}</div><div class="action-tile-label">Relat\xF3rio PDF</div></div>
 <div class="action-tile" onclick="editarCliente()"><div class="action-tile-icon" style="background:#e0f2fe">\u270F\uFE0F</div><div class="action-tile-label">Editar Dados</div></div>
@@ -714,28 +714,53 @@ async function carregarPrePartoVendedor(farmId){
   if(!body)return;
   body.innerHTML=`
     <div style="padding:16px">
-      <div style="font-size:17px;font-weight:800;margin-bottom:4px">🩺 Monitoramento Pré-Parto</div>
-      <div style="font-size:12px;color:var(--muted);margin-bottom:14px">Consumo e pH urinário do lote de transição</div>
+      <div style="font-size:17px;font-weight:800;margin-bottom:4px">🩺 Período de Transição</div>
+      <div style="font-size:12px;color:var(--muted);margin-bottom:14px">Pré-parto (consumo + pH) e pós-parto (BHB + eventos)</div>
       <div id="ppv-historico-chips" style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px"></div>
-      <div class="info-section">
-        <div class="form-group"><label class="form-label">Data</label><input type="date" class="form-input" id="ppv-data" value="${new Date().toISOString().slice(0,10)}"></div>
-        <div class="form-group"><label class="form-label">Nome do Lote/Grupo</label><input type="text" class="form-input" id="ppv-lote" value="Pré-Parto"></div>
-        <div class="form-group"><label class="form-label">Consumo (kg MS/animal/dia)</label><input type="number" step="0.1" class="form-input" id="ppv-consumo" placeholder="Ex: 11.5"></div>
-        <div class="form-group"><label class="form-label">Observações</label><textarea class="form-input" id="ppv-obs" rows="2"></textarea></div>
+      <div style="display:flex;gap:8px;margin-bottom:14px">
+        <button id="ppv-subtab-pre" onclick="setPpvSubTab('pre')" style="flex:1;background:#15803d;color:white;border:none;border-radius:8px;padding:9px;font-size:12px;font-weight:700;cursor:pointer">🌙 Pré-Parto</button>
+        <button id="ppv-subtab-pos" onclick="setPpvSubTab('pos')" style="flex:1;background:var(--surface2);color:var(--text);border:1px solid var(--border);border-radius:8px;padding:9px;font-size:12px;font-weight:700;cursor:pointer">🌅 Pós-Parto</button>
       </div>
-      <div class="info-section">
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
-          <div style="font-weight:700;font-size:13px">🧪 pH Urinário por Animal</div>
-          <button onclick="adicionarLinhaPHVendedor()" style="background:#15803d;color:white;border:none;border-radius:6px;padding:6px 12px;font-size:11px;font-weight:700;cursor:pointer">➕ Vaca</button>
+      <div id="ppv-secao-pre">
+        <div class="info-section">
+          <div class="form-group"><label class="form-label">Data</label><input type="date" class="form-input" id="ppv-data" value="${new Date().toISOString().slice(0,10)}"></div>
+          <div class="form-group"><label class="form-label">Nome do Lote/Grupo</label><input type="text" class="form-input" id="ppv-lote" value="Pré-Parto"></div>
+          <div class="form-group"><label class="form-label">Consumo (kg MS/animal/dia)</label><input type="number" step="0.1" class="form-input" id="ppv-consumo" placeholder="Ex: 11.5"></div>
+          <div class="form-group"><label class="form-label">Observações</label><textarea class="form-input" id="ppv-obs" rows="2"></textarea></div>
         </div>
-        <div id="ppv-ph-linhas"></div>
+        <div class="info-section">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+            <div style="font-weight:700;font-size:13px">🧪 pH Urinário por Animal</div>
+            <button onclick="adicionarLinhaPHVendedor()" style="background:#15803d;color:white;border:none;border-radius:6px;padding:6px 12px;font-size:11px;font-weight:700;cursor:pointer">➕ Vaca</button>
+          </div>
+          <div id="ppv-ph-linhas"></div>
+        </div>
+        <div class="info-section">
+          <div style="font-weight:700;font-size:13px;margin-bottom:2px">📊 pH — Faixa Desejada 5.5–7.0</div>
+          <div id="ppv-chart-sub" style="font-size:11px;color:var(--muted);margin-bottom:10px"></div>
+          <div style="height:260px"><canvas id="ppv-ch-ph"></canvas></div>
+        </div>
+      </div>
+      <div id="ppv-secao-pos" style="display:none">
+        <div class="info-section">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+            <div style="font-weight:700;font-size:13px">🩸 BHB e Eventos por Animal</div>
+            <button onclick="adicionarLinhaPosVendedor()" style="background:#15803d;color:white;border:none;border-radius:6px;padding:6px 12px;font-size:11px;font-weight:700;cursor:pointer">➕ Vaca</button>
+          </div>
+          <div style="font-size:10px;color:var(--muted);margin-bottom:8px">BHB em mmol/L. Referência: ≥1.2 subclínica, ≥3.0 clínica.</div>
+          <div id="ppv-pos-linhas"></div>
+        </div>
+        <div class="info-section">
+          <div style="font-weight:700;font-size:13px;margin-bottom:2px">📊 BHB por Animal</div>
+          <div id="ppv-chart-bhb-sub" style="font-size:11px;color:var(--muted);margin-bottom:10px"></div>
+          <div style="height:260px"><canvas id="ppv-ch-bhb"></canvas></div>
+        </div>
+        <div class="info-section">
+          <div style="font-weight:700;font-size:13px;margin-bottom:8px">🎯 Índices de Saúde Pós-Parto</div>
+          <div id="ppv-indices-saude" style="display:grid;grid-template-columns:1fr 1fr;gap:8px"></div>
+        </div>
       </div>
       <button onclick="salvarPrePartoVendedor()" style="width:100%;background:#7c3aed;color:white;border:none;border-radius:10px;padding:13px;font-size:14px;font-weight:700;cursor:pointer;margin:12px 0">💾 Salvar</button>
-      <div class="info-section">
-        <div style="font-weight:700;font-size:13px;margin-bottom:2px">📊 pH por Animal — Faixa Desejada 5.5–7.0</div>
-        <div id="ppv-chart-sub" style="font-size:11px;color:var(--muted);margin-bottom:10px"></div>
-        <div style="height:260px"><canvas id="ppv-ch-ph"></canvas></div>
-      </div>
     </div>
   `;
   try{
@@ -747,17 +772,26 @@ async function carregarPrePartoVendedor(farmId){
       if(!datas.length){chipsWrap.innerHTML='<div style="font-size:11px;color:var(--muted)">Nenhum registro ainda.</div>';}
       else{chipsWrap.innerHTML=[...datas].reverse().slice(0,8).map(d=>`<button onclick="carregarDataPrePartoVendedor('${d}')" style="background:var(--surface2);border:1px solid var(--border);border-radius:20px;padding:6px 12px;font-size:11px;font-weight:600;cursor:pointer">${new Date(d+"T12:00:00").toLocaleDateString("pt-BR")}</button>`).join("");}
     }
-    ppVPhLinhaCount=0;
+    ppVPhLinhaCount=0;ppVPosLinhaCount=0;
     if(datas.length){
       carregarDataPrePartoVendedor(datas[datas.length-1]);
     }else{
       adicionarLinhaPHVendedor();
+      adicionarLinhaPosVendedor();
     }
   }catch(e){
-    console.error("Erro ao carregar pré-parto:",e);
+    console.error("Erro ao carregar período de transição:",e);
     showToast("❌ Erro ao carregar dados",true);
   }
 }
+function setPpvSubTab(tab){
+  document.getElementById("ppv-secao-pre").style.display=tab==="pre"?"block":"none";
+  document.getElementById("ppv-secao-pos").style.display=tab==="pos"?"block":"none";
+  const btnPre=document.getElementById("ppv-subtab-pre"),btnPos=document.getElementById("ppv-subtab-pos");
+  if(tab==="pre"){btnPre.style.background="#15803d";btnPre.style.color="white";btnPre.style.border="none";btnPos.style.background="var(--surface2)";btnPos.style.color="var(--text)";btnPos.style.border="1px solid var(--border)";}
+  else{btnPos.style.background="#15803d";btnPos.style.color="white";btnPos.style.border="none";btnPre.style.background="var(--surface2)";btnPre.style.color="var(--text)";btnPre.style.border="1px solid var(--border)";}
+}
+
 function carregarDataPrePartoVendedor(data){
   const reg=ppVDataCache[data];
   document.getElementById("ppv-data").value=data;
@@ -771,6 +805,14 @@ function carregarDataPrePartoVendedor(data){
   if(animais.length)animais.forEach(a=>adicionarLinhaPHVendedor(a.numero,a.ph));
   else adicionarLinhaPHVendedor();
   renderChartPrePartoVendedor(animais);
+  const posWrap=document.getElementById("ppv-pos-linhas");
+  posWrap.innerHTML="";
+  ppVPosLinhaCount=0;
+  const animaisPos=reg?.animais_posparto||[];
+  if(animaisPos.length)animaisPos.forEach(a=>adicionarLinhaPosVendedor(a.numero,a.bhb,a.parto_assistido,a.retencao_placenta,a.deslocamento_abomaso));
+  else adicionarLinhaPosVendedor();
+  renderChartBHBVendedor(animaisPos);
+  renderIndicesSaudePosPartoVendedor(animaisPos);
 }
 function adicionarLinhaPHVendedor(numero,ph){
   const wrap=document.getElementById("ppv-ph-linhas");
@@ -803,15 +845,82 @@ async function salvarPrePartoVendedor(){
   const consumo=parseFloat(document.getElementById("ppv-consumo").value)||null;
   const obs=document.getElementById("ppv-obs").value.trim();
   const animais=coletarAnimaisPHVendedor();
-  const dados={lote,consumo_kg_animal:consumo,observacoes:obs,animais,autor:nomeVendedor,atualizado_em:new Date().toISOString()};
+  const animaisPos=coletarAnimaisPosVendedor();
+  const dados={lote,consumo_kg_animal:consumo,observacoes:obs,animais,animais_posparto:animaisPos,autor:nomeVendedor,atualizado_em:new Date().toISOString()};
   try{
     await db.ref("pre_parto/"+ppVFarmId+"/"+data).set(dados);
-    showToast("✅ Registro de pré-parto salvo!");
+    showToast("✅ Registro do período de transição salvo!");
     carregarPrePartoVendedor(ppVFarmId);
   }catch(e){
-    console.error("Erro ao salvar pré-parto:",e);
+    console.error("Erro ao salvar período de transição:",e);
     showToast("❌ Erro ao salvar: "+e.message,true);
   }
+}
+let ppVPosLinhaCount=0;let ppVChartBHB=null;
+function adicionarLinhaPosVendedor(numero,bhb,partoAssistido,retencaoPlacenta,deslocamentoAbomaso){
+  const wrap=document.getElementById("ppv-pos-linhas");
+  if(!wrap)return;
+  const idx=ppVPosLinhaCount++;
+  const row=document.createElement("div");
+  row.id="ppv-pos-linha-"+idx;
+  row.style.cssText="background:var(--surface2);border-radius:10px;padding:10px;margin-bottom:8px";
+  row.innerHTML=`<div style="display:flex;gap:8px;margin-bottom:6px">
+      <input type="text" class="form-input" placeholder="Nº da vaca" value="${numero||""}" id="ppv-pos-num-${idx}" style="flex:1">
+      <input type="number" step="0.01" min="0" max="10" class="form-input" placeholder="BHB" value="${bhb!=null?bhb:""}" id="ppv-pos-bhb-${idx}" style="width:90px">
+      <button onclick="document.getElementById('ppv-pos-linha-${idx}').remove()" style="background:#fee2e2;color:#dc2626;border:none;border-radius:8px;padding:8px 10px;font-size:12px;cursor:pointer">🗑️</button>
+    </div>
+    <label style="display:flex;align-items:center;gap:6px;font-size:12px;font-weight:600;margin-bottom:4px"><input type="checkbox" id="ppv-pos-parto-${idx}" ${partoAssistido?"checked":""}> Parto assistido</label>
+    <label style="display:flex;align-items:center;gap:6px;font-size:12px;font-weight:600;margin-bottom:4px"><input type="checkbox" id="ppv-pos-retencao-${idx}" ${retencaoPlacenta?"checked":""}> Retenção de placenta</label>
+    <label style="display:flex;align-items:center;gap:6px;font-size:12px;font-weight:600"><input type="checkbox" id="ppv-pos-abomaso-${idx}" ${deslocamentoAbomaso?"checked":""}> Deslocamento de abomaso</label>`;
+  wrap.appendChild(row);
+}
+function coletarAnimaisPosVendedor(){
+  const wrap=document.getElementById("ppv-pos-linhas");
+  const animais=[];
+  wrap.querySelectorAll("[id^='ppv-pos-linha-']").forEach(row=>{
+    const idx=row.id.replace("ppv-pos-linha-","");
+    const numero=document.getElementById("ppv-pos-num-"+idx)?.value.trim();
+    const bhbVal=document.getElementById("ppv-pos-bhb-"+idx)?.value;
+    const bhb=bhbVal!==""?parseFloat(bhbVal):null;
+    const partoAssistido=document.getElementById("ppv-pos-parto-"+idx)?.checked||false;
+    const retencaoPlacenta=document.getElementById("ppv-pos-retencao-"+idx)?.checked||false;
+    const deslocamentoAbomaso=document.getElementById("ppv-pos-abomaso-"+idx)?.checked||false;
+    if(numero)animais.push({numero,bhb,parto_assistido:partoAssistido,retencao_placenta:retencaoPlacenta,deslocamento_abomaso:deslocamentoAbomaso});
+  });
+  return animais;
+}
+function renderChartBHBVendedor(animais){
+  const canvas=document.getElementById("ppv-ch-bhb");
+  const subEl=document.getElementById("ppv-chart-bhb-sub");
+  if(!canvas)return;
+  if(ppVChartBHB){ppVChartBHB.destroy();ppVChartBHB=null}
+  const comBhb=(animais||[]).filter(a=>a.bhb!=null);
+  if(!comBhb.length){if(subEl)subEl.textContent="Sem BHB lançado nessa data ainda.";return}
+  const media=comBhb.reduce((s,a)=>s+a.bhb,0)/comBhb.length;
+  const subclinica=comBhb.filter(a=>a.bhb>=1.2&&a.bhb<3).length;
+  const clinica=comBhb.filter(a=>a.bhb>=3).length;
+  if(subEl)subEl.textContent=comBhb.length+" animais · média "+media.toFixed(2)+" · "+subclinica+" subclínica(s) · "+clinica+" clínica(s)";
+  const cores=comBhb.map(a=>a.bhb>=3?"#dc2626":a.bhb>=1.2?"#d97706":"#15803d");
+  ppVChartBHB=new Chart(canvas,{type:"bar",data:{labels:comBhb.map(a=>a.numero),datasets:[{label:"BHB",data:comBhb.map(a=>a.bhb),backgroundColor:cores,borderRadius:4}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},annotation:{annotations:{
+    mediaLine:{type:"line",yMin:media,yMax:media,borderColor:"#7c3aed",borderWidth:2,borderDash:[6,4],label:{display:true,content:"Média "+media.toFixed(2),color:"#7c3aed",font:{size:8,weight:"bold"},position:"end",backgroundColor:"rgba(245,243,255,.9)",padding:{x:4,y:2},borderRadius:4}},
+    subLine:{type:"line",yMin:1.2,yMax:1.2,borderColor:"#d97706",borderWidth:1.5,borderDash:[4,3],label:{display:true,content:"1.2 subclínica",color:"#d97706",font:{size:8,weight:"bold"},position:"start",backgroundColor:"rgba(255,251,235,.9)",padding:{x:4,y:2},borderRadius:4}},
+    clinLine:{type:"line",yMin:3,yMax:3,borderColor:"#dc2626",borderWidth:1.5,borderDash:[4,3],label:{display:true,content:"3.0 clínica",color:"#dc2626",font:{size:8,weight:"bold"},position:"start",backgroundColor:"rgba(254,242,242,.9)",padding:{x:4,y:2},borderRadius:4}}
+  }}},scales:{y:{min:0,max:6,title:{display:true,text:"BHB (mmol/L)",font:{size:10}}},x:{title:{display:true,text:"Nº da Vaca",font:{size:10}}}}}});
+}
+function renderIndicesSaudePosPartoVendedor(animais){
+  const wrap=document.getElementById("ppv-indices-saude");
+  if(!wrap)return;
+  const total=(animais||[]).length;
+  if(!total){wrap.innerHTML='<div style="grid-column:1/-1;text-align:center;color:var(--muted);font-size:12px;padding:12px">Sem animais lançados ainda.</div>';return}
+  const partoAssistido=animais.filter(a=>a.parto_assistido).length;
+  const retencao=animais.filter(a=>a.retencao_placenta).length;
+  const abomaso=animais.filter(a=>a.deslocamento_abomaso).length;
+  const comBhb=animais.filter(a=>a.bhb!=null);
+  const cetoseSub=comBhb.filter(a=>a.bhb>=1.2&&a.bhb<3).length;
+  const cetoseClin=comBhb.filter(a=>a.bhb>=3).length;
+  const pct2=(n,d)=>d>0?(n/d*100).toFixed(0):"0";
+  const item=(label,n,denom,cor)=>`<div style="text-align:center;background:var(--surface2);border-radius:10px;padding:10px"><div style="font-size:18px;font-weight:900;color:${cor}">${pct2(n,denom)}%</div><div style="font-size:9px;color:var(--muted);font-weight:700;margin-top:2px">${label}</div><div style="font-size:9px;color:var(--muted)">${n}/${denom}</div></div>`;
+  wrap.innerHTML=item("Parto Assistido",partoAssistido,total,partoAssistido/total>.15?"#dc2626":"#15803d")+item("Retenção Placenta",retencao,total,retencao/total>.1?"#dc2626":"#15803d")+item("Deslocamento Abomaso",abomaso,total,abomaso/total>.05?"#dc2626":"#15803d")+item("Cetose Subclínica",cetoseSub,comBhb.length,cetoseSub/(comBhb.length||1)>.3?"#d97706":"#15803d")+item("Cetose Clínica",cetoseClin,comBhb.length,cetoseClin/(comBhb.length||1)>.05?"#dc2626":"#15803d");
 }
 function renderChartPrePartoVendedor(animais){
   const canvas=document.getElementById("ppv-ch-ph");
