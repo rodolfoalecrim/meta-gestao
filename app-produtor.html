@@ -268,12 +268,14 @@ async function iniciar(){
   if(!token)token=localStorage.getItem("meta_produtor_token")||"";
   if(!token){mostrarErro();return}
   try{
-    const snap=await db.ref("propriedades").orderByChild("produtor_token").equalTo(token).once("value");
+    const trocarClaim=fns.httpsCallable("trocarTokenPorClaim");
+    const claimRes=await trocarClaim({token});
+    farmId=claimRes.data.farmId;
+    await auth.currentUser.getIdToken(true);
+    const snap=await db.ref("propriedades/"+farmId).once("value");
     const val=snap.val();
     if(!val){mostrarErro();return}
-    const keys=Object.keys(val);
-    farmId=keys[0];
-    farmData=val[farmId];
+    farmData=val;
     localStorage.setItem("meta_produtor_token",token);
     document.getElementById("loading-screen").style.display="none";
     const jaVerificado=localStorage.getItem("meta_produtor_ok_"+farmId)==="1";
