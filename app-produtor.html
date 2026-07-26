@@ -165,6 +165,11 @@ button:active{transform:scale(.96)}
       <div id="consumo-body"></div>
     </div>
 
+    <!-- LANÇAR CONSUMO (trato/cocho) -->
+    <div class="screen" id="screen-lancarconsumo">
+      <div id="lancarconsumo-body"></div>
+    </div>
+
     <!-- FORRAGEM -->
     <div class="screen" id="screen-forragem">
       <div id="forragem-body"></div>
@@ -352,6 +357,141 @@ function liberarOrientacao(){
   }catch(e){}
 }
 
+let lcLotesCache=[];
+let lcLoteAtual=null;
+let lcUltimoCalculo=null;
+
+async function renderLancarConsumo(){
+  const body=document.getElementById("lancarconsumo-body");
+  if(!body)return;
+  body.innerHTML=`<div style="text-align:center;padding:40px"><div class="mg-spinner"></div></div>`;
+  try{
+    const snap=await db.ref("dietas/"+farmId+"/lotes").once("value");
+    const lotes=snap.val()||{};
+    lcLotesCache=Object.entries(lotes).map(([id,l])=>({id,...l}));
+    if(!lcLotesCache.length){
+      body.innerHTML=`<div style="font-size:17px;font-weight:800;margin-bottom:10px">🐄 Lançar Trato</div><div style="text-align:center;padding:30px;color:var(--muted)">Ainda não tem lote cadastrado em Dieta &amp; Custos. Peça pro seu técnico cadastrar primeiro.</div>`;
+      return;
+    }
+    if(lcLotesCache.length===1){
+      lcLoteAtual=lcLotesCache[0];
+      renderFormLancarConsumo();
+    }else{
+      body.innerHTML=`<div style="font-size:17px;font-weight:800;margin-bottom:14px">🐄 Qual lote?</div>`+
+        lcLotesCache.map(l=>`<div onclick="selecionarLoteProdutor('${l.id}')" style="background:#fff;border:1.5px solid var(--border);border-radius:12px;padding:14px 16px;margin-bottom:10px;cursor:pointer">
+          <div style="font-weight:700;font-size:14.5px">${l.nome||l.nomeDieta||"Lote"}</div>
+          <div style="font-size:12px;color:var(--muted);margin-top:2px">${l.vacas||"—"} vacas · ${l.prod||"—"} L/dia média</div>
+        </div>`).join("");
+    }
+  }catch(e){
+    console.error(e);
+    body.innerHTML=`<div style="text-align:center;padding:30px;color:var(--red)">Erro ao carregar lotes.</div>`;
+  }
+}
+
+function selecionarLoteProdutor(loteId){
+  lcLoteAtual=lcLotesCache.find(l=>l.id===loteId);
+  if(!lcLoteAtual)return;
+  renderFormLancarConsumo();
+}
+
+function renderFormLancarConsumo(){
+  const body=document.getElementById("lancarconsumo-body");
+  if(!body||!lcLoteAtual)return;
+  body.innerHTML=`
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:14px">
+      ${lcLotesCache.length>1?`<button onclick="lcLoteAtual=null;renderLancarConsumo()" style="background:none;border:none;font-size:20px;cursor:pointer;padding:0 4px">←</button>`:""}
+      <div>
+        <div style="font-size:17px;font-weight:800">🐄 ${lcLoteAtual.nome||lcLoteAtual.nomeDieta||"Lote"}</div>
+        <div style="font-size:11.5px;color:var(--muted)">MS da dieta oferecida: ${lcLoteAtual.ms_dieta>0?lcLoteAtual.ms_dieta+"%":"não cadastrado"}</div>
+      </div>
+    </div>
+
+    <div class="form-field"><label class="form-label">Data</label><input class="form-input" type="date" id="lc-data"></div>
+    <div class="form-field"><label class="form-label">Nº de animais no lote</label><input class="form-input" type="number" id="lc-animais" oninput="atualizarPreviewLC()"></div>
+    <div class="form-field"><label class="form-label">Nº de animais tratados hoje</label><input class="form-input" type="number" id="lc-tratados"></div>
+    <div class="form-field"><label class="form-label">Ofertado no cocho (kg)</label><input class="form-input" type="number" id="lc-ofertado" oninput="atualizarPreviewLC()"></div>
+    <div class="form-field"><label class="form-label">Sobra no cocho (kg)</label><input class="form-input" type="number" id="lc-sobra" oninput="atualizarPreviewLC()"></div>
+    <div class="form-field"><label class="form-label">MS% da sobra (se souber)</label><input class="form-input" type="number" id="lc-ms-sobra" oninput="atualizarPreviewLC()"></div>
+    <div class="form-field"><label class="form-label">Média de leite do lote (L/vaca/dia, opcional)</label><input class="form-input" type="number" id="lc-media-leite" oninput="atualizarPreviewLC()"></div>
+    <div class="form-field"><label class="form-label">Ração no robô (kg/vaca, se tiver)</label><input class="form-input" type="number" id="lc-racao-robo" oninput="atualizarPreviewLC()"></div>
+
+    <div id="lc-preview-wrap" style="display:none;background:var(--GL);border-radius:12px;padding:14px;margin:10px 0 16px">
+      <div style="display:flex;justify-content:space-between;margin-bottom:6px"><span style="font-size:12.5px;color:var(--muted)">% de sobra</span><span id="lc-pv-sobra" style="font-weight:800"></span></div>
+      <div style="display:flex;justify-content:space-between;margin-bottom:6px"><span style="font-size:12.5px;color:var(--muted)">MS ingerida/animal</span><span id="lc-pv-ms-animal" style="font-weight:800"></span></div>
+      <div style="display:flex;justify-content:space-between" id="lc-pv-leite-row"><span style="font-size:12.5px;color:var(--muted)">Leite/kg MS</span><span id="lc-pv-leite-ms" style="font-weight:800"></span></div>
+    </div>
+
+    <button class="btn-action btn-primary" onclick="salvarConsumoProdutor()">💾 Salvar Lançamento</button>
+  `;
+  document.getElementById("lc-data").value=new Date().toISOString().slice(0,10);
+  document.getElementById("lc-animais").value=lcLoteAtual.vacas||"";
+  document.getElementById("lc-tratados").value=lcLoteAtual.vacas||"";
+  document.getElementById("lc-media-leite").value=lcLoteAtual.prod||"";
+}
+
+function calcularConsumoLC(){
+  const animais=parseFloat(document.getElementById("lc-animais")?.value)||0;
+  const tratados=parseFloat(document.getElementById("lc-tratados")?.value)||0;
+  const ofertado=parseFloat(document.getElementById("lc-ofertado")?.value)||0;
+  const sobra=parseFloat(document.getElementById("lc-sobra")?.value)||0;
+  const msSobraPct=parseFloat(document.getElementById("lc-ms-sobra")?.value)||0;
+  const msOfertadoPct=parseFloat(lcLoteAtual?.ms_dieta)||0;
+  const mediaLeite=parseFloat(document.getElementById("lc-media-leite")?.value)||0;
+  const racaoRobo=parseFloat(document.getElementById("lc-racao-robo")?.value)||0;
+  if(!(ofertado>0)||!(animais>0))return null;
+  const pctSobra=ofertado>0?sobra/ofertado*100:0;
+  const msOfertadaKg=ofertado*msOfertadoPct/100;
+  const msSobraKg=sobra*msSobraPct/100;
+  const msIngeridaBunkKg=Math.max(0,msOfertadaKg-msSobraKg);
+  const msBunkAnimal=animais>0?msIngeridaBunkKg/animais:0;
+  const msRoboAnimal=racaoRobo>0?racaoRobo*.89:0;
+  const msTotalAnimal=msBunkAnimal+msRoboAnimal;
+  const leiteMs=mediaLeite>0&&msTotalAnimal>0?mediaLeite/msTotalAnimal:0;
+  return{animais,tratados,ofertado,sobra,msSobraPct,msOfertadoPct,mediaLeite,racaoRobo,pctSobra,msOfertadaKg,msSobraKg,msIngeridaBunkKg,msBunkAnimal,msRoboAnimal,msTotalAnimal,leiteMs};
+}
+
+function atualizarPreviewLC(){
+  const r=calcularConsumoLC();
+  const wrap=document.getElementById("lc-preview-wrap");
+  if(!wrap)return;
+  if(!r){wrap.style.display="none";lcUltimoCalculo=null;return}
+  lcUltimoCalculo=r;
+  wrap.style.display="block";
+  document.getElementById("lc-pv-sobra").textContent=r.pctSobra.toFixed(1)+"%";
+  document.getElementById("lc-pv-ms-animal").textContent=r.msBunkAnimal.toFixed(1)+" kg";
+  const leiteRow=document.getElementById("lc-pv-leite-row");
+  if(r.leiteMs>0){leiteRow.style.display="flex";document.getElementById("lc-pv-leite-ms").textContent=r.leiteMs.toFixed(2)}
+  else{leiteRow.style.display="none"}
+}
+
+async function salvarConsumoProdutor(){
+  const r=calcularConsumoLC();
+  if(!r){showToast("Preencha nº de animais e quantidade ofertada",true);return}
+  const data=document.getElementById("lc-data").value||new Date().toISOString().slice(0,10);
+  const registro={
+    data,animais:r.animais,tratados:r.tratados||r.animais,ofertado:r.ofertado,sobra:r.sobra,
+    ms_sobra_pct:r.msSobraPct,ms_oferecido_pct:r.msOfertadoPct,media_leite:r.mediaLeite,racao_robo:r.racaoRobo,
+    pct_sobra:+r.pctSobra.toFixed(2),ms_ofertada_kg:+r.msOfertadaKg.toFixed(2),ms_sobra_kg:+r.msSobraKg.toFixed(2),
+    ms_ingerida_kg:+r.msIngeridaBunkKg.toFixed(2),ms_ingerida_animal:+r.msBunkAnimal.toFixed(2),
+    ms_robo_animal:+r.msRoboAnimal.toFixed(2),ms_total_animal:+r.msTotalAnimal.toFixed(2),leite_ms:+r.leiteMs.toFixed(2),
+    tratador:(farmData&&farmData.produtor?farmData.produtor:"Produtor")+" (app produtor)",
+    salvo_em:new Date().toISOString()
+  };
+  try{
+    await db.ref("consumo_ms/"+farmId+"/"+lcLoteAtual.id).push(registro);
+    showToast("✅ Lançamento salvo!");
+    document.getElementById("lc-ofertado").value="";
+    document.getElementById("lc-sobra").value="";
+    document.getElementById("lc-ms-sobra").value="";
+    document.getElementById("lc-racao-robo").value="";
+    document.getElementById("lc-preview-wrap").style.display="none";
+  }catch(e){
+    console.error(e);
+    showToast("Erro ao salvar: "+e.message,true);
+  }
+}
+
 function navScreen(name){
   document.querySelectorAll(".screen").forEach(s=>s.classList.remove("active"));
   document.getElementById("screen-"+name).classList.add("active");
@@ -360,7 +500,7 @@ function navScreen(name){
   if(navBtn)navBtn.classList.add("active");
   else{
     // secondary screens (consumo, forragem, evolucao, edit) reached via "Mais" — highlight Mais
-    if(["consumo","forragem","evolucao","edit","bromatologia","reproducao","recria","meuhistorico","avisos","insumos","conforto","timeline"].includes(name)){
+    if(["consumo","forragem","evolucao","edit","bromatologia","reproducao","recria","meuhistorico","avisos","insumos","conforto","timeline","lancarconsumo"].includes(name)){
       const maisBtn=document.getElementById("nav-mais");
       if(maisBtn)maisBtn.classList.add("active");
     }
@@ -373,6 +513,7 @@ function navScreen(name){
   if(name==="dieta")renderDietaScreen();
   if(name==="financeiro")renderFinanceiroScreen();
   if(name==="consumo")renderConsumoScreen();
+  if(name==="lancarconsumo")renderLancarConsumo();
   if(name==="forragem")renderForragemScreen();
   if(name==="evolucao")renderEvolucaoScreen();
   if(name==="mais")renderMaisMenu();
@@ -1921,7 +2062,8 @@ async function renderConsumoScreen(){
   if(!body)return;
   body.innerHTML=`
     <div style="font-size:17px;font-weight:800;margin-bottom:4px">📊 Monitoramento de Consumo</div>
-    <div style="font-size:12px;color:var(--muted);margin-bottom:14px">% de sobra do cocho e matéria seca ingerida, últimos 60 dias</div>
+    <div style="font-size:12px;color:var(--muted);margin-bottom:10px">% de sobra do cocho e matéria seca ingerida, últimos 60 dias</div>
+    <button class="btn-action btn-primary" onclick="navScreen('lancarconsumo')" style="margin-bottom:14px">➕ Lançar Trato de Hoje</button>
     <div class="rotate-hint"><span class="ico">📱</span>Gire o celular de lado pra ver os gráficos maiores</div>
     <div id="consumo-content"><div style="text-align:center;padding:40px"><div class="mg-spinner"></div></div></div>
   `;
