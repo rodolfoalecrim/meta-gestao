@@ -168,7 +168,8 @@ button:active{transform:scale(.96)}
     </div>
 
     <div class="f-field"><label>Fazenda</label>
-      <select id="mi-farm"></select>
+      <input id="mi-farm-input" list="mi-farm-datalist" placeholder="Digite o nome do produtor ou a cidade" autocomplete="off">
+      <datalist id="mi-farm-datalist"></datalist>
     </div>
 
     <div class="f-field"><label>Dia da visita</label>
@@ -264,7 +265,7 @@ const SEED_PRODUTOS={
   fenacao:["SILAGEM DE MILHO","PRÉ-SECADO","FENO","ENSILAGEM"],
   agricola:["SEMENTE","FERTILIZANTE","DEFENSIVO","CALCÁRIO"]
 };
-const OBJETIVOS_FIXOS=["PROSPECÇÃO","FECHAMENTO","ACOMPANHAMENTO","PÓS VENDA","VISITA TÉCNICA"];
+const OBJETIVOS_FIXOS=["PROSPECÇÃO","FECHAMENTO","ACOMPANHAMENTO","PÓS VENDA","VISITA TÉCNICA","ENTREGA","COBRANÇA"];
 const SUPERVISORES={agricola:["Evandro"],saude_animal:["Everton"],nutricao:["Rodolfo","Alexandre","Julia"],fenacao:[]};
 const STATUS_LABEL={planejado:{t:"Planejado",bg:"#e2e8f0",c:"#475569"},realizado:{t:"Realizada",bg:"#dcfce7",c:"#15803d"},nao_realizado:{t:"Não realizada",bg:"#fee2e2",c:"#dc2626"},remarcado:{t:"Remarcada",bg:"#fef3c7",c:"#92400e"}};
 const CHECKIN_RAIO_KM=2;
@@ -289,6 +290,7 @@ let ciStatusSelecionado="realizado";
 let ciGeo=null;
 let itemEditandoId=null;
 let agendaRefAtual=null;
+let farmLabelToId={};
 
 /* ===================== HELPERS ===================== */
 function toISODate(d){return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0")}
@@ -472,10 +474,13 @@ function renderItens(){
 }
 
 /* ===================== MODAL: NOVO ITEM ===================== */
+function farmLabel(d){return (d.produtor||"—")+(d.cidade?" — "+d.cidade:"")}
 function abrirModalItem(farmIdPreSelecionado){
   itemEditandoId=null;
-  document.getElementById("mi-farm").innerHTML=meusClientes.map(d=>'<option value="'+d.id+'">'+(d.produtor||"—")+'</option>').join("");
-  if(farmIdPreSelecionado)document.getElementById("mi-farm").value=farmIdPreSelecionado;
+  farmLabelToId={};
+  meusClientes.forEach(d=>{farmLabelToId[farmLabel(d)]=d.id});
+  document.getElementById("mi-farm-datalist").innerHTML=meusClientes.map(d=>'<option value="'+farmLabel(d)+'">').join("");
+  document.getElementById("mi-farm-input").value=farmIdPreSelecionado?farmLabel(clientesById[farmIdPreSelecionado]):"";
   document.getElementById("mi-dia").innerHTML=DIAS_SEMANA.map(dia=>{const iso=toISODate(addDays(currentMonday,dia.off));return '<option value="'+iso+'"'+(iso===selectedDate?" selected":"")+'>'+dia.l+" ("+String(addDays(currentMonday,dia.off).getDate()).padStart(2,"0")+")"+'</option>'}).join("");
   montarAreaPick("nutricao");
   document.getElementById("mi-produto-livre").style.display="none";document.getElementById("mi-produto-livre").value="";
@@ -556,9 +561,10 @@ function onAcompMudou(){
 function fecharModal(id){document.getElementById(id).classList.remove("on")}
 
 async function salvarItem(){
-  const farmId=document.getElementById("mi-farm").value;
+  const farmTexto=document.getElementById("mi-farm-input").value.trim();
+  const farmId=farmLabelToId[farmTexto];
   const farm=clientesById[farmId];
-  if(!farm){showToast("Selecione uma fazenda",true);return}
+  if(!farm){showToast("Selecione uma fazenda da lista (digite e escolha uma sugestão)",true);return}
   const area=window._areaAtual||"nutricao";
   const dia=document.getElementById("mi-dia").value;
   const produtoSel=document.getElementById("mi-produto-sel").value;
