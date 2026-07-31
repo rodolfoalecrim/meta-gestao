@@ -147,6 +147,15 @@ h1,h2,h3,.font-display{font-family:var(--font-display)}
 
 .skeleton{background:linear-gradient(90deg,var(--surface2) 25%,var(--border) 37%,var(--surface2) 63%);background-size:400% 100%;animation:skelWave 1.4s ease infinite;border-radius:14px;height:78px;margin-bottom:10px}
 @keyframes skelWave{0%{background-position:100% 0}100%{background-position:0 0}}
+
+.perf-card{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:14px;margin-bottom:10px;box-shadow:var(--shadow)}
+.perf-nome{font-family:var(--font-display);font-weight:700;font-size:14px;margin-bottom:10px;display:flex;justify-content:space-between;align-items:center}
+.perf-pct{font-family:var(--font-mono);font-size:13px;font-weight:600;padding:3px 10px;border-radius:20px}
+.perf-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;text-align:center}
+.perf-cell{background:var(--surface2);border-radius:10px;padding:8px 4px}
+.perf-num{font-family:var(--font-mono);font-size:17px;font-weight:700;color:var(--ink);display:block}
+.perf-num.desvio{color:var(--clay)}
+.perf-lbl{font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.3px;margin-top:2px;display:block}
 </style>
 </head>
 <body>
@@ -198,7 +207,17 @@ h1,h2,h3,.font-display{font-family:var(--font-display)}
 
     <div id="view-hoje" style="display:none">
       <div class="lista-titulo" id="hoje-titulo">Hoje</div>
+      <button class="btn-ghost" id="btn-avulso" style="width:100%;margin-bottom:12px;display:none" onclick="abrirModalItem(null,true)">📍 Registrar visita não planejada</button>
       <div id="hoje-lista"></div>
+    </div>
+
+    <div id="view-desempenho" style="display:none">
+      <div class="f-row">
+        <div class="f-field"><label>De</label><input type="date" id="desemp-de"></div>
+        <div class="f-field"><label>Até</label><input type="date" id="desemp-ate"></div>
+      </div>
+      <button class="btn-save" style="margin-bottom:16px" onclick="aplicarFiltroDesempenho()">🔍 Aplicar filtro</button>
+      <div id="desemp-lista"></div>
     </div>
 
   </div>
@@ -208,6 +227,7 @@ h1,h2,h3,.font-display{font-family:var(--font-display)}
   <div class="bottom-nav">
     <button class="bn-tab on" id="bn-semana" onclick="trocarView('semana')"><span class="bn-ic">🗂️</span>Planejamento</button>
     <button class="bn-tab" id="bn-hoje" onclick="trocarView('hoje')"><span class="bn-ic">📍</span>Hoje</button>
+    <button class="bn-tab" id="bn-desempenho" style="display:none" onclick="trocarView('desempenho')"><span class="bn-ic">📊</span>Desempenho</button>
   </div>
 </div>
 
@@ -217,7 +237,7 @@ h1,h2,h3,.font-display{font-family:var(--font-display)}
 <div class="modal-bg" id="modal-item">
   <div class="modal-box">
     <div class="modal-hdr">
-      <div class="modal-title">Nova visita planejada</div>
+      <div class="modal-title" id="modal-item-titulo">Nova visita planejada</div>
       <button class="modal-close" onclick="fecharModal('modal-item')">✕</button>
     </div>
 
@@ -234,7 +254,7 @@ h1,h2,h3,.font-display{font-family:var(--font-display)}
       <input id="mi-farm-cidade" placeholder="Cidade da visita">
     </div>
 
-    <div class="f-field"><label>Dia da visita</label>
+    <div class="f-field" id="mi-dia-wrap"><label>Dia da visita</label>
       <select id="mi-dia"></select>
     </div>
 
@@ -263,7 +283,7 @@ h1,h2,h3,.font-display{font-family:var(--font-display)}
       </div>
     </div>
 
-    <button class="btn-save" onclick="salvarItem()">💾 Salvar no planejamento</button>
+    <button class="btn-save" id="mi-btn-salvar" onclick="salvarItem()">💾 Salvar no planejamento</button>
   </div>
 </div>
 
@@ -417,6 +437,7 @@ function mostrarSkeleton(){
 function montarSeletorAdmin(){
   const sel=document.getElementById("admin-vend-sel");
   sel.style.display="block";
+  document.getElementById("bn-desempenho").style.display="flex";
   const emails=Object.keys(VENDEDOR_MAP);
   sel.innerHTML='<option value="'+usuarioAtual.email.toLowerCase()+'">👤 Minha agenda</option>'+
     emails.map(e=>'<option value="'+e+'">'+(NOME_AMIGAVEL[e]||e)+'</option>').join("");
@@ -517,9 +538,80 @@ function trocarView(v){
   viewAtual=v;
   document.getElementById("view-semana").style.display=v==="semana"?"block":"none";
   document.getElementById("view-hoje").style.display=v==="hoje"?"block":"none";
+  document.getElementById("view-desempenho").style.display=v==="desempenho"?"block":"none";
   document.getElementById("bn-semana").classList.toggle("on",v==="semana");
   document.getElementById("bn-hoje").classList.toggle("on",v==="hoje");
+  document.getElementById("bn-desempenho").classList.toggle("on",v==="desempenho");
   document.getElementById("fab-add").style.display=(v==="semana"&&!somenteLeitura)?"block":"none";
+  if(v==="desempenho")prepararFiltroDesempenhoPadrao();
+}
+function prepararFiltroDesempenhoPadrao(){
+  const de=document.getElementById("desemp-de");
+  const ate=document.getElementById("desemp-ate");
+  if(de.value&&ate.value)return; // já tem filtro escolhido, não sobrescreve
+  const seg=getMonday(new Date());
+  de.value=toISODate(seg);
+  ate.value=toISODate(addDays(seg,5));
+}
+function weekKeysInRange(deISO,ateISO){
+  const keys=[];
+  let cursor=getMonday(new Date(deISO+"T00:00:00"));
+  const fim=new Date(ateISO+"T00:00:00");
+  let guard=0;
+  while(cursor<=fim&&guard<80){
+    const k=weekKeyOf(cursor);
+    if(!keys.includes(k))keys.push(k);
+    cursor=addDays(cursor,7);
+    guard++;
+  }
+  return keys;
+}
+async function aplicarFiltroDesempenho(){
+  const de=document.getElementById("desemp-de").value;
+  const ate=document.getElementById("desemp-ate").value;
+  if(!de||!ate){showToast("Selecione o período (de/até)",true);return}
+  const wrap=document.getElementById("desemp-lista");
+  wrap.innerHTML='<div class="skeleton"></div><div class="skeleton"></div><div class="skeleton"></div>';
+  const weekKeys=weekKeysInRange(de,ate);
+  const emails=Object.keys(VENDEDOR_MAP);
+  const resultados=[];
+  for(const email of emails){
+    const uid=emailParaUid[email];
+    if(!uid){resultados.push({email,semUid:true});continue}
+    let planejadas=0,realizadas=0,checkins=0,desvios=0;
+    for(const wk of weekKeys){
+      let snap;
+      try{snap=await db.ref("agendas/"+uid+"/"+wk+"/itens").once("value")}catch(e){continue}
+      snap.forEach(c=>{
+        const it=c.val();
+        if(!it||!it.data||it.data<de||it.data>ate)return;
+        if(it.foraDoPlanejamento)desvios++;else planejadas++;
+        if(it.status==="realizado")realizadas++;
+        if(it.checkin)checkins++;
+      });
+    }
+    resultados.push({email,nome:NOME_AMIGAVEL[email]||email,planejadas,realizadas,checkins,desvios,
+      performance:planejadas>0?Math.round(realizadas/planejadas*100):null});
+  }
+  renderDesempenho(resultados);
+}
+function renderDesempenho(resultados){
+  const wrap=document.getElementById("desemp-lista");
+  resultados.sort((a,b)=>(b.performance??-1)-(a.performance??-1));
+  if(!resultados.length){wrap.innerHTML='<div class="empty-state"><div class="es-emoji">📊</div>Nenhum vendedor cadastrado</div>';return}
+  wrap.innerHTML=resultados.map(r=>{
+    if(r.semUid)return '<div class="perf-card"><div class="perf-nome">'+(NOME_AMIGAVEL[r.email]||r.email)+'</div><div class="item-meta" style="color:var(--clay)">uid não encontrado em /usuarios</div></div>';
+    const pct=r.performance;
+    const pctCor=pct===null?"background:var(--surface2);color:var(--muted)":pct>=80?"background:var(--pasture-light);color:var(--GD)":pct>=50?"background:#F7EAD2;color:#7A4F0F":"background:var(--clay-light);color:var(--clay)";
+    return '<div class="perf-card">'+
+      '<div class="perf-nome"><span>'+r.nome+'</span><span class="perf-pct" style="'+pctCor+'">'+(pct===null?"—":pct+"% concluído")+'</span></div>'+
+      '<div class="perf-grid">'+
+        '<div class="perf-cell"><span class="perf-num">'+r.planejadas+'</span><span class="perf-lbl">Planejadas</span></div>'+
+        '<div class="perf-cell"><span class="perf-num">'+r.realizadas+'</span><span class="perf-lbl">Realizadas</span></div>'+
+        '<div class="perf-cell"><span class="perf-num">'+r.checkins+'</span><span class="perf-lbl">Check-ins</span></div>'+
+        '<div class="perf-cell"><span class="perf-num'+(r.desvios>0?" desvio":"")+'">'+r.desvios+'</span><span class="perf-lbl">Desvios</span></div>'+
+      '</div></div>';
+  }).join("");
 }
 
 /* ===================== SUGESTÕES ===================== */
@@ -564,8 +656,9 @@ function montarCardItem(item){
   const acomp=item.acompanhante&&item.acompanhante.nome?("<br>👥 <b>Acompanhado por:</b> "+item.acompanhante.nome):"";
   const podeCheckin=!somenteLeitura&&item.status==="planejado"&&item.data<=hojeISO;
   const checkinInfo=item.checkin?('<div class="item-meta">📝 '+(item.checkin.resumo||"")+(item.checkin.localizacaoValidada===false?' <span style="color:var(--clay)">· sem validação de localização</span>':"")+'</div>'):"";
+  const desvioTag=item.foraDoPlanejamento?'<div class="item-area" style="color:var(--clay)">📍 Fora do planejamento</div>':"";
   return '<div class="item-card" style="--area-color:'+area.color+'">'+
-    '<div class="item-top"><div><div class="item-farm">'+(item.farmNome||"—")+(item.farmCidade?' <span style="font-weight:600;color:var(--muted);font-size:11px">— '+item.farmCidade+'</span>':"")+'</div><div class="item-area">'+area.icon+' '+area.label+'</div></div>'+
+    '<div class="item-top"><div><div class="item-farm">'+(item.farmNome||"—")+(item.farmCidade?' <span style="font-weight:600;color:var(--muted);font-size:11px">— '+item.farmCidade+'</span>':"")+'</div><div class="item-area">'+area.icon+' '+area.label+'</div>'+desvioTag+'</div>'+
     '<span class="item-badge" style="background:'+st.bg+';color:'+st.c+'">'+st.t+'</span></div>'+
     '<div class="item-meta">📦 <b>Produto:</b> '+produto+'<br>🎯 <b>Objetivo:</b> '+objetivo+acomp+'</div>'+
     checkinInfo+
@@ -579,6 +672,7 @@ function renderHoje(){
   const titulo=document.getElementById("hoje-titulo");
   titulo.innerHTML="Hoje — "+new Date().toLocaleDateString("pt-BR",{weekday:"long",day:"2-digit",month:"2-digit"})+
     (itens.length?'<span class="progresso">'+feitas+" de "+itens.length+"</span>":"");
+  document.getElementById("btn-avulso").style.display=somenteLeitura?"none":"block";
   const wrap=document.getElementById("hoje-lista");
   if(!itens.length){
     wrap.innerHTML='<div class="empty-state"><div class="es-emoji">☀️</div>Nenhuma visita planejada para hoje'+(somenteLeitura?"":'<br><br><button class="btn-add-sugg" onclick="abrirModalItem()">+ Adicionar visita</button>')+'</div>';
@@ -589,8 +683,9 @@ function renderHoje(){
 
 /* ===================== MODAL: NOVO ITEM ===================== */
 function farmLabel(d){return d.produtor||"—"}
-function abrirModalItem(farmIdPreSelecionado){
+function abrirModalItem(farmIdPreSelecionado,avulso){
   itemEditandoId=null;
+  window._avulso=!!avulso;
   farmLabelToId={};
   meusClientes.forEach(d=>{farmLabelToId[farmLabel(d)]=d.id});
   document.getElementById("mi-farm-datalist").innerHTML=meusClientes.map(d=>'<option value="'+farmLabel(d)+'">').join("");
@@ -598,6 +693,9 @@ function abrirModalItem(farmIdPreSelecionado){
   document.getElementById("mi-farm-input").value=farmPre?farmLabel(farmPre):"";
   document.getElementById("mi-farm-cidade").value=farmPre?(farmPre.cidade||""):"";
   document.getElementById("mi-dia").innerHTML=DIAS_SEMANA.map(dia=>{const iso=toISODate(addDays(currentMonday,dia.off));return '<option value="'+iso+'"'+(iso===selectedDate?" selected":"")+'>'+dia.l+" ("+String(addDays(currentMonday,dia.off).getDate()).padStart(2,"0")+")"+'</option>'}).join("");
+  document.getElementById("mi-dia-wrap").style.display=avulso?"none":"block";
+  document.getElementById("modal-item-titulo").textContent=avulso?"Visita não planejada":"Nova visita planejada";
+  document.getElementById("mi-btn-salvar").textContent=avulso?"📍 Registrar e fazer check-in":"💾 Salvar no planejamento";
   montarAreaPick("nutricao");
   document.getElementById("mi-produto-livre").style.display="none";document.getElementById("mi-produto-livre").value="";
   document.getElementById("mi-objetivo-livre").style.display="none";document.getElementById("mi-objetivo-livre").value="";
@@ -709,23 +807,32 @@ async function salvarItem(){
   if(produtoSel==="__outro__"&&!produtoLivre){showToast("Descreva o produto",true);return}
   if(objetivoSel==="__outro__"&&!objetivoLivre){showToast("Descreva o objetivo",true);return}
 
+  const avulso=!!window._avulso;
   const item={
     farmId,farmNome:(farm?farm.produtor:farmTexto.toUpperCase())||"—",
     farmCidade:farmCidade||(farm?farm.cidade||"":"")||null,
-    area,data:dia,
+    area,data:avulso?toISODate(new Date()):dia,
     produto:produtoSel==="__outro__"?null:produtoSel,
     produtoLivre:produtoSel==="__outro__"?produtoLivre.toUpperCase():null,
     objetivo:objetivoSel==="__outro__"?null:objetivoSel,
     objetivoLivre:objetivoSel==="__outro__"?objetivoLivre.toUpperCase():null,
-    acompanhante,status:"planejado",criado_em:new Date().toISOString()
+    acompanhante,status:"planejado",criado_em:new Date().toISOString(),
+    foraDoPlanejamento:avulso
   };
   try{
-    const wk=weekKeyOf(currentMonday);
-    await db.ref("agendas/"+vendedorAlvoUid+"/"+wk+"/itens").push(item);
+    const wk=avulso?weekKeyOf(getMonday(new Date())):weekKeyOf(currentMonday);
+    const novaRef=db.ref("agendas/"+vendedorAlvoUid+"/"+wk+"/itens").push();
+    await novaRef.set(item);
     if(produtoSel==="__outro__")await db.ref("produtosCustom/"+area).push({valor:produtoLivre.toUpperCase()}).catch(()=>{});
     if(objetivoSel==="__outro__")await db.ref("objetivosCustom/"+area).push({valor:objetivoLivre.toUpperCase()}).catch(()=>{});
     fecharModal("modal-item");
-    showToast("✅ Visita adicionada ao planejamento");
+    if(avulso){
+      hojeItens[novaRef.key]={id:novaRef.key,...item};
+      renderHoje();
+      abrirModalCheckin(novaRef.key);
+    }else{
+      showToast("✅ Visita adicionada ao planejamento");
+    }
   }catch(e){showToast("Erro ao salvar: "+(e.message||""),true)}
 }
 
