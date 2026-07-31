@@ -273,7 +273,7 @@ const OBJETIVOS_FIXOS=["PROSPECÇÃO","FECHAMENTO","ACOMPANHAMENTO","PÓS VENDA"
 const SUPERVISORES={agricola:["Evandro"],saude_animal:["Everton"],nutricao:["Rodolfo","Alexandre","Julia"],fenacao:[]};
 const STATUS_LABEL={planejado:{t:"Planejado",bg:"#e2e8f0",c:"#475569"},realizado:{t:"Realizada",bg:"#dcfce7",c:"#15803d"},nao_realizado:{t:"Não realizada",bg:"#fee2e2",c:"#dc2626"},remarcado:{t:"Remarcada",bg:"#fef3c7",c:"#92400e"}};
 const CHECKIN_RAIO_KM=2;
-const DIAS_SEMANA=[{k:"seg",l:"Seg",off:0},{k:"ter",l:"Ter",off:1},{k:"qua",l:"Qua",off:2},{k:"qui",l:"Qui",off:3},{k:"sex",l:"Sex",off:4}];
+const DIAS_SEMANA=[{k:"seg",l:"Seg",off:0},{k:"ter",l:"Ter",off:1},{k:"qua",l:"Qua",off:2},{k:"qui",l:"Qui",off:3},{k:"sex",l:"Sex",off:4},{k:"sab",l:"Sáb",off:5}];
 
 /* ===================== ESTADO ===================== */
 let usuarioAtual=null,nomeVendedor="",isAdmin=false;
@@ -284,8 +284,16 @@ let emailParaUid={};               // mapa email->uid, construído a partir de /
 let meusClientes=[];
 let clientesById={};
 let mapCoordsIndex={};
-let currentMonday=getMonday(new Date());
-let selectedDate=toISODate(new Date());
+function calcularEstadoInicialSemana(){
+  const hoje=new Date();const dow=hoje.getDay();// 0=domingo,6=sábado
+  const ehFimDeSemana=dow===6||dow===0;
+  let seg=getMonday(hoje);
+  if(ehFimDeSemana)seg=addDays(seg,7);
+  return{seg,sel:ehFimDeSemana?toISODate(seg):toISODate(hoje)};
+}
+const _estadoInicial=calcularEstadoInicialSemana();
+let currentMonday=_estadoInicial.seg;
+let selectedDate=_estadoInicial.sel;
 let itensSemana={}; // {itemId: item}
 let produtosCustomCache={};
 let objetivosCustomCache={};
@@ -388,8 +396,8 @@ function carregarPortfolio(email){
 
 /* ===================== SEMANA / DIAS ===================== */
 function renderWeekLabel(){
-  const dom=addDays(currentMonday,4);
-  document.getElementById("wk-label").textContent=String(currentMonday.getDate()).padStart(2,"0")+"/"+String(currentMonday.getMonth()+1).padStart(2,"0")+" a "+String(dom.getDate()).padStart(2,"0")+"/"+String(dom.getMonth()+1).padStart(2,"0");
+  const fim=addDays(currentMonday,5);
+  document.getElementById("wk-label").textContent=String(currentMonday.getDate()).padStart(2,"0")+"/"+String(currentMonday.getMonth()+1).padStart(2,"0")+" a "+String(fim.getDate()).padStart(2,"0")+"/"+String(fim.getMonth()+1).padStart(2,"0");
 }
 function renderDayTabs(){
   const wrap=document.getElementById("day-tabs");
@@ -409,7 +417,7 @@ function mudarSemana(delta){
   const primeiraISO=toISODate(currentMonday);
   selectedDate=(delta===0)?hojeISO:primeiraISO;
   // se a semana atual contém hoje, seleciona hoje; senão seleciona segunda
-  const domISO=toISODate(addDays(currentMonday,4));
+  const domISO=toISODate(addDays(currentMonday,5));
   selectedDate=(hojeISO>=primeiraISO&&hojeISO<=domISO)?hojeISO:primeiraISO;
   renderDayTabs();
   carregarSemana();
