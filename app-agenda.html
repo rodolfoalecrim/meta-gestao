@@ -607,53 +607,130 @@ function carregarPdfLib(){
     document.head.appendChild(s);
   });
 }
+function hexParaTripla(hex){
+  hex=(hex||"#2F6B3C").replace("#","");
+  return[parseInt(hex.substring(0,2),16)/255,parseInt(hex.substring(2,4),16)/255,parseInt(hex.substring(4,6),16)/255];
+}
+async function carregarLogoBytes(){
+  try{
+    const resp=await fetch("meta_logo.jpg");
+    if(!resp.ok)throw new Error("sem logo");
+    return await resp.arrayBuffer();
+  }catch(e){return null}
+}
 async function gerarPDFSemana(){
   if(!navigator.onLine){showToast("Precisa de sinal pra gerar o PDF (carrega uma biblioteca)",true);return}
   showToast("📄 Gerando PDF...");
   try{
     await carregarPdfLib();
     const{PDFDocument,StandardFonts,rgb}=window.PDFLib;
+    const cor=(hex)=>rgb(...hexParaTripla(hex));
+    const PASTURE_DARK="#122B18",PASTURE="#2F6B3C",CLOVER="#8FBF2E",PAPER="#EEF1E6",INK="#152016",MUTED="#5B6B57",SURF2="#F6F7F1";
+
     const pdfDoc=await PDFDocument.create();
     const fontBold=await pdfDoc.embedFont(StandardFonts.HelveticaBold);
     const font=await pdfDoc.embedFont(StandardFonts.Helvetica);
-    const pageW=595,pageH=842,margin=42;
+    const logoBytes=await carregarLogoBytes();
+    let logoImg=null;
+    if(logoBytes){try{logoImg=await pdfDoc.embedJpg(logoBytes)}catch(e){try{logoImg=await pdfDoc.embedPng(logoBytes)}catch(e2){}}}
+
+    const pageW=595,pageH=842,margin=40;
     let page=pdfDoc.addPage([pageW,pageH]);
-    let y=pageH-margin;
-    function novaPaginaSeNecessario(altura){
-      if(y-altura<margin){page=pdfDoc.addPage([pageW,pageH]);y=pageH-margin;}
-    }
-    function escrever(texto,opts){
+    let y=pageH;
+
+    function novaPagina(){page=pdfDoc.addPage([pageW,pageH]);y=pageH-margin;}
+    function precisaDeEspaco(altura){if(y-altura<margin)novaPagina();}
+    function texto(t,x,yy,opts){
       opts=opts||{};
-      const tamanho=opts.tamanho||10,negrito=!!opts.negrito,cor=opts.cor||[0.08,0.13,0.09],altura=opts.altura||(tamanho+4);
-      novaPaginaSeNecessario(altura);
-      page.drawText(texto,{x:margin,y,size:tamanho,font:negrito?fontBold:font,color:rgb(cor[0],cor[1],cor[2])});
-      y-=altura;
+      page.drawText(t,{x,y:yy,size:opts.tamanho||9,font:opts.negrito?fontBold:font,color:opts.cor||cor(INK)});
     }
+    function larguraTexto(t,tamanho,negrito){return(negrito?fontBold:font).widthOfTextAtSize(t,tamanho)}
+
     const dom=addDays(currentMonday,5);
     const periodo=String(currentMonday.getDate()).padStart(2,"0")+"/"+String(currentMonday.getMonth()+1).padStart(2,"0")+" a "+String(dom.getDate()).padStart(2,"0")+"/"+String(dom.getMonth()+1).padStart(2,"0")+"/"+dom.getFullYear();
+    const nomeVend=NOME_AMIGAVEL[vendedorAlvoEmail]||vendedorAlvoEmail;
 
-    escrever("Meta Agenda",{tamanho:18,negrito:true,cor:[0.07,0.17,0.09],altura:24});
-    escrever("Planejamento da semana — "+periodo,{tamanho:12,negrito:true,altura:18});
-    escrever("Vendedor: "+(NOME_AMIGAVEL[vendedorAlvoEmail]||vendedorAlvoEmail),{tamanho:10,altura:20});
+    /* ---- cabeçalho de marca ---- */
+    const hdrH=86;
+    page.drawRectangle({x:0,y:pageH-hdrH,width:pageW,height:hdrH,color:cor(PASTURE_DARK)});
+    page.drawRectangle({x:0,y:pageH-hdrH-3,width:pageW,height:3,color:cor(CLOVER)});
+    let logoX=margin;
+    if(logoImg){
+      const logoSize=48;
+      page.drawImage(logoImg,{x:margin,y:pageH-hdrH+(hdrH-logoSize)/2,width:logoSize,height:logoSize});
+      logoX=margin+logoSize+14;
+    }
+    texto("META AGENDA",logoX,pageH-38,{tamanho:20,negrito:true,cor:rgb(1,1,1)});
+    texto("Planejamento da semana",logoX,pageH-56,{tamanho:10.5,cor:cor(CLOVER)});
+    // período alinhado à direita do cabeçalho
+    const periodoLbl=periodo;
+    texto(periodoLbl,pageW-margin-larguraTexto(periodoLbl,11,true),pageH-38,{tamanho:11,negrito:true,cor:rgb(1,1,1)});
+    texto("Vendedor: "+nomeVend,pageW-margin-larguraTexto("Vendedor: "+nomeVend,9,false),pageH-56,{tamanho:9,cor:rgb(0.85,0.9,0.82)});
 
+    y=pageH-hdrH-24;
+
+    /* ---- resumo da semana ---- */
+    const itensTodos=Object.values(itensSemana);
+    const planejadasR=itensTodos.filter(i=>!i.foraDoPlanejamento).length;
+    const realizadasR=itensTodos.filter(i=>i.status==="realizado"&&!i.foraDoPlanejamento).length;
+    const desviosR=itensTodos.filter(i=>i.foraDoPlanejamento).length;
+    const stats=[["Planejadas",planejadasR],["Realizadas",realizadasR],["Desvios",desviosR]];
+    const boxW=(pageW-margin*2-16)/3;
+    stats.forEach((s,i)=>{
+      const bx=margin+i*(boxW+8);
+      page.drawRectangle({x:bx,y:y-46,width:boxW,height:46,color:cor(SURF2),borderColor:cor("#DCE1D3"),borderWidth:1});
+      const num=String(s[1]);
+      texto(num,bx+10,y-24,{tamanho:18,negrito:true,cor:cor(s[0]==="Desvios"&&s[1]>0?"#B5541F":PASTURE_DARK)});
+      texto(s[0].toUpperCase(),bx+10,y-38,{tamanho:7,cor:cor(MUTED)});
+    });
+    y-=46+22;
+
+    /* ---- dias da semana ---- */
     for(const dia of DIAS_SEMANA){
       const iso=toISODate(addDays(currentMonday,dia.off));
       const itensDoDia=Object.values(itensSemana).filter(i=>i.data===iso).sort((a,b)=>(a.criado_em||"").localeCompare(b.criado_em||""));
-      escrever(dia.l.toUpperCase()+" ("+iso.split("-").reverse().join("/")+")",{tamanho:11,negrito:true,cor:[0.18,0.42,0.24],altura:16});
+      precisaDeEspaco(30);
+      const diaLbl=dia.l.toUpperCase()+" — "+iso.split("-").reverse().join("/");
+      page.drawRectangle({x:margin,y:y-18,width:pageW-margin*2,height:20,color:cor(PASTURE)});
+      texto(diaLbl,margin+8,y-13,{tamanho:9.5,negrito:true,cor:rgb(1,1,1)});
+      y-=26;
       if(!itensDoDia.length){
-        escrever("  Sem visitas planejadas",{tamanho:9,cor:[0.4,0.44,0.38],altura:14});
+        precisaDeEspaco(16);
+        texto("Sem visitas planejadas",margin+8,y-9,{tamanho:8.5,cor:cor(MUTED)});
+        y-=20;
       }else{
         for(const it of itensDoDia){
+          const cardH=34;
+          precisaDeEspaco(cardH+6);
+          const areaHex=(AREAS[it.area]||AREAS.nutricao).color;
+          const st=STATUS_LABEL[it.status]||STATUS_LABEL.planejado;
+          const cardY=y-cardH;
+          page.drawRectangle({x:margin,y:cardY,width:pageW-margin*2,height:cardH,color:cor(SURF2)});
+          page.drawRectangle({x:margin,y:cardY,width:3.5,height:cardH,color:cor(areaHex)});
+          const nomeTxt=(it.farmNome||"—")+(it.farmCidade?" — "+it.farmCidade:"");
+          texto(nomeTxt,margin+12,cardY+cardH-13,{tamanho:9.5,negrito:true,cor:cor(INK)});
+          if(it.foraDoPlanejamento){
+            const nomeW=larguraTexto(nomeTxt,9.5,true);
+            texto("· DESVIO",margin+12+nomeW+5,cardY+cardH-13,{tamanho:8,negrito:true,cor:cor("#B5541F")});
+          }
           const produto=it.produtoLivre||it.produto||"—";
           const objetivo=it.objetivoLivre||it.objetivo||"—";
-          const statusTxt=(STATUS_LABEL[it.status]||STATUS_LABEL.planejado).t;
-          escrever("• "+(it.farmNome||"—")+(it.farmCidade?" — "+it.farmCidade:"")+"   ["+statusTxt+"]",{tamanho:9.5,altura:13});
-          escrever("   Produto: "+produto+"   |   Objetivo: "+objetivo,{tamanho:8.5,cor:[0.35,0.4,0.34],altura:15});
+          texto("Produto: "+produto+"   |   Objetivo: "+objetivo,margin+12,cardY+7,{tamanho:7.5,cor:cor(MUTED)});
+          // selo de status, alinhado à direita
+          const pillW=76,pillH=15;
+          const pillX=pageW-margin-8-pillW,pillY=cardY+cardH-13-11;
+          page.drawRectangle({x:pillX,y:pillY,width:pillW,height:pillH,color:cor(st.bg)});
+          const stTxt=st.t;
+          const stW=larguraTexto(stTxt,7.5,true);
+          texto(stTxt,pillX+(pillW-stW)/2,pillY+4.5,{tamanho:7.5,negrito:true,cor:cor(st.c)});
+          y=cardY-6;
         }
       }
-      y-=4;
+      y-=6;
     }
-    escrever("Gerado em "+new Date().toLocaleString("pt-BR"),{tamanho:7,cor:[0.6,0.62,0.58]});
+
+    precisaDeEspaco(16);
+    texto("Gerado em "+new Date().toLocaleString("pt-BR"),margin,margin-6,{tamanho:7,cor:cor(MUTED)});
 
     const bytes=await pdfDoc.save();
     const blob=new Blob([bytes],{type:"application/pdf"});
