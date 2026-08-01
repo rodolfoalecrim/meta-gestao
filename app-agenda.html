@@ -700,7 +700,8 @@ async function gerarPDFSemana(){
         y-=20;
       }else{
         for(const it of itensDoDia){
-          const cardH=34;
+          const temAcomp=!!(it.acompanhante&&it.acompanhante.nome);
+          const cardH=temAcomp?48:34;
           precisaDeEspaco(cardH+6);
           const areaHex=(AREAS[it.area]||AREAS.nutricao).color;
           const st=STATUS_LABEL[it.status]||STATUS_LABEL.planejado;
@@ -715,7 +716,14 @@ async function gerarPDFSemana(){
           }
           const produto=it.produtoLivre||it.produto||"—";
           const objetivo=it.objetivoLivre||it.objetivo||"—";
-          texto("Produto: "+produto+"   |   Objetivo: "+objetivo,margin+12,cardY+7,{tamanho:7.5,cor:cor(MUTED)});
+          texto("Produto: "+produto+"   |   Objetivo: "+objetivo,margin+12,cardY+(temAcomp?20:7),{tamanho:7.5,cor:cor(MUTED)});
+          if(temAcomp){
+            const tipoLbl=it.acompanhante.tipo==="supervisor"?"Supervisor técnico":"Promotor externo";
+            const acompTxt="ACOMPANHADO POR: "+it.acompanhante.nome.toUpperCase()+" ("+tipoLbl+")";
+            const faixaY=cardY+3,faixaH=13;
+            page.drawRectangle({x:margin+3.5,y:faixaY,width:pageW-margin*2-3.5,height:faixaH,color:cor("#F7EAD2")});
+            texto(acompTxt,margin+12,faixaY+3.5,{tamanho:7,negrito:true,cor:cor("#7A4F0F")});
+          }
           // selo de status, alinhado à direita
           const pillW=76,pillH=15;
           const pillX=pageW-margin-8-pillW,pillY=cardY+cardH-13-11;
