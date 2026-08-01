@@ -201,6 +201,8 @@ h1,h2,h3,.font-display{font-family:var(--font-display)}
 
       <button class="btn-ghost" id="btn-duplicar-semana" style="width:100%;margin-bottom:12px;display:none" onclick="duplicarSemanaAnterior()">📋 Duplicar planejamento da semana anterior</button>
 
+      <button class="btn-ghost" id="btn-pdf-semana" style="width:100%;margin-bottom:12px" onclick="gerarPDFSemana()">📄 Gerar PDF da semana (WhatsApp)</button>
+
       <div class="day-tabs" id="day-tabs"></div>
 
       <div class="sugg-wrap" id="sugg-wrap" style="display:none">
@@ -595,6 +597,82 @@ function carregarSemana(){
     document.getElementById("btn-duplicar-semana").style.display=(!somenteLeitura&&Object.keys(itensSemana).length===0)?"block":"none";
   });
 }
+function carregarPdfLib(){
+  return new Promise((resolve,reject)=>{
+    if(window.PDFLib){resolve();return}
+    const s=document.createElement("script");
+    s.src="https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js";
+    s.onload=()=>resolve();
+    s.onerror=()=>reject(new Error("Falha ao carregar biblioteca de PDF"));
+    document.head.appendChild(s);
+  });
+}
+async function gerarPDFSemana(){
+  if(!navigator.onLine){showToast("Precisa de sinal pra gerar o PDF (carrega uma biblioteca)",true);return}
+  showToast("📄 Gerando PDF...");
+  try{
+    await carregarPdfLib();
+    const{PDFDocument,StandardFonts,rgb}=window.PDFLib;
+    const pdfDoc=await PDFDocument.create();
+    const fontBold=await pdfDoc.embedFont(StandardFonts.HelveticaBold);
+    const font=await pdfDoc.embedFont(StandardFonts.Helvetica);
+    const pageW=595,pageH=842,margin=42;
+    let page=pdfDoc.addPage([pageW,pageH]);
+    let y=pageH-margin;
+    function novaPaginaSeNecessario(altura){
+      if(y-altura<margin){page=pdfDoc.addPage([pageW,pageH]);y=pageH-margin;}
+    }
+    function escrever(texto,opts){
+      opts=opts||{};
+      const tamanho=opts.tamanho||10,negrito=!!opts.negrito,cor=opts.cor||[0.08,0.13,0.09],altura=opts.altura||(tamanho+4);
+      novaPaginaSeNecessario(altura);
+      page.drawText(texto,{x:margin,y,size:tamanho,font:negrito?fontBold:font,color:rgb(cor[0],cor[1],cor[2])});
+      y-=altura;
+    }
+    const dom=addDays(currentMonday,5);
+    const periodo=String(currentMonday.getDate()).padStart(2,"0")+"/"+String(currentMonday.getMonth()+1).padStart(2,"0")+" a "+String(dom.getDate()).padStart(2,"0")+"/"+String(dom.getMonth()+1).padStart(2,"0")+"/"+dom.getFullYear();
+
+    escrever("Meta Agenda",{tamanho:18,negrito:true,cor:[0.07,0.17,0.09],altura:24});
+    escrever("Planejamento da semana — "+periodo,{tamanho:12,negrito:true,altura:18});
+    escrever("Vendedor: "+(NOME_AMIGAVEL[vendedorAlvoEmail]||vendedorAlvoEmail),{tamanho:10,altura:20});
+
+    for(const dia of DIAS_SEMANA){
+      const iso=toISODate(addDays(currentMonday,dia.off));
+      const itensDoDia=Object.values(itensSemana).filter(i=>i.data===iso).sort((a,b)=>(a.criado_em||"").localeCompare(b.criado_em||""));
+      escrever(dia.l.toUpperCase()+" ("+iso.split("-").reverse().join("/")+")",{tamanho:11,negrito:true,cor:[0.18,0.42,0.24],altura:16});
+      if(!itensDoDia.length){
+        escrever("  Sem visitas planejadas",{tamanho:9,cor:[0.4,0.44,0.38],altura:14});
+      }else{
+        for(const it of itensDoDia){
+          const produto=it.produtoLivre||it.produto||"—";
+          const objetivo=it.objetivoLivre||it.objetivo||"—";
+          const statusTxt=(STATUS_LABEL[it.status]||STATUS_LABEL.planejado).t;
+          escrever("• "+(it.farmNome||"—")+(it.farmCidade?" — "+it.farmCidade:"")+"   ["+statusTxt+"]",{tamanho:9.5,altura:13});
+          escrever("   Produto: "+produto+"   |   Objetivo: "+objetivo,{tamanho:8.5,cor:[0.35,0.4,0.34],altura:15});
+        }
+      }
+      y-=4;
+    }
+    escrever("Gerado em "+new Date().toLocaleString("pt-BR"),{tamanho:7,cor:[0.6,0.62,0.58]});
+
+    const bytes=await pdfDoc.save();
+    const blob=new Blob([bytes],{type:"application/pdf"});
+    const nomeArquivo="planejamento_"+(NOME_AMIGAVEL[vendedorAlvoEmail]||"semana").replace(/\s+/g,"_")+"_"+toISODate(currentMonday)+".pdf";
+    const file=new File([blob],nomeArquivo,{type:"application/pdf"});
+    if(navigator.canShare&&navigator.canShare({files:[file]})){
+      await navigator.share({files:[file],title:"Planejamento da semana",text:"Planejamento da semana — "+periodo});
+    }else{
+      const url=URL.createObjectURL(blob);
+      const a=document.createElement("a");
+      a.href=url;a.download=nomeArquivo;document.body.appendChild(a);a.click();document.body.removeChild(a);
+      setTimeout(()=>URL.revokeObjectURL(url),4000);
+      showToast("📄 PDF baixado — é só anexar no WhatsApp");
+    }
+  }catch(e){
+    if(e&&e.name==="AbortError")return; // usuário cancelou o share, não é erro
+    showToast("Erro ao gerar PDF: "+(e.message||""),true);
+  }
+}
 async function duplicarSemanaAnterior(){
   if(!navigator.onLine){showToast("Precisa de sinal pra duplicar a semana anterior",true);return}
   if(!confirm("Isso copia as visitas planejadas da semana passada pra esta semana (mesmo dia da semana, sem os check-ins). Continuar?"))return;
@@ -645,6 +723,7 @@ function carregarHoje(){
   });
 }
 function trocarView(v){
+  if(v==="desempenho"&&!isAdmin)return;
   viewAtual=v;
   document.getElementById("view-semana").style.display=v==="semana"?"block":"none";
   document.getElementById("view-hoje").style.display=v==="hoje"?"block":"none";
@@ -687,6 +766,7 @@ function weekKeysInRange(deISO,ateISO){
   return keys;
 }
 async function aplicarFiltroDesempenho(){
+  if(!isAdmin)return;
   const de=document.getElementById("desemp-de").value;
   const ate=document.getElementById("desemp-ate").value;
   if(!de||!ate){showToast("Selecione o período (de/até)",true);return}
