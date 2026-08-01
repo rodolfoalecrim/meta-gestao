@@ -17,6 +17,7 @@
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-storage-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-functions-compat.js"></script>
 <style>
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
 :root{
@@ -203,6 +204,9 @@ h1,h2,h3,.font-display{font-family:var(--font-display)}
 
       <button class="btn-ghost" id="btn-pdf-semana" style="width:100%;margin-bottom:12px" onclick="gerarPDFSemana()">📄 Gerar PDF da semana (WhatsApp)</button>
 
+      <button class="btn-ghost" id="btn-sugg-ia" style="width:100%;margin-bottom:8px" onclick="gerarSugestoesIA()">🤖 Sugestão de visitas com IA</button>
+      <div id="sugg-ia-wrap" style="display:none;margin-bottom:12px"></div>
+
       <div class="day-tabs" id="day-tabs"></div>
 
       <div class="sugg-wrap" id="sugg-wrap" style="display:none">
@@ -343,6 +347,7 @@ firebase.initializeApp(firebaseConfig);
 const auth=firebase.auth();
 const db=firebase.database();
 const storage=firebase.storage();
+const cloudFn=firebase.functions();
 
 const VENDEDOR_MAP={"vetsinvesting@gmail.com":["PAULO","PAULO VETS","VETSINVESTING"],"jozielsantossoares@gmail.com":["JOZIEL","JOZIEL SANTOS","JOZIELSANTOSSOARES"],"vetdalmolin@gmail.com":["MAICON","MAICON DALMOLIN","VETDALMOLIN"],"arthursoaresaa@gmail.com":["ARTHUR","ARTHUR SOARES","ARTHURSOARESAA"],"lucasbianchi214@gmail.com":["LUCAS","LUCAS BIANCHI","LUCASBIANCHI214"],"jrlucasramos2@gmail.com":["JOSÉ LUCAS","JOSE LUCAS","JRLUCASRAMOS2"],"mullerjulio02@gmail.com":["JULIO","JULIO MULLER","MULLERJULIO02"],"vagner7leguas@gmail.com":["VAGNER","VAGNER7LEGUAS","VAGNER LEGUAS"]};
 const NOME_AMIGAVEL={"rodolfoalecrim@gmail.com":"Rodolfo","vetsinvesting@gmail.com":"Paulo","jozielsantossoares@gmail.com":"Joziel","vetdalmolin@gmail.com":"Maicon","arthursoaresaa@gmail.com":"Arthur","lucasbianchi214@gmail.com":"Lucas","jrlucasramos2@gmail.com":"José Lucas","mullerjulio02@gmail.com":"Julio","vagner7leguas@gmail.com":"Vagner"};
@@ -779,6 +784,17 @@ async function duplicarSemanaAnterior(){
     showToast("✅ "+copiadas+" visita"+(copiadas>1?"s":"")+" copiada"+(copiadas>1?"s":"")+" pra esta semana");
   }catch(e){showToast("Erro ao buscar a semana anterior",true)}
 }
+function montarBarraAreas(itens){
+  if(!itens.length)return"";
+  const counts={};
+  itens.forEach(i=>{counts[i.area]=(counts[i.area]||0)+1});
+  const total=itens.length;
+  const dados=Object.keys(AREAS).map(k=>({label:AREAS[k].label,color:AREAS[k].color,count:counts[k]||0,pct:Math.round((counts[k]||0)/total*100)})).filter(d=>d.count>0);
+  if(!dados.length)return"";
+  const barra=dados.map(d=>'<div style="flex:'+d.pct+';background:'+d.color+'"></div>').join("");
+  const legenda=dados.map(d=>'<span style="display:inline-flex;align-items:center;gap:4px;margin-right:10px;font-size:10px;color:var(--muted);font-family:var(--font-mono)"><span style="width:8px;height:8px;border-radius:2px;background:'+d.color+';display:inline-block"></span>'+d.label+' '+d.pct+'%</span>').join("");
+  return '<div style="display:flex;border-radius:6px;overflow:hidden;height:8px;margin-top:10px">'+barra+'</div><div style="margin-top:7px;line-height:1.8">'+legenda+'</div>';
+}
 function renderResumoSemanal(){
   const wrap=document.getElementById("resumo-semana-card");
   const itens=Object.values(itensSemana);
@@ -795,7 +811,22 @@ function renderResumoSemanal(){
       '<div class="perf-cell"><span class="perf-num">'+realizadas+'</span><span class="perf-lbl">Realizadas</span></div>'+
       '<div class="perf-cell"><span class="perf-num">'+checkins+'</span><span class="perf-lbl">Check-ins</span></div>'+
       '<div class="perf-cell"><span class="perf-num'+(desvios>0?" desvio":"")+'">'+desvios+'</span><span class="perf-lbl">Desvios</span></div>'+
-    '</div>';
+    '</div>'+montarBarraAreas(itens)+
+    '<button class="btn-ghost" style="width:100%;margin-top:10px" onclick="gerarResumoIAProprio()">🤖 Resumo com IA da minha semana</button>'+
+    '<div id="resumo-ia-propria" style="display:none;margin-top:10px"></div>';
+}
+async function gerarResumoIAProprio(){
+  const box=document.getElementById("resumo-ia-propria");
+  box.style.display="block";
+  const visitas=Object.values(itensSemana).filter(i=>i.checkin&&i.checkin.resumo).map(i=>({farmNome:i.farmNome,data:i.data,resumo:i.checkin.resumo}));
+  if(!visitas.length){box.innerHTML='<div class="item-meta">Nenhuma anotação de check-in essa semana pra resumir</div>';return}
+  box.innerHTML='<div class="skeleton" style="height:60px"></div>';
+  try{
+    const resp=await cloudFn.httpsCallable("gerarResumoVisitasAgenda")({visitas});
+    box.innerHTML='<div style="padding:10px 12px;background:var(--pasture-light);border-left:2.5px solid var(--G);border-radius:6px;font-size:12px;color:var(--GD);line-height:1.6">🤖 '+(resp.data.resumo||"Sem resumo retornado")+'</div>';
+  }catch(e){
+    box.innerHTML='<div class="item-meta" style="color:var(--clay)">Erro ao gerar resumo: '+(e.message||"falha na função")+'</div>';
+  }
 }
 function carregarHoje(){
   const wk=weekKeyOf(getMonday(new Date()));
@@ -874,7 +905,7 @@ async function aplicarFiltroDesempenho(){
         if(it.foraDoPlanejamento)desvios++;else planejadas++;
         if(it.status==="realizado"&&!it.foraDoPlanejamento)realizadas++;
         if(it.checkin)checkins++;
-        itensDetalhe.push({data:it.data,farmNome:it.farmNome,status:it.status,foraDoPlanejamento:!!it.foraDoPlanejamento});
+        itensDetalhe.push({data:it.data,farmNome:it.farmNome,status:it.status,foraDoPlanejamento:!!it.foraDoPlanejamento,area:it.area,checkinResumo:it.checkin?it.checkin.resumo:null});
       });
     }
     itensDetalhe.sort((a,b)=>a.data.localeCompare(b.data));
@@ -926,6 +957,21 @@ function montarSVGTendencia(dados){
   }).join("");
   return '<svg viewBox="0 0 '+w+' '+h+'" style="width:100%;height:110px">'+barras+'</svg>';
 }
+async function gerarResumoIA(idx){
+  const r=window._desempenhoAtual[idx];
+  const box=document.getElementById("perf-ia-"+idx);
+  if(!box)return;
+  box.style.display="block";
+  const visitas=(r.itensDetalhe||[]).filter(it=>it.checkinResumo).map(it=>({farmNome:it.farmNome,data:it.data,resumo:it.checkinResumo}));
+  if(!visitas.length){box.innerHTML='<div class="item-meta">Nenhuma anotação de check-in no período pra resumir</div>';return}
+  box.innerHTML='<div class="skeleton" style="height:60px"></div>';
+  try{
+    const resp=await cloudFn.httpsCallable("gerarResumoVisitasAgenda")({visitas});
+    box.innerHTML='<div style="padding:10px 12px;background:var(--pasture-light);border-left:2.5px solid var(--G);border-radius:6px;font-size:12px;color:var(--GD);line-height:1.6">🤖 '+(resp.data.resumo||"Sem resumo retornado")+'</div>';
+  }catch(e){
+    box.innerHTML='<div class="item-meta" style="color:var(--clay)">Erro ao gerar resumo: '+(e.message||"falha na função")+'</div>';
+  }
+}
 function renderDesempenho(resultados){
   const wrap=document.getElementById("desemp-lista");
   resultados.sort((a,b)=>(b.performance??-1)-(a.performance??-1));
@@ -935,10 +981,13 @@ function renderDesempenho(resultados){
     const pct=r.performance;
     const pctCor=pct===null?"background:var(--surface2);color:var(--muted)":pct>=80?"background:var(--pasture-light);color:var(--GD)":pct>=50?"background:#F7EAD2;color:#7A4F0F":"background:var(--clay-light);color:var(--clay)";
     const detalheHtml=r.itensDetalhe.length?r.itensDetalhe.map(it=>
-      '<div style="display:flex;justify-content:space-between;padding:5px 0;border-top:1px solid var(--border);font-size:12px">'+
+      '<div style="padding:5px 0;border-top:1px solid var(--border);font-size:12px">'+
+      '<div style="display:flex;justify-content:space-between">'+
       '<span class="mono" style="color:var(--muted)">'+it.data.slice(5).split("-").reverse().join("/")+'</span>'+
       '<span style="flex:1;padding:0 8px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+(it.farmNome||"—")+(it.foraDoPlanejamento?' <span style="color:var(--clay)">· desvio</span>':"")+'</span>'+
       '<span class="mono" style="color:'+(it.status==="realizado"?"var(--pasture)":it.status==="nao_realizado"?"var(--clay)":"var(--muted)")+'">'+(STATUS_LABEL[it.status]||STATUS_LABEL.planejado).t+'</span>'+
+      '</div>'+
+      (it.checkinResumo?'<div style="margin-top:4px;padding:6px 8px;background:var(--surface2);border-left:2.5px solid var(--G);border-radius:4px;font-size:11px;color:var(--muted);font-style:italic">💬 '+it.checkinResumo+'</div>':"")+
       '</div>'
     ).join(""):'<div class="item-meta">Nenhuma visita no período</div>';
     return '<div class="perf-card">'+
@@ -948,13 +997,15 @@ function renderDesempenho(resultados){
         '<div class="perf-cell"><span class="perf-num">'+r.realizadas+'</span><span class="perf-lbl">Realizadas</span></div>'+
         '<div class="perf-cell"><span class="perf-num">'+r.checkins+'</span><span class="perf-lbl">Check-ins</span></div>'+
         '<div class="perf-cell"><span class="perf-num'+(r.desvios>0?" desvio":"")+'">'+r.desvios+'</span><span class="perf-lbl">Desvios</span></div>'+
-      '</div>'+
+      '</div>'+montarBarraAreas(r.itensDetalhe)+
       '<div style="display:flex;gap:8px;margin-top:10px">'+
         '<button class="btn-ghost" style="flex:1" onclick="toggleDetalheVendedor('+idx+')">📋 Ver visitas</button>'+
         '<button class="btn-ghost" style="flex:1" onclick="mostrarTendencia('+idx+')">📈 Tendência</button>'+
       '</div>'+
+      '<button class="btn-ghost" style="width:100%;margin-top:8px" onclick="gerarResumoIA('+idx+')">🤖 Resumo com IA</button>'+
       '<div id="perf-detalhe-'+idx+'" style="display:none;margin-top:8px;max-height:220px;overflow-y:auto">'+detalheHtml+'</div>'+
       '<div id="perf-tendencia-'+idx+'" style="display:none;margin-top:10px"></div>'+
+      '<div id="perf-ia-'+idx+'" style="display:none;margin-top:10px"></div>'+
       '</div>';
   }).join("");
 }
@@ -979,6 +1030,35 @@ function renderSugestoes(){
   ).join("");
 }
 function toggleSugg(){const b=document.getElementById("sugg-body");b.style.display=b.style.display==="none"?"block":"none"}
+async function gerarSugestoesIA(){
+  const box=document.getElementById("sugg-ia-wrap");
+  box.style.display="block";
+  const hoje=Date.now();
+  const farmIdsJaNaAgenda=new Set(Object.values(itensSemana).map(i=>i.farmId));
+  const candidatas=meusClientes.filter(d=>(d.situacao||"").toUpperCase()==="ATIVO"&&!farmIdsJaNaAgenda.has(d.id)).map(d=>{
+    const dataRef=d.data_visita||d.atualizado_em;
+    const dias=dataRef?Math.floor((hoje-new Date(dataRef).getTime())/864e5):null;
+    return{id:d.id,produtor:d.produtor,cidade:d.cidade,produto:d.produto,vacas:d.vacas,mediaProd:d.media_prod,diasSemVisita:dias};
+  }).sort((a,b)=>(b.diasSemVisita??9999)-(a.diasSemVisita??9999)).slice(0,40);
+  if(!candidatas.length){box.innerHTML='<div class="item-meta">Sem fazendas no portfólio pra a IA analisar (tudo já está no planejamento desta semana)</div>';return}
+  box.innerHTML='<div class="skeleton" style="height:90px"></div>';
+  try{
+    const resp=await cloudFn.httpsCallable("gerarSugestoesVisitaAgenda")({fazendas:candidatas});
+    const sugestoes=Array.isArray(resp.data.sugestoes)?resp.data.sugestoes:[];
+    if(!sugestoes.length){box.innerHTML='<div class="item-meta">A IA não retornou sugestões dessa vez</div>';return}
+    box.innerHTML='<div class="sugg-wrap" style="border-style:solid;border-color:var(--G)">'+
+      '<div class="sugg-title" style="margin-bottom:6px">🤖 Sugestões da IA</div>'+
+      sugestoes.map(s=>{
+        const farm=candidatas.find(c=>(c.produtor||"").toUpperCase()===String(s.produtor||"").toUpperCase());
+        return '<div class="sugg-item"><div class="sugg-item-info"><div class="sugg-item-nome">'+(s.produtor||"—")+'</div><div class="sugg-item-sub" style="color:var(--muted)">'+(s.motivo||"")+'</div></div>'+
+          (farm?'<button class="btn-add-sugg" onclick="abrirModalItem(\''+farm.id+'\')">+ Agendar</button>':'')+
+          '</div>';
+      }).join("")+
+      '</div>';
+  }catch(e){
+    box.innerHTML='<div class="item-meta" style="color:var(--clay)">Erro ao pedir sugestão da IA: '+(e.message||"falha na função")+'</div>';
+  }
+}
 
 /* ===================== RENDER ITENS DO DIA ===================== */
 function renderItens(){
@@ -1000,7 +1080,10 @@ function montarCardItem(item){
   const objetivo=item.objetivoLivre||item.objetivo||"—";
   const acomp=item.acompanhante&&item.acompanhante.nome?("<br>👥 <b>Acompanhado por:</b> "+item.acompanhante.nome):"";
   const podeCheckin=!somenteLeitura&&item.status==="planejado"&&item.data<=hojeISO;
-  const checkinInfo=item.checkin?('<div class="item-meta">📝 '+(item.checkin.resumo||"")+(item.checkin.localizacaoValidada===false?' <span style="color:var(--clay)">· sem validação de localização</span>':"")+'</div>'):"";
+  const checkinInfo=item.checkin?(
+    (item.checkin.resumo?'<div style="margin-top:8px;padding:8px 10px;background:var(--surface2);border-left:2.5px solid var(--G);border-radius:6px;font-size:12px;color:var(--muted);font-style:italic">💬 '+item.checkin.resumo+'</div>':'')+
+    (item.checkin.localizacaoValidada===false?'<div class="item-meta" style="color:var(--clay)">⚠️ sem validação de localização</div>':'')
+  ):"";
   const desvioTag=item.foraDoPlanejamento?'<div class="item-area" style="color:var(--clay)">📍 Fora do planejamento</div>':"";
   const pendenteTag=String(item.id).startsWith("local_")?'<div class="item-meta" style="color:var(--muted)">🔄 Salvo no aparelho — aguardando sinal pra sincronizar</div>':"";
   const podeEditar=!somenteLeitura;
