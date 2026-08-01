@@ -38,9 +38,12 @@ button:active{transform:scale(.95)}
 h1,h2,h3,.font-display{font-family:var(--font-display)}
 .mono{font-family:var(--font-mono)}
 @media (prefers-reduced-motion:reduce){*{animation-duration:.01ms !important;transition-duration:.01ms !important}}
-#loading-screen{position:fixed;inset:0;background:var(--GD);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:999;color:#fff;font-weight:700;font-family:var(--font-display)}
+#loading-screen{position:fixed;inset:0;background:var(--GD);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:999;color:#fff;font-weight:700;font-family:var(--font-display);gap:14px}
+.loading-logo{width:64px;height:64px;border-radius:16px;object-fit:cover;animation:pulseLogo 1.4s ease infinite}
+@keyframes pulseLogo{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.75;transform:scale(.94)}}
 #login-screen{position:fixed;inset:0;background:linear-gradient(160deg,var(--GD) 0%,var(--pasture-mid) 55%,var(--clover) 130%);display:none;flex-direction:column;align-items:center;justify-content:center;padding:24px;z-index:998}
 .login-box{background:#fff;border-radius:22px;padding:34px 28px;width:100%;max-width:380px;box-shadow:0 24px 70px #00000055;animation:riseIn .5s cubic-bezier(.16,1,.3,1)}
+.login-logo{width:72px;height:72px;border-radius:18px;object-fit:cover;display:block;margin:0 auto 16px;box-shadow:0 8px 20px rgba(18,43,24,.25)}
 @keyframes riseIn{from{opacity:0;transform:translateY(18px)}to{opacity:1;transform:translateY(0)}}
 .login-title{font-family:var(--font-display);font-size:24px;font-weight:700;color:var(--ink);margin-bottom:4px;text-align:center;letter-spacing:-.3px}
 .login-sub{font-size:13px;color:var(--muted);text-align:center;margin-bottom:26px}
@@ -51,8 +54,8 @@ h1,h2,h3,.font-display{font-family:var(--font-display)}
 .btn-login{width:100%;background:linear-gradient(135deg,var(--pasture-mid),var(--GD));color:#fff;border:none;border-radius:12px;padding:14px;font-size:15px;font-weight:700;cursor:pointer;margin-top:8px;font-family:var(--font-display);letter-spacing:.2px}
 #app{display:none;flex-direction:column;height:100dvh;overflow:hidden}
 .topbar{background:var(--GD);border-bottom:none;padding:0 16px;height:56px;display:flex;align-items:center;gap:10px;flex-shrink:0;padding-top:var(--safe-top)}
-.topbar-title{font-family:var(--font-display);font-size:16px;font-weight:700;color:#fff;letter-spacing:-.2px;display:flex;align-items:center;gap:7px}
-.topbar-title .stamp-dot{width:8px;height:8px;border-radius:50%;background:var(--clover);box-shadow:0 0 0 3px rgba(143,191,46,.25)}
+.topbar-title{font-family:var(--font-display);font-size:16px;font-weight:700;color:#fff;letter-spacing:-.2px;display:flex;align-items:center;gap:8px}
+.topbar-logo{width:26px;height:26px;border-radius:7px;object-fit:cover;box-shadow:0 0 0 2px rgba(255,255,255,.15)}
 .topbar-right{margin-left:auto;display:flex;align-items:center;gap:12px}
 .topbar-vend{font-size:12px;font-weight:600;color:var(--clover)}
 .btn-logout{background:none;border:none;cursor:pointer;color:rgba(255,255,255,.7);font-size:16px;padding:4px}
@@ -160,11 +163,12 @@ h1,h2,h3,.font-display{font-family:var(--font-display)}
 </head>
 <body>
 
-<div id="loading-screen">Carregando...</div>
+<div id="loading-screen"><img src="meta_logo.jpg" class="loading-logo" alt="" onerror="this.style.display='none'"><span>Carregando...</span></div>
 
 <div id="login-screen">
   <div class="login-box">
-    <div class="login-title">📅 Meta Agenda</div>
+    <img src="meta_logo.jpg" alt="Meta" class="login-logo" onerror="this.style.display='none'">
+    <div class="login-title">Meta Agenda</div>
     <div class="login-sub">Planejamento semanal de visitas</div>
     <div class="login-field"><label>Email</label><input type="email" id="l-email" placeholder="seu@email.com"></div>
     <div class="login-field"><label>Senha</label><input type="password" id="l-senha" placeholder="••••••••"></div>
@@ -174,8 +178,10 @@ h1,h2,h3,.font-display{font-family:var(--font-display)}
 
 <div id="app">
   <div class="topbar">
-    <div class="topbar-title"><span class="stamp-dot"></span>Meta Agenda</div>
+    <div class="topbar-title"><img src="meta_logo.jpg" class="topbar-logo" alt="" onerror="this.style.display='none'">Meta Agenda</div>
     <div class="topbar-right">
+      <span id="offline-badge" style="display:none;font-size:11px;color:#F7C9BC;font-weight:600">📴 Offline</span>
+      <span id="sync-queue-badge" style="display:none;font-size:11px;color:var(--clover);font-weight:600">🔄 <span id="sync-count">0</span></span>
       <span class="topbar-vend" id="tvendedor"></span>
       <button class="btn-logout" onclick="fazerLogout()" title="Sair">⏻</button>
     </div>
@@ -190,6 +196,10 @@ h1,h2,h3,.font-display{font-family:var(--font-display)}
         <div class="wk-label" id="wk-label">—</div>
         <button onclick="mudarSemana(1)">→</button>
       </div>
+
+      <div class="perf-card" id="resumo-semana-card" style="margin-bottom:12px"></div>
+
+      <button class="btn-ghost" id="btn-duplicar-semana" style="width:100%;margin-bottom:12px;display:none" onclick="duplicarSemanaAnterior()">📋 Duplicar planejamento da semana anterior</button>
 
       <div class="day-tabs" id="day-tabs"></div>
 
@@ -207,6 +217,7 @@ h1,h2,h3,.font-display{font-family:var(--font-display)}
 
     <div id="view-hoje" style="display:none">
       <div class="lista-titulo" id="hoje-titulo">Hoje</div>
+      <button class="btn-ghost" id="btn-rota" style="width:100%;margin-bottom:8px;display:none" onclick="abrirRotaDoDia()">🗺️ Ver rota do dia no mapa</button>
       <button class="btn-ghost" id="btn-avulso" style="width:100%;margin-bottom:12px;display:none" onclick="abrirModalItem(null,true)">📍 Registrar visita não planejada</button>
       <div id="hoje-lista"></div>
     </div>
@@ -225,6 +236,7 @@ h1,h2,h3,.font-display{font-family:var(--font-display)}
   <button class="fab" id="fab-add" onclick="abrirModalItem()">+</button>
 
   <div class="bottom-nav">
+    <div class="bn-indicator" id="bn-indicator"></div>
     <button class="bn-tab on" id="bn-semana" onclick="trocarView('semana')"><span class="bn-ic">🗂️</span>Planejamento</button>
     <button class="bn-tab" id="bn-hoje" onclick="trocarView('hoje')"><span class="bn-ic">📍</span>Hoje</button>
     <button class="bn-tab" id="bn-desempenho" style="display:none" onclick="trocarView('desempenho')"><span class="bn-ic">📊</span>Desempenho</button>
@@ -395,6 +407,60 @@ function distKm(lat1,lng1,lat2,lng2){const R=6371,dLat=(lat2-lat1)*Math.PI/180,d
 function getFarmCoords(d){if(!d)return null;if(d.lat&&d.lng)return{lat:parseFloat(d.lat),lng:parseFloat(d.lng)};const key=(d.produtor||"").toUpperCase().trim();if(key&&mapCoordsIndex[key])return mapCoordsIndex[key];return null}
 function obterItem(id){return itensSemana[id]||hojeItens[id]}
 
+/* ===================== FILA OFFLINE ===================== */
+const OFFLINE_KEY="meta_agenda_offline_queue";
+function getOfflineQueue(){try{return JSON.parse(localStorage.getItem(OFFLINE_KEY)||"[]")}catch(e){return[]}}
+function saveOfflineQueue(q){try{localStorage.setItem(OFFLINE_KEY,JSON.stringify(q))}catch(e){}}
+function addToOfflineQueue(type,data){const q=getOfflineQueue();q.push({type,data,ts:new Date().toISOString(),id:Date.now()+"_"+Math.random().toString(36).slice(2,7)});saveOfflineQueue(q);atualizarBadgeOffline()}
+function atualizarBadgeOffline(){
+  const badge=document.getElementById("offline-badge");
+  const syncBadge=document.getElementById("sync-queue-badge");
+  const cnt=document.getElementById("sync-count");
+  if(!badge)return;
+  badge.style.display=navigator.onLine?"none":"inline";
+  const q=getOfflineQueue();
+  if(q.length>0){syncBadge.style.display="inline";cnt.textContent=q.length}else{syncBadge.style.display="none"}
+}
+async function tentarSincronizarAgenda(){
+  if(!navigator.onLine)return;
+  const q=getOfflineQueue();
+  if(!q.length)return;
+  const tempMap={};
+  let processados=0;
+  for(const entrada of q){
+    const d=entrada.data;
+    try{
+      if(entrada.type==="novo_item"){
+        const ref=db.ref("agendas/"+d.uid+"/"+d.wk+"/itens").push();
+        await ref.set(d.item);
+        tempMap[d.tempId]=ref.key;
+      }else if(entrada.type==="checkin"){
+        const realId=d.itemId||tempMap[d.tempId];
+        if(!realId)throw new Error("aguardando item ainda não sincronizado");
+        await db.ref("agendas/"+d.uid+"/"+d.wk+"/itens/"+realId).update(d.patch);
+      }else if(entrada.type==="editar_item"){
+        const realId=d.itemId||tempMap[d.tempId];
+        if(!realId)throw new Error("aguardando item ainda não sincronizado");
+        await db.ref("agendas/"+d.uid+"/"+d.wk+"/itens/"+realId).update(d.patch);
+      }else if(entrada.type==="produto_custom"){
+        await db.ref("produtosCustom/"+d.area).push({valor:d.valor});
+      }else if(entrada.type==="objetivo_custom"){
+        await db.ref("objetivosCustom/"+d.area).push({valor:d.valor});
+      }
+      processados++;
+    }catch(e){break}
+  }
+  if(processados>0){
+    saveOfflineQueue(q.slice(processados));
+    atualizarBadgeOffline();
+    Object.keys(tempMap).forEach(t=>{delete itensSemana[t];delete hojeItens[t]});
+    renderItens();renderHoje();
+    showToast("✅ "+processados+" registro"+(processados>1?"s":"")+" sincronizado"+(processados>1?"s":"")+"!");
+  }
+}
+window.addEventListener("online",()=>{atualizarBadgeOffline();tentarSincronizarAgenda()});
+window.addEventListener("offline",atualizarBadgeOffline);
+
 /* ===================== AUTH ===================== */
 auth.onAuthStateChanged(user=>{
   document.getElementById("loading-screen").style.display="none";
@@ -426,6 +492,9 @@ function fazerLogout(){if(confirm("Deseja sair?"))auth.signOut()}
 function iniciarApp(){
   mostrarSkeleton();
   if(isAdmin)montarSeletorAdmin();
+  atualizarIndicadorNav("semana");
+  atualizarBadgeOffline();
+  tentarSincronizarAgenda();
   carregarMapCoords();
   carregarPortfolio(vendedorAlvoEmail);
 }
@@ -522,7 +591,48 @@ function carregarSemana(){
     snap.forEach(c=>{itensSemana[c.key]={id:c.key,...c.val()}});
     renderItens();
     renderSugestoes();
+    renderResumoSemanal();
+    document.getElementById("btn-duplicar-semana").style.display=(!somenteLeitura&&Object.keys(itensSemana).length===0)?"block":"none";
   });
+}
+async function duplicarSemanaAnterior(){
+  if(!navigator.onLine){showToast("Precisa de sinal pra duplicar a semana anterior",true);return}
+  if(!confirm("Isso copia as visitas planejadas da semana passada pra esta semana (mesmo dia da semana, sem os check-ins). Continuar?"))return;
+  const wkAnterior=weekKeyOf(addDays(currentMonday,-7));
+  const wkAtual=weekKeyOf(currentMonday);
+  try{
+    const snap=await db.ref("agendas/"+vendedorAlvoUid+"/"+wkAnterior+"/itens").once("value");
+    const itens=[];
+    snap.forEach(c=>{const v=c.val();if(v&&!v.foraDoPlanejamento)itens.push(v)});
+    if(!itens.length){showToast("Não encontrei visitas planejadas na semana anterior",true);return}
+    const destRef=db.ref("agendas/"+vendedorAlvoUid+"/"+wkAtual+"/itens");
+    let copiadas=0;
+    for(const it of itens){
+      const novaData=toISODate(addDays(new Date(it.data+"T00:00:00"),7));
+      const novoItem={...it,data:novaData,status:"planejado",criado_em:new Date().toISOString()};
+      delete novoItem.checkin;
+      try{await destRef.push().set(novoItem);copiadas++}catch(e){}
+    }
+    showToast("✅ "+copiadas+" visita"+(copiadas>1?"s":"")+" copiada"+(copiadas>1?"s":"")+" pra esta semana");
+  }catch(e){showToast("Erro ao buscar a semana anterior",true)}
+}
+function renderResumoSemanal(){
+  const wrap=document.getElementById("resumo-semana-card");
+  const itens=Object.values(itensSemana);
+  if(!itens.length){wrap.innerHTML='<div class="perf-nome">Resumo da semana<span class="perf-pct" style="background:var(--surface2);color:var(--muted)">sem visitas ainda</span></div>';return}
+  const planejadas=itens.filter(i=>!i.foraDoPlanejamento).length;
+  const realizadas=itens.filter(i=>i.status==="realizado"&&!i.foraDoPlanejamento).length;
+  const checkins=itens.filter(i=>i.checkin).length;
+  const desvios=itens.filter(i=>i.foraDoPlanejamento).length;
+  const pct=planejadas>0?Math.round(realizadas/planejadas*100):null;
+  const pctCor=pct===null?"background:var(--surface2);color:var(--muted)":pct>=80?"background:var(--pasture-light);color:var(--GD)":pct>=50?"background:#F7EAD2;color:#7A4F0F":"background:var(--clay-light);color:var(--clay)";
+  wrap.innerHTML='<div class="perf-nome"><span>Resumo da semana</span><span class="perf-pct" style="'+pctCor+'">'+(pct===null?"—":pct+"% concluído")+'</span></div>'+
+    '<div class="perf-grid">'+
+      '<div class="perf-cell"><span class="perf-num">'+planejadas+'</span><span class="perf-lbl">Planejadas</span></div>'+
+      '<div class="perf-cell"><span class="perf-num">'+realizadas+'</span><span class="perf-lbl">Realizadas</span></div>'+
+      '<div class="perf-cell"><span class="perf-num">'+checkins+'</span><span class="perf-lbl">Check-ins</span></div>'+
+      '<div class="perf-cell"><span class="perf-num'+(desvios>0?" desvio":"")+'">'+desvios+'</span><span class="perf-lbl">Desvios</span></div>'+
+    '</div>';
 }
 function carregarHoje(){
   const wk=weekKeyOf(getMonday(new Date()));
@@ -543,7 +653,17 @@ function trocarView(v){
   document.getElementById("bn-hoje").classList.toggle("on",v==="hoje");
   document.getElementById("bn-desempenho").classList.toggle("on",v==="desempenho");
   document.getElementById("fab-add").style.display=(v==="semana"&&!somenteLeitura)?"block":"none";
+  atualizarIndicadorNav(v);
   if(v==="desempenho")prepararFiltroDesempenhoPadrao();
+}
+function atualizarIndicadorNav(v){
+  const tabs=isAdmin?["semana","hoje","desempenho"]:["semana","hoje"];
+  const idx=tabs.indexOf(v);
+  if(idx<0)return;
+  const pct=100/tabs.length;
+  const ind=document.getElementById("bn-indicator");
+  ind.style.width=pct+"%";
+  ind.style.left=(idx*pct)+"%";
 }
 function prepararFiltroDesempenhoPadrao(){
   const de=document.getElementById("desemp-de");
@@ -577,8 +697,9 @@ async function aplicarFiltroDesempenho(){
   const resultados=[];
   for(const email of emails){
     const uid=emailParaUid[email];
-    if(!uid){resultados.push({email,semUid:true});continue}
+    if(!uid){resultados.push({email,nome:NOME_AMIGAVEL[email]||email,semUid:true});continue}
     let planejadas=0,realizadas=0,checkins=0,desvios=0;
+    const itensDetalhe=[];
     for(const wk of weekKeys){
       let snap;
       try{snap=await db.ref("agendas/"+uid+"/"+wk+"/itens").once("value")}catch(e){continue}
@@ -586,23 +707,75 @@ async function aplicarFiltroDesempenho(){
         const it=c.val();
         if(!it||!it.data||it.data<de||it.data>ate)return;
         if(it.foraDoPlanejamento)desvios++;else planejadas++;
-        if(it.status==="realizado")realizadas++;
+        if(it.status==="realizado"&&!it.foraDoPlanejamento)realizadas++;
         if(it.checkin)checkins++;
+        itensDetalhe.push({data:it.data,farmNome:it.farmNome,status:it.status,foraDoPlanejamento:!!it.foraDoPlanejamento});
       });
     }
-    resultados.push({email,nome:NOME_AMIGAVEL[email]||email,planejadas,realizadas,checkins,desvios,
+    itensDetalhe.sort((a,b)=>a.data.localeCompare(b.data));
+    resultados.push({email,uid,nome:NOME_AMIGAVEL[email]||email,planejadas,realizadas,checkins,desvios,itensDetalhe,
       performance:planejadas>0?Math.round(realizadas/planejadas*100):null});
   }
+  window._desempenhoAtual=resultados;
   renderDesempenho(resultados);
+}
+function toggleDetalheVendedor(idx){
+  const el=document.getElementById("perf-detalhe-"+idx);
+  if(!el)return;
+  el.style.display=el.style.display==="none"?"block":"none";
+}
+async function mostrarTendencia(idx){
+  const r=window._desempenhoAtual[idx];
+  const box=document.getElementById("perf-tendencia-"+idx);
+  if(!box)return;
+  if(box.dataset.carregado==="1"){box.style.display=box.style.display==="none"?"block":"none";return}
+  box.style.display="block";
+  box.innerHTML='<div class="skeleton" style="height:90px"></div>';
+  const hojeMonday=getMonday(new Date());
+  const semanas=[];
+  for(let i=7;i>=0;i--)semanas.push(addDays(hojeMonday,-7*i));
+  const dados=[];
+  for(const seg of semanas){
+    const wk=weekKeyOf(seg);
+    let planejadas=0,realizadas=0;
+    try{
+      const snap=await db.ref("agendas/"+r.uid+"/"+wk+"/itens").once("value");
+      snap.forEach(c=>{const it=c.val();if(!it||it.foraDoPlanejamento)return;planejadas++;if(it.status==="realizado")realizadas++});
+    }catch(e){}
+    dados.push({label:String(seg.getDate()).padStart(2,"0")+"/"+String(seg.getMonth()+1).padStart(2,"0"),pct:planejadas>0?Math.round(realizadas/planejadas*100):null});
+  }
+  box.dataset.carregado="1";
+  box.innerHTML=montarSVGTendencia(dados);
+}
+function montarSVGTendencia(dados){
+  const w=300,h=110,padBottom=22,barW=w/dados.length,maxH=h-padBottom-6;
+  const barras=dados.map((d,i)=>{
+    const val=d.pct===null?0:d.pct;
+    const bh=d.pct===null?3:Math.max(3,val/100*maxH);
+    const x=i*barW+barW*0.2;
+    const bw=barW*0.6;
+    const y=h-padBottom-bh;
+    const cor=d.pct===null?"var(--border)":d.pct>=80?"var(--pasture)":d.pct>=50?"#C98A2E":"var(--clay)";
+    return '<rect x="'+x+'" y="'+y+'" width="'+bw+'" height="'+bh+'" rx="3" fill="'+cor+'"></rect>'+
+      '<text x="'+(x+bw/2)+'" y="'+(h-8)+'" text-anchor="middle" font-size="8" font-family="IBM Plex Mono, monospace" fill="var(--muted)">'+d.label+'</text>';
+  }).join("");
+  return '<svg viewBox="0 0 '+w+' '+h+'" style="width:100%;height:110px">'+barras+'</svg>';
 }
 function renderDesempenho(resultados){
   const wrap=document.getElementById("desemp-lista");
   resultados.sort((a,b)=>(b.performance??-1)-(a.performance??-1));
   if(!resultados.length){wrap.innerHTML='<div class="empty-state"><div class="es-emoji">📊</div>Nenhum vendedor cadastrado</div>';return}
-  wrap.innerHTML=resultados.map(r=>{
-    if(r.semUid)return '<div class="perf-card"><div class="perf-nome">'+(NOME_AMIGAVEL[r.email]||r.email)+'</div><div class="item-meta" style="color:var(--clay)">uid não encontrado em /usuarios</div></div>';
+  wrap.innerHTML=resultados.map((r,idx)=>{
+    if(r.semUid)return '<div class="perf-card"><div class="perf-nome">'+r.nome+'</div><div class="item-meta" style="color:var(--clay)">uid não encontrado em /usuarios</div></div>';
     const pct=r.performance;
     const pctCor=pct===null?"background:var(--surface2);color:var(--muted)":pct>=80?"background:var(--pasture-light);color:var(--GD)":pct>=50?"background:#F7EAD2;color:#7A4F0F":"background:var(--clay-light);color:var(--clay)";
+    const detalheHtml=r.itensDetalhe.length?r.itensDetalhe.map(it=>
+      '<div style="display:flex;justify-content:space-between;padding:5px 0;border-top:1px solid var(--border);font-size:12px">'+
+      '<span class="mono" style="color:var(--muted)">'+it.data.slice(5).split("-").reverse().join("/")+'</span>'+
+      '<span style="flex:1;padding:0 8px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+(it.farmNome||"—")+(it.foraDoPlanejamento?' <span style="color:var(--clay)">· desvio</span>':"")+'</span>'+
+      '<span class="mono" style="color:'+(it.status==="realizado"?"var(--pasture)":it.status==="nao_realizado"?"var(--clay)":"var(--muted)")+'">'+(STATUS_LABEL[it.status]||STATUS_LABEL.planejado).t+'</span>'+
+      '</div>'
+    ).join(""):'<div class="item-meta">Nenhuma visita no período</div>';
     return '<div class="perf-card">'+
       '<div class="perf-nome"><span>'+r.nome+'</span><span class="perf-pct" style="'+pctCor+'">'+(pct===null?"—":pct+"% concluído")+'</span></div>'+
       '<div class="perf-grid">'+
@@ -610,7 +783,14 @@ function renderDesempenho(resultados){
         '<div class="perf-cell"><span class="perf-num">'+r.realizadas+'</span><span class="perf-lbl">Realizadas</span></div>'+
         '<div class="perf-cell"><span class="perf-num">'+r.checkins+'</span><span class="perf-lbl">Check-ins</span></div>'+
         '<div class="perf-cell"><span class="perf-num'+(r.desvios>0?" desvio":"")+'">'+r.desvios+'</span><span class="perf-lbl">Desvios</span></div>'+
-      '</div></div>';
+      '</div>'+
+      '<div style="display:flex;gap:8px;margin-top:10px">'+
+        '<button class="btn-ghost" style="flex:1" onclick="toggleDetalheVendedor('+idx+')">📋 Ver visitas</button>'+
+        '<button class="btn-ghost" style="flex:1" onclick="mostrarTendencia('+idx+')">📈 Tendência</button>'+
+      '</div>'+
+      '<div id="perf-detalhe-'+idx+'" style="display:none;margin-top:8px;max-height:220px;overflow-y:auto">'+detalheHtml+'</div>'+
+      '<div id="perf-tendencia-'+idx+'" style="display:none;margin-top:10px"></div>'+
+      '</div>';
   }).join("");
 }
 
@@ -657,12 +837,17 @@ function montarCardItem(item){
   const podeCheckin=!somenteLeitura&&item.status==="planejado"&&item.data<=hojeISO;
   const checkinInfo=item.checkin?('<div class="item-meta">📝 '+(item.checkin.resumo||"")+(item.checkin.localizacaoValidada===false?' <span style="color:var(--clay)">· sem validação de localização</span>':"")+'</div>'):"";
   const desvioTag=item.foraDoPlanejamento?'<div class="item-area" style="color:var(--clay)">📍 Fora do planejamento</div>':"";
+  const pendenteTag=String(item.id).startsWith("local_")?'<div class="item-meta" style="color:var(--muted)">🔄 Salvo no aparelho — aguardando sinal pra sincronizar</div>':"";
+  const podeEditar=!somenteLeitura;
+  const acoes=(podeCheckin||podeEditar)?'<div class="item-actions">'+
+    (podeCheckin?'<button class="btn-checkin" onclick="abrirModalCheckin(\''+item.id+'\')">📍 Fazer check-in</button>':'')+
+    (podeEditar?'<button class="btn-ghost" onclick="editarItem(\''+item.id+'\')">✏️ Editar</button>':'')+
+    '</div>':'';
   return '<div class="item-card" style="--area-color:'+area.color+'">'+
     '<div class="item-top"><div><div class="item-farm">'+(item.farmNome||"—")+(item.farmCidade?' <span style="font-weight:600;color:var(--muted);font-size:11px">— '+item.farmCidade+'</span>':"")+'</div><div class="item-area">'+area.icon+' '+area.label+'</div>'+desvioTag+'</div>'+
     '<span class="item-badge" style="background:'+st.bg+';color:'+st.c+'">'+st.t+'</span></div>'+
     '<div class="item-meta">📦 <b>Produto:</b> '+produto+'<br>🎯 <b>Objetivo:</b> '+objetivo+acomp+'</div>'+
-    checkinInfo+
-    (podeCheckin?'<div class="item-actions"><button class="btn-checkin" onclick="abrirModalCheckin(\''+item.id+'\')">📍 Fazer check-in</button></div>':'')+
+    checkinInfo+pendenteTag+acoes+
     '</div>';
 }
 function renderHoje(){
@@ -673,6 +858,7 @@ function renderHoje(){
   titulo.innerHTML="Hoje — "+new Date().toLocaleDateString("pt-BR",{weekday:"long",day:"2-digit",month:"2-digit"})+
     (itens.length?'<span class="progresso">'+feitas+" de "+itens.length+"</span>":"");
   document.getElementById("btn-avulso").style.display=somenteLeitura?"none":"block";
+  document.getElementById("btn-rota").style.display=itens.length?"block":"none";
   const wrap=document.getElementById("hoje-lista");
   if(!itens.length){
     wrap.innerHTML='<div class="empty-state"><div class="es-emoji">☀️</div>Nenhuma visita planejada para hoje'+(somenteLeitura?"":'<br><br><button class="btn-add-sugg" onclick="abrirModalItem()">+ Adicionar visita</button>')+'</div>';
@@ -680,29 +866,71 @@ function renderHoje(){
   }
   wrap.innerHTML=itens.map(montarCardItem).join("");
 }
+function abrirRotaDoDia(){
+  const hojeISO=toISODate(new Date());
+  const itens=Object.values(hojeItens).filter(i=>i.data===hojeISO).sort((a,b)=>(a.criado_em||"").localeCompare(b.criado_em||""));
+  if(!itens.length){showToast("Nenhuma visita hoje pra montar rota",true);return}
+  const pontos=itens.map(it=>{
+    const coords=getFarmCoords(clientesById[it.farmId]);
+    if(coords)return coords.lat+","+coords.lng;
+    return encodeURIComponent((it.farmNome||"")+(it.farmCidade?" "+it.farmCidade:""));
+  });
+  const destino=pontos[pontos.length-1];
+  const waypoints=pontos.slice(0,-1).join("|");
+  let url="https://www.google.com/maps/dir/?api=1&destination="+destino+"&travelmode=driving";
+  if(waypoints)url+="&waypoints="+waypoints;
+  window.open(url,"_blank");
+}
 
 /* ===================== MODAL: NOVO ITEM ===================== */
 function farmLabel(d){return d.produtor||"—"}
-function abrirModalItem(farmIdPreSelecionado,avulso){
-  itemEditandoId=null;
+function abrirModalItem(farmIdPreSelecionado,avulso,editId){
+  itemEditandoId=editId||null;
   window._avulso=!!avulso;
   farmLabelToId={};
   meusClientes.forEach(d=>{farmLabelToId[farmLabel(d)]=d.id});
   document.getElementById("mi-farm-datalist").innerHTML=meusClientes.map(d=>'<option value="'+farmLabel(d)+'">').join("");
-  const farmPre=farmIdPreSelecionado?clientesById[farmIdPreSelecionado]:null;
-  document.getElementById("mi-farm-input").value=farmPre?farmLabel(farmPre):"";
-  document.getElementById("mi-farm-cidade").value=farmPre?(farmPre.cidade||""):"";
-  document.getElementById("mi-dia").innerHTML=DIAS_SEMANA.map(dia=>{const iso=toISODate(addDays(currentMonday,dia.off));return '<option value="'+iso+'"'+(iso===selectedDate?" selected":"")+'>'+dia.l+" ("+String(addDays(currentMonday,dia.off).getDate()).padStart(2,"0")+")"+'</option>'}).join("");
-  document.getElementById("mi-dia-wrap").style.display=avulso?"none":"block";
-  document.getElementById("modal-item-titulo").textContent=avulso?"Visita não planejada":"Nova visita planejada";
-  document.getElementById("mi-btn-salvar").textContent=avulso?"📍 Registrar e fazer check-in":"💾 Salvar no planejamento";
-  montarAreaPick("nutricao");
-  document.getElementById("mi-produto-livre").style.display="none";document.getElementById("mi-produto-livre").value="";
-  document.getElementById("mi-objetivo-livre").style.display="none";document.getElementById("mi-objetivo-livre").value="";
-  document.getElementById("mi-acomp-tipo").value="";
-  document.getElementById("mi-acomp-nome-wrap").style.display="none";
+
+  const original=editId?obterItem(editId):null;
+
+  if(original){
+    // modo edição: pré-preenche tudo a partir do item existente
+    document.getElementById("mi-farm-input").value=original.farmNome||"";
+    document.getElementById("mi-farm-cidade").value=original.farmCidade||"";
+    const semanaDoItem=getMonday(new Date(original.data+"T00:00:00"));
+    document.getElementById("mi-dia").innerHTML=DIAS_SEMANA.map(dia=>{const iso=toISODate(addDays(semanaDoItem,dia.off));return '<option value="'+iso+'"'+(iso===original.data?" selected":"")+'>'+dia.l+" ("+String(addDays(semanaDoItem,dia.off).getDate()).padStart(2,"0")+")"+'</option>'}).join("");
+    document.getElementById("mi-dia-wrap").style.display="block";
+    document.getElementById("modal-item-titulo").textContent="Editar visita";
+    document.getElementById("mi-btn-salvar").textContent="💾 Salvar alterações";
+    montarAreaPick(original.area||"nutricao",
+      {valor:original.produto,livre:original.produtoLivre},
+      {valor:original.objetivo,livre:original.objetivoLivre});
+    if(original.acompanhante){
+      document.getElementById("mi-acomp-tipo").value=original.acompanhante.tipo;
+      onAcompMudou();
+      if(original.acompanhante.tipo==="supervisor")document.getElementById("mi-acomp-nome-sel").value=original.acompanhante.nome;
+      else document.getElementById("mi-acomp-nome-livre").value=original.acompanhante.nome;
+    }else{
+      document.getElementById("mi-acomp-tipo").value="";
+      document.getElementById("mi-acomp-nome-wrap").style.display="none";
+    }
+  }else{
+    const farmPre=farmIdPreSelecionado?clientesById[farmIdPreSelecionado]:null;
+    document.getElementById("mi-farm-input").value=farmPre?farmLabel(farmPre):"";
+    document.getElementById("mi-farm-cidade").value=farmPre?(farmPre.cidade||""):"";
+    document.getElementById("mi-dia").innerHTML=DIAS_SEMANA.map(dia=>{const iso=toISODate(addDays(currentMonday,dia.off));return '<option value="'+iso+'"'+(iso===selectedDate?" selected":"")+'>'+dia.l+" ("+String(addDays(currentMonday,dia.off).getDate()).padStart(2,"0")+")"+'</option>'}).join("");
+    document.getElementById("mi-dia-wrap").style.display=avulso?"none":"block";
+    document.getElementById("modal-item-titulo").textContent=avulso?"Visita não planejada":"Nova visita planejada";
+    document.getElementById("mi-btn-salvar").textContent=avulso?"📍 Registrar e fazer check-in":"💾 Salvar no planejamento";
+    montarAreaPick("nutricao");
+    document.getElementById("mi-produto-livre").style.display="none";document.getElementById("mi-produto-livre").value="";
+    document.getElementById("mi-objetivo-livre").style.display="none";document.getElementById("mi-objetivo-livre").value="";
+    document.getElementById("mi-acomp-tipo").value="";
+    document.getElementById("mi-acomp-nome-wrap").style.display="none";
+  }
   document.getElementById("modal-item").classList.add("on");
 }
+function editarItem(id){abrirModalItem(null,false,id)}
 function onFarmInputMudou(){
   const texto=document.getElementById("mi-farm-input").value.trim();
   const farmId=farmLabelToId[texto];
@@ -711,24 +939,31 @@ function onFarmInputMudou(){
     document.getElementById("mi-farm-cidade").value=farm.cidade||"";
   }
 }
-function montarAreaPick(areaSelecionada){
+function montarAreaPick(areaSelecionada,presetProduto,presetObjetivo){
   const pick=document.getElementById("area-pick");
   pick.innerHTML=Object.entries(AREAS).map(([k,a])=>
     '<div class="area-opt'+(k===areaSelecionada?" on":"")+'" style="--area-color:'+a.color+'" onclick="selecionarArea(\''+k+'\')" data-area="'+k+'"><span class="ao-ic">'+a.icon+'</span>'+a.label+'</div>'
   ).join("");
   window._areaAtual=areaSelecionada;
-  carregarListasArea(areaSelecionada);
+  carregarListasArea(areaSelecionada,presetProduto,presetObjetivo);
 }
 function selecionarArea(k){
   document.querySelectorAll("#area-pick .area-opt").forEach(el=>el.classList.toggle("on",el.dataset.area===k));
   window._areaAtual=k;
   carregarListasArea(k);
 }
-function carregarListasArea(area){
+function carregarListasArea(area,presetProduto,presetObjetivo){
   const montarSelectProduto=(lista)=>{
     const sel=document.getElementById("mi-produto-sel");
     sel.innerHTML=lista.map(p=>'<option>'+p+'</option>').join("")+'<option value="__outro__">Outro (descrever)</option>';
-    sel.value=lista[0]||"__outro__";
+    if(presetProduto&&presetProduto.livre){
+      sel.value="__outro__";
+      document.getElementById("mi-produto-livre").value=presetProduto.livre;
+    }else if(presetProduto&&presetProduto.valor&&lista.some(p=>p===presetProduto.valor)){
+      sel.value=presetProduto.valor;
+    }else{
+      sel.value=lista[0]||"__outro__";
+    }
     onProdutoSelMudou();
   };
   if(produtosCustomCache[area]){montarSelectProduto(produtosCustomCache[area]);}
@@ -744,7 +979,14 @@ function carregarListasArea(area){
   const selObj=document.getElementById("mi-objetivo-sel");
   const montarSelectObjetivo=(lista)=>{
     selObj.innerHTML=lista.map(o=>'<option>'+o+'</option>').join("")+'<option value="__outro__">Outro (descrever)</option>';
-    selObj.value=lista[0]||"__outro__";
+    if(presetObjetivo&&presetObjetivo.livre){
+      selObj.value="__outro__";
+      document.getElementById("mi-objetivo-livre").value=presetObjetivo.livre;
+    }else if(presetObjetivo&&presetObjetivo.valor&&lista.some(o=>o===presetObjetivo.valor)){
+      selObj.value=presetObjetivo.valor;
+    }else{
+      selObj.value=lista[0]||"__outro__";
+    }
     onObjetivoSelMudou();
   };
   if(objetivosCustomCache[area]){montarSelectObjetivo(objetivosCustomCache[area]);}
@@ -807,7 +1049,51 @@ async function salvarItem(){
   if(produtoSel==="__outro__"&&!produtoLivre){showToast("Descreva o produto",true);return}
   if(objetivoSel==="__outro__"&&!objetivoLivre){showToast("Descreva o objetivo",true);return}
 
+  const editId=itemEditandoId;
+  if(editId){
+    const wkEdit=weekKeyOf(getMonday(new Date(dia+"T00:00:00")));
+    const patch={
+      farmId,farmNome:(farm?farm.produtor:farmTexto.toUpperCase())||"—",
+      farmCidade:farmCidade||(farm?farm.cidade||"":"")||null,
+      area,data:dia,
+      produto:produtoSel==="__outro__"?null:produtoSel,
+      produtoLivre:produtoSel==="__outro__"?produtoLivre.toUpperCase():null,
+      objetivo:objetivoSel==="__outro__"?null:objetivoSel,
+      objetivoLivre:objetivoSel==="__outro__"?objetivoLivre.toUpperCase():null,
+      acompanhante
+    };
+    function salvarEdicaoOffline(){
+      const isTemp=String(editId).startsWith("local_");
+      if(isTemp){
+        const q=getOfflineQueue();
+        const alvo=q.find(e=>e.type==="novo_item"&&e.data.tempId===editId);
+        if(alvo)Object.assign(alvo.data.item,patch);
+        saveOfflineQueue(q);
+        atualizarBadgeOffline();
+      }else{
+        addToOfflineQueue("editar_item",{itemId:editId,uid:vendedorAlvoUid,wk:wkEdit,patch});
+      }
+      if(produtoSel==="__outro__")addToOfflineQueue("produto_custom",{area,valor:produtoLivre.toUpperCase()});
+      if(objetivoSel==="__outro__")addToOfflineQueue("objetivo_custom",{area,valor:objetivoLivre.toUpperCase()});
+      if(itensSemana[editId])Object.assign(itensSemana[editId],patch);
+      if(hojeItens[editId])Object.assign(hojeItens[editId],patch);
+      renderItens();renderHoje();
+      fecharModal("modal-item");
+      showToast("📥 Alteração salva offline — sincroniza sozinha depois");
+    }
+    if(!navigator.onLine){salvarEdicaoOffline();return}
+    try{
+      await db.ref("agendas/"+vendedorAlvoUid+"/"+wkEdit+"/itens/"+editId).update(patch);
+      if(produtoSel==="__outro__")await db.ref("produtosCustom/"+area).push({valor:produtoLivre.toUpperCase()}).catch(()=>{});
+      if(objetivoSel==="__outro__")await db.ref("objetivosCustom/"+area).push({valor:objetivoLivre.toUpperCase()}).catch(()=>{});
+      fecharModal("modal-item");
+      showToast("✅ Visita atualizada");
+    }catch(e){salvarEdicaoOffline()}
+    return;
+  }
+
   const avulso=!!window._avulso;
+  const wk=avulso?weekKeyOf(getMonday(new Date())):weekKeyOf(currentMonday);
   const item={
     farmId,farmNome:(farm?farm.produtor:farmTexto.toUpperCase())||"—",
     farmCidade:farmCidade||(farm?farm.cidade||"":"")||null,
@@ -819,8 +1105,23 @@ async function salvarItem(){
     acompanhante,status:"planejado",criado_em:new Date().toISOString(),
     foraDoPlanejamento:avulso
   };
+
+  function salvarOffline(){
+    const tempId="local_"+Date.now();
+    addToOfflineQueue("novo_item",{tempId,uid:vendedorAlvoUid,wk,item});
+    if(produtoSel==="__outro__")addToOfflineQueue("produto_custom",{area,valor:produtoLivre.toUpperCase()});
+    if(objetivoSel==="__outro__")addToOfflineQueue("objetivo_custom",{area,valor:objetivoLivre.toUpperCase()});
+    const itemComId={id:tempId,...item};
+    if(item.data===toISODate(new Date()))hojeItens[tempId]=itemComId;
+    if(wk===weekKeyOf(currentMonday))itensSemana[tempId]=itemComId;
+    renderItens();renderHoje();
+    fecharModal("modal-item");
+    if(avulso){abrirModalCheckin(tempId)}
+    else{showToast("📥 Salvo offline — sincroniza sozinho quando voltar o sinal")}
+  }
+
+  if(!navigator.onLine){salvarOffline();return}
   try{
-    const wk=avulso?weekKeyOf(getMonday(new Date())):weekKeyOf(currentMonday);
     const novaRef=db.ref("agendas/"+vendedorAlvoUid+"/"+wk+"/itens").push();
     await novaRef.set(item);
     if(produtoSel==="__outro__")await db.ref("produtosCustom/"+area).push({valor:produtoLivre.toUpperCase()}).catch(()=>{});
@@ -833,7 +1134,7 @@ async function salvarItem(){
     }else{
       showToast("✅ Visita adicionada ao planejamento");
     }
-  }catch(e){showToast("Erro ao salvar: "+(e.message||""),true)}
+  }catch(e){salvarOffline()}
 }
 
 /* ===================== MODAL: CHECK-IN ===================== */
@@ -947,9 +1248,27 @@ async function salvarCheckin(){
   };
 
   const wk=weekKeyOf(getMonday(new Date(item.data+"T00:00:00")));
+  const statusFinal=statusMap[ciStatusSelecionado]||"realizado";
+
+  function salvarCheckinOffline(){
+    const isTemp=String(itemEditandoId).startsWith("local_");
+    addToOfflineQueue("checkin",isTemp
+      ?{tempId:itemEditandoId,uid:vendedorAlvoUid,wk,patch:{status:statusFinal,checkin}}
+      :{itemId:itemEditandoId,uid:vendedorAlvoUid,wk,patch:{status:statusFinal,checkin}});
+    if(produtoSel==="__outro__")addToOfflineQueue("produto_custom",{area:item.area,valor:produtoLivre.toUpperCase()});
+    Object.assign(item,{status:statusFinal,checkin});
+    if(itensSemana[itemEditandoId])Object.assign(itensSemana[itemEditandoId],{status:statusFinal,checkin});
+    if(hojeItens[itemEditandoId])Object.assign(hojeItens[itemEditandoId],{status:statusFinal,checkin});
+    renderItens();renderHoje();
+    fecharModal("modal-checkin");
+    mostrarCarimbo(ciStatusSelecionado==="realizado");
+    showToast(ciFotoBase64?"📥 Check-in salvo offline (a foto não vai junto sem sinal)":"📥 Check-in salvo offline — sincroniza sozinho depois");
+  }
+
+  if(!navigator.onLine){salvarCheckinOffline();return}
   const ref=db.ref("agendas/"+vendedorAlvoUid+"/"+wk+"/itens/"+itemEditandoId);
   try{
-    await ref.update({status:statusMap[ciStatusSelecionado]||"realizado",checkin});
+    await ref.update({status:statusFinal,checkin});
     if(produtoSel==="__outro__")await db.ref("produtosCustom/"+item.area).push({valor:produtoLivre.toUpperCase()}).catch(()=>{});
     if(ciFotoBase64){
       const blob=await(await fetch(ciFotoBase64)).blob();
@@ -962,7 +1281,7 @@ async function salvarCheckin(){
     fecharModal("modal-checkin");
     mostrarCarimbo(ciStatusSelecionado==="realizado");
     showToast("✅ Check-in registrado");
-  }catch(e){showToast("Erro ao registrar check-in: "+(e.message||""),true)}
+  }catch(e){salvarCheckinOffline()}
 }
 function mostrarCarimbo(sucesso){
   const holder=document.getElementById("stamp-overlay-holder");
