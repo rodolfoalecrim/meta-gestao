@@ -826,20 +826,43 @@ async function gerarPDFSemana(){
     for(const dia of DIAS_SEMANA){
       const iso=toISODate(addDays(currentMonday,dia.off));
       const itensDoDia=Object.values(itensSemana).filter(i=>i.data===iso).sort((a,b)=>(a.criado_em||"").localeCompare(b.criado_em||""));
+      const folgaPdf=folgasSemana[iso];
+      const acompPdf=acompanhamentosSemana[iso];
+      const eventoPdf=eventosSemana[iso];
       precisaDeEspaco(30);
       const diaLbl=dia.l.toUpperCase()+" — "+iso.split("-").reverse().join("/");
       page.drawRectangle({x:margin,y:y-18,width:pageW-margin*2,height:20,color:cor(PASTURE)});
       texto(diaLbl,margin+8,y-13,{tamanho:9.5,negrito:true,cor:rgb(1,1,1)});
       y-=26;
+
+      function desenharMarcador(titulo,subtitulo,observacao,corFundo,corTexto){
+        const linhas=observacao?2:1;
+        const cardH=21+linhas*11;
+        precisaDeEspaco(cardH+6);
+        const cardY=y-cardH;
+        page.drawRectangle({x:margin,y:cardY,width:pageW-margin*2,height:cardH,color:cor(corFundo)});
+        page.drawRectangle({x:margin,y:cardY,width:3.5,height:cardH,color:cor(corTexto)});
+        texto(titulo,margin+12,cardY+cardH-13,{tamanho:9.5,negrito:true,cor:cor(INK)});
+        texto(subtitulo,margin+12,cardY+cardH-13-11,{tamanho:7.5,negrito:true,cor:cor(corTexto)});
+        if(observacao)texto(observacao,margin+12,cardY+cardH-13-22,{tamanho:7.5,cor:cor(MUTED)});
+        y=cardY-6;
+      }
+      if(folgaPdf)desenharMarcador("🏖 Dia OFF",folgaPdf.motivo||"",folgaPdf.observacao,"#FBEAE0","#B5541F");
+      if(acompPdf)desenharMarcador("Acompanhando "+(acompPdf.vendedorNome||"—"),acompPdf.cidade||"",acompPdf.observacao,"#E7F0F5","#3E6E8E");
+      if(eventoPdf)desenharMarcador(eventoPdf.titulo||"Evento",eventoPdf.tipo||"",eventoPdf.observacao,"#F7EAD2","#8A5A18");
+
       if(!itensDoDia.length){
-        precisaDeEspaco(16);
-        texto("Sem visitas planejadas",margin+8,y-9,{tamanho:8.5,cor:cor(MUTED)});
-        y-=20;
+        if(!folgaPdf&&!acompPdf&&!eventoPdf){
+          precisaDeEspaco(16);
+          texto("Sem visitas planejadas",margin+8,y-9,{tamanho:8.5,cor:cor(MUTED)});
+          y-=20;
+        }
       }else{
         for(const it of itensDoDia){
           const temAcomp=!!(it.acompanhante&&it.acompanhante.nome);
+          const temObs=!!(it.checkin&&it.checkin.resumo);
           const atividadesPdf=atividadesDoItem(it);
-          const cardH=21+atividadesPdf.length*13+(temAcomp?15:0);
+          const cardH=21+atividadesPdf.length*13+(temAcomp?15:0)+(temObs?15:0);
           precisaDeEspaco(cardH+6);
           const areaHex=(AREAS[atividadesPdf[0].area]||AREAS.nutricao).color;
           const st=STATUS_LABEL[it.status]||STATUS_LABEL.planejado;
@@ -858,6 +881,11 @@ async function gerarPDFSemana(){
             const prefixo=atividadesPdf.length>1?((AREAS[av.area]||AREAS.nutricao).label+": "):"Produto: ";
             texto(prefixo+produto+"   |   Objetivo: "+objetivo,margin+12,cardY+cardH-13-13*(idx+1),{tamanho:7.5,cor:cor(MUTED)});
           });
+          let proximaLinhaY=cardY+cardH-13-13*atividadesPdf.length;
+          if(temObs){
+            texto("Obs.: "+it.checkin.resumo,margin+12,proximaLinhaY-4,{tamanho:7,cor:cor(MUTED)});
+            proximaLinhaY-=15;
+          }
           if(temAcomp){
             const tipoLbl=it.acompanhante.tipo==="supervisor"?"Supervisor técnico":"Promotor externo";
             const acompTxt="ACOMPANHADO POR: "+it.acompanhante.nome.toUpperCase()+" ("+tipoLbl+")";
