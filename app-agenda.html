@@ -101,13 +101,12 @@ h1,h2,h3,.font-display{font-family:var(--font-display)}
 .btn-ghost{background:var(--surface2);color:var(--muted);border:none;border-radius:9px;padding:9px 12px;font-size:12px;font-weight:700;cursor:pointer}
 .empty-state{text-align:center;padding:40px 12px;color:var(--muted)}
 .empty-state .es-emoji{font-size:34px;margin-bottom:10px;display:block}
-.fab{position:fixed;right:18px;bottom:calc(78px + var(--safe-bot));width:56px;height:56px;border-radius:50%;background:var(--clover);color:var(--pasture-dark);border:none;font-size:26px;font-weight:700;box-shadow:0 10px 24px rgba(143,191,46,.45);cursor:pointer;z-index:50}
-.bottom-nav{position:fixed;left:0;right:0;bottom:0;background:var(--GD);display:flex;padding-bottom:var(--safe-bot);z-index:60;box-shadow:0 -4px 16px rgba(18,43,24,.25)}
-.bn-tab{flex:1;border:none;background:none;color:rgba(255,255,255,.55);padding:11px 4px 9px;display:flex;flex-direction:column;align-items:center;gap:3px;font-size:10px;font-weight:600;cursor:pointer;font-family:var(--font-display);letter-spacing:.2px}
-.bn-tab .bn-ic{font-size:19px}
-.bn-tab.on{color:#fff}
-.bn-tab.on .bn-ic{transform:translateY(-1px)}
-.bn-indicator{position:absolute;top:0;height:2.5px;background:var(--clover);border-radius:0 0 4px 4px;transition:left .25s cubic-bezier(.34,1.56,.64,1),width .25s}
+.fab{position:fixed;right:18px;bottom:calc(96px + var(--safe-bot));width:56px;height:56px;border-radius:50%;background:var(--clover);color:var(--pasture-dark);border:none;font-size:26px;font-weight:700;box-shadow:0 10px 24px rgba(143,191,46,.45);cursor:pointer;z-index:50}
+.bottom-nav{position:fixed;left:14px;right:14px;bottom:calc(14px + var(--safe-bot));background:var(--surface);display:flex;gap:4px;padding:6px;border-radius:26px;z-index:60;box-shadow:0 14px 34px rgba(18,43,24,.22)}
+.bn-tab{flex:1;border:none;background:none;color:var(--muted);padding:9px 4px;border-radius:19px;display:flex;flex-direction:column;align-items:center;gap:2px;font-size:9.5px;font-weight:700;cursor:pointer;font-family:var(--font-display);transition:background .2s,color .2s}
+.bn-tab .bn-ic{font-size:18px;transition:transform .2s}
+.bn-tab.on{background:var(--pasture-dark);color:#fff}
+.bn-tab.on .bn-ic{transform:translateY(-1px) scale(1.08)}
 .modal-bg{position:fixed;inset:0;background:rgba(18,43,24,.55);display:none;align-items:flex-end;justify-content:center;z-index:200;backdrop-filter:blur(2px)}
 .modal-bg.on{display:flex}
 .modal-box{background:var(--surface);border-radius:22px 22px 0 0;width:100%;max-width:480px;max-height:88vh;overflow-y:auto;padding:18px 18px calc(18px + var(--safe-bot));animation:sheetUp .32s cubic-bezier(.16,1,.3,1)}
@@ -120,10 +119,15 @@ h1,h2,h3,.font-display{font-family:var(--font-display)}
 .f-field select,.f-field input,.f-field textarea{width:100%;border:1.5px solid var(--border);border-radius:10px;padding:10px 12px;font-size:14px;font-family:var(--font-ui);outline:none;background:var(--surface);color:var(--ink)}
 .f-field select:focus,.f-field input:focus,.f-field textarea:focus{border-color:var(--G)}
 .f-row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-.area-pick{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:12px}
-.area-opt{border:1.5px solid var(--border);border-radius:10px;padding:9px 4px;text-align:center;cursor:pointer;font-size:10px;font-weight:700;color:var(--muted)}
-.area-opt .ao-ic{font-size:18px;display:block;margin-bottom:3px}
-.area-opt.on{border-color:var(--area-color,var(--G));background:color-mix(in srgb,var(--area-color,var(--G)) 12%,#fff);color:var(--area-color,var(--G))}
+.area-pick{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:14px}
+.area-opt{display:flex;flex-direction:column;align-items:center;gap:6px;cursor:pointer}
+.area-circ{width:52px;height:52px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:22px;margin:0 auto;background:color-mix(in srgb,var(--area-color,var(--G)) 12%,var(--surface2));border:1.5px solid var(--border);transition:transform .15s,box-shadow .15s,background .15s}
+.area-circ.on{background:var(--area-color,var(--G));border-color:var(--area-color,var(--G));box-shadow:0 8px 18px color-mix(in srgb,var(--area-color,var(--G)) 45%,transparent);transform:scale(1.06)}
+.area-lbl{font-size:9.5px;font-weight:600;color:var(--muted);text-align:center}
+.area-lbl.on{color:var(--area-color,var(--G));font-weight:700}
+.chips-wrap{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+.chip-sugestao{background:var(--surface2);border:1.5px solid var(--border);border-radius:20px;padding:6px 12px;font-size:11.5px;font-weight:600;color:var(--muted);cursor:pointer;font-family:var(--font-ui);transition:all .12s}
+.chip-sugestao.on{background:var(--pasture-light);border-color:var(--G);color:var(--GD)}
 .btn-save{width:100%;background:linear-gradient(135deg,var(--pasture-mid),var(--GD));color:#fff;border:none;border-radius:12px;padding:14px;font-size:15px;font-weight:700;cursor:pointer;margin-top:6px;font-family:var(--font-display);letter-spacing:.2px}
 .gps-box{background:var(--pasture-light);border:1.5px solid var(--G);border-radius:12px;padding:12px;margin-bottom:14px;text-align:center;font-size:12px;font-weight:600;color:var(--GD);font-family:var(--font-mono)}
 .gps-box.warn{background:#F7EAD2;border-color:#C98A2E;color:#7A4F0F}
@@ -160,6 +164,15 @@ h1,h2,h3,.font-display{font-family:var(--font-display)}
 .perf-num{font-family:var(--font-mono);font-size:17px;font-weight:700;color:var(--ink);display:block}
 .perf-num.desvio{color:var(--clay)}
 .perf-lbl{font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.3px;margin-top:2px;display:block}
+.hero-summary{background:linear-gradient(135deg,var(--pasture-dark) 0%,var(--pasture-mid) 60%,var(--pasture) 120%);border:none;color:#fff;position:relative;overflow:hidden;border-radius:20px;padding:16px}
+.hero-summary::before{content:"";position:absolute;right:-36px;top:-36px;width:150px;height:150px;border-radius:50%;background:rgba(255,255,255,.09)}
+.hero-summary::after{content:"";position:absolute;left:-20px;bottom:-40px;width:100px;height:100px;border-radius:50%;background:rgba(255,255,255,.06)}
+.hero-summary .perf-nome{color:#fff;position:relative}
+.hero-summary .perf-cell{background:rgba(255,255,255,.14);position:relative}
+.hero-summary .perf-num{color:#fff}
+.hero-summary .perf-num.desvio{color:#FFD9C7}
+.hero-summary .perf-lbl{color:rgba(255,255,255,.72)}
+.hero-summary .perf-pct{background:rgba(255,255,255,.92)!important;color:var(--pasture-dark)!important}
 </style>
 </head>
 <body>
@@ -198,7 +211,7 @@ h1,h2,h3,.font-display{font-family:var(--font-display)}
         <button onclick="mudarSemana(1)">→</button>
       </div>
 
-      <div class="perf-card" id="resumo-semana-card" style="margin-bottom:12px"></div>
+      <div class="perf-card hero-summary" id="resumo-semana-card" style="margin-bottom:12px"></div>
 
       <button class="btn-ghost" id="btn-duplicar-semana" style="width:100%;margin-bottom:12px;display:none" onclick="duplicarSemanaAnterior()">📋 Duplicar planejamento da semana anterior</button>
 
@@ -242,7 +255,6 @@ h1,h2,h3,.font-display{font-family:var(--font-display)}
   <button class="fab" id="fab-add" onclick="abrirModalItem()">+</button>
 
   <div class="bottom-nav">
-    <div class="bn-indicator" id="bn-indicator"></div>
     <button class="bn-tab on" id="bn-semana" onclick="trocarView('semana')"><span class="bn-ic">🗂️</span>Planejamento</button>
     <button class="bn-tab" id="bn-hoje" onclick="trocarView('hoje')"><span class="bn-ic">📍</span>Hoje</button>
     <button class="bn-tab" id="bn-desempenho" style="display:none" onclick="trocarView('desempenho')"><span class="bn-ic">📊</span>Desempenho</button>
@@ -277,13 +289,13 @@ h1,h2,h3,.font-display{font-family:var(--font-display)}
     </div>
 
     <div class="f-field"><label>Produto</label>
-      <select id="mi-produto-sel" onchange="onProdutoSelMudou()"></select>
-      <input id="mi-produto-livre" placeholder="Descreva o produto" style="display:none;margin-top:6px">
+      <input id="mi-produto-input" placeholder="Digite ou toque numa sugestão" oninput="filtrarChips('mi-produto')">
+      <div id="mi-produto-chips" class="chips-wrap"></div>
     </div>
 
     <div class="f-field"><label>Objetivo da visita</label>
-      <select id="mi-objetivo-sel" onchange="onObjetivoSelMudou()"></select>
-      <input id="mi-objetivo-livre" placeholder="Descreva o objetivo" style="display:none;margin-top:6px">
+      <input id="mi-objetivo-input" placeholder="Digite ou toque numa sugestão" oninput="filtrarChips('mi-objetivo')">
+      <div id="mi-objetivo-chips" class="chips-wrap"></div>
     </div>
 
     <div class="f-row">
@@ -318,8 +330,8 @@ h1,h2,h3,.font-display{font-family:var(--font-display)}
     <div class="status-pick" id="ci-status-pick"></div>
 
     <div class="f-field"><label>Produto confirmado</label>
-      <select id="ci-produto-sel" onchange="onCiProdutoSelMudou()"></select>
-      <input id="ci-produto-livre" placeholder="Descreva o produto" style="display:none;margin-top:6px">
+      <input id="ci-produto-input" placeholder="Digite ou toque numa sugestão" oninput="filtrarChips('ci-produto')">
+      <div id="ci-produto-chips" class="chips-wrap"></div>
     </div>
 
     <div class="f-field"><label>Como foi a visita? (observação curta)</label>
@@ -362,8 +374,8 @@ const AREAS={
 };
 const SEED_PRODUTOS={
   nutricao:["ULTRAMAX","POLINUTRI"],
-  saude_animal:["VACINA AFTOSA","VERMÍFUGO","SUPLEMENTO MINERAL","ANTIBIÓTICO"],
-  fenacao:["SILAGEM DE MILHO","PRÉ-SECADO","FENO","ENSILAGEM"],
+  saude_animal:["VACINA AFTOSA","VERMÍFUGO","SUPLEMENTO MINERAL","ANTIBIÓTICO","AZCLEAN (ORDENHA E LIMPEZA)","HOMEOPATIA"],
+  fenacao:["SILAGEM DE MILHO","PRÉ-SECADO","FENO","ENSILAGEM","LONA"],
   agricola:["SEMENTE","FERTILIZANTE","DEFENSIVO","CALCÁRIO"]
 };
 const OBJETIVOS_FIXOS=["PROSPECÇÃO","FECHAMENTO","ACOMPANHAMENTO","PÓS VENDA","VISITA TÉCNICA","ENTREGA","COBRANÇA"];
@@ -449,6 +461,8 @@ async function tentarSincronizarAgenda(){
         const realId=d.itemId||tempMap[d.tempId];
         if(!realId)throw new Error("aguardando item ainda não sincronizado");
         await db.ref("agendas/"+d.uid+"/"+d.wk+"/itens/"+realId).update(d.patch);
+      }else if(entrada.type==="excluir_item"){
+        await db.ref("agendas/"+d.uid+"/"+d.wk+"/itens/"+d.itemId).remove();
       }else if(entrada.type==="produto_custom"){
         await db.ref("produtosCustom/"+d.area).push({valor:d.valor});
       }else if(entrada.type==="objetivo_custom"){
@@ -499,7 +513,6 @@ function fazerLogout(){if(confirm("Deseja sair?"))auth.signOut()}
 function iniciarApp(){
   mostrarSkeleton();
   if(isAdmin)montarSeletorAdmin();
-  atualizarIndicadorNav("semana");
   atualizarBadgeOffline();
   tentarSincronizarAgenda();
   carregarMapCoords();
@@ -848,17 +861,7 @@ function trocarView(v){
   document.getElementById("bn-hoje").classList.toggle("on",v==="hoje");
   document.getElementById("bn-desempenho").classList.toggle("on",v==="desempenho");
   document.getElementById("fab-add").style.display=(v==="semana"&&!somenteLeitura)?"block":"none";
-  atualizarIndicadorNav(v);
   if(v==="desempenho")prepararFiltroDesempenhoPadrao();
-}
-function atualizarIndicadorNav(v){
-  const tabs=isAdmin?["semana","hoje","desempenho"]:["semana","hoje"];
-  const idx=tabs.indexOf(v);
-  if(idx<0)return;
-  const pct=100/tabs.length;
-  const ind=document.getElementById("bn-indicator");
-  ind.style.width=pct+"%";
-  ind.style.left=(idx*pct)+"%";
 }
 function prepararFiltroDesempenhoPadrao(){
   const de=document.getElementById("desemp-de");
@@ -1087,9 +1090,11 @@ function montarCardItem(item){
   const desvioTag=item.foraDoPlanejamento?'<div class="item-area" style="color:var(--clay)">📍 Fora do planejamento</div>':"";
   const pendenteTag=String(item.id).startsWith("local_")?'<div class="item-meta" style="color:var(--muted)">🔄 Salvo no aparelho — aguardando sinal pra sincronizar</div>':"";
   const podeEditar=!somenteLeitura;
+  const podeExcluir=!somenteLeitura&&item.status==="planejado"&&item.data>=hojeISO;
   const acoes=(podeCheckin||podeEditar)?'<div class="item-actions">'+
     (podeCheckin?'<button class="btn-checkin" onclick="abrirModalCheckin(\''+item.id+'\')">📍 Fazer check-in</button>':'')+
     (podeEditar?'<button class="btn-ghost" onclick="editarItem(\''+item.id+'\')">✏️ Editar</button>':'')+
+    (podeExcluir?'<button class="btn-ghost" style="color:var(--clay)" onclick="excluirItem(\''+item.id+'\')" title="Excluir">🗑️</button>':'')+
     '</div>':'';
   return '<div class="item-card" style="--area-color:'+area.color+'">'+
     '<div class="item-top"><div><div class="item-farm">'+(item.farmNome||"—")+(item.farmCidade?' <span style="font-weight:600;color:var(--muted);font-size:11px">— '+item.farmCidade+'</span>':"")+'</div><div class="item-area">'+area.icon+' '+area.label+'</div>'+desvioTag+'</div>'+
@@ -1131,6 +1136,36 @@ function abrirRotaDoDia(){
 }
 
 /* ===================== MODAL: NOVO ITEM ===================== */
+/* ===================== SUGESTÕES EM CHIP (produto/objetivo) ===================== */
+function montarChips(prefixo,lista,valorAtual){
+  const wrap=document.getElementById(prefixo+"-chips");
+  if(!wrap)return;
+  const valorUpper=String(valorAtual||"").trim().toUpperCase();
+  wrap.innerHTML=lista.map(v=>'<button type="button" class="chip-sugestao'+(v.toUpperCase()===valorUpper?" on":"")+'" onclick="selecionarChip(\''+prefixo+'\',\''+v.replace(/'/g,"\\'")+'\')">'+v+'</button>').join("");
+}
+function selecionarChip(prefixo,valor){
+  document.getElementById(prefixo+"-input").value=valor;
+  filtrarChips(prefixo);
+}
+function filtrarChips(prefixo){
+  const input=document.getElementById(prefixo+"-input");
+  const wrap=document.getElementById(prefixo+"-chips");
+  if(!input||!wrap)return;
+  const texto=input.value.trim().toUpperCase();
+  Array.from(wrap.children).forEach(btn=>{
+    const val=btn.textContent;
+    const bate=!texto||val.toUpperCase().includes(texto);
+    btn.style.display=bate?"inline-block":"none";
+    btn.classList.toggle("on",val.toUpperCase()===texto);
+  });
+}
+function resolverValorDaLista(texto,lista){
+  const t=(texto||"").trim();
+  if(!t)return{valor:null,livre:null};
+  const upper=t.toUpperCase();
+  const match=(lista||[]).find(v=>v.toUpperCase()===upper);
+  return match?{valor:match,livre:null}:{valor:null,livre:upper};
+}
 function farmLabel(d){return d.produtor||"—"}
 function abrirModalItem(farmIdPreSelecionado,avulso,editId){
   itemEditandoId=editId||null;
@@ -1151,8 +1186,8 @@ function abrirModalItem(farmIdPreSelecionado,avulso,editId){
     document.getElementById("modal-item-titulo").textContent="Editar visita";
     document.getElementById("mi-btn-salvar").textContent="💾 Salvar alterações";
     montarAreaPick(original.area||"nutricao",
-      {valor:original.produto,livre:original.produtoLivre},
-      {valor:original.objetivo,livre:original.objetivoLivre});
+      original.produtoLivre||original.produto||"",
+      original.objetivoLivre||original.objetivo||"");
     if(original.acompanhante){
       document.getElementById("mi-acomp-tipo").value=original.acompanhante.tipo;
       onAcompMudou();
@@ -1170,15 +1205,43 @@ function abrirModalItem(farmIdPreSelecionado,avulso,editId){
     document.getElementById("mi-dia-wrap").style.display=avulso?"none":"block";
     document.getElementById("modal-item-titulo").textContent=avulso?"Visita não planejada":"Nova visita planejada";
     document.getElementById("mi-btn-salvar").textContent=avulso?"📍 Registrar e fazer check-in":"💾 Salvar no planejamento";
-    montarAreaPick("nutricao");
-    document.getElementById("mi-produto-livre").style.display="none";document.getElementById("mi-produto-livre").value="";
-    document.getElementById("mi-objetivo-livre").style.display="none";document.getElementById("mi-objetivo-livre").value="";
+    montarAreaPick("nutricao","","");
     document.getElementById("mi-acomp-tipo").value="";
     document.getElementById("mi-acomp-nome-wrap").style.display="none";
   }
   document.getElementById("modal-item").classList.add("on");
 }
 function editarItem(id){abrirModalItem(null,false,id)}
+async function excluirItem(id){
+  if(!confirm("Excluir esta visita do planejamento? Essa ação não pode ser desfeita."))return;
+  const item=obterItem(id);
+  if(!item)return;
+  const isTemp=String(id).startsWith("local_");
+  if(isTemp){
+    const q=getOfflineQueue().filter(e=>!(e.type==="novo_item"&&e.data.tempId===id));
+    saveOfflineQueue(q);
+    atualizarBadgeOffline();
+    delete itensSemana[id];delete hojeItens[id];
+    renderItens();renderHoje();
+    showToast("🗑️ Visita removida");
+    return;
+  }
+  const wk=weekKeyOf(getMonday(new Date(item.data+"T00:00:00")));
+  const ref=db.ref("agendas/"+vendedorAlvoUid+"/"+wk+"/itens/"+id);
+  function removerOffline(){
+    addToOfflineQueue("excluir_item",{itemId:id,uid:vendedorAlvoUid,wk});
+    delete itensSemana[id];delete hojeItens[id];
+    renderItens();renderHoje();
+    showToast("🗑️ Exclusão salva offline — sincroniza sozinha depois");
+  }
+  if(!navigator.onLine){removerOffline();return}
+  try{
+    await ref.remove();
+    delete itensSemana[id];delete hojeItens[id];
+    renderItens();renderHoje();
+    showToast("🗑️ Visita removida do planejamento");
+  }catch(e){removerOffline()}
+}
 function onFarmInputMudou(){
   const texto=document.getElementById("mi-farm-input").value.trim();
   const farmId=farmLabelToId[texto];
@@ -1190,70 +1253,45 @@ function onFarmInputMudou(){
 function montarAreaPick(areaSelecionada,presetProduto,presetObjetivo){
   const pick=document.getElementById("area-pick");
   pick.innerHTML=Object.entries(AREAS).map(([k,a])=>
-    '<div class="area-opt'+(k===areaSelecionada?" on":"")+'" style="--area-color:'+a.color+'" onclick="selecionarArea(\''+k+'\')" data-area="'+k+'"><span class="ao-ic">'+a.icon+'</span>'+a.label+'</div>'
+    '<div class="area-opt" style="--area-color:'+a.color+'" onclick="selecionarArea(\''+k+'\')" data-area="'+k+'">'+
+      '<div class="area-circ'+(k===areaSelecionada?" on":"")+'">'+a.icon+'</div>'+
+      '<div class="area-lbl'+(k===areaSelecionada?" on":"")+'">'+a.label+'</div>'+
+    '</div>'
   ).join("");
   window._areaAtual=areaSelecionada;
   carregarListasArea(areaSelecionada,presetProduto,presetObjetivo);
 }
 function selecionarArea(k){
-  document.querySelectorAll("#area-pick .area-opt").forEach(el=>el.classList.toggle("on",el.dataset.area===k));
+  document.querySelectorAll("#area-pick .area-opt").forEach(el=>{
+    const on=el.dataset.area===k;
+    el.querySelector(".area-circ").classList.toggle("on",on);
+    el.querySelector(".area-lbl").classList.toggle("on",on);
+  });
   window._areaAtual=k;
   carregarListasArea(k);
 }
-function carregarListasArea(area,presetProduto,presetObjetivo){
-  const montarSelectProduto=(lista)=>{
-    const sel=document.getElementById("mi-produto-sel");
-    sel.innerHTML=lista.map(p=>'<option>'+p+'</option>').join("")+'<option value="__outro__">Outro (descrever)</option>';
-    if(presetProduto&&presetProduto.livre){
-      sel.value="__outro__";
-      document.getElementById("mi-produto-livre").value=presetProduto.livre;
-    }else if(presetProduto&&presetProduto.valor&&lista.some(p=>p===presetProduto.valor)){
-      sel.value=presetProduto.valor;
-    }else{
-      sel.value=lista[0]||"__outro__";
-    }
-    onProdutoSelMudou();
-  };
-  if(produtosCustomCache[area]){montarSelectProduto(produtosCustomCache[area]);}
+function carregarListasArea(area,presetProdutoTexto,presetObjetivoTexto){
+  document.getElementById("mi-produto-input").value=presetProdutoTexto||"";
+  document.getElementById("mi-objetivo-input").value=presetObjetivoTexto||"";
+  if(produtosCustomCache[area]){montarChips("mi-produto",produtosCustomCache[area],presetProdutoTexto)}
   else{
     db.ref("produtosCustom/"+area).once("value").then(snap=>{
       const custom=[];snap.forEach(c=>{if(c.val()&&c.val().valor)custom.push(c.val().valor)});
       const seed=SEED_PRODUTOS[area]||[];
       const todos=[...seed,...custom.filter(c=>!seed.some(s=>s.toUpperCase()===c.toUpperCase()))];
       produtosCustomCache[area]=todos;
-      montarSelectProduto(todos);
-    }).catch(()=>montarSelectProduto(SEED_PRODUTOS[area]||[]));
+      montarChips("mi-produto",todos,presetProdutoTexto);
+    }).catch(()=>montarChips("mi-produto",SEED_PRODUTOS[area]||[],presetProdutoTexto));
   }
-  const selObj=document.getElementById("mi-objetivo-sel");
-  const montarSelectObjetivo=(lista)=>{
-    selObj.innerHTML=lista.map(o=>'<option>'+o+'</option>').join("")+'<option value="__outro__">Outro (descrever)</option>';
-    if(presetObjetivo&&presetObjetivo.livre){
-      selObj.value="__outro__";
-      document.getElementById("mi-objetivo-livre").value=presetObjetivo.livre;
-    }else if(presetObjetivo&&presetObjetivo.valor&&lista.some(o=>o===presetObjetivo.valor)){
-      selObj.value=presetObjetivo.valor;
-    }else{
-      selObj.value=lista[0]||"__outro__";
-    }
-    onObjetivoSelMudou();
-  };
-  if(objetivosCustomCache[area]){montarSelectObjetivo(objetivosCustomCache[area]);}
+  if(objetivosCustomCache[area]){montarChips("mi-objetivo",objetivosCustomCache[area],presetObjetivoTexto)}
   else{
     db.ref("objetivosCustom/"+area).once("value").then(snap=>{
       const custom=[];snap.forEach(c=>{if(c.val()&&c.val().valor)custom.push(c.val().valor)});
       const todos=[...OBJETIVOS_FIXOS,...custom.filter(c=>!OBJETIVOS_FIXOS.some(s=>s.toUpperCase()===c.toUpperCase()))];
       objetivosCustomCache[area]=todos;
-      montarSelectObjetivo(todos);
-    }).catch(()=>montarSelectObjetivo(OBJETIVOS_FIXOS));
+      montarChips("mi-objetivo",todos,presetObjetivoTexto);
+    }).catch(()=>montarChips("mi-objetivo",OBJETIVOS_FIXOS,presetObjetivoTexto));
   }
-}
-function onProdutoSelMudou(){
-  const v=document.getElementById("mi-produto-sel").value;
-  document.getElementById("mi-produto-livre").style.display=v==="__outro__"?"block":"none";
-}
-function onObjetivoSelMudou(){
-  const v=document.getElementById("mi-objetivo-sel").value;
-  document.getElementById("mi-objetivo-livre").style.display=v==="__outro__"?"block":"none";
 }
 function onAcompMudou(){
   const tipo=document.getElementById("mi-acomp-tipo").value;
@@ -1281,10 +1319,10 @@ async function salvarItem(){
   if(!farm&&!farmCidade){showToast("Essa fazenda não está no seu portfólio — informe a cidade",true);return}
   const area=window._areaAtual||"nutricao";
   const dia=document.getElementById("mi-dia").value;
-  const produtoSel=document.getElementById("mi-produto-sel").value;
-  const produtoLivre=document.getElementById("mi-produto-livre").value.trim();
-  const objetivoSel=document.getElementById("mi-objetivo-sel").value;
-  const objetivoLivre=document.getElementById("mi-objetivo-livre").value.trim();
+  const produtoLista=produtosCustomCache[area]||SEED_PRODUTOS[area]||[];
+  const objetivoLista=objetivosCustomCache[area]||OBJETIVOS_FIXOS;
+  const{valor:produtoValor,livre:produtoLivreVal}=resolverValorDaLista(document.getElementById("mi-produto-input").value,produtoLista);
+  const{valor:objetivoValor,livre:objetivoLivreVal}=resolverValorDaLista(document.getElementById("mi-objetivo-input").value,objetivoLista);
   const acompTipo=document.getElementById("mi-acomp-tipo").value;
   let acompanhante=null;
   if(acompTipo==="supervisor"){
@@ -1294,8 +1332,8 @@ async function salvarItem(){
     if(!nome){showToast("Informe o nome do promotor externo",true);return}
     acompanhante={tipo:"promotor_externo",nome};
   }
-  if(produtoSel==="__outro__"&&!produtoLivre){showToast("Descreva o produto",true);return}
-  if(objetivoSel==="__outro__"&&!objetivoLivre){showToast("Descreva o objetivo",true);return}
+  if(!produtoValor&&!produtoLivreVal){showToast("Informe o produto",true);return}
+  if(!objetivoValor&&!objetivoLivreVal){showToast("Informe o objetivo",true);return}
 
   const editId=itemEditandoId;
   if(editId){
@@ -1304,10 +1342,8 @@ async function salvarItem(){
       farmId,farmNome:(farm?farm.produtor:farmTexto.toUpperCase())||"—",
       farmCidade:farmCidade||(farm?farm.cidade||"":"")||null,
       area,data:dia,
-      produto:produtoSel==="__outro__"?null:produtoSel,
-      produtoLivre:produtoSel==="__outro__"?produtoLivre.toUpperCase():null,
-      objetivo:objetivoSel==="__outro__"?null:objetivoSel,
-      objetivoLivre:objetivoSel==="__outro__"?objetivoLivre.toUpperCase():null,
+      produto:produtoValor,produtoLivre:produtoLivreVal,
+      objetivo:objetivoValor,objetivoLivre:objetivoLivreVal,
       acompanhante
     };
     function salvarEdicaoOffline(){
@@ -1321,8 +1357,8 @@ async function salvarItem(){
       }else{
         addToOfflineQueue("editar_item",{itemId:editId,uid:vendedorAlvoUid,wk:wkEdit,patch});
       }
-      if(produtoSel==="__outro__")addToOfflineQueue("produto_custom",{area,valor:produtoLivre.toUpperCase()});
-      if(objetivoSel==="__outro__")addToOfflineQueue("objetivo_custom",{area,valor:objetivoLivre.toUpperCase()});
+      if(produtoLivreVal)addToOfflineQueue("produto_custom",{area,valor:produtoLivreVal});
+      if(objetivoLivreVal)addToOfflineQueue("objetivo_custom",{area,valor:objetivoLivreVal});
       if(itensSemana[editId])Object.assign(itensSemana[editId],patch);
       if(hojeItens[editId])Object.assign(hojeItens[editId],patch);
       renderItens();renderHoje();
@@ -1332,8 +1368,8 @@ async function salvarItem(){
     if(!navigator.onLine){salvarEdicaoOffline();return}
     try{
       await db.ref("agendas/"+vendedorAlvoUid+"/"+wkEdit+"/itens/"+editId).update(patch);
-      if(produtoSel==="__outro__")await db.ref("produtosCustom/"+area).push({valor:produtoLivre.toUpperCase()}).catch(()=>{});
-      if(objetivoSel==="__outro__")await db.ref("objetivosCustom/"+area).push({valor:objetivoLivre.toUpperCase()}).catch(()=>{});
+      if(produtoLivreVal)await db.ref("produtosCustom/"+area).push({valor:produtoLivreVal}).catch(()=>{});
+      if(objetivoLivreVal)await db.ref("objetivosCustom/"+area).push({valor:objetivoLivreVal}).catch(()=>{});
       fecharModal("modal-item");
       showToast("✅ Visita atualizada");
     }catch(e){salvarEdicaoOffline()}
@@ -1341,15 +1377,13 @@ async function salvarItem(){
   }
 
   const avulso=!!window._avulso;
-  const wk=avulso?weekKeyOf(getMonday(new Date())):weekKeyOf(currentMonday);
+  const wk=avulso?weekKeyOf(getMonday(new Date())):weekKeyOf(getMonday(new Date(dia+"T00:00:00")));
   const item={
     farmId,farmNome:(farm?farm.produtor:farmTexto.toUpperCase())||"—",
     farmCidade:farmCidade||(farm?farm.cidade||"":"")||null,
     area,data:avulso?toISODate(new Date()):dia,
-    produto:produtoSel==="__outro__"?null:produtoSel,
-    produtoLivre:produtoSel==="__outro__"?produtoLivre.toUpperCase():null,
-    objetivo:objetivoSel==="__outro__"?null:objetivoSel,
-    objetivoLivre:objetivoSel==="__outro__"?objetivoLivre.toUpperCase():null,
+    produto:produtoValor,produtoLivre:produtoLivreVal,
+    objetivo:objetivoValor,objetivoLivre:objetivoLivreVal,
     acompanhante,status:"planejado",criado_em:new Date().toISOString(),
     foraDoPlanejamento:avulso
   };
@@ -1357,8 +1391,8 @@ async function salvarItem(){
   function salvarOffline(){
     const tempId="local_"+Date.now();
     addToOfflineQueue("novo_item",{tempId,uid:vendedorAlvoUid,wk,item});
-    if(produtoSel==="__outro__")addToOfflineQueue("produto_custom",{area,valor:produtoLivre.toUpperCase()});
-    if(objetivoSel==="__outro__")addToOfflineQueue("objetivo_custom",{area,valor:objetivoLivre.toUpperCase()});
+    if(produtoLivreVal)addToOfflineQueue("produto_custom",{area,valor:produtoLivreVal});
+    if(objetivoLivreVal)addToOfflineQueue("objetivo_custom",{area,valor:objetivoLivreVal});
     const itemComId={id:tempId,...item};
     if(item.data===toISODate(new Date()))hojeItens[tempId]=itemComId;
     if(wk===weekKeyOf(currentMonday))itensSemana[tempId]=itemComId;
@@ -1372,8 +1406,8 @@ async function salvarItem(){
   try{
     const novaRef=db.ref("agendas/"+vendedorAlvoUid+"/"+wk+"/itens").push();
     await novaRef.set(item);
-    if(produtoSel==="__outro__")await db.ref("produtosCustom/"+area).push({valor:produtoLivre.toUpperCase()}).catch(()=>{});
-    if(objetivoSel==="__outro__")await db.ref("objetivosCustom/"+area).push({valor:objetivoLivre.toUpperCase()}).catch(()=>{});
+    if(produtoLivreVal)await db.ref("produtosCustom/"+area).push({valor:produtoLivreVal}).catch(()=>{});
+    if(objetivoLivreVal)await db.ref("objetivosCustom/"+area).push({valor:objetivoLivreVal}).catch(()=>{});
     fecharModal("modal-item");
     if(avulso){
       hojeItens[novaRef.key]={id:novaRef.key,...item};
@@ -1399,20 +1433,16 @@ function abrirModalCheckin(itemId){
 
   const item=obterItem(itemId);
   const area=item.area||"nutricao";
-  const montarSelectProdutoCi=(lista)=>{
-    const sel=document.getElementById("ci-produto-sel");
-    sel.innerHTML=lista.map(p=>'<option>'+p+'</option>').join("")+'<option value="__outro__">Outro (descrever)</option>';
-    sel.value=item.produtoLivre?"__outro__":(item.produto||lista[0]);
-    onCiProdutoSelMudou();
-    if(item.produtoLivre)document.getElementById("ci-produto-livre").value=item.produtoLivre;
-  };
-  if(produtosCustomCache[area])montarSelectProdutoCi(produtosCustomCache[area]);
+  const presetTexto=item.produtoLivre||item.produto||"";
+  window._ciArea=area;
+  if(produtosCustomCache[area])montarChips("ci-produto",produtosCustomCache[area],presetTexto);
   else db.ref("produtosCustom/"+area).once("value").then(snap=>{
     const custom=[];snap.forEach(c=>{if(c.val()&&c.val().valor)custom.push(c.val().valor)});
     const seed=SEED_PRODUTOS[area]||[];
     const todos=[...seed,...custom.filter(c=>!seed.some(s=>s.toUpperCase()===c.toUpperCase()))];
-    produtosCustomCache[area]=todos;montarSelectProdutoCi(todos);
-  }).catch(()=>montarSelectProdutoCi(SEED_PRODUTOS[area]||[]));
+    produtosCustomCache[area]=todos;montarChips("ci-produto",todos,presetTexto);
+  }).catch(()=>montarChips("ci-produto",SEED_PRODUTOS[area]||[],presetTexto));
+  document.getElementById("ci-produto-input").value=presetTexto;
 
   document.getElementById("modal-checkin").classList.add("on");
   obterGeolocalizacaoCheckin(item);
@@ -1420,10 +1450,6 @@ function abrirModalCheckin(itemId){
 function selecionarStatusCheckin(k){
   ciStatusSelecionado=k;
   document.querySelectorAll("#ci-status-pick .status-opt").forEach(el=>el.classList.toggle("on",el.dataset.st===k));
-}
-function onCiProdutoSelMudou(){
-  const v=document.getElementById("ci-produto-sel").value;
-  document.getElementById("ci-produto-livre").style.display=v==="__outro__"?"block":"none";
 }
 function onCiFotoSelecionada(event){
   const file=event.target.files&&event.target.files[0];event.target.value="";
@@ -1471,9 +1497,9 @@ function obterGeolocalizacaoCheckin(item){
 async function salvarCheckin(){
   const item=obterItem(itemEditandoId);
   if(!item)return;
-  const produtoSel=document.getElementById("ci-produto-sel").value;
-  const produtoLivre=document.getElementById("ci-produto-livre").value.trim();
-  if(produtoSel==="__outro__"&&!produtoLivre){showToast("Descreva o produto",true);return}
+  const produtoLista=produtosCustomCache[item.area]||SEED_PRODUTOS[item.area]||[];
+  const{valor:produtoValor,livre:produtoLivreVal}=resolverValorDaLista(document.getElementById("ci-produto-input").value,produtoLista);
+  if(!produtoValor&&!produtoLivreVal){showToast("Informe o produto",true);return}
   const obs=document.getElementById("ci-obs").value.trim();
 
   const farmCoords=getFarmCoords(clientesById[item.farmId]);
@@ -1492,7 +1518,7 @@ async function salvarCheckin(){
     lat:ciGeo?ciGeo.lat:null,lng:ciGeo?ciGeo.lng:null,
     localizacaoValidada,distanciaKm,motivo,
     resumo:(ciStatusSelecionado==="produtor_ausente"?"Produtor ausente. ":"")+obs,
-    produtoConfirmado:produtoSel==="__outro__"?produtoLivre.toUpperCase():produtoSel
+    produtoConfirmado:produtoValor||produtoLivreVal
   };
 
   const wk=weekKeyOf(getMonday(new Date(item.data+"T00:00:00")));
@@ -1503,7 +1529,7 @@ async function salvarCheckin(){
     addToOfflineQueue("checkin",isTemp
       ?{tempId:itemEditandoId,uid:vendedorAlvoUid,wk,patch:{status:statusFinal,checkin}}
       :{itemId:itemEditandoId,uid:vendedorAlvoUid,wk,patch:{status:statusFinal,checkin}});
-    if(produtoSel==="__outro__")addToOfflineQueue("produto_custom",{area:item.area,valor:produtoLivre.toUpperCase()});
+    if(produtoLivreVal)addToOfflineQueue("produto_custom",{area:item.area,valor:produtoLivreVal});
     Object.assign(item,{status:statusFinal,checkin});
     if(itensSemana[itemEditandoId])Object.assign(itensSemana[itemEditandoId],{status:statusFinal,checkin});
     if(hojeItens[itemEditandoId])Object.assign(hojeItens[itemEditandoId],{status:statusFinal,checkin});
@@ -1517,7 +1543,7 @@ async function salvarCheckin(){
   const ref=db.ref("agendas/"+vendedorAlvoUid+"/"+wk+"/itens/"+itemEditandoId);
   try{
     await ref.update({status:statusFinal,checkin});
-    if(produtoSel==="__outro__")await db.ref("produtosCustom/"+item.area).push({valor:produtoLivre.toUpperCase()}).catch(()=>{});
+    if(produtoLivreVal)await db.ref("produtosCustom/"+item.area).push({valor:produtoLivreVal}).catch(()=>{});
     if(ciFotoBase64){
       const blob=await(await fetch(ciFotoBase64)).blob();
       const path="agenda_checkins/"+item.farmId+"/"+Date.now()+".jpg";
