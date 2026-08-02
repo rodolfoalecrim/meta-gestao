@@ -134,6 +134,8 @@ h1,h2,h3,.font-display{font-family:var(--font-display)}
 .chips-wrap{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
 .chip-sugestao{background:var(--surface2);border:1.5px solid var(--border);border-radius:20px;padding:6px 12px;font-size:11.5px;font-weight:600;color:var(--muted);cursor:pointer;font-family:var(--font-ui);transition:all .12s}
 .chip-sugestao.on{background:var(--pasture-light);border-color:var(--G);color:var(--GD)}
+.atividade-block{border:1.5px dashed var(--border);border-radius:14px;padding:12px;margin-bottom:10px;position:relative}
+.atividade-num{font-family:var(--font-mono);font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.4px;margin-bottom:8px}
 .btn-save{width:100%;background:linear-gradient(135deg,var(--pasture-mid),var(--GD));color:#fff;border:none;border-radius:12px;padding:14px;font-size:15px;font-weight:700;cursor:pointer;margin-top:6px;font-family:var(--font-display);letter-spacing:.2px}
 .gps-box{background:var(--pasture-light);border:1.5px solid var(--G);border-radius:12px;padding:12px;margin-bottom:14px;text-align:center;font-size:12px;font-weight:600;color:var(--GD);font-family:var(--font-mono)}
 .gps-box.warn{background:#F7EAD2;border-color:#C98A2E;color:#7A4F0F}
@@ -281,10 +283,6 @@ h1,h2,h3,.font-display{font-family:var(--font-display)}
       <button class="modal-close" onclick="fecharModal('modal-item')">✕</button>
     </div>
 
-    <div class="f-field"><label>Área</label>
-      <div class="area-pick" id="area-pick"></div>
-    </div>
-
     <div class="f-field"><label>Fazenda</label>
       <input id="mi-farm-input" list="mi-farm-datalist" placeholder="Digite o nome do produtor" autocomplete="off" oninput="onFarmInputMudou()">
       <datalist id="mi-farm-datalist"></datalist>
@@ -298,15 +296,9 @@ h1,h2,h3,.font-display{font-family:var(--font-display)}
       <select id="mi-dia"></select>
     </div>
 
-    <div class="f-field"><label>Produto</label>
-      <input id="mi-produto-input" placeholder="Digite ou toque numa sugestão" oninput="filtrarChips('mi-produto')">
-      <div id="mi-produto-chips" class="chips-wrap"></div>
-    </div>
-
-    <div class="f-field"><label>Objetivo da visita</label>
-      <input id="mi-objetivo-input" placeholder="Digite ou toque numa sugestão" oninput="filtrarChips('mi-objetivo')">
-      <div id="mi-objetivo-chips" class="chips-wrap"></div>
-    </div>
+    <label style="font-size:12px;font-weight:700;color:var(--muted);display:block;margin-bottom:6px">O que vai fazer nessa visita?</label>
+    <div id="atividades-container"></div>
+    <button class="btn-ghost" style="width:100%;margin-bottom:14px" onclick="adicionarAtividade()">➕ Adicionar outra atividade nessa mesma visita</button>
 
     <div class="f-row">
       <div class="f-field"><label>Vai acompanhado?</label>
@@ -448,7 +440,7 @@ const SEED_PRODUTOS={
   fenacao:["SILAGEM DE MILHO","PRÉ-SECADO","FENO","ENSILAGEM","LONA"],
   agricola:["SEMENTE","FERTILIZANTE","DEFENSIVO","CALCÁRIO"]
 };
-const OBJETIVOS_FIXOS=["PROSPECÇÃO","FECHAMENTO","ACOMPANHAMENTO","PÓS VENDA","VISITA TÉCNICA","ENTREGA","COBRANÇA"];
+const OBJETIVOS_FIXOS=["PROSPECÇÃO","LEVANTAMENTO DE DADOS","FECHAMENTO","ACOMPANHAMENTO","PÓS VENDA","VISITA TÉCNICA","ENTREGA","COBRANÇA"];
 const MOTIVOS_FOLGA=["CONSULTA MÉDICA","COMPROMISSO PESSOAL","VIAGEM COM FAMÍLIA","OUTRO"];
 const TIPOS_EVENTO=["FEIRA/EXPOSIÇÃO","REUNIÃO","TREINAMENTO","OUTRO"];
 const SUPERVISORES={agricola:["Evandro"],saude_animal:["Everton"],nutricao:["Rodolfo","Alexandre","Julia"],fenacao:[]};
@@ -503,6 +495,10 @@ function showToast(msg,err){const t=document.getElementById("toast");t.textConte
 function distKm(lat1,lng1,lat2,lng2){const R=6371,dLat=(lat2-lat1)*Math.PI/180,dLng=(lng2-lng1)*Math.PI/180;const a=Math.sin(dLat/2)**2+Math.cos(lat1*Math.PI/180)*Math.cos(lat2*Math.PI/180)*Math.sin(dLng/2)**2;return R*2*Math.atan2(Math.sqrt(a),Math.sqrt(1-a))}
 function getFarmCoords(d){if(!d)return null;if(d.lat&&d.lng)return{lat:parseFloat(d.lat),lng:parseFloat(d.lng)};const key=(d.produtor||"").toUpperCase().trim();if(key&&mapCoordsIndex[key])return mapCoordsIndex[key];return null}
 function obterItem(id){return itensSemana[id]||hojeItens[id]}
+function atividadesDoItem(item){
+  if(item.atividades&&item.atividades.length)return item.atividades;
+  return[{area:item.area,produto:item.produto,produtoLivre:item.produtoLivre,objetivo:item.objetivo,objetivoLivre:item.objetivoLivre}];
+}
 
 /* ===================== FILA OFFLINE ===================== */
 const OFFLINE_KEY="meta_agenda_offline_queue";
@@ -842,9 +838,10 @@ async function gerarPDFSemana(){
       }else{
         for(const it of itensDoDia){
           const temAcomp=!!(it.acompanhante&&it.acompanhante.nome);
-          const cardH=temAcomp?48:34;
+          const atividadesPdf=atividadesDoItem(it);
+          const cardH=21+atividadesPdf.length*13+(temAcomp?15:0);
           precisaDeEspaco(cardH+6);
-          const areaHex=(AREAS[it.area]||AREAS.nutricao).color;
+          const areaHex=(AREAS[atividadesPdf[0].area]||AREAS.nutricao).color;
           const st=STATUS_LABEL[it.status]||STATUS_LABEL.planejado;
           const cardY=y-cardH;
           page.drawRectangle({x:margin,y:cardY,width:pageW-margin*2,height:cardH,color:cor(SURF2)});
@@ -855,9 +852,12 @@ async function gerarPDFSemana(){
             const nomeW=larguraTexto(nomeTxt,9.5,true);
             texto("· DESVIO",margin+12+nomeW+5,cardY+cardH-13,{tamanho:8,negrito:true,cor:cor("#B5541F")});
           }
-          const produto=it.produtoLivre||it.produto||"—";
-          const objetivo=it.objetivoLivre||it.objetivo||"—";
-          texto("Produto: "+produto+"   |   Objetivo: "+objetivo,margin+12,cardY+(temAcomp?20:7),{tamanho:7.5,cor:cor(MUTED)});
+          atividadesPdf.forEach((av,idx)=>{
+            const produto=av.produtoLivre||av.produto||"—";
+            const objetivo=av.objetivoLivre||av.objetivo||"—";
+            const prefixo=atividadesPdf.length>1?((AREAS[av.area]||AREAS.nutricao).label+": "):"Produto: ";
+            texto(prefixo+produto+"   |   Objetivo: "+objetivo,margin+12,cardY+cardH-13-13*(idx+1),{tamanho:7.5,cor:cor(MUTED)});
+          });
           if(temAcomp){
             const tipoLbl=it.acompanhante.tipo==="supervisor"?"Supervisor técnico":"Promotor externo";
             const acompTxt="ACOMPANHADO POR: "+it.acompanhante.nome.toUpperCase()+" ("+tipoLbl+")";
@@ -923,8 +923,9 @@ async function duplicarSemanaAnterior(){
 function montarBarraAreas(itens){
   if(!itens.length)return"";
   const counts={};
-  itens.forEach(i=>{counts[i.area]=(counts[i.area]||0)+1});
-  const total=itens.length;
+  let total=0;
+  itens.forEach(i=>{atividadesDoItem(i).forEach(av=>{counts[av.area]=(counts[av.area]||0)+1;total++})});
+  if(!total)return"";
   const dados=Object.keys(AREAS).map(k=>({label:AREAS[k].label,color:AREAS[k].color,count:counts[k]||0,pct:Math.round((counts[k]||0)/total*100)})).filter(d=>d.count>0);
   if(!dados.length)return"";
   const barra=dados.map(d=>'<div style="flex:'+d.pct+';background:'+d.color+'"></div>').join("");
@@ -1022,6 +1023,7 @@ async function aplicarFiltroDesempenho(){
     if(!uid){resultados.push({email,nome:NOME_AMIGAVEL[email]||email,semUid:true});continue}
     let planejadas=0,realizadas=0,checkins=0,desvios=0;
     const itensDetalhe=[];
+    const atividadesDetalhe=[];
     for(const wk of weekKeys){
       let snap;
       try{snap=await db.ref("agendas/"+uid+"/"+wk+"/itens").once("value")}catch(e){continue}
@@ -1032,10 +1034,11 @@ async function aplicarFiltroDesempenho(){
         if(it.status==="realizado"&&!it.foraDoPlanejamento)realizadas++;
         if(it.checkin)checkins++;
         itensDetalhe.push({data:it.data,farmNome:it.farmNome,status:it.status,foraDoPlanejamento:!!it.foraDoPlanejamento,area:it.area,checkinResumo:it.checkin?it.checkin.resumo:null});
+        atividadesDoItem(it).forEach(av=>atividadesDetalhe.push({area:av.area}));
       });
     }
     itensDetalhe.sort((a,b)=>a.data.localeCompare(b.data));
-    resultados.push({email,uid,nome:NOME_AMIGAVEL[email]||email,planejadas,realizadas,checkins,desvios,itensDetalhe,
+    resultados.push({email,uid,nome:NOME_AMIGAVEL[email]||email,planejadas,realizadas,checkins,desvios,itensDetalhe,atividadesDetalhe,
       performance:planejadas>0?Math.round(realizadas/planejadas*100):null});
   }
   window._desempenhoAtual=resultados;
@@ -1123,7 +1126,7 @@ function renderDesempenho(resultados){
         '<div class="perf-cell"><span class="perf-num">'+r.realizadas+'</span><span class="perf-lbl">Realizadas</span></div>'+
         '<div class="perf-cell"><span class="perf-num">'+r.checkins+'</span><span class="perf-lbl">Check-ins</span></div>'+
         '<div class="perf-cell"><span class="perf-num'+(r.desvios>0?" desvio":"")+'">'+r.desvios+'</span><span class="perf-lbl">Desvios</span></div>'+
-      '</div>'+montarBarraAreas(r.itensDetalhe)+
+      '</div>'+montarBarraAreas(r.atividadesDetalhe)+
       '<div style="display:flex;gap:8px;margin-top:10px">'+
         '<button class="btn-ghost" style="flex:1" onclick="toggleDetalheVendedor('+idx+')">📋 Ver visitas</button>'+
         '<button class="btn-ghost" style="flex:1" onclick="mostrarTendencia('+idx+')">📈 Tendência</button>'+
@@ -1156,18 +1159,55 @@ function renderSugestoes(){
   ).join("");
 }
 function toggleSugg(){const b=document.getElementById("sugg-body");b.style.display=b.style.display==="none"?"block":"none"}
+async function coletarHistoricoObjetivosPorFazenda(diasParaTras){
+  const hoje=new Date();
+  const inicio=addDays(hoje,-diasParaTras);
+  const weekKeys=weekKeysInRange(toISODate(inicio),toISODate(hoje));
+  const historico={};
+  for(const wk of weekKeys){
+    let snap;
+    try{snap=await db.ref("agendas/"+vendedorAlvoUid+"/"+wk+"/itens").once("value")}catch(e){continue}
+    snap.forEach(c=>{
+      const it=c.val();
+      if(!it||it.status!=="realizado"||!it.farmId)return;
+      atividadesDoItem(it).forEach(av=>{
+        const objetivo=(av.objetivoLivre||av.objetivo||"").toUpperCase();
+        if(!objetivo)return;
+        const existente=historico[it.farmId];
+        if(!existente||it.data>existente.data)historico[it.farmId]={objetivo,data:it.data};
+      });
+    });
+  }
+  const hojeMs=Date.now();
+  Object.keys(historico).forEach(fid=>{
+    historico[fid].dias=Math.floor((hojeMs-new Date(historico[fid].data+"T00:00:00").getTime())/864e5);
+  });
+  return historico;
+}
 async function gerarSugestoesIA(){
   const box=document.getElementById("sugg-ia-wrap");
   box.style.display="block";
+  box.innerHTML='<div class="skeleton" style="height:90px"></div>';
   const hoje=Date.now();
   const farmIdsJaNaAgenda=new Set(Object.values(itensSemana).map(i=>i.farmId));
-  const candidatas=meusClientes.filter(d=>(d.situacao||"").toUpperCase()==="ATIVO"&&!farmIdsJaNaAgenda.has(d.id)).map(d=>{
+  let candidatas=meusClientes.filter(d=>(d.situacao||"").toUpperCase()==="ATIVO"&&!farmIdsJaNaAgenda.has(d.id)).map(d=>{
     const dataRef=d.data_visita||d.atualizado_em;
     const dias=dataRef?Math.floor((hoje-new Date(dataRef).getTime())/864e5):null;
     return{id:d.id,produtor:d.produtor,cidade:d.cidade,produto:d.produto,vacas:d.vacas,mediaProd:d.media_prod,diasSemVisita:dias};
-  }).sort((a,b)=>(b.diasSemVisita??9999)-(a.diasSemVisita??9999)).slice(0,40);
+  });
+  const historico=await coletarHistoricoObjetivosPorFazenda(60);
+  candidatas.forEach(c=>{
+    const h=historico[c.id];
+    if(h){c.ultimoObjetivo=h.objetivo;c.diasDesdeUltimoObjetivo=h.dias}
+  });
+  candidatas.sort((a,b)=>{
+    const prioridade=x=>(x.ultimoObjetivo==="PROSPECÇÃO"||x.ultimoObjetivo==="LEVANTAMENTO DE DADOS")?1:0;
+    const pa=prioridade(a),pb=prioridade(b);
+    if(pa!==pb)return pb-pa;
+    return(b.diasSemVisita??9999)-(a.diasSemVisita??9999);
+  });
+  candidatas=candidatas.slice(0,50);
   if(!candidatas.length){box.innerHTML='<div class="item-meta">Sem fazendas no portfólio pra a IA analisar (tudo já está no planejamento desta semana)</div>';return}
-  box.innerHTML='<div class="skeleton" style="height:90px"></div>';
   try{
     const resp=await cloudFn.httpsCallable("gerarSugestoesVisitaAgenda")({fazendas:candidatas});
     const sugestoes=Array.isArray(resp.data.sugestoes)?resp.data.sugestoes:[];
@@ -1232,10 +1272,17 @@ function renderItens(){
 }
 function montarCardItem(item){
   const hojeISO=toISODate(new Date());
-  const area=AREAS[item.area]||AREAS.nutricao;
+  const atividades=atividadesDoItem(item);
+  const area=AREAS[atividades[0].area]||AREAS.nutricao;
+  const areasUnicas=[...new Set(atividades.map(av=>av.area))].map(k=>AREAS[k]||AREAS.nutricao);
+  const areaLabel=areasUnicas.map(a=>a.icon+" "+a.label).join(" + ");
   const st=STATUS_LABEL[item.status]||STATUS_LABEL.planejado;
-  const produto=item.produtoLivre||item.produto||"—";
-  const objetivo=item.objetivoLivre||item.objetivo||"—";
+  const atividadesHtml=atividades.map(av=>{
+    const ai=AREAS[av.area]||AREAS.nutricao;
+    const produto=av.produtoLivre||av.produto||"—";
+    const objetivo=av.objetivoLivre||av.objetivo||"—";
+    return(atividades.length>1?'<b style="color:'+ai.color+'">'+ai.icon+' '+ai.label+':</b> ':'📦 <b>Produto:</b> ')+produto+(atividades.length>1?' — 🎯 '+objetivo:'<br>🎯 <b>Objetivo:</b> '+objetivo);
+  }).join("<br>");
   const acomp=item.acompanhante&&item.acompanhante.nome?("<br>👥 <b>Acompanhado por:</b> "+item.acompanhante.nome):"";
   const podeCheckin=!somenteLeitura&&item.status==="planejado"&&item.data<=hojeISO;
   const checkinInfo=item.checkin?(
@@ -1252,9 +1299,9 @@ function montarCardItem(item){
     (podeExcluir?'<button class="btn-ghost" style="color:var(--clay)" onclick="excluirItem(\''+item.id+'\')" title="Excluir">🗑️</button>':'')+
     '</div>':'';
   return '<div class="item-card" style="--area-color:'+area.color+'">'+
-    '<div class="item-top"><div><div class="item-farm">'+(item.farmNome||"—")+(item.farmCidade?' <span style="font-weight:600;color:var(--muted);font-size:11px">— '+item.farmCidade+'</span>':"")+'</div><div class="item-area">'+area.icon+' '+area.label+'</div>'+desvioTag+'</div>'+
+    '<div class="item-top"><div><div class="item-farm">'+(item.farmNome||"—")+(item.farmCidade?' <span style="font-weight:600;color:var(--muted);font-size:11px">— '+item.farmCidade+'</span>':"")+'</div><div class="item-area">'+areaLabel+'</div>'+desvioTag+'</div>'+
     '<span class="item-badge" style="background:'+st.bg+';color:'+st.c+'">'+st.t+'</span></div>'+
-    '<div class="item-meta">📦 <b>Produto:</b> '+produto+'<br>🎯 <b>Objetivo:</b> '+objetivo+acomp+'</div>'+
+    '<div class="item-meta">'+atividadesHtml+acomp+'</div>'+
     checkinInfo+pendenteTag+acoes+
     '</div>';
 }
@@ -1340,9 +1387,12 @@ function abrirModalItem(farmIdPreSelecionado,avulso,editId){
     document.getElementById("mi-dia-wrap").style.display="block";
     document.getElementById("modal-item-titulo").textContent="Editar visita";
     document.getElementById("mi-btn-salvar").textContent="💾 Salvar alterações";
-    montarAreaPick(original.area||"nutricao",
-      original.produtoLivre||original.produto||"",
-      original.objetivoLivre||original.objetivo||"");
+    window._atividades=atividadesDoItem(original).map(av=>({
+      area:av.area||"nutricao",
+      _presetProduto:av.produtoLivre||av.produto||"",
+      _presetObjetivo:av.objetivoLivre||av.objetivo||""
+    }));
+    renderAtividades();
     if(original.acompanhante){
       document.getElementById("mi-acomp-tipo").value=original.acompanhante.tipo;
       onAcompMudou();
@@ -1360,7 +1410,8 @@ function abrirModalItem(farmIdPreSelecionado,avulso,editId){
     document.getElementById("mi-dia-wrap").style.display=avulso?"none":"block";
     document.getElementById("modal-item-titulo").textContent=avulso?"Visita não planejada":"Nova visita planejada";
     document.getElementById("mi-btn-salvar").textContent=avulso?"📍 Registrar e fazer check-in":"💾 Salvar no planejamento";
-    montarAreaPick("nutricao","","");
+    window._atividades=[{area:"nutricao",_presetProduto:"",_presetObjetivo:""}];
+    renderAtividades();
     document.getElementById("mi-acomp-tipo").value="";
     document.getElementById("mi-acomp-nome-wrap").style.display="none";
   }
@@ -1550,47 +1601,76 @@ function onFarmInputMudou(){
     document.getElementById("mi-farm-cidade").value=farm.cidade||"";
   }
 }
-function montarAreaPick(areaSelecionada,presetProduto,presetObjetivo){
-  const pick=document.getElementById("area-pick");
+function renderAtividades(){
+  const container=document.getElementById("atividades-container");
+  container.innerHTML=window._atividades.map((av,idx)=>
+    '<div class="atividade-block" data-idx="'+idx+'">'+
+      '<div class="atividade-num">Atividade '+(idx+1)+'</div>'+
+      '<div class="f-field"><label>Área</label><div class="area-pick" id="ativ'+idx+'-area-pick"></div></div>'+
+      '<div class="f-field"><label>Produto</label>'+
+        '<input id="ativ'+idx+'-produto-input" placeholder="Digite ou toque numa sugestão" oninput="filtrarChips(\'ativ'+idx+'-produto\')">'+
+        '<div id="ativ'+idx+'-produto-chips" class="chips-wrap"></div>'+
+      '</div>'+
+      '<div class="f-field" style="margin-bottom:0"><label>Objetivo</label>'+
+        '<input id="ativ'+idx+'-objetivo-input" placeholder="Digite ou toque numa sugestão" oninput="filtrarChips(\'ativ'+idx+'-objetivo\')">'+
+        '<div id="ativ'+idx+'-objetivo-chips" class="chips-wrap"></div>'+
+      '</div>'+
+      (window._atividades.length>1?'<button type="button" class="btn-ghost" style="width:100%;margin-top:10px;color:var(--clay)" onclick="removerAtividade('+idx+')">✕ Remover esta atividade</button>':'')+
+    '</div>'
+  ).join("");
+  window._atividades.forEach((av,idx)=>montarAreaPickAtividade(idx,av.area||"nutricao",av._presetProduto,av._presetObjetivo));
+}
+function adicionarAtividade(){
+  window._atividades.push({area:"nutricao",_presetProduto:"",_presetObjetivo:""});
+  renderAtividades();
+}
+function removerAtividade(idx){
+  if(window._atividades.length<=1)return;
+  window._atividades.splice(idx,1);
+  renderAtividades();
+}
+function montarAreaPickAtividade(idx,areaSelecionada,presetProduto,presetObjetivo){
+  const pick=document.getElementById("ativ"+idx+"-area-pick");
   pick.innerHTML=Object.entries(AREAS).map(([k,a])=>
-    '<div class="area-opt" style="--area-color:'+a.color+'" onclick="selecionarArea(\''+k+'\')" data-area="'+k+'">'+
+    '<div class="area-opt" style="--area-color:'+a.color+'" onclick="selecionarAreaAtividade('+idx+',\''+k+'\')" data-area="'+k+'">'+
       '<div class="area-circ'+(k===areaSelecionada?" on":"")+'">'+a.icon+'</div>'+
       '<div class="area-lbl'+(k===areaSelecionada?" on":"")+'">'+a.label+'</div>'+
     '</div>'
   ).join("");
-  window._areaAtual=areaSelecionada;
-  carregarListasArea(areaSelecionada,presetProduto,presetObjetivo);
+  window._atividades[idx].area=areaSelecionada;
+  carregarListasAtividade(idx,areaSelecionada,presetProduto,presetObjetivo);
 }
-function selecionarArea(k){
-  document.querySelectorAll("#area-pick .area-opt").forEach(el=>{
+function selecionarAreaAtividade(idx,k){
+  document.querySelectorAll('#ativ'+idx+'-area-pick .area-opt').forEach(el=>{
     const on=el.dataset.area===k;
     el.querySelector(".area-circ").classList.toggle("on",on);
     el.querySelector(".area-lbl").classList.toggle("on",on);
   });
-  window._areaAtual=k;
-  carregarListasArea(k);
+  window._atividades[idx].area=k;
+  carregarListasAtividade(idx,k);
 }
-function carregarListasArea(area,presetProdutoTexto,presetObjetivoTexto){
-  document.getElementById("mi-produto-input").value=presetProdutoTexto||"";
-  document.getElementById("mi-objetivo-input").value=presetObjetivoTexto||"";
-  if(produtosCustomCache[area]){montarChips("mi-produto",produtosCustomCache[area],presetProdutoTexto)}
+function carregarListasAtividade(idx,area,presetProdutoTexto,presetObjetivoTexto){
+  const prefixoP="ativ"+idx+"-produto",prefixoO="ativ"+idx+"-objetivo";
+  document.getElementById(prefixoP+"-input").value=presetProdutoTexto||"";
+  document.getElementById(prefixoO+"-input").value=presetObjetivoTexto||"";
+  if(produtosCustomCache[area]){montarChips(prefixoP,produtosCustomCache[area],presetProdutoTexto)}
   else{
     db.ref("produtosCustom/"+area).once("value").then(snap=>{
       const custom=[];snap.forEach(c=>{if(c.val()&&c.val().valor)custom.push(c.val().valor)});
       const seed=SEED_PRODUTOS[area]||[];
       const todos=[...seed,...custom.filter(c=>!seed.some(s=>s.toUpperCase()===c.toUpperCase()))];
       produtosCustomCache[area]=todos;
-      montarChips("mi-produto",todos,presetProdutoTexto);
-    }).catch(()=>montarChips("mi-produto",SEED_PRODUTOS[area]||[],presetProdutoTexto));
+      montarChips(prefixoP,todos,presetProdutoTexto);
+    }).catch(()=>montarChips(prefixoP,SEED_PRODUTOS[area]||[],presetProdutoTexto));
   }
-  if(objetivosCustomCache[area]){montarChips("mi-objetivo",objetivosCustomCache[area],presetObjetivoTexto)}
+  if(objetivosCustomCache[area]){montarChips(prefixoO,objetivosCustomCache[area],presetObjetivoTexto)}
   else{
     db.ref("objetivosCustom/"+area).once("value").then(snap=>{
       const custom=[];snap.forEach(c=>{if(c.val()&&c.val().valor)custom.push(c.val().valor)});
       const todos=[...OBJETIVOS_FIXOS,...custom.filter(c=>!OBJETIVOS_FIXOS.some(s=>s.toUpperCase()===c.toUpperCase()))];
       objetivosCustomCache[area]=todos;
-      montarChips("mi-objetivo",todos,presetObjetivoTexto);
-    }).catch(()=>montarChips("mi-objetivo",OBJETIVOS_FIXOS,presetObjetivoTexto));
+      montarChips(prefixoO,todos,presetObjetivoTexto);
+    }).catch(()=>montarChips(prefixoO,OBJETIVOS_FIXOS,presetObjetivoTexto));
   }
 }
 function onAcompMudou(){
@@ -1610,6 +1690,25 @@ function onAcompMudou(){
 }
 function fecharModal(id){document.getElementById(id).classList.remove("on")}
 
+function coletarAtividades(){
+  const atividades=[];
+  const customs=[];
+  for(let idx=0;idx<window._atividades.length;idx++){
+    const area=window._atividades[idx].area||"nutricao";
+    const produtoTexto=document.getElementById("ativ"+idx+"-produto-input").value;
+    const objetivoTexto=document.getElementById("ativ"+idx+"-objetivo-input").value;
+    const produtoLista=produtosCustomCache[area]||SEED_PRODUTOS[area]||[];
+    const objetivoLista=objetivosCustomCache[area]||OBJETIVOS_FIXOS;
+    const{valor:pv,livre:pl}=resolverValorDaLista(produtoTexto,produtoLista);
+    const{valor:ov,livre:ol}=resolverValorDaLista(objetivoTexto,objetivoLista);
+    if(!pv&&!pl)return{erro:"Informe o produto da atividade "+(idx+1)};
+    if(!ov&&!ol)return{erro:"Informe o objetivo da atividade "+(idx+1)};
+    atividades.push({area,produto:pv,produtoLivre:pl,objetivo:ov,objetivoLivre:ol});
+    if(pl)customs.push({tipo:"produto_custom",area,valor:pl});
+    if(ol)customs.push({tipo:"objetivo_custom",area,valor:ol});
+  }
+  return{atividades,customs};
+}
 async function salvarItem(){
   const farmTexto=document.getElementById("mi-farm-input").value.trim();
   const farmCidade=document.getElementById("mi-farm-cidade").value.trim();
@@ -1617,12 +1716,11 @@ async function salvarItem(){
   const farm=farmId?clientesById[farmId]:null;
   if(!farmTexto){showToast("Informe o nome do produtor",true);return}
   if(!farm&&!farmCidade){showToast("Essa fazenda não está no seu portfólio — informe a cidade",true);return}
-  const area=window._areaAtual||"nutricao";
   const dia=document.getElementById("mi-dia").value;
-  const produtoLista=produtosCustomCache[area]||SEED_PRODUTOS[area]||[];
-  const objetivoLista=objetivosCustomCache[area]||OBJETIVOS_FIXOS;
-  const{valor:produtoValor,livre:produtoLivreVal}=resolverValorDaLista(document.getElementById("mi-produto-input").value,produtoLista);
-  const{valor:objetivoValor,livre:objetivoLivreVal}=resolverValorDaLista(document.getElementById("mi-objetivo-input").value,objetivoLista);
+  const coleta=coletarAtividades();
+  if(coleta.erro){showToast(coleta.erro,true);return}
+  const{atividades,customs}=coleta;
+  const primeira=atividades[0];
   const acompTipo=document.getElementById("mi-acomp-tipo").value;
   let acompanhante=null;
   if(acompTipo==="supervisor"){
@@ -1632,8 +1730,16 @@ async function salvarItem(){
     if(!nome){showToast("Informe o nome do promotor externo",true);return}
     acompanhante={tipo:"promotor_externo",nome};
   }
-  if(!produtoValor&&!produtoLivreVal){showToast("Informe o produto",true);return}
-  if(!objetivoValor&&!objetivoLivreVal){showToast("Informe o objetivo",true);return}
+
+  function aprenderCustomsOffline(){
+    customs.forEach(c=>addToOfflineQueue(c.tipo,{area:c.area,valor:c.valor}));
+  }
+  async function aprenderCustomsOnline(){
+    for(const c of customs){
+      const no=c.tipo==="produto_custom"?"produtosCustom":"objetivosCustom";
+      await db.ref(no+"/"+c.area).push({valor:c.valor}).catch(()=>{});
+    }
+  }
 
   const editId=itemEditandoId;
   if(editId){
@@ -1641,9 +1747,10 @@ async function salvarItem(){
     const patch={
       farmId,farmNome:(farm?farm.produtor:farmTexto.toUpperCase())||"—",
       farmCidade:farmCidade||(farm?farm.cidade||"":"")||null,
-      area,data:dia,
-      produto:produtoValor,produtoLivre:produtoLivreVal,
-      objetivo:objetivoValor,objetivoLivre:objetivoLivreVal,
+      area:primeira.area,data:dia,
+      produto:primeira.produto,produtoLivre:primeira.produtoLivre,
+      objetivo:primeira.objetivo,objetivoLivre:primeira.objetivoLivre,
+      atividades,
       acompanhante
     };
     function salvarEdicaoOffline(){
@@ -1657,8 +1764,7 @@ async function salvarItem(){
       }else{
         addToOfflineQueue("editar_item",{itemId:editId,uid:vendedorAlvoUid,wk:wkEdit,patch});
       }
-      if(produtoLivreVal)addToOfflineQueue("produto_custom",{area,valor:produtoLivreVal});
-      if(objetivoLivreVal)addToOfflineQueue("objetivo_custom",{area,valor:objetivoLivreVal});
+      aprenderCustomsOffline();
       if(itensSemana[editId])Object.assign(itensSemana[editId],patch);
       if(hojeItens[editId])Object.assign(hojeItens[editId],patch);
       renderItens();renderHoje();
@@ -1668,8 +1774,7 @@ async function salvarItem(){
     if(!navigator.onLine){salvarEdicaoOffline();return}
     try{
       await db.ref("agendas/"+vendedorAlvoUid+"/"+wkEdit+"/itens/"+editId).update(patch);
-      if(produtoLivreVal)await db.ref("produtosCustom/"+area).push({valor:produtoLivreVal}).catch(()=>{});
-      if(objetivoLivreVal)await db.ref("objetivosCustom/"+area).push({valor:objetivoLivreVal}).catch(()=>{});
+      await aprenderCustomsOnline();
       fecharModal("modal-item");
       showToast("✅ Visita atualizada");
     }catch(e){salvarEdicaoOffline()}
@@ -1681,9 +1786,10 @@ async function salvarItem(){
   const item={
     farmId,farmNome:(farm?farm.produtor:farmTexto.toUpperCase())||"—",
     farmCidade:farmCidade||(farm?farm.cidade||"":"")||null,
-    area,data:avulso?toISODate(new Date()):dia,
-    produto:produtoValor,produtoLivre:produtoLivreVal,
-    objetivo:objetivoValor,objetivoLivre:objetivoLivreVal,
+    area:primeira.area,data:avulso?toISODate(new Date()):dia,
+    produto:primeira.produto,produtoLivre:primeira.produtoLivre,
+    objetivo:primeira.objetivo,objetivoLivre:primeira.objetivoLivre,
+    atividades,
     acompanhante,status:"planejado",criado_em:new Date().toISOString(),
     foraDoPlanejamento:avulso
   };
@@ -1691,8 +1797,7 @@ async function salvarItem(){
   function salvarOffline(){
     const tempId="local_"+Date.now();
     addToOfflineQueue("novo_item",{tempId,uid:vendedorAlvoUid,wk,item});
-    if(produtoLivreVal)addToOfflineQueue("produto_custom",{area,valor:produtoLivreVal});
-    if(objetivoLivreVal)addToOfflineQueue("objetivo_custom",{area,valor:objetivoLivreVal});
+    aprenderCustomsOffline();
     const itemComId={id:tempId,...item};
     if(item.data===toISODate(new Date()))hojeItens[tempId]=itemComId;
     if(wk===weekKeyOf(currentMonday))itensSemana[tempId]=itemComId;
@@ -1706,8 +1811,7 @@ async function salvarItem(){
   try{
     const novaRef=db.ref("agendas/"+vendedorAlvoUid+"/"+wk+"/itens").push();
     await novaRef.set(item);
-    if(produtoLivreVal)await db.ref("produtosCustom/"+area).push({valor:produtoLivreVal}).catch(()=>{});
-    if(objetivoLivreVal)await db.ref("objetivosCustom/"+area).push({valor:objetivoLivreVal}).catch(()=>{});
+    await aprenderCustomsOnline();
     fecharModal("modal-item");
     if(avulso){
       hojeItens[novaRef.key]={id:novaRef.key,...item};
