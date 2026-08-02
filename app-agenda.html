@@ -76,6 +76,10 @@ h1,h2,h3,.font-display{font-family:var(--font-display)}
 .day-tab.today:not(.on){border-color:var(--G);color:var(--G)}
 .day-tab.today:not(.on) .dt-num{color:var(--G)}
 .day-tab.today:not(.on)::before{content:"";position:absolute;top:5px;right:6px;width:5px;height:5px;border-radius:50%;background:var(--clay)}
+.day-tab.off-day:not(.on){background:var(--clay-light);border-color:#E8C4AE;color:var(--clay)}
+.day-tab.off-day:not(.on) .dt-num{color:var(--clay);text-decoration:line-through}
+.day-tab.acomp-day:not(.on){background:color-mix(in srgb,var(--sky) 14%,var(--surface));border-color:var(--sky);color:var(--sky)}
+.day-tab.acomp-day:not(.on) .dt-num{color:var(--sky)}
 .sugg-wrap{background:var(--surface);border:1.5px dashed var(--dim);border-radius:14px;padding:12px 14px;margin-bottom:14px}
 .sugg-hdr{display:flex;justify-content:space-between;align-items:center;cursor:pointer}
 .sugg-title{font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;font-family:var(--font-display)}
@@ -222,6 +226,9 @@ h1,h2,h3,.font-display{font-family:var(--font-display)}
 
       <div class="day-tabs" id="day-tabs"></div>
 
+      <button class="btn-ghost" id="btn-marcar-off" style="width:100%;margin-bottom:8px;display:none" onclick="abrirModalFolga()">🏖️ Marcar este dia como OFF</button>
+      <button class="btn-ghost" id="btn-marcar-acomp" style="width:100%;margin-bottom:10px;display:none" onclick="abrirModalAcomp()">👥 Marcar acompanhamento de vendedor</button>
+
       <div class="sugg-wrap" id="sugg-wrap" style="display:none">
         <div class="sugg-hdr" onclick="toggleSugg()">
           <span class="sugg-title">⏰ Sugestões — fazendas sem visita recente</span>
@@ -317,6 +324,45 @@ h1,h2,h3,.font-display{font-family:var(--font-display)}
   </div>
 </div>
 
+<!-- MODAL: dia OFF -->
+<div class="modal-bg" id="modal-folga">
+  <div class="modal-box">
+    <div class="modal-hdr">
+      <div class="modal-title">Marcar dia OFF</div>
+      <button class="modal-close" onclick="fecharModal('modal-folga')">✕</button>
+    </div>
+    <div class="f-field"><label>Motivo</label>
+      <input id="folga-motivo-input" placeholder="Digite ou toque numa sugestão" oninput="filtrarChips('folga-motivo')">
+      <div id="folga-motivo-chips" class="chips-wrap"></div>
+    </div>
+    <div class="f-field"><label>Observação (opcional)</label>
+      <input id="folga-obs" placeholder="Ex: consulta às 14h">
+    </div>
+    <button class="btn-save" onclick="salvarFolga()">🏖️ Marcar como OFF</button>
+  </div>
+</div>
+
+<!-- MODAL: acompanhamento de vendedor -->
+<div class="modal-bg" id="modal-acomp">
+  <div class="modal-box">
+    <div class="modal-hdr">
+      <div class="modal-title">Acompanhar vendedor</div>
+      <button class="modal-close" onclick="fecharModal('modal-acomp')">✕</button>
+    </div>
+    <div class="f-field"><label>Vendedor</label>
+      <input id="acomp-vendedor-input" placeholder="Digite ou toque numa sugestão" oninput="filtrarChips('acomp-vendedor')">
+      <div id="acomp-vendedor-chips" class="chips-wrap"></div>
+    </div>
+    <div class="f-field"><label>Cidade</label>
+      <input id="acomp-cidade" placeholder="Cidade onde vai acompanhar">
+    </div>
+    <div class="f-field"><label>Observação (opcional)</label>
+      <input id="acomp-obs" placeholder="Ex: visita técnica em duas fazendas">
+    </div>
+    <button class="btn-save" onclick="salvarAcomp()">👥 Marcar acompanhamento</button>
+  </div>
+</div>
+
 <!-- MODAL: check-in -->
 <div class="modal-bg" id="modal-checkin">
   <div class="modal-box">
@@ -379,6 +425,7 @@ const SEED_PRODUTOS={
   agricola:["SEMENTE","FERTILIZANTE","DEFENSIVO","CALCÁRIO"]
 };
 const OBJETIVOS_FIXOS=["PROSPECÇÃO","FECHAMENTO","ACOMPANHAMENTO","PÓS VENDA","VISITA TÉCNICA","ENTREGA","COBRANÇA"];
+const MOTIVOS_FOLGA=["CONSULTA MÉDICA","COMPROMISSO PESSOAL","VIAGEM COM FAMÍLIA","OUTRO"];
 const SUPERVISORES={agricola:["Evandro"],saude_animal:["Everton"],nutricao:["Rodolfo","Alexandre","Julia"],fenacao:[]};
 const STATUS_LABEL={planejado:{t:"Planejado",bg:"#E4E9DA",c:"#5B6B57"},realizado:{t:"Realizada",bg:"#E4EFDD",c:"#2F6B3C"},nao_realizado:{t:"Não realizada",bg:"#FBEAE0",c:"#B0362B"},remarcado:{t:"Remarcada",bg:"#F7EAD2",c:"#8A5A18"}};
 const CHECKIN_RAIO_KM=2;
@@ -414,6 +461,10 @@ let ciStatusSelecionado="realizado";
 let ciGeo=null;
 let itemEditandoId=null;
 let agendaRefAtual=null;
+let folgasSemana={};
+let folgaRefAtual=null;
+let acompanhamentosSemana={};
+let acompRefAtual=null;
 let farmLabelToId={};
 
 /* ===================== HELPERS ===================== */
@@ -463,6 +514,14 @@ async function tentarSincronizarAgenda(){
         await db.ref("agendas/"+d.uid+"/"+d.wk+"/itens/"+realId).update(d.patch);
       }else if(entrada.type==="excluir_item"){
         await db.ref("agendas/"+d.uid+"/"+d.wk+"/itens/"+d.itemId).remove();
+      }else if(entrada.type==="folga"){
+        await db.ref("agendas/"+d.uid+"/"+d.wk+"/folgas/"+d.data).set(d.folga);
+      }else if(entrada.type==="remover_folga"){
+        await db.ref("agendas/"+d.uid+"/"+d.wk+"/folgas/"+d.data).remove();
+      }else if(entrada.type==="acomp"){
+        await db.ref("agendas/"+d.uid+"/"+d.wk+"/acompanhamentos/"+d.data).set(d.acomp);
+      }else if(entrada.type==="remover_acomp"){
+        await db.ref("agendas/"+d.uid+"/"+d.wk+"/acompanhamentos/"+d.data).remove();
       }else if(entrada.type==="produto_custom"){
         await db.ref("produtosCustom/"+d.area).push({valor:d.valor});
       }else if(entrada.type==="objetivo_custom"){
@@ -488,14 +547,22 @@ auth.onAuthStateChanged(user=>{
   if(user){
     usuarioAtual=user;
     const email=user.email.toLowerCase();
-    nomeVendedor=NOME_AMIGAVEL[email]||email.split("@")[0].toUpperCase();
-    isAdmin=ADMIN_EMAILS.includes(email);
     vendedorAlvoEmail=email;
     vendedorAlvoUid=user.uid;
-    document.getElementById("tvendedor").textContent=nomeVendedor;
     document.getElementById("app").style.display="flex";
     document.getElementById("login-screen").style.display="none";
-    iniciarApp();
+    db.ref("usuarios/"+user.uid).once("value").then(snap=>{
+      const dados=snap.val()||{};
+      isAdmin=dados.role==="admin"||ADMIN_EMAILS.includes(email);
+      nomeVendedor=dados.nome||NOME_AMIGAVEL[email]||email.split("@")[0].toUpperCase();
+      document.getElementById("tvendedor").textContent=nomeVendedor;
+      iniciarApp();
+    }).catch(()=>{
+      isAdmin=ADMIN_EMAILS.includes(email);
+      nomeVendedor=NOME_AMIGAVEL[email]||email.split("@")[0].toUpperCase();
+      document.getElementById("tvendedor").textContent=nomeVendedor;
+      iniciarApp();
+    });
   }else{
     document.getElementById("login-screen").style.display="flex";
     document.getElementById("app").style.display="none";
@@ -586,7 +653,9 @@ function renderDayTabs(){
     const iso=toISODate(dt);
     const isToday=iso===hojeISO;
     const isOn=iso===selectedDate;
-    return '<div class="day-tab'+(isOn?" on":"")+(isToday?" today":"")+'" onclick="selecionarDia(\''+iso+'\')"><div>'+dia.l+'</div><div class="dt-num">'+String(dt.getDate()).padStart(2,"0")+'</div></div>';
+    const isOff=!!folgasSemana[iso];
+    const isAcomp=!isOff&&!!acompanhamentosSemana[iso];
+    return '<div class="day-tab'+(isOn?" on":"")+(isToday?" today":"")+(isOff?" off-day":"")+(isAcomp?" acomp-day":"")+'" onclick="selecionarDia(\''+iso+'\')"><div>'+dia.l+'</div><div class="dt-num">'+String(dt.getDate()).padStart(2,"0")+'</div>'+(isOff?'<div style="font-size:7.5px;font-weight:800">OFF</div>':(isAcomp?'<div style="font-size:7.5px;font-weight:800">ACOMP</div>':''))+'</div>';
   }).join("");
 }
 function selecionarDia(iso){selectedDate=iso;renderDayTabs();renderItens()}
@@ -613,6 +682,20 @@ function carregarSemana(){
     renderSugestoes();
     renderResumoSemanal();
     document.getElementById("btn-duplicar-semana").style.display=(!somenteLeitura&&Object.keys(itensSemana).length===0)?"block":"none";
+  });
+  if(folgaRefAtual)folgaRefAtual.off();
+  folgaRefAtual=db.ref("agendas/"+vendedorAlvoUid+"/"+wk+"/folgas");
+  folgaRefAtual.on("value",snap=>{
+    folgasSemana=snap.val()||{};
+    renderDayTabs();
+    renderItens();
+  });
+  if(acompRefAtual)acompRefAtual.off();
+  acompRefAtual=db.ref("agendas/"+vendedorAlvoUid+"/"+wk+"/acompanhamentos");
+  acompRefAtual.on("value",snap=>{
+    acompanhamentosSemana=snap.val()||{};
+    renderDayTabs();
+    renderItens();
   });
 }
 function carregarPdfLib(){
@@ -1069,11 +1152,33 @@ function renderItens(){
   document.getElementById("lista-titulo").textContent="Planejamento — "+dt.toLocaleDateString("pt-BR",{weekday:"long",day:"2-digit",month:"2-digit"});
   const itens=Object.values(itensSemana).filter(i=>i.data===selectedDate).sort((a,b)=>(a.criado_em||"").localeCompare(b.criado_em||""));
   const wrap=document.getElementById("itens-lista");
+  const folga=folgasSemana[selectedDate];
+  const acomp=acompanhamentosSemana[selectedDate];
+  document.getElementById("btn-marcar-off").style.display=(!somenteLeitura&&!folga&&!acomp)?"block":"none";
+  document.getElementById("btn-marcar-acomp").style.display=(!somenteLeitura&&!folga&&!acomp)?"block":"none";
+  const folgaBanner=folga?(
+    '<div class="item-card" style="--area-color:var(--clay);background:var(--clay-light)">'+
+    '<div class="item-top"><div><div class="item-farm">🏖️ Dia OFF</div><div class="item-area" style="color:var(--clay)">'+folga.motivo+'</div></div></div>'+
+    (folga.observacao?'<div class="item-meta">'+folga.observacao+'</div>':'')+
+    (!somenteLeitura?'<div class="item-actions"><button class="btn-ghost" onclick="removerFolga(\''+selectedDate+'\')">✕ Remover marcação</button></div>':'')+
+    '</div>'
+  ):"";
+  const acompBanner=acomp?(
+    '<div class="item-card" style="--area-color:var(--sky);background:color-mix(in srgb,var(--sky) 10%,var(--surface))">'+
+    '<div class="item-top"><div><div class="item-farm">👥 Acompanhando '+(acomp.vendedorNome||"—")+'</div><div class="item-area" style="color:var(--sky)">'+(acomp.cidade||"")+'</div></div></div>'+
+    (acomp.observacao?'<div class="item-meta">'+acomp.observacao+'</div>':'')+
+    '<div class="item-meta" style="color:var(--muted)">As visitas específicas ficam a cargo do planejamento do próprio vendedor.</div>'+
+    (!somenteLeitura?'<div class="item-actions"><button class="btn-ghost" onclick="removerAcomp(\''+selectedDate+'\')">✕ Remover marcação</button></div>':'')+
+    '</div>'
+  ):"";
+  const marcadorBanner=folgaBanner+acompBanner;
   if(!itens.length){
-    wrap.innerHTML='<div class="empty-state"><div class="es-emoji">🗓️</div>Nenhuma visita planejada para este dia'+(somenteLeitura?"":'<br><br><button class="btn-add-sugg" onclick="abrirModalItem()">+ Adicionar visita</button>')+'</div>';
+    const emoji=folga?"☕":(acomp?"👥":"🗓️");
+    const texto=folga?"Nenhuma visita planejada — dia marcado como OFF":(acomp?"Nenhuma visita planejada — acompanhando vendedor":"Nenhuma visita planejada para este dia");
+    wrap.innerHTML=marcadorBanner+'<div class="empty-state"><div class="es-emoji">'+emoji+'</div>'+texto+(somenteLeitura||folga||acomp?"":'<br><br><button class="btn-add-sugg" onclick="abrirModalItem()">+ Adicionar visita</button>')+'</div>';
     return;
   }
-  wrap.innerHTML=itens.map(montarCardItem).join("");
+  wrap.innerHTML=marcadorBanner+itens.map(montarCardItem).join("");
 }
 function montarCardItem(item){
   const hojeISO=toISODate(new Date());
@@ -1212,6 +1317,102 @@ function abrirModalItem(farmIdPreSelecionado,avulso,editId){
   document.getElementById("modal-item").classList.add("on");
 }
 function editarItem(id){abrirModalItem(null,false,id)}
+function abrirModalFolga(){
+  document.getElementById("folga-motivo-input").value="";
+  document.getElementById("folga-obs").value="";
+  montarChips("folga-motivo",MOTIVOS_FOLGA,"");
+  document.getElementById("modal-folga").classList.add("on");
+}
+async function salvarFolga(){
+  const motivo=document.getElementById("folga-motivo-input").value.trim();
+  if(!motivo){showToast("Selecione ou descreva o motivo",true);return}
+  const obs=document.getElementById("folga-obs").value.trim();
+  const folga={motivo:motivo.toUpperCase(),observacao:obs||null,criado_em:new Date().toISOString()};
+  const dataAlvo=selectedDate;
+  const wk=weekKeyOf(getMonday(new Date(dataAlvo+"T00:00:00")));
+  function salvarOffline(){
+    addToOfflineQueue("folga",{uid:vendedorAlvoUid,wk,data:dataAlvo,folga});
+    folgasSemana[dataAlvo]=folga;
+    renderDayTabs();renderItens();
+    fecharModal("modal-folga");
+    showToast("📥 Dia OFF salvo offline — sincroniza sozinho depois");
+  }
+  if(!navigator.onLine){salvarOffline();return}
+  try{
+    await db.ref("agendas/"+vendedorAlvoUid+"/"+wk+"/folgas/"+dataAlvo).set(folga);
+    folgasSemana[dataAlvo]=folga;
+    renderDayTabs();renderItens();
+    fecharModal("modal-folga");
+    showToast("🏖️ Dia marcado como OFF");
+  }catch(e){salvarOffline()}
+}
+async function removerFolga(dataIso){
+  if(!confirm("Remover a marcação de dia OFF desse dia?"))return;
+  const wk=weekKeyOf(getMonday(new Date(dataIso+"T00:00:00")));
+  function removerOffline(){
+    addToOfflineQueue("remover_folga",{uid:vendedorAlvoUid,wk,data:dataIso});
+    delete folgasSemana[dataIso];
+    renderDayTabs();renderItens();
+    showToast("📥 Remoção salva offline — sincroniza sozinha depois");
+  }
+  if(!navigator.onLine){removerOffline();return}
+  try{
+    await db.ref("agendas/"+vendedorAlvoUid+"/"+wk+"/folgas/"+dataIso).remove();
+    delete folgasSemana[dataIso];
+    renderDayTabs();renderItens();
+    showToast("Marcação de OFF removida");
+  }catch(e){removerOffline()}
+}
+function abrirModalAcomp(){
+  document.getElementById("acomp-vendedor-input").value="";
+  document.getElementById("acomp-cidade").value="";
+  document.getElementById("acomp-obs").value="";
+  const nomesVendedores=Object.keys(VENDEDOR_MAP).map(e=>NOME_AMIGAVEL[e]||e);
+  montarChips("acomp-vendedor",nomesVendedores,"");
+  document.getElementById("modal-acomp").classList.add("on");
+}
+async function salvarAcomp(){
+  const vendedorNome=document.getElementById("acomp-vendedor-input").value.trim();
+  if(!vendedorNome){showToast("Informe qual vendedor você vai acompanhar",true);return}
+  const cidade=document.getElementById("acomp-cidade").value.trim();
+  if(!cidade){showToast("Informe a cidade",true);return}
+  const obs=document.getElementById("acomp-obs").value.trim();
+  const acomp={vendedorNome:vendedorNome.toUpperCase(),cidade:cidade.toUpperCase(),observacao:obs||null,criado_em:new Date().toISOString()};
+  const dataAlvo=selectedDate;
+  const wk=weekKeyOf(getMonday(new Date(dataAlvo+"T00:00:00")));
+  function salvarOffline(){
+    addToOfflineQueue("acomp",{uid:vendedorAlvoUid,wk,data:dataAlvo,acomp});
+    acompanhamentosSemana[dataAlvo]=acomp;
+    renderDayTabs();renderItens();
+    fecharModal("modal-acomp");
+    showToast("📥 Acompanhamento salvo offline — sincroniza sozinho depois");
+  }
+  if(!navigator.onLine){salvarOffline();return}
+  try{
+    await db.ref("agendas/"+vendedorAlvoUid+"/"+wk+"/acompanhamentos/"+dataAlvo).set(acomp);
+    acompanhamentosSemana[dataAlvo]=acomp;
+    renderDayTabs();renderItens();
+    fecharModal("modal-acomp");
+    showToast("👥 Acompanhamento marcado");
+  }catch(e){salvarOffline()}
+}
+async function removerAcomp(dataIso){
+  if(!confirm("Remover a marcação de acompanhamento desse dia?"))return;
+  const wk=weekKeyOf(getMonday(new Date(dataIso+"T00:00:00")));
+  function removerOffline(){
+    addToOfflineQueue("remover_acomp",{uid:vendedorAlvoUid,wk,data:dataIso});
+    delete acompanhamentosSemana[dataIso];
+    renderDayTabs();renderItens();
+    showToast("📥 Remoção salva offline — sincroniza sozinha depois");
+  }
+  if(!navigator.onLine){removerOffline();return}
+  try{
+    await db.ref("agendas/"+vendedorAlvoUid+"/"+wk+"/acompanhamentos/"+dataIso).remove();
+    delete acompanhamentosSemana[dataIso];
+    renderDayTabs();renderItens();
+    showToast("Marcação de acompanhamento removida");
+  }catch(e){removerOffline()}
+}
 async function excluirItem(id){
   if(!confirm("Excluir esta visita do planejamento? Essa ação não pode ser desfeita."))return;
   const item=obterItem(id);
