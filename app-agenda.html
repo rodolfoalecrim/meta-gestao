@@ -258,6 +258,9 @@ h1,h2,h3,.font-display{font-family:var(--font-display)}
         <div class="f-field"><label>De</label><input type="date" id="desemp-de"></div>
         <div class="f-field"><label>Até</label><input type="date" id="desemp-ate"></div>
       </div>
+      <div class="f-field"><label>Área</label>
+        <div id="desemp-area-chips" class="chips-wrap"></div>
+      </div>
       <button class="btn-save" style="margin-bottom:16px" onclick="aplicarFiltroDesempenho()">🔍 Aplicar filtro</button>
       <div id="desemp-lista"></div>
     </div>
@@ -748,6 +751,10 @@ function hexParaTripla(hex){
   hex=(hex||"#2F6B3C").replace("#","");
   return[parseInt(hex.substring(0,2),16)/255,parseInt(hex.substring(2,4),16)/255,parseInt(hex.substring(4,6),16)/255];
 }
+function limparParaPdf(t){
+  if(t===null||t===undefined)return t;
+  return String(t).replace(/[\u{1F000}-\u{1FFFF}\u{2600}-\u{27BF}\u{2190}-\u{21FF}\u{2B00}-\u{2BFF}\u{FE0F}\u{200D}]/gu,"").trim();
+}
 async function carregarLogoBytes(){
   try{
     const resp=await fetch("meta_logo.jpg");
@@ -779,9 +786,9 @@ async function gerarPDFSemana(){
     function precisaDeEspaco(altura){if(y-altura<margin)novaPagina();}
     function texto(t,x,yy,opts){
       opts=opts||{};
-      page.drawText(t,{x,y:yy,size:opts.tamanho||9,font:opts.negrito?fontBold:font,color:opts.cor||cor(INK)});
+      page.drawText(limparParaPdf(t),{x,y:yy,size:opts.tamanho||9,font:opts.negrito?fontBold:font,color:opts.cor||cor(INK)});
     }
-    function larguraTexto(t,tamanho,negrito){return(negrito?fontBold:font).widthOfTextAtSize(t,tamanho)}
+    function larguraTexto(t,tamanho,negrito){return(negrito?fontBold:font).widthOfTextAtSize(limparParaPdf(t),tamanho)}
 
     const dom=addDays(currentMonday,5);
     const periodo=String(currentMonday.getDate()).padStart(2,"0")+"/"+String(currentMonday.getMonth()+1).padStart(2,"0")+" a "+String(dom.getDate()).padStart(2,"0")+"/"+String(dom.getMonth()+1).padStart(2,"0")+"/"+dom.getFullYear();
@@ -847,7 +854,7 @@ async function gerarPDFSemana(){
         if(observacao)texto(observacao,margin+12,cardY+cardH-13-22,{tamanho:7.5,cor:cor(MUTED)});
         y=cardY-6;
       }
-      if(folgaPdf)desenharMarcador("🏖 Dia OFF",folgaPdf.motivo||"",folgaPdf.observacao,"#FBEAE0","#B5541F");
+      if(folgaPdf)desenharMarcador("Dia OFF",folgaPdf.motivo||"",folgaPdf.observacao,"#FBEAE0","#B5541F");
       if(acompPdf)desenharMarcador("Acompanhando "+(acompPdf.vendedorNome||"—"),acompPdf.cidade||"",acompPdf.observacao,"#E7F0F5","#3E6E8E");
       if(eventoPdf)desenharMarcador(eventoPdf.titulo||"Evento",eventoPdf.tipo||"",eventoPdf.observacao,"#F7EAD2","#8A5A18");
 
@@ -1018,10 +1025,23 @@ function trocarView(v){
 function prepararFiltroDesempenhoPadrao(){
   const de=document.getElementById("desemp-de");
   const ate=document.getElementById("desemp-ate");
-  if(de.value&&ate.value)return; // já tem filtro escolhido, não sobrescreve
-  const seg=getMonday(new Date());
-  de.value=toISODate(seg);
-  ate.value=toISODate(addDays(seg,5));
+  if(!de.value||!ate.value){
+    const seg=getMonday(new Date());
+    de.value=toISODate(seg);
+    ate.value=toISODate(addDays(seg,5));
+  }
+  montarChipsAreaDesempenho();
+}
+function montarChipsAreaDesempenho(){
+  const wrap=document.getElementById("desemp-area-chips");
+  if(!wrap)return;
+  const opcoes=[{k:"",label:"Todas",icon:"🗂️"}].concat(Object.entries(AREAS).map(([k,a])=>({k,label:a.label,icon:a.icon})));
+  wrap.innerHTML=opcoes.map(o=>'<button type="button" class="chip-sugestao'+((window._desempAreaFiltro||"")===o.k?" on":"")+'" onclick="selecionarAreaDesempenho(\''+o.k+'\')">'+o.icon+' '+o.label+'</button>').join("");
+}
+function selecionarAreaDesempenho(k){
+  window._desempAreaFiltro=k||null;
+  montarChipsAreaDesempenho();
+  if(document.getElementById("desemp-de").value&&document.getElementById("desemp-ate").value)aplicarFiltroDesempenho();
 }
 function weekKeysInRange(deISO,ateISO){
   const keys=[];
@@ -1041,6 +1061,7 @@ async function aplicarFiltroDesempenho(){
   const de=document.getElementById("desemp-de").value;
   const ate=document.getElementById("desemp-ate").value;
   if(!de||!ate){showToast("Selecione o período (de/até)",true);return}
+  const filtroArea=window._desempAreaFiltro||null;
   const wrap=document.getElementById("desemp-lista");
   wrap.innerHTML='<div class="skeleton"></div><div class="skeleton"></div><div class="skeleton"></div>';
   const weekKeys=weekKeysInRange(de,ate);
@@ -1058,11 +1079,13 @@ async function aplicarFiltroDesempenho(){
       snap.forEach(c=>{
         const it=c.val();
         if(!it||!it.data||it.data<de||it.data>ate)return;
+        const atividadesItem=atividadesDoItem(it);
+        if(filtroArea&&!atividadesItem.some(av=>av.area===filtroArea))return;
         if(it.foraDoPlanejamento)desvios++;else planejadas++;
         if(it.status==="realizado"&&!it.foraDoPlanejamento)realizadas++;
         if(it.checkin)checkins++;
         itensDetalhe.push({data:it.data,farmNome:it.farmNome,status:it.status,foraDoPlanejamento:!!it.foraDoPlanejamento,area:it.area,checkinResumo:it.checkin?it.checkin.resumo:null});
-        atividadesDoItem(it).forEach(av=>atividadesDetalhe.push({area:av.area}));
+        atividadesItem.forEach(av=>{if(!filtroArea||av.area===filtroArea)atividadesDetalhe.push({area:av.area})});
       });
     }
     itensDetalhe.sort((a,b)=>a.data.localeCompare(b.data));
@@ -1132,8 +1155,10 @@ async function gerarResumoIA(idx){
 function renderDesempenho(resultados){
   const wrap=document.getElementById("desemp-lista");
   resultados.sort((a,b)=>(b.performance??-1)-(a.performance??-1));
-  if(!resultados.length){wrap.innerHTML='<div class="empty-state"><div class="es-emoji">📊</div>Nenhum vendedor cadastrado</div>';return}
-  wrap.innerHTML=resultados.map((r,idx)=>{
+  const filtroArea=window._desempAreaFiltro||null;
+  const rotuloFiltro=filtroArea?'<div style="font-size:11px;font-weight:700;color:var(--muted);margin-bottom:10px">Mostrando apenas: '+(AREAS[filtroArea]||{}).icon+' '+(AREAS[filtroArea]||{}).label+'</div>':"";
+  if(!resultados.length){wrap.innerHTML=rotuloFiltro+'<div class="empty-state"><div class="es-emoji">📊</div>Nenhum vendedor cadastrado</div>';return}
+  wrap.innerHTML=rotuloFiltro+resultados.map((r,idx)=>{
     if(r.semUid)return '<div class="perf-card"><div class="perf-nome">'+r.nome+'</div><div class="item-meta" style="color:var(--clay)">uid não encontrado em /usuarios</div></div>';
     const pct=r.performance;
     const pctCor=pct===null?"background:var(--surface2);color:var(--muted)":pct>=80?"background:var(--pasture-light);color:var(--GD)":pct>=50?"background:#F7EAD2;color:#7A4F0F":"background:var(--clay-light);color:var(--clay)";
