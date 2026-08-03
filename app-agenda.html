@@ -253,6 +253,11 @@ h1,h2,h3,.font-display{font-family:var(--font-display)}
       <div id="hoje-lista"></div>
     </div>
 
+    <div id="view-gestao" style="display:none">
+      <div class="lista-titulo">Gestão da agenda dos vendedores</div>
+      <div id="gestao-lista"></div>
+    </div>
+
     <div id="view-desempenho" style="display:none">
       <div class="f-row">
         <div class="f-field"><label>De</label><input type="date" id="desemp-de"></div>
@@ -270,6 +275,7 @@ h1,h2,h3,.font-display{font-family:var(--font-display)}
   <button class="fab" id="fab-add" onclick="abrirModalItem()">+</button>
 
   <div class="bottom-nav">
+    <button class="bn-tab" id="bn-gestao" style="display:none" onclick="trocarView('gestao')"><span class="bn-ic">🧑‍💼</span>Gestão</button>
     <button class="bn-tab on" id="bn-semana" onclick="trocarView('semana')"><span class="bn-ic">🗂️</span>Planejamento</button>
     <button class="bn-tab" id="bn-hoje" onclick="trocarView('hoje')"><span class="bn-ic">📍</span>Hoje</button>
     <button class="bn-tab" id="bn-desempenho" style="display:none" onclick="trocarView('desempenho')"><span class="bn-ic">📊</span>Desempenho</button>
@@ -624,6 +630,7 @@ function montarSeletorAdmin(){
   const sel=document.getElementById("admin-vend-sel");
   sel.style.display="block";
   document.getElementById("bn-desempenho").style.display="flex";
+  document.getElementById("bn-gestao").style.display="flex";
   const emails=Object.keys(VENDEDOR_MAP);
   sel.innerHTML='<option value="'+usuarioAtual.email.toLowerCase()+'">👤 Minha agenda</option>'+
     emails.map(e=>'<option value="'+e+'">'+(NOME_AMIGAVEL[e]||e)+'</option>').join("");
@@ -631,6 +638,62 @@ function montarSeletorAdmin(){
   db.ref("usuarios").once("value").then(snap=>{
     snap.forEach(c=>{const v=c.val();if(v&&v.email)emailParaUid[v.email.toLowerCase()]=c.key});
   }).catch(()=>{showToast("Não consegui carregar a lista de vendedores (usuarios)",true)});
+}
+function abrirAgendaDoVendedor(email){
+  document.getElementById("admin-vend-sel").value=email;
+  onAdminVendMudou();
+  trocarView("semana");
+}
+async function carregarGestaoOverview(){
+  const wrap=document.getElementById("gestao-lista");
+  wrap.innerHTML='<div class="skeleton"></div><div class="skeleton"></div><div class="skeleton"></div>';
+  const hojeISO=toISODate(new Date());
+  const wk=weekKeyOf(getMonday(new Date()));
+  const emails=Object.keys(VENDEDOR_MAP);
+  const cards=[];
+  for(const email of emails){
+    const uid=emailParaUid[email];
+    const nome=NOME_AMIGAVEL[email]||email;
+    if(!uid){cards.push({email,nome,semUid:true});continue}
+    let itensHoje=[],folgaHoje=null,acompHoje=null,eventoHoje=null;
+    try{
+      const[snapItens,snapFolgas,snapAcomp,snapEventos]=await Promise.all([
+        db.ref("agendas/"+uid+"/"+wk+"/itens").once("value"),
+        db.ref("agendas/"+uid+"/"+wk+"/folgas/"+hojeISO).once("value"),
+        db.ref("agendas/"+uid+"/"+wk+"/acompanhamentos/"+hojeISO).once("value"),
+        db.ref("agendas/"+uid+"/"+wk+"/eventos/"+hojeISO).once("value")
+      ]);
+      snapItens.forEach(c=>{const it=c.val();if(it&&it.data===hojeISO)itensHoje.push(it)});
+      folgaHoje=snapFolgas.val();
+      acompHoje=snapAcomp.val();
+      eventoHoje=snapEventos.val();
+    }catch(e){}
+    cards.push({email,nome,uid,itensHoje,folgaHoje,acompHoje,eventoHoje});
+  }
+  wrap.innerHTML=cards.map(c=>{
+    if(c.semUid)return '<div class="perf-card"><div class="perf-nome">'+c.nome+'</div><div class="item-meta" style="color:var(--clay)">uid não encontrado em /usuarios</div></div>';
+    let statusHtml;
+    if(c.folgaHoje){
+      statusHtml='<div class="item-meta" style="color:var(--clay)">🏖 Hoje: OFF — '+(c.folgaHoje.motivo||"")+'</div>';
+    }else if(c.acompHoje){
+      statusHtml='<div class="item-meta" style="color:var(--sky)">👥 Hoje: acompanhando '+(c.acompHoje.vendedorNome||"")+' em '+(c.acompHoje.cidade||"")+'</div>';
+    }else if(c.eventoHoje){
+      statusHtml='<div class="item-meta" style="color:#8A5A18">📅 Hoje: '+(c.eventoHoje.titulo||"evento")+'</div>';
+    }else if(!c.itensHoje.length){
+      statusHtml='<div class="item-meta" style="color:var(--muted)">Nenhuma visita planejada hoje</div>';
+    }else{
+      const feitas=c.itensHoje.filter(i=>i.status!=="planejado").length;
+      statusHtml='<div class="item-meta">'+feitas+" de "+c.itensHoje.length+" visitas concluídas hoje</div>";
+    }
+    return '<div class="perf-card">'+
+      '<div class="perf-nome"><span>'+c.nome+'</span></div>'+
+      statusHtml+
+      '<div style="display:flex;gap:8px;margin-top:10px">'+
+        '<button class="btn-ghost" style="flex:1" onclick="abrirAgendaDoVendedor(\''+c.email+'\')">🗂️ Ver agenda</button>'+
+        '<button class="btn-ghost" style="flex:1" onclick="trocarView(\'desempenho\')">📊 Ver desempenho</button>'+
+      '</div>'+
+      '</div>';
+  }).join("");
 }
 function onAdminVendMudou(){
   vendedorAlvoEmail=document.getElementById("admin-vend-sel").value;
@@ -1011,16 +1074,19 @@ function carregarHoje(){
   });
 }
 function trocarView(v){
-  if(v==="desempenho"&&!isAdmin)return;
+  if((v==="desempenho"||v==="gestao")&&!isAdmin)return;
   viewAtual=v;
   document.getElementById("view-semana").style.display=v==="semana"?"block":"none";
   document.getElementById("view-hoje").style.display=v==="hoje"?"block":"none";
+  document.getElementById("view-gestao").style.display=v==="gestao"?"block":"none";
   document.getElementById("view-desempenho").style.display=v==="desempenho"?"block":"none";
   document.getElementById("bn-semana").classList.toggle("on",v==="semana");
   document.getElementById("bn-hoje").classList.toggle("on",v==="hoje");
+  document.getElementById("bn-gestao").classList.toggle("on",v==="gestao");
   document.getElementById("bn-desempenho").classList.toggle("on",v==="desempenho");
   document.getElementById("fab-add").style.display=(v==="semana"&&!somenteLeitura)?"block":"none";
   if(v==="desempenho")prepararFiltroDesempenhoPadrao();
+  if(v==="gestao")carregarGestaoOverview();
 }
 function prepararFiltroDesempenhoPadrao(){
   const de=document.getElementById("desemp-de");
