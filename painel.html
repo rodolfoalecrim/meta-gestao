@@ -1969,29 +1969,29 @@ Ração;5;1.80"></textarea>
         <div id="ml-result-wrap" style="margin-top:16px"></div>
         <div id="ml-qualidade-standalone-wrap" style="display:none;margin-top:16px">
     <div class="cc" style="margin-bottom:16px">
-      <div class="cc-hdr"><span class="cc-ico">\u{1F9EA}</span><span class="cc-title">Qualidade do Leite \u2014 Laudos do Latic\xEDnio</span></div>
-      <div style="font-size:11px;color:var(--muted);margin:-6px 0 10px">Cole ou importe por IA os boletins de qualidade (gordura, prote\xEDna, CCS, CBT, NUL etc.) enviados pelo latic\xEDnio. O laudo mais recente atualiza automaticamente a ficha da fazenda e os indicadores usados no resto do painel (\xCDndice de Sa\xFAde, alertas, benchmarks, relat\xF3rios em PDF).</div>
+      <div class="cc-hdr"><span class="cc-ico">🧪</span><span class="cc-title">Qualidade do Leite — Laudos do Laticínio</span></div>
+      <div style="font-size:11px;color:var(--muted);margin:-6px 0 10px">Cole ou importe por IA os boletins de qualidade (gordura, proteína, CCS, CBT, NUL etc.) enviados pelo laticínio. O laudo mais recente atualiza automaticamente a ficha da fazenda e os indicadores usados no resto do painel (Índice de Saúde, alertas, benchmarks, relatórios em PDF).</div>
       <div style="display:flex;gap:8px;margin-bottom:12px">
-        <button class="dt-tab-btn on" id="ml-qual-tabbtn-ia" onclick="setMlQualInputMode('ia')">\u{1F916} Preencher com IA</button>
-        <button class="dt-tab-btn" id="ml-qual-tabbtn-manual" onclick="setMlQualInputMode('manual')">\u270F\uFE0F Colar Manualmente</button>
+        <button class="dt-tab-btn on" id="ml-qual-tabbtn-ia" onclick="setMlQualInputMode('ia')">🤖 Preencher com IA</button>
+        <button class="dt-tab-btn" id="ml-qual-tabbtn-manual" onclick="setMlQualInputMode('manual')">✏️ Colar Manualmente</button>
       </div>
       <div id="ml-qual-mode-ia">
-        <div style="font-size:11px;color:var(--muted);margin-bottom:8px">Envie foto(s) ou PDF do boletim de qualidade (Cl\xEDnica do Leite, Stat Qualidade, etc.) \u2014 pode selecionar v\xE1rios arquivos de uma vez.</div>
+        <div style="font-size:11px;color:var(--muted);margin-bottom:8px">Envie foto(s) ou PDF do boletim de qualidade (Clínica do Leite, Stat Qualidade, etc.) — pode selecionar vários arquivos de uma vez.</div>
         <input type="file" id="ml-qual-ia-file" accept="application/pdf,image/*" multiple style="font-size:12px;margin-bottom:10px">
-        <br><button class="dt-save-btn" id="ml-qual-ia-btn" onclick="processarQualidadeLeiteIA()">\u{1F916} Processar com IA</button>
+        <br><button class="dt-save-btn" id="ml-qual-ia-btn" onclick="processarQualidadeLeiteIA()">🤖 Processar com IA</button>
         <div id="ml-qual-ia-status" style="font-size:11px;color:var(--muted);margin-top:8px"></div>
       </div>
       <div id="ml-qual-mode-manual" style="display:none">
-        <div style="font-size:11px;color:var(--muted);margin-bottom:6px">Uma linha por data de coleta: <code>Data;Gordura;Prote\xEDna;Lactose;ST;ESD;CCS;CBT;NUL</code> (deixe em branco o que n\xE3o tiver, ex: <code>11/03/2026;3.68;3.28;4.55;12.38;8.70;569;28;17.3</code>)</div>
+        <div style="font-size:11px;color:var(--muted);margin-bottom:6px">Uma linha por data de coleta: <code>Data;Gordura;Proteína;Lactose;ST;ESD;CCS;CBT;NUL</code> (deixe em branco o que não tiver, ex: <code>11/03/2026;3.68;3.28;4.55;12.38;8.70;569;28;17.3</code>)</div>
         <textarea id="ml-qual-paste" rows="6" style="width:100%;font-family:var(--mono);font-size:12px;padding:10px;border:1.5px solid var(--border);border-radius:8px" placeholder="11/03/2026;3.68;3.28;4.55;12.38;8.70;569;28;17.3"></textarea>
       </div>
       <div style="display:flex;gap:8px;margin-top:12px">
-        <button class="dt-save-btn" onclick="importarQualidadeLeite()">\u2795 Importar Laudos</button>
+        <button class="dt-save-btn" onclick="importarQualidadeLeite()">➕ Importar Laudos</button>
       </div>
       <div id="ml-qual-status" style="font-size:11px;color:var(--muted);margin-top:8px"></div>
     </div>
     <div class="cc" style="margin-bottom:16px">
-      <div class="cc-hdr"><span class="cc-ico">\u{1F4C8}</span><span class="cc-title">Evolu\xE7\xE3o da Qualidade do Leite</span></div>
+      <div class="cc-hdr"><span class="cc-ico">📈</span><span class="cc-title">Evolução da Qualidade do Leite</span></div>
       <div id="ml-qual-info" style="font-size:11px;color:var(--muted);margin:-6px 0 10px"></div>
       <div style="height:260px"><canvas id="ml-ch-qual-evolucao"></canvas></div>
     </div>
