@@ -418,8 +418,11 @@ function renderFormLancarConsumo(){
 
     <div id="lc-preview-wrap" style="display:none;background:var(--GL);border-radius:12px;padding:14px;margin:10px 0 16px">
       <div style="display:flex;justify-content:space-between;margin-bottom:6px"><span style="font-size:12.5px;color:var(--muted)">% de sobra</span><span id="lc-pv-sobra" style="font-weight:800"></span></div>
-      <div style="display:flex;justify-content:space-between;margin-bottom:6px"><span style="font-size:12.5px;color:var(--muted)">MS ingerida/animal</span><span id="lc-pv-ms-animal" style="font-weight:800"></span></div>
-      <div style="display:flex;justify-content:space-between" id="lc-pv-leite-row"><span style="font-size:12.5px;color:var(--muted)">Leite/kg MS</span><span id="lc-pv-leite-ms" style="font-weight:800"></span></div>
+      <div id="lc-aviso-ms" style="display:none;background:#fef3c7;color:#92400e;border-radius:8px;padding:8px 10px;margin-bottom:6px;font-size:12px;line-height:1.4">⚠️ MS% da dieta não cadastrada pra esse lote (peça pro técnico cadastrar em Dieta &amp; Custos). A MS ingerida não vai ser calculada — só a % de sobra será salva.</div>
+      <div id="lc-ms-rows">
+        <div style="display:flex;justify-content:space-between;margin-bottom:6px"><span style="font-size:12.5px;color:var(--muted)">MS ingerida/animal</span><span id="lc-pv-ms-animal" style="font-weight:800"></span></div>
+        <div style="display:flex;justify-content:space-between" id="lc-pv-leite-row"><span style="font-size:12.5px;color:var(--muted)">Leite/kg MS</span><span id="lc-pv-leite-ms" style="font-weight:800"></span></div>
+      </div>
     </div>
 
     <button class="btn-action btn-primary" onclick="salvarConsumoProdutor()">💾 Salvar Lançamento</button>
@@ -441,14 +444,15 @@ function calcularConsumoLC(){
   const racaoRobo=parseFloat(document.getElementById("lc-racao-robo")?.value)||0;
   if(!(ofertado>0)||!(animais>0))return null;
   const pctSobra=ofertado>0?sobra/ofertado*100:0;
-  const msOfertadaKg=ofertado*msOfertadoPct/100;
-  const msSobraKg=sobra*msSobraPct/100;
-  const msIngeridaBunkKg=Math.max(0,msOfertadaKg-msSobraKg);
-  const msBunkAnimal=animais>0?msIngeridaBunkKg/animais:0;
+  const msDietaCadastrada=msOfertadoPct>0;
+  const msOfertadaKg=msDietaCadastrada?ofertado*msOfertadoPct/100:null;
+  const msSobraKg=msDietaCadastrada?sobra*msSobraPct/100:null;
+  const msIngeridaBunkKg=msDietaCadastrada?Math.max(0,msOfertadaKg-msSobraKg):null;
+  const msBunkAnimal=(msDietaCadastrada&&animais>0)?msIngeridaBunkKg/animais:null;
   const msRoboAnimal=racaoRobo>0?racaoRobo*.89:0;
-  const msTotalAnimal=msBunkAnimal+msRoboAnimal;
-  const leiteMs=mediaLeite>0&&msTotalAnimal>0?mediaLeite/msTotalAnimal:0;
-  return{animais,tratados,ofertado,sobra,msSobraPct,msOfertadoPct,mediaLeite,racaoRobo,pctSobra,msOfertadaKg,msSobraKg,msIngeridaBunkKg,msBunkAnimal,msRoboAnimal,msTotalAnimal,leiteMs};
+  const msTotalAnimal=msBunkAnimal!=null?msBunkAnimal+msRoboAnimal:null;
+  const leiteMs=(mediaLeite>0&&msTotalAnimal>0)?mediaLeite/msTotalAnimal:0;
+  return{animais,tratados,ofertado,sobra,msSobraPct,msOfertadoPct,mediaLeite,racaoRobo,pctSobra,msDietaCadastrada,msOfertadaKg,msSobraKg,msIngeridaBunkKg,msBunkAnimal,msRoboAnimal,msTotalAnimal,leiteMs};
 }
 
 function atualizarPreviewLC(){
@@ -459,6 +463,15 @@ function atualizarPreviewLC(){
   lcUltimoCalculo=r;
   wrap.style.display="block";
   document.getElementById("lc-pv-sobra").textContent=r.pctSobra.toFixed(1)+"%";
+  const avisoEl=document.getElementById("lc-aviso-ms");
+  const msRows=document.getElementById("lc-ms-rows");
+  if(!r.msDietaCadastrada){
+    avisoEl.style.display="block";
+    msRows.style.display="none";
+    return;
+  }
+  avisoEl.style.display="none";
+  msRows.style.display="block";
   document.getElementById("lc-pv-ms-animal").textContent=r.msBunkAnimal.toFixed(1)+" kg";
   const leiteRow=document.getElementById("lc-pv-leite-row");
   if(r.leiteMs>0){leiteRow.style.display="flex";document.getElementById("lc-pv-leite-ms").textContent=r.leiteMs.toFixed(2)}
@@ -468,13 +481,22 @@ function atualizarPreviewLC(){
 async function salvarConsumoProdutor(){
   const r=calcularConsumoLC();
   if(!r){showToast("Preencha nº de animais e quantidade ofertada",true);return}
+  if(!r.msDietaCadastrada){
+    const ok=confirm("O MS% da dieta oferecida não está cadastrado pra esse lote (peça pro técnico cadastrar em Dieta & Custos no painel). Esse lançamento vai salvar só a % de sobra"+(r.racaoRobo>0?" e a ração do robô":"")+" — a MS ingerida do cocho e o total NÃO vão ser calculados até o MS% ser cadastrado. Salvar mesmo assim?");
+    if(!ok)return;
+  }
   const data=document.getElementById("lc-data").value||new Date().toISOString().slice(0,10);
   const registro={
     data,animais:r.animais,tratados:r.tratados||r.animais,ofertado:r.ofertado,sobra:r.sobra,
     ms_sobra_pct:r.msSobraPct,ms_oferecido_pct:r.msOfertadoPct,media_leite:r.mediaLeite,racao_robo:r.racaoRobo,
-    pct_sobra:+r.pctSobra.toFixed(2),ms_ofertada_kg:+r.msOfertadaKg.toFixed(2),ms_sobra_kg:+r.msSobraKg.toFixed(2),
-    ms_ingerida_kg:+r.msIngeridaBunkKg.toFixed(2),ms_ingerida_animal:+r.msBunkAnimal.toFixed(2),
-    ms_robo_animal:+r.msRoboAnimal.toFixed(2),ms_total_animal:+r.msTotalAnimal.toFixed(2),leite_ms:+r.leiteMs.toFixed(2),
+    pct_sobra:+r.pctSobra.toFixed(2),ms_dieta_incompleta:!r.msDietaCadastrada,
+    ms_ofertada_kg:r.msOfertadaKg!=null?+r.msOfertadaKg.toFixed(2):null,
+    ms_sobra_kg:r.msSobraKg!=null?+r.msSobraKg.toFixed(2):null,
+    ms_ingerida_kg:r.msIngeridaBunkKg!=null?+r.msIngeridaBunkKg.toFixed(2):null,
+    ms_ingerida_animal:r.msBunkAnimal!=null?+r.msBunkAnimal.toFixed(2):null,
+    ms_robo_animal:+r.msRoboAnimal.toFixed(2),
+    ms_total_animal:r.msTotalAnimal!=null?+r.msTotalAnimal.toFixed(2):null,
+    leite_ms:r.leiteMs>0?+r.leiteMs.toFixed(2):null,
     tratador:(farmData&&farmData.produtor?farmData.produtor:"Produtor")+" (app produtor)",
     salvo_em:new Date().toISOString()
   };
