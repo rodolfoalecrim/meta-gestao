@@ -360,10 +360,38 @@ function liberarOrientacao(){
 let lcLotesCache=[];
 let lcLoteAtual=null;
 let lcUltimoCalculo=null;
+let lcEditandoId=null;
+let _produtorConsumoEntradasCache=[];
+
+async function editarLancamentoProdutor(loteId,entryId){
+  const e=_produtorConsumoEntradasCache.find(x=>x.id===entryId&&x.loteId===loteId);
+  if(!e)return;
+  if(!lcLotesCache.length){
+    try{
+      const snap=await db.ref("dietas/"+farmId+"/lotes").once("value");
+      lcLotesCache=Object.entries(snap.val()||{}).map(([id,l])=>({id,...l}));
+    }catch(err){console.error(err)}
+  }
+  lcLoteAtual=lcLotesCache.find(l=>l.id===loteId);
+  if(!lcLoteAtual){showToast("Lote não encontrado.",true);return}
+  lcEditandoId=entryId;
+  navScreen("lancarconsumo");
+  renderFormLancarConsumo();
+  document.getElementById("lc-data").value=e.data||"";
+  document.getElementById("lc-animais").value=e.animais||"";
+  document.getElementById("lc-tratados").value=e.tratados||"";
+  document.getElementById("lc-ofertado").value=e.ofertado||"";
+  document.getElementById("lc-sobra").value=e.sobra||"";
+  document.getElementById("lc-ms-sobra").value=e.ms_sobra_pct||"";
+  document.getElementById("lc-media-leite").value=e.media_leite||"";
+  document.getElementById("lc-racao-robo").value=e.racao_robo||"";
+  atualizarPreviewLC();
+}
 
 async function renderLancarConsumo(){
   const body=document.getElementById("lancarconsumo-body");
   if(!body)return;
+  lcEditandoId=null;
   body.innerHTML=`<div style="text-align:center;padding:40px"><div class="mg-spinner"></div></div>`;
   try{
     const snap=await db.ref("dietas/"+farmId+"/lotes").once("value");
@@ -392,6 +420,7 @@ async function renderLancarConsumo(){
 function selecionarLoteProdutor(loteId){
   lcLoteAtual=lcLotesCache.find(l=>l.id===loteId);
   if(!lcLoteAtual)return;
+  lcEditandoId=null;
   renderFormLancarConsumo();
 }
 
@@ -400,7 +429,7 @@ function renderFormLancarConsumo(){
   if(!body||!lcLoteAtual)return;
   body.innerHTML=`
     <div style="display:flex;align-items:center;gap:8px;margin-bottom:14px">
-      ${lcLotesCache.length>1?`<button onclick="lcLoteAtual=null;renderLancarConsumo()" style="background:none;border:none;font-size:20px;cursor:pointer;padding:0 4px">←</button>`:""}
+      ${lcEditandoId?`<button onclick="lcEditandoId=null;navScreen('consumo');renderConsumoScreen()" style="background:none;border:none;font-size:20px;cursor:pointer;padding:0 4px">←</button>`:lcLotesCache.length>1?`<button onclick="lcLoteAtual=null;renderLancarConsumo()" style="background:none;border:none;font-size:20px;cursor:pointer;padding:0 4px">←</button>`:""}
       <div>
         <div style="font-size:17px;font-weight:800">🐄 ${lcLoteAtual.nome||lcLoteAtual.nomeDieta||"Lote"}</div>
         <div style="font-size:11.5px;color:var(--muted)">MS da dieta oferecida: ${lcLoteAtual.ms_dieta>0?lcLoteAtual.ms_dieta+"%":"não cadastrado"}</div>
@@ -425,7 +454,7 @@ function renderFormLancarConsumo(){
       </div>
     </div>
 
-    <button class="btn-action btn-primary" onclick="salvarConsumoProdutor()">💾 Salvar Lançamento</button>
+    <button class="btn-action btn-primary" id="lc-btn-salvar" onclick="salvarConsumoProdutor()">${lcEditandoId?"💾 Salvar Alterações":"💾 Salvar Lançamento"}</button>
   `;
   document.getElementById("lc-data").value=new Date().toISOString().slice(0,10);
   document.getElementById("lc-animais").value=lcLoteAtual.vacas||"";
@@ -501,13 +530,22 @@ async function salvarConsumoProdutor(){
     salvo_em:new Date().toISOString()
   };
   try{
-    await db.ref("consumo_ms/"+farmId+"/"+lcLoteAtual.id).push(registro);
-    showToast("✅ Lançamento salvo!");
-    document.getElementById("lc-ofertado").value="";
-    document.getElementById("lc-sobra").value="";
-    document.getElementById("lc-ms-sobra").value="";
-    document.getElementById("lc-racao-robo").value="";
-    document.getElementById("lc-preview-wrap").style.display="none";
+    if(lcEditandoId){
+      registro.editado_em=new Date().toISOString();
+      await db.ref("consumo_ms/"+farmId+"/"+lcLoteAtual.id+"/"+lcEditandoId).update(registro);
+      showToast("✅ Lançamento atualizado!");
+      lcEditandoId=null;
+      navScreen("consumo");
+      renderConsumoScreen();
+    }else{
+      await db.ref("consumo_ms/"+farmId+"/"+lcLoteAtual.id).push(registro);
+      showToast("✅ Lançamento salvo!");
+      document.getElementById("lc-ofertado").value="";
+      document.getElementById("lc-sobra").value="";
+      document.getElementById("lc-ms-sobra").value="";
+      document.getElementById("lc-racao-robo").value="";
+      document.getElementById("lc-preview-wrap").style.display="none";
+    }
   }catch(e){
     console.error(e);
     showToast("Erro ao salvar: "+e.message,true);
@@ -2090,19 +2128,27 @@ async function renderConsumoScreen(){
     <div id="consumo-content"><div style="text-align:center;padding:40px"><div class="mg-spinner"></div></div></div>
   `;
   try{
-    const snap=await db.ref("consumo_ms/"+farmId).once("value");
+    const [snap,dtSnap]=await Promise.all([
+      db.ref("consumo_ms/"+farmId).once("value"),
+      db.ref("dietas/"+farmId+"/lotes").once("value")
+    ]);
     const porLote=snap.val()||{};
+    const lotesMap=dtSnap.val()||{};
     const cutoff=Date.now()-60*864e5;
     const porData={};
-    Object.values(porLote).forEach(entradas=>{
-      Object.values(entradas||{}).forEach(e=>{
+    const todasEntradas=[];
+    Object.entries(porLote).forEach(([loteId,entradas])=>{
+      Object.entries(entradas||{}).forEach(([entryId,e])=>{
         if(!e.data||new Date(e.data+"T12:00:00").getTime()<cutoff)return;
         if(!porData[e.data])porData[e.data]={somaSobra:0,nSobra:0,somaMs:0,nMs:0};
         if(e.pct_sobra!=null){porData[e.data].somaSobra+=e.pct_sobra;porData[e.data].nSobra++}
         const msVal=e.ms_total_animal!=null?e.ms_total_animal:e.ms_ingerida_animal;
         if(msVal!=null){porData[e.data].somaMs+=msVal;porData[e.data].nMs++}
+        todasEntradas.push({id:entryId,loteId,loteNome:(lotesMap[loteId]||{}).nome||(lotesMap[loteId]||{}).nomeDieta||"Lote",...e});
       });
     });
+    todasEntradas.sort((a,b)=>(a.data||"")>(b.data||"")?-1:1);
+    _produtorConsumoEntradasCache=todasEntradas;
     const datas=Object.keys(porData).sort();
     const cont=document.getElementById("consumo-content");
     if(!datas.length){
@@ -2116,11 +2162,25 @@ async function renderConsumoScreen(){
     const avgSobra=sobraValidos.length?sobraValidos.reduce((a,b)=>a+b,0)/sobraValidos.length:0;
     const avgMs=msValidos.length?msValidos.reduce((a,b)=>a+b,0)/msValidos.length:0;
     const labels=datas.map(d=>new Date(d+"T12:00:00").toLocaleDateString("pt-BR",{day:"2-digit",month:"2-digit"}));
+    const listaHtml=todasEntradas.slice(0,15).map(e=>`
+      <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid #f1f5f9;gap:8px">
+        <div style="min-width:0">
+          <div style="font-weight:700;font-size:12.5px">${e.data?new Date(e.data+"T12:00:00").toLocaleDateString("pt-BR"):"—"} · ${e.loteNome}</div>
+          <div style="font-size:11px;color:var(--muted);margin-top:2px">${(e.pct_sobra||0).toFixed(1)}% sobra · ${e.ms_total_animal!=null?e.ms_total_animal.toFixed(1)+" kg MS/animal":"MS% incompleto"}</div>
+        </div>
+        <button onclick="editarLancamentoProdutor('${e.loteId}','${e.id}')" style="background:#eff6ff;border:1px solid #93c5fd;color:#1d4ed8;font-size:11px;font-weight:700;padding:6px 12px;border-radius:8px;cursor:pointer;flex-shrink:0">✏️ Editar</button>
+      </div>
+    `).join("");
     cont.innerHTML=`
       <div class="chart-card">
         <div class="chart-card-title">Resumo da Fazenda — Todos os Lotes</div>
         <div class="chart-card-sub">% Sobra média: <b style="color:#d97706">${avgSobra.toFixed(1)}%</b> · MS/Animal média: <b style="color:#15803d">${avgMs.toFixed(1)} kg</b></div>
         <div style="height:260px"><canvas id="ch-consumo"></canvas></div>
+      </div>
+      <div class="chart-card" style="margin-top:14px">
+        <div class="chart-card-title">Lançamentos Recentes</div>
+        <div style="font-size:11px;color:var(--muted);margin-bottom:4px">Toque em "Editar" pra corrigir um lançamento já salvo</div>
+        ${listaHtml}
       </div>
     `;
     mkChart("ch-consumo","line",{
