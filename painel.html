@@ -197,18 +197,17 @@ html.dark-mode img,html.dark-mode .no-dark{filter:none}*{box-sizing:border-box;m
         <span class="ni-b" id="notif-badge" style="display:none">0</span>
       </div>
 
-      <div class="sg">ANÁLISE</div>
-      <div class="ni" id="ni-ranking" onclick="nav('ranking')"><span class="ni-i">🏆</span>Ranking Índice Meta</div>
-      <div class="sg">GESTÃO</div>
-      <div class="ni" id="ni-props" onclick="nav('props')"><span class="ni-i">🏡</span>Propriedades</div>
+      <div class="sg">COMERCIAL</div>
       <div class="ni" id="ni-pipeline" onclick="nav('pipeline')" style="position:relative"><span class="ni-i">🗂️</span>Pipeline de Prospectos<span class="ni-b" id="badge-pipeline" style="display:none">0</span></div>
       <div class="ni" id="ni-propostas" onclick="nav('propostas')" style="position:relative"><span class="ni-i">📄</span>Propostas Comerciais<span class="ni-b" id="badge-propostas" style="display:none">0</span></div>
+      <div class="sg">GESTÃO</div>
+      <div class="ni" id="ni-props" onclick="nav('props')"><span class="ni-i">🏡</span>Propriedades</div>
       <div class="ni" id="ni-usoapp" onclick="nav('usoapp')"><span class="ni-i">📱</span>Uso do App do Produtor</div>
       <div class="ni" id="ni-estoqueinsumos" onclick="nav('estoqueinsumos')"><span class="ni-i">📦</span>Estoque de Insumos</div>
       <div class="ni" id="ni-vends" onclick="nav('vends')"><span class="ni-i">👤</span>Vendedores</div>
       <div class="ni" id="ni-tec" onclick="nav('tec')"><span class="ni-i">👨‍🔬</span>Técnicos</div>
       <div class="ni" id="ni-mapa" onclick="navMapa()"><span class="ni-i">🗺️</span>Mapa de Clientes</div>
-      <div class="sg">FERRAMENTAS</div>
+      <div class="sg">MONITORAMENTO</div>
       <div class="ni" id="ni-alertas-zoo" onclick="nav('alertas-zoo')" style="position:relative"><span class="ni-i">🚨</span>Alertas Zootécnicos<span class="ni-b" id="badge-zoo" style="display:none">0</span></div>
       <div class="sg" style="margin-top:6px">NUTRIÇÃO</div>
       <div class="ni" id="ni-dieta" onclick="nav('dieta')"><span class="ni-i">🌽</span>Dieta & Custos</div>
@@ -216,7 +215,7 @@ html.dark-mode img,html.dark-mode .no-dark{filter:none}*{box-sizing:border-box;m
       <div class="ni" id="ni-qual" onclick="nav('qual')"><span class="ni-i">🧪</span>Qualidade do Leite</div>
       <div class="ni" id="ni-consumo" onclick="nav('consumo')"><span class="ni-i">📊</span>Monitoramento de Consumo</div>
       <div class="ni" id="ni-forragem" onclick="nav('forragem')"><span class="ni-i">🌾</span>Forragem: Estoque &amp; Custo</div>
-      <div class="ni" id="ni-bromatologia" onclick="nav('bromatologia')"><span class="ni-i">🔬</span>Qualidade da Forragem</div>
+      <div class="ni" id="ni-bromatologia" onclick="nav('bromatologia')"><span class="ni-i">🔬</span>Forragem: Qualidade</div>
       <div class="ni" id="ni-isrf" onclick="nav('isrf')"><span class="ni-i">🐄</span>Saúde Ruminal (ISRF)</div>
       <div class="sg" style="margin-top:6px">ZOOTECNIA & REPRODUÇÃO</div>
       <div class="ni" id="ni-recria" onclick="nav('recria')"><span class="ni-i">🐮</span>Monitoramento da Recria</div>
@@ -228,6 +227,7 @@ html.dark-mode img,html.dark-mode .no-dark{filter:none}*{box-sizing:border-box;m
       <div class="ni" id="ni-financeiro" onclick="nav('financeiro')"><span class="ni-i">💵</span>Painel Financeiro</div>
       <div class="ni" id="ni-comparador" onclick="nav('comparador')"><span class="ni-i">⚡</span>Comparar Fazendas</div>
       <div class="ni" id="ni-calc" onclick="nav('calc')"><span class="ni-i">💰</span>Calculadora</div>
+      <div class="ni" id="ni-ranking" onclick="nav('ranking')"><span class="ni-i">🏆</span>Ranking Índice Meta</div>
     </div>
     <!-- CONTENT -->
     <div class="content">
@@ -533,9 +533,12 @@ Maria Souza;;Realeza;PR;PROSPECTO;VAGNER;80;28"></textarea>
             </div>
             <div style="position:relative">
               <button onclick="const m=document.getElementById('props-tools-menu');m.style.display=m.style.display==='block'?'none':'block'" style="white-space:nowrap;background:#fff;border:1.5px solid var(--border);border-radius:8px;color:var(--muted);font-size:12px;font-family:Inter,sans-serif;padding:7px 12px;cursor:pointer;font-weight:600" title="Ferramentas de manutenção de dados">⚙ Ferramentas</button>
-              <div id="props-tools-menu" style="display:none;position:absolute;top:calc(100% + 6px);right:0;background:#fff;border:1px solid var(--border);border-radius:10px;box-shadow:var(--shadow-md);padding:6px;z-index:50;min-width:240px">
+              <div id="props-tools-menu" style="display:none;position:absolute;top:calc(100% + 6px);right:0;background:#fff;border:1px solid var(--border);border-radius:10px;box-shadow:var(--shadow-md);padding:6px;z-index:50;min-width:260px">
+                <div style="font-size:9.5px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;padding:6px 10px 2px">Diagnóstico (só leitura)</div>
                 <button onclick="document.getElementById('props-tools-menu').style.display='none';detectarDuplicatas()" style="display:block;width:100%;text-align:left;white-space:nowrap;background:transparent;border:none;border-radius:6px;color:var(--text);font-size:12px;font-family:Inter,sans-serif;padding:8px 10px;cursor:pointer;font-weight:600">Detectar Duplicatas</button>
                 <button onclick="document.getElementById('props-tools-menu').style.display='none';detectarFantasmasSeed()" style="display:block;width:100%;text-align:left;white-space:nowrap;background:transparent;border:none;border-radius:6px;color:var(--text);font-size:12px;font-family:Inter,sans-serif;padding:8px 10px;cursor:pointer;font-weight:600">Detectar Registros Fantasmas</button>
+                <div style="height:1px;background:var(--border);margin:6px 4px"></div>
+                <div style="font-size:9.5px;font-weight:800;color:#b45309;text-transform:uppercase;letter-spacing:.5px;padding:6px 10px 2px">⚠ Correção de dados (escreve no banco)</div>
                 <button onclick="document.getElementById('props-tools-menu').style.display='none';backfillHistoricoControleLeiteiro()" style="display:block;width:100%;text-align:left;white-space:nowrap;background:transparent;border:none;border-radius:6px;color:var(--text);font-size:12px;font-family:Inter,sans-serif;padding:8px 10px;cursor:pointer;font-weight:600">Preencher Histórico do Controle Leiteiro</button>
                 <button onclick="document.getElementById('props-tools-menu').style.display='none';corrigirConsumoMsMascarado()" style="display:block;width:100%;text-align:left;white-space:nowrap;background:transparent;border:none;border-radius:6px;color:var(--text);font-size:12px;font-family:Inter,sans-serif;padding:8px 10px;cursor:pointer;font-weight:600">Corrigir Consumo de MS Mascarado (bug MS%)</button>
               </div>
@@ -2297,7 +2300,7 @@ Ração;5;1.80"></textarea>
 
       <div class="sc" id="sc-bromatologia">
         <div class="ph">
-          <div><h2>Qualidade da Forragem</h2><p>Laudos bromatológicos, leitura automática por IA e potencial de produção de leite (MLK2024)</p></div>
+          <div><h2>Forragem: Qualidade</h2><p>Laudos bromatológicos, leitura automática por IA e potencial de produção de leite (MLK2024)</p></div>
           <div style="display:flex;gap:8px;flex-shrink:0">
             <button onclick="salvarBromatologia()" style="background:#7c3aed;color:white;border:none;border-radius:8px;padding:9px 16px;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap">Salvar</button>
           </div>
