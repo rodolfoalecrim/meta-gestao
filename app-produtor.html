@@ -2764,7 +2764,9 @@ function calcGmdAnimalSimples(a){
   const pesoAtual=ultima?ultima.peso:a.peso_nascimento;
   const diasVida=a.nascimento?Math.floor((Date.now()-new Date(a.nascimento+"T12:00:00").getTime())/864e5):0;
   const gmdGeral=diasVida>0&&pesoAtual!=null&&a.peso_nascimento!=null?(pesoAtual-a.peso_nascimento)/diasVida*1000:null;
-  return{gmdGeral,pesoAtual};
+  const pesagensComAltura=pesagens.filter(p=>p.altura!=null);
+  const alturaAtual=pesagensComAltura.length?pesagensComAltura[pesagensComAltura.length-1].altura:a.altura_nascimento;
+  return{gmdGeral,pesoAtual,alturaAtual};
 }
 let _recriaAnimaisCache={};
 async function renderRecriaScreen(){
@@ -2810,7 +2812,7 @@ async function renderRecriaScreen(){
           const r=calcGmdAnimalSimples(a);
           return `<div style="display:flex;justify-content:space-between;align-items:center;padding:7px 0;border-bottom:1px solid #f1f5f9">
             <div style="font-size:12.5px;font-weight:600">${a.numero||"?"}</div>
-            <div style="font-size:11.5px;color:var(--muted)">${r.pesoAtual!=null?r.pesoAtual.toFixed(0)+"kg":"—"}${r.gmdGeral!=null?" · GMD "+r.gmdGeral.toFixed(0)+"g/d":""}</div>
+            <div style="font-size:11.5px;color:var(--muted)">${r.pesoAtual!=null?r.pesoAtual.toFixed(0)+"kg":"—"}${r.alturaAtual!=null?" · "+r.alturaAtual.toFixed(0)+"cm":""}${r.gmdGeral!=null?" · GMD "+r.gmdGeral.toFixed(0)+"g/d":""}</div>
           </div>`;
         }).join("")}
       </div>
@@ -2865,12 +2867,14 @@ function atualizarFormRecriaTipo(){
       </div>
       <div class="form-field"><label class="form-label">Data da pesagem</label><input type="date" class="form-input" id="rec-pesagem-data" value="${hoje}"></div>
       <div class="form-field"><label class="form-label">Peso (kg)</label><input type="number" step="0.1" class="form-input" id="rec-pesagem-peso" placeholder="Ex: 145"></div>
+      <div class="form-field"><label class="form-label">Altura (cm) — opcional</label><input type="number" step="0.1" class="form-input" id="rec-pesagem-altura" placeholder="Ex: 95"></div>
     `;
   }else{
     wrap.innerHTML=`
       <div class="form-field"><label class="form-label">Número/identificação do animal</label><input type="text" class="form-input" id="rec-novo-numero" placeholder="Ex: 512"></div>
       <div class="form-field"><label class="form-label">Data de nascimento</label><input type="date" class="form-input" id="rec-novo-nascimento" value="${hoje}"></div>
       <div class="form-field"><label class="form-label">Peso ao nascer (kg)</label><input type="number" step="0.1" class="form-input" id="rec-novo-peso" placeholder="Ex: 38"></div>
+      <div class="form-field"><label class="form-label">Altura ao nascer (cm) — opcional</label><input type="number" step="0.1" class="form-input" id="rec-novo-altura" placeholder="Ex: 75"></div>
     `;
   }
 }
@@ -2882,15 +2886,23 @@ async function salvarLancamentoRecria(){
       const animalId=document.getElementById("rec-animal-sel")?.value;
       const data=document.getElementById("rec-pesagem-data")?.value;
       const peso=parseFloat(document.getElementById("rec-pesagem-peso")?.value);
+      const alturaRaw=document.getElementById("rec-pesagem-altura")?.value;
+      const altura=alturaRaw?parseFloat(alturaRaw):null;
       if(!animalId||!data||isNaN(peso)||peso<=0){showToast("❌ Preencha animal, data e peso",true);return}
-      await db.ref("recria/"+farmId+"/"+animalId+"/pesagens").push({data,peso});
+      const registroPesagem={data,peso};
+      if(altura>0)registroPesagem.altura=altura;
+      await db.ref("recria/"+farmId+"/"+animalId+"/pesagens").push(registroPesagem);
       showToast("✅ Pesagem lançada!");
     }else{
       const numero=document.getElementById("rec-novo-numero")?.value.trim();
       const nascimento=document.getElementById("rec-novo-nascimento")?.value;
       const pesoNasc=parseFloat(document.getElementById("rec-novo-peso")?.value);
+      const alturaNascRaw=document.getElementById("rec-novo-altura")?.value;
+      const alturaNasc=alturaNascRaw?parseFloat(alturaNascRaw):null;
       if(!numero||!nascimento||isNaN(pesoNasc)||pesoNasc<=0){showToast("❌ Preencha número, nascimento e peso",true);return}
-      await db.ref("recria/"+farmId).push({numero,nascimento,peso_nascimento:pesoNasc,status:"ativo",origem:"produtor"});
+      const registroAnimal={numero,nascimento,peso_nascimento:pesoNasc,status:"ativo",origem:"produtor"};
+      if(alturaNasc>0)registroAnimal.altura_nascimento=alturaNasc;
+      await db.ref("recria/"+farmId).push(registroAnimal);
       showToast("✅ Animal cadastrado na recria!");
     }
     document.getElementById("form-recria-wrap").style.display="none";
