@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Meta Motorista</title>
+<meta name="theme-color" content="#052e16">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Meta Motorista">
+<link rel="icon" href="meta_logo.jpg"><link rel="apple-touch-icon" href="meta_logo.jpg">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&family=JetBrains+Mono:wght@600;700&display=swap" rel="stylesheet">
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
+<style>
+:root{--bg:#f3f6f3;--border:#e2e8f0;--text:#0f172a;--muted:#64748b;--G:#15803d;--GD:#052e16;--GL:#f0fdf4;--amber:#d97706;--amberL:#fffbeb;--red:#dc2626;--redL:#fef2f2;--mono:'JetBrains Mono',ui-monospace,monospace}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%}
+body{font-family:Inter,system-ui,sans-serif;background:var(--bg);color:var(--text);font-size:15px;-webkit-font-smoothing:antialiased}
+button{font-family:inherit;cursor:pointer}
+:focus-visible{outline:2px solid var(--G);outline-offset:2px}
+.num{font-family:var(--mono)}
+#login,#nome{display:none;min-height:100%;align-items:center;justify-content:center;padding:24px;background:var(--GD)}
+.lb{background:#fff;border-radius:18px;padding:26px;width:100%;max-width:360px}
+.lb h1{font-size:20px;margin-bottom:4px}.lb p{color:var(--muted);font-size:13px;margin-bottom:16px}
+.inp{width:100%;border:1px solid var(--border);border-radius:12px;padding:13px 14px;font-size:16px;font-family:inherit;background:#fff}
+.inp:focus{border-color:var(--G);outline:none}
+.btn{border:none;border-radius:14px;padding:15px 16px;font-size:16px;font-weight:800;display:flex;align-items:center;justify-content:center;gap:8px;width:100%}
+.btn-g{background:var(--G);color:#fff}.btn-o{background:#fff;color:var(--text);border:1px solid var(--border)}.btn-a{background:var(--amberL);color:#92400e}.btn-d{background:var(--GD);color:#fff}
+.btn-sm{padding:10px 12px;font-size:14px;border-radius:11px;width:auto}
+#app{display:none;min-height:100%;flex-direction:column}
+.top{background:var(--GD);color:#fff;padding:calc(12px + env(safe-area-inset-top,0px)) 16px 14px;position:sticky;top:0;z-index:5;display:flex;align-items:center;gap:10px}
+.top h1{font-size:17px;flex:1}
+.top button{background:rgba(255,255,255,.12);color:#fff;border:none;border-radius:10px;padding:8px 11px;font-size:13px;font-weight:700}
+.net{font-size:12px;font-weight:700;padding:4px 9px;border-radius:999px;background:rgba(255,255,255,.12)}
+.net.off{background:#fbbf24;color:#451a03}
+main{flex:1;padding:14px 14px calc(30px + env(safe-area-inset-bottom,0px));max-width:640px;width:100%;margin:0 auto}
+.card{background:#fff;border:1px solid var(--border);border-radius:16px;padding:16px;margin-bottom:12px}
+.h2{font-size:13px;font-weight:800;color:var(--muted);margin:16px 2px 8px}
+.pill{display:inline-flex;border-radius:999px;padding:4px 10px;font-size:12px;font-weight:800;white-space:nowrap}
+.p-montagem,.p-fechada{background:#f1f5f9;color:#475569}.p-carregada{background:#ecfeff;color:#0e7490}.p-a_caminho{background:var(--amberL);color:#b45309}.p-entregue{background:var(--GL);color:var(--G)}.p-atraso{background:var(--redL);color:var(--red)}
+.ch{display:flex;align-items:flex-start;gap:10px}
+.ch .t{flex:1}.ch b{font-size:16px}.ch .s{font-size:13px;color:var(--muted);margin-top:3px}
+.stop{border-left:6px solid var(--G)}
+.stop.done{opacity:.6}
+.stop .n{width:30px;height:30px;border-radius:50%;background:var(--GD);color:#fff;font-weight:800;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.cx{display:flex;justify-content:space-between;gap:8px;padding:9px 0;border-bottom:1px solid #f1f5f9;font-size:14px}
+.cx:last-child{border-bottom:none}
+.cx b{font-family:var(--mono)}
+.tot{font-family:var(--mono);font-size:22px;font-weight:700}
+.acts{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px}
+.note{font-size:13px;background:var(--amberL);color:#78350f;border-radius:10px;padding:9px 11px;margin-top:10px}
+.empty{text-align:center;padding:50px 20px;color:var(--muted)}.empty b{display:block;color:var(--text);font-size:16px;margin-bottom:6px}
+#sheet{position:fixed;inset:0;background:rgba(15,23,42,.5);display:none;align-items:flex-end;z-index:20}
+#sheet.on{display:flex}
+.sh{background:#fff;width:100%;max-width:640px;margin:0 auto;border-radius:20px 20px 0 0;padding:20px 18px calc(20px + env(safe-area-inset-bottom,0px));max-height:90vh;overflow:auto}
+.sh h3{font-size:18px;margin-bottom:6px}
+.chips{display:flex;flex-wrap:wrap;gap:8px;margin:10px 0}
+.chip{border:1px solid var(--border);background:#fff;border-radius:999px;padding:9px 13px;font-size:14px;font-weight:600}
+#toast{position:fixed;left:50%;bottom:calc(26px + env(safe-area-inset-bottom,0px));transform:translateX(-50%) translateY(90px);background:var(--G);color:#fff;padding:12px 18px;border-radius:12px;font-weight:700;z-index:99;transition:transform .25s;max-width:90vw;text-align:center}
+#toast.on{transform:translateX(-50%) translateY(0)}
+</style>
+</head>
+<body>
+<div id="login"><div class="lb"><h1>App do motorista</h1><p>Entre com o e-mail e a senha que a Meta passou para você.</p><input class="inp" id="l-e" type="email" placeholder="E-mail" autocomplete="username"><input class="inp" id="l-s" type="password" placeholder="Senha" style="margin-top:8px" autocomplete="current-password"><button class="btn btn-g" style="margin-top:14px" onclick="login()">Entrar</button><p id="l-m" style="margin:12px 0 0;color:var(--red)"></p></div></div>
+<div id="nome"><div class="lb"><h1>Como você se chama?</h1><p>É o nome que aparece para quem monta a carga.</p><input class="inp" id="n-v" placeholder="Seu nome"><button class="btn btn-g" style="margin-top:14px" onclick="salvarNome()">Continuar</button></div></div>
+<div id="app">
+  <div class="top"><h1 id="tt">Minhas cargas</h1><span class="net" id="net">online</span><button id="bk" style="display:none" onclick="voltar()">← Voltar</button><button id="sair" onclick="logout()">Sair</button></div>
+  <main id="m"></main>
+</div>
+<div id="sheet" onclick="if(event.target===this)fechar()"><div class="sh" id="sh"></div></div>
+<div id="toast"></div>
+<script>
+const firebaseConfig={apiKey:"AIzaSyClpsHjO8OLThD--hDOfg7Fg3t6hhuM-To",authDomain:"meta-gestao-608d7.firebaseapp.com",databaseURL:"https://meta-gestao-608d7-default-rtdb.firebaseio.com",projectId:"meta-gestao-608d7",storageBucket:"meta-gestao-608d7.firebasestorage.app",messagingSenderId:"318618053627",appId:"1:318618053627:web:ae289200bd1e87be29395e"};
+firebase.initializeApp(firebaseConfig);
+const auth=firebase.auth(),db=firebase.database();
+let U=null,NOME="",CARGAS={},CLI={},ABERTA=null;
+const QK="meta_motorista_fila",CK="meta_motorista_cache";
+const STATUS_TXT={montagem:"Em montagem",fechada:"Aguardando carregamento",carregada:"Pronta para sair",a_caminho:"A caminho",entregue:"Entregue"};
+function esc(s){return String(s==null?"":s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]))}
+function iso(d){return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0")}
+function hoje(){return iso(new Date())}
+function addDias(s,n){const d=new Date(s+"T12:00:00");d.setDate(d.getDate()+n);return iso(d)}
+function fDataL(s){return s?new Date(s+"T12:00:00").toLocaleDateString("pt-BR",{weekday:"short",day:"2-digit",month:"2-digit"}):"—"}
+function hora(ts){return new Date(ts).toLocaleTimeString("pt-BR",{hour:"2-digit",minute:"2-digit"})}
+function t(kg){return((+kg||0)/1000).toLocaleString("pt-BR",{minimumFractionDigits:1,maximumFractionDigits:1})+" t"}
+function arr(o){if(!o)return[];return Array.isArray(o)?o.filter(x=>x!=null):Object.keys(o).sort((a,b)=>a-b).map(k=>o[k])}
+function toast(m,err){const e=document.getElementById("toast");e.textContent=m;e.style.background=err?"var(--red)":"var(--G)";e.classList.add("on");clearTimeout(e._t);e._t=setTimeout(()=>e.classList.remove("on"),3000)}
+function paradas(c){const ids=[];arr(c.caixas).forEach(b=>{if(b&&b.clienteId&&!ids.includes(b.clienteId))ids.push(b.clienteId)});const o=arr(c.ordem).filter(x=>ids.includes(x));ids.forEach(x=>{if(!o.includes(x))o.push(x)});return o}
+/* mesma regra do app de montagem */
+function calcStatus(c){const cx=arr(c.caixas);const us=cx.filter(b=>b&&b.clienteId);const ids=paradas(c);const ent=c.entregas||{};if(ids.length&&ids.every(id=>ent[id]&&ent[id].status==="entregue"))return"entregue";if(c.saidaEm)return"a_caminho";const fech=us.length>0&&(cx.length===us.length||c.fechadaComVazia);if(fech&&us.every(b=>b.carregada))return"carregada";if(fech)return"fechada";return"montagem"}
+function atrasada(c){return c.status!=="entregue"&&c.data<hoje()}
+
+/* ---------- fila offline: cada ação é um update multi-caminho ---------- */
+function fila(){try{return JSON.parse(localStorage.getItem(QK)||"[]")}catch(e){return[]}}
+function setFila(q){try{localStorage.setItem(QK,JSON.stringify(q))}catch(e){}}
+function aplicarLocal(up){Object.entries(up).forEach(([path,v])=>{const p=path.split("/");if(p[0]!=="cargas"||!CARGAS[p[1]])return;let o=CARGAS[p[1]];for(let i=2;i<p.length-1;i++){o[p[i]]=o[p[i]]||{};o=o[p[i]]}o[p[p.length-1]]=v})}
+function enviar(up,msg){
+  aplicarLocal(up);salvarCache();render();if(msg)toast(msg);
+  if(!navigator.onLine){const q=fila();q.push(up);setFila(q);net();return}
+  db.ref().update(up).catch(e=>{if(/permission/i.test(e.message)){toast("Sem permissão para salvar. Fale com a logística.",true);return}const q=fila();q.push(up);setFila(q);net()});
+}
+async function sincronizar(){const q=fila();if(!q.length||!navigator.onLine)return;let ok=0;for(const up of q){try{await db.ref().update(up);ok++}catch(e){break}}setFila(q.slice(ok));net();if(ok)toast(ok+" registro"+(ok>1?"s":"")+" enviado"+(ok>1?"s":""))}
+function net(){const e=document.getElementById("net");const n=fila().length;e.className="net"+(navigator.onLine?"":" off");e.textContent=navigator.onLine?(n?"enviando "+n:"online"):"sem sinal"+(n?" · "+n+" na fila":"")}
+window.addEventListener("online",()=>{net();sincronizar()});window.addEventListener("offline",net);
+function salvarCache(){try{localStorage.setItem(CK,JSON.stringify({CARGAS,CLI}))}catch(e){}}
+
+/* ---------- auth ---------- */
+function login(){const e=document.getElementById("l-e").value.trim(),s=document.getElementById("l-s").value;if(e&&s)auth.signInWithEmailAndPassword(e,s).catch(()=>document.getElementById("l-m").textContent="E-mail ou senha incorretos.")}
+function logout(){if(confirm("Sair?"))auth.signOut()}
+function mostrar(id){["login","nome","app"].forEach(x=>document.getElementById(x).style.display=x===id?"flex":"none")}
+auth.onAuthStateChanged(async u=>{
+  if(!u){mostrar("login");return}
+  U=u;let role=null;try{role=(await db.ref("usuarios/"+u.uid+"/role").once("value")).val()}catch(e){}
+  if(role&&role!=="motorista"&&role!=="admin"&&role!=="logistica"){document.getElementById("l-m").textContent="Este usuário não é de motorista.";auth.signOut();return}
+  let me=null;try{me=(await db.ref("cargas_motoristas/"+u.uid).once("value")).val()}catch(e){}
+  if(!me||!me.nome){mostrar("nome");return}
+  NOME=me.nome;db.ref("cargas_motoristas/"+u.uid).update({ultimoAcesso:Date.now(),email:u.email});iniciar();
+});
+function salvarNome(){const n=document.getElementById("n-v").value.trim();if(n.length<2)return;db.ref("cargas_motoristas/"+U.uid).set({nome:n,email:U.email,criadoEm:Date.now()}).then(()=>{NOME=n;iniciar()}).catch(e=>toast("Erro: "+e.message,true))}
+function iniciar(){
+  mostrar("app");net();
+  try{const c=JSON.parse(localStorage.getItem(CK)||"{}");CARGAS=c.CARGAS||{};CLI=c.CLI||{};fila().forEach(aplicarLocal);render()}catch(e){}
+  db.ref("cargas").orderByChild("motoristaUid").equalTo(U.uid).on("value",s=>{
+    const v=s.val()||{};const lim=addDias(hoje(),-10);CARGAS={};
+    Object.entries(v).forEach(([k,c])=>{if(c.status!=="entregue"||c.data>=lim)CARGAS[k]=c});
+    fila().forEach(aplicarLocal);
+    Object.values(CARGAS).forEach(c=>paradas(c).forEach(id=>{if(!CLI["_l"+id]){CLI["_l"+id]=1;db.ref("cargas_clientes/"+id).on("value",x=>{const d=x.val()||{};CLI[id]={nome:d.nome,lat:d.lat,lng:d.lng,localObs:d.localObs,cidade:d.cidade};salvarCache();render()})}}));
+    salvarCache();render();
+  });
+  sincronizar();
+}
+
+/* ---------- telas ---------- */
+function voltar(){ABERTA=null;render()}
+function render(){
+  const m=document.getElementById("m");document.getElementById("bk").style.display=ABERTA?"":"none";document.getElementById("sair").style.display=ABERTA?"none":"";
+  if(ABERTA&&CARGAS[ABERTA])return renderCarga(m,ABERTA,CARGAS[ABERTA]);
+  ABERTA=null;document.getElementById("tt").textContent="Olá, "+NOME.split(" ")[0];
+  const l=Object.entries(CARGAS).sort((a,b)=>(a[1].data||"").localeCompare(b[1].data||""));
+  const ativas=l.filter(([,c])=>c.status!=="entregue"),feitas=l.filter(([,c])=>c.status==="entregue").reverse();
+  let h=ativas.length?'<div class="h2">Para entregar</div>'+ativas.map(([k,c])=>cardLista(k,c)).join(""):'<div class="empty"><b>Nenhuma carga para você agora</b>Quando a logística montar uma carga no seu nome, ela aparece aqui.</div>';
+  if(feitas.length)h+='<div class="h2">Entregues nos últimos dias</div>'+feitas.map(([k,c])=>cardLista(k,c)).join("");
+  m.innerHTML=h;
+}
+function cardLista(k,c){const ids=paradas(c);const ent=c.entregas||{};const feitas=ids.filter(i=>ent[i]&&ent[i].status==="entregue").length;const kg=arr(c.caixas).reduce((s,b)=>s+(b&&b.clienteId?+b.kg||0:0),0);
+  return'<div class="card" style="cursor:pointer" onclick="ABERTA=\''+k+'\';render();scrollTo(0,0)"><div class="ch"><div class="t"><b>'+fDataL(c.data)+'</b><div class="s">'+(c.numero?"Carga "+esc(c.numero)+" · ":"")+esc(c.placa||"")+' · '+ids.length+' cliente'+(ids.length!==1?"s":"")+' · <span class="num">'+t(kg)+'</span></div><div class="s">'+ids.map(i=>esc(((arr(c.caixas).find(b=>b&&b.clienteId===i)||{}).cidade)||"")).filter((v,i,a)=>v&&a.indexOf(v)===i).join(", ")+'</div></div><span class="pill p-'+(atrasada(c)?"atraso":c.status)+'">'+(c.status==="a_caminho"?feitas+"/"+ids.length+" entregues":STATUS_TXT[c.status])+'</span></div></div>'}
+function linkRota(c){const pts=paradas(c).filter(i=>(c.entregas||{})[i]?.status!=="entregue").map(i=>CLI[i]).filter(x=>x&&x.lat);if(!pts.length)return null;const dest=pts[pts.length-1];const wp=pts.slice(0,-1).map(p=>p.lat+","+p.lng).join("|");return"https://www.google.com/maps/dir/?api=1&travelmode=driving&destination="+dest.lat+","+dest.lng+(wp?"&waypoints="+encodeURIComponent(wp):"")}
+function renderCarga(m,k,c){
+  document.getElementById("tt").textContent=c.numero?"Carga "+c.numero:"Carga";
+  const cx=arr(c.caixas);const ids=paradas(c);const ent=c.entregas||{};const kg=cx.reduce((s,b)=>s+(b&&b.clienteId?+b.kg||0:0),0);
+  let h='<div class="card"><div class="ch"><div class="t"><b>'+fDataL(c.data)+'</b><div class="s">'+esc(c.placa||"")+' · <span class="num">'+t(kg)+'</span></div></div><span class="pill p-'+(atrasada(c)?"atraso":c.status)+'">'+STATUS_TXT[c.status]+'</span></div>';
+  if(c.obs)h+='<div class="note">'+esc(c.obs)+'</div>';
+  if(!c.saidaEm&&c.status!=="entregue")h+='<button class="btn btn-d" style="margin-top:14px" onclick="sair(\''+k+'\')">Saí da fábrica</button>'+(c.status!=="carregada"?'<div class="s" style="font-size:12.5px;color:var(--amber);margin-top:8px;font-weight:700">A logística ainda não marcou todas as caixas como carregadas.</div>':"");
+  else if(c.saidaEm)h+='<div class="s" style="margin-top:10px;font-size:13px;color:var(--muted)">Saiu da fábrica às '+hora(c.saidaEm)+(c.entregueEm?" · última entrega às "+hora(c.entregueEm):"")+'</div>';
+  const rota=linkRota(c);
+  h+='<div class="acts">'+(rota&&c.status!=="entregue"?'<a class="btn btn-o btn-sm" style="width:100%;text-decoration:none" href="'+rota+'" target="_blank" rel="noopener">Rota no Maps</a>':'<span></span>')+(c.status!=="entregue"?'<button class="btn btn-a btn-sm" style="width:100%" onclick="atraso(\''+k+'\')">Informar atraso</button>':'')+'</div>';
+  const at=Object.values(c.atrasos||{}).sort((a,b)=>(b.ts||0)-(a.ts||0));if(at.length)h+='<div class="note">Atraso: '+esc(at[0].obs)+'</div>';
+  h+='</div><div class="h2">Entregas em ordem</div>';
+  ids.forEach((id,i)=>{
+    const bs=cx.filter(b=>b&&b.clienteId===id);const cl=CLI[id]||{};const e=ent[id];const done=e&&e.status==="entregue";const kgC=bs.reduce((s,b)=>s+(+b.kg||0),0);
+    h+='<div class="card stop'+(done?" done":"")+'"><div class="ch"><div class="n">'+(i+1)+'</div><div class="t"><b>'+esc(bs[0].cliente)+'</b><div class="s">'+esc(bs[0].cidade||cl.cidade||"")+'</div></div><div class="tot">'+t(kgC)+'</div></div>';
+    if(cl.localObs)h+='<div class="note">'+esc(cl.localObs)+'</div>';
+    h+='<div style="margin-top:10px">'+bs.map(b=>'<div class="cx"><span>CX'+b.cx+' · '+esc(b.produto)+'</span><b>'+t(b.kg)+'</b></div>').join("")+'</div>';
+    if(done)h+='<div style="margin-top:10px;font-weight:700;color:var(--G)">Entregue às '+hora(e.ts)+(e.obs?' — <span style="font-weight:500">'+esc(e.obs)+'</span>':"")+'</div>'+(Date.now()-e.ts<15*60e3?'<button class="btn btn-o btn-sm" style="margin-top:8px" onclick="desfazer(\''+k+'\',\''+id+'\')">Desfazer</button>':"");
+    else h+='<div class="acts">'+(cl.lat?'<a class="btn btn-o btn-sm" style="width:100%;text-decoration:none" href="https://www.google.com/maps/dir/?api=1&travelmode=driving&destination='+cl.lat+','+cl.lng+'" target="_blank" rel="noopener">Navegar</a>':'<button class="btn btn-o btn-sm" style="width:100%" onclick="fixar(\''+id+'\')">Fixar localização aqui</button>')+(c.saidaEm?'<button class="btn btn-g btn-sm" style="width:100%" onclick="entregar(\''+k+'\',\''+id+'\')">Entregue</button>':'<button class="btn btn-g btn-sm" style="width:100%;opacity:.45" disabled title="Confirme a saída da fábrica primeiro">Entregue</button>')+'</div>'+(cl.lat?'<button style="background:none;border:none;color:var(--muted);font-size:12.5px;margin-top:8px;text-decoration:underline" onclick="fixar(\''+id+'\',1)">Localização errada? Corrigir para onde estou</button>':"");
+    h+='</div>';
+  });
+  m.innerHTML=h;
+}
+
+/* ---------- ações ---------- */
+function sair(k){const c=CARGAS[k];if(c.status!=="carregada"&&!confirm("Nem todas as caixas estão marcadas como carregadas. Confirmar a saída assim mesmo?"))return;const up={};up["cargas/"+k+"/saidaEm"]=Date.now();up["cargas/"+k+"/status"]="a_caminho";enviar(up,"Saída registrada. Boa viagem!")}
+function abrir(h){document.getElementById("sh").innerHTML=h;document.getElementById("sheet").classList.add("on")}
+function fechar(){document.getElementById("sheet").classList.remove("on")}
+function obsSheet(titulo,sub,motivos,obrig,cb){
+  window._cb=cb;abrir('<h3>'+titulo+'</h3><div style="color:var(--muted);font-size:14px">'+sub+'</div><div class="chips">'+motivos.map(x=>'<button class="chip" onclick="document.getElementById(\'ob\').value=this.textContent">'+x+'</button>').join("")+'</div><textarea class="inp" id="ob" rows="3" placeholder="'+(obrig?"Observação (obrigatória)":"Observação (opcional)")+'"></textarea><div class="acts"><button class="btn btn-o" onclick="fechar()">Cancelar</button><button class="btn btn-g" onclick="const v=document.getElementById(\'ob\').value.trim();if('+(obrig?1:0)+'&&!v){toast(\'Escreva o motivo\',true);return}fechar();window._cb(v)">Confirmar</button></div>');
+}
+function entregar(k,id){
+  const c=CARGAS[k];const late=c.data<hoje();
+  obsSheet("Confirmar entrega",late?"A carga era para "+fDataL(c.data)+". Diga o motivo do atraso.":"Alguma observação da entrega?",late?["Chuva / estrada ruim","Cliente pediu para adiar","Saída atrasada da fábrica","Problema no caminhão"]:["Descarregado no silo","Cliente não estava, deixei com funcionário"],late,v=>{
+    const up={};up["cargas/"+k+"/entregas/"+id]={status:"entregue",ts:Date.now(),obs:v||"",por:NOME};
+    const tmp=JSON.parse(JSON.stringify(c));tmp.entregas=tmp.entregas||{};tmp.entregas[id]={status:"entregue"};
+    up["cargas/"+k+"/entregueEm"]=Date.now();if(calcStatus(tmp)==="entregue")up["cargas/"+k+"/status"]="entregue";
+    if(late)up["cargas/"+k+"/atrasos/"+db.ref().push().key]={obs:v,ts:Date.now(),por:NOME,clienteId:id};
+    enviar(up,calcStatus(tmp)==="entregue"?"Última entrega confirmada. Carga concluída.":"Entrega confirmada");
+  });
+}
+function desfazer(k,id){if(!confirm("Desfazer esta entrega?"))return;const up={};up["cargas/"+k+"/entregas/"+id]=null;up["cargas/"+k+"/status"]="a_caminho";enviar(up,"Entrega desfeita")}
+function atraso(k){obsSheet("Informar atraso","A logística e o vendedor veem essa observação.",["Fila na fábrica","Chuva / estrada ruim","Problema no caminhão","Cliente pediu para adiar"],true,v=>{const up={};up["cargas/"+k+"/atrasos/"+db.ref().push().key]={obs:v,ts:Date.now(),por:NOME};enviar(up,"Atraso informado")})}
+function fixar(id,corrigir){
+  if(!navigator.geolocation){toast("GPS indisponível",true);return}
+  if(!confirm(corrigir?"Substituir a localização deste cliente pela sua posição atual?":"Você está no local de entrega deste cliente? A posição atual fica salva para as próximas entregas."))return;
+  toast("Pegando o GPS…");
+  navigator.geolocation.getCurrentPosition(p=>{const up={};const b="cargas_clientes/"+id+"/";up[b+"lat"]=p.coords.latitude;up[b+"lng"]=p.coords.longitude;up[b+"localPor"]="motorista "+NOME;up[b+"localEm"]=Date.now();CLI[id]=Object.assign(CLI[id]||{},{lat:p.coords.latitude,lng:p.coords.longitude});
+    if(!navigator.onLine){const q=fila();q.push(up);setFila(q);net();salvarCache();render();toast("Localização guardada, envia quando tiver sinal");return}
+    db.ref().update(up).then(()=>toast("Localização fixada")).catch(e=>toast("Não salvou: "+e.message,true));render()},
+    ()=>toast("Não consegui o GPS. Ative a localização do celular.",true),{enableHighAccuracy:true,timeout:20000,maximumAge:0});
+}
+</script>
+</body>
+</html>
