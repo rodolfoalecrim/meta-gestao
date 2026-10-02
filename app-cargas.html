@@ -211,6 +211,7 @@ label.f{display:block;font-size:12px;font-weight:700;color:var(--muted);margin:1
 .mapa{height:540px;border-radius:14px;border:1px solid var(--border);overflow:hidden;background:#e5ebe7;z-index:0}
 .pin{width:26px;height:26px;border-radius:50%;color:#fff;font-weight:800;font-size:12px;display:flex;align-items:center;justify-content:center;border:2px solid #fff;box-shadow:0 1px 4px rgba(0,0,0,.35);font-family:Inter,sans-serif}
 .pin.ho{background:#fff;border-width:2.5px}
+.pin.ax{opacity:.72;border-style:dashed}
 @media(max-width:1100px){.kpis{grid-template-columns:repeat(3,1fr)}}
 @media(max-width:900px){.painel{grid-template-columns:1fr}.fila{position:static;max-height:none}}
 @media(max-width:600px){.kpis{grid-template-columns:1fr 1fr}.fr{grid-template-columns:1fr}.mapa{height:420px}.seg{display:flex}.seg button{flex:1;padding:7px 6px}}
@@ -234,6 +235,34 @@ label.f{display:block;font-size:12px;font-weight:700;color:var(--muted);margin:1
 .pvr .main b{display:block;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.pvr .main span{font-size:11.5px;color:var(--muted)}
 .pvr .r{text-align:right;white-space:nowrap}.pvr .late{color:var(--red);font-weight:700}
 @media(max-width:900px){.kpis8{grid-template-columns:1fr 1fr}.charts,.tools{grid-template-columns:1fr}.rks{grid-template-columns:1fr}}
+
+/* ===== barra lateral ===== */
+.sbar{display:none}
+@media(min-width:900px){
+ #app{flex-direction:row}
+ .sbar{display:flex;flex-direction:column;width:228px;flex-shrink:0;background:var(--GD);color:#fff;position:sticky;top:0;height:100vh;padding:16px 12px;overflow:auto}
+ .wrap{flex:1;min-width:0;display:flex;flex-direction:column}
+ .wrap .top{display:none}
+ .fila{top:16px;max-height:calc(100vh - 32px)}
+ .ed .side{top:16px}
+ main{max-width:1320px;padding-top:22px}
+}
+.wrap{flex:1;min-width:0;display:flex;flex-direction:column}
+.side-h{display:flex;align-items:center;gap:10px;padding:2px 6px 18px}
+.side-h img{height:34px;border-radius:7px;background:#fff;padding:2px}
+.side-h b{display:block;font-size:16px}.side-h small{font-size:11.5px;opacity:.6}
+.side-n{display:flex;flex-direction:column;gap:2px}
+.snav{display:flex;align-items:center;gap:11px;border:none;background:none;color:rgba(255,255,255,.72);padding:10px 11px;border-radius:10px;font-size:13.5px;font-weight:600;text-align:left;width:100%}
+.snav span{flex:1}
+.snav:hover{background:rgba(255,255,255,.07);color:#fff}
+.snav.on{background:rgba(134,239,172,.16);color:#fff}
+.snav.on svg{color:#86efac}
+.sbg{flex:0 0 auto!important;background:rgba(255,255,255,.16);color:#fff;border-radius:9px;padding:1px 7px;font-size:11px;font-weight:700}
+.sbg:empty{display:none}
+.sbg.red{background:var(--red)}
+.side-sec{font-size:11px;font-weight:700;opacity:.45;margin:18px 11px 6px}
+.side-f{margin-top:auto;padding-top:14px;border-top:1px solid rgba(255,255,255,.1)}
+.who2{font-size:11.5px;opacity:.55;padding:0 11px 6px;word-break:break-all}
 </style>
 </head>
 <body>
@@ -250,6 +279,14 @@ label.f{display:block;font-size:12px;font-weight:700;color:var(--muted);margin:1
 </div>
 
 <div id="app">
+<aside class="sbar">
+  <div class="side-h"><img src="meta_logo.jpg" alt="Meta" onerror="this.style.display='none'"><div><b>Cargas</b><small>Logística de ração</small></div></div>
+  <nav class="side-n"><button class="snav on" data-v="cargas" onclick="tab('cargas')"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 7h11v9H3z"/><path d="M14 10h4l3 3v3h-7z"/><circle cx="7" cy="17.5" r="1.6"/><circle cx="17" cy="17.5" r="1.6"/></svg><span>Painel de cargas</span><span class="sbg red" id="sb-atraso"></span></button><button class="snav" data-v="indicadores" onclick="tab('indicadores')"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20V10"/><path d="M10 20V4"/><path d="M16 20v-7"/><path d="M22 20H2"/></svg><span>Indicadores</span></button><button class="snav" data-v="pedidos" onclick="tab('pedidos')"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 6h12M8 12h12M8 18h12"/><circle cx="4" cy="6" r="1"/><circle cx="4" cy="12" r="1"/><circle cx="4" cy="18" r="1"/></svg><span>Pedidos</span><span class="sbg" id="sb-fila"></span></button><button class="snav" data-v="contratos" onclick="tab('contratos')"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 3h7l5 5v13H7z"/><path d="M14 3v5h5"/><path d="M10 13h6M10 17h6"/></svg><span>Contratos</span></button><button class="snav" data-v="clientes" onclick="tab('clientes')"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 21s-7-6.2-7-11.5A7 7 0 0 1 19 9.5C19 14.8 12 21 12 21z"/><circle cx="12" cy="9.5" r="2.5"/></svg><span>Clientes</span></button><button class="snav" data-v="historico" onclick="tab('historico')"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg><span>Histórico</span></button></nav>
+  <div class="side-sec">Configuração</div>
+  <nav class="side-n"><button class="snav" onclick="abrirCaminhoes()"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg><span>Caminhões e fábrica</span></button></nav>
+  <div class="side-f"><div class="who2" id="who2"></div><button class="snav" onclick="logout()"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="M16 17l5-5-5-5"/><path d="M21 12H9"/></svg><span>Sair</span></button></div>
+</aside>
+<div class="wrap">
   <div class="top">
     <div class="top-row">
       <img src="meta_logo.jpg" alt="" onerror="this.style.display='none'">
@@ -276,6 +313,7 @@ label.f{display:block;font-size:12px;font-weight:700;color:var(--muted);margin:1
     <section class="view" id="v-clientes"></section>
     <section class="view" id="v-historico"></section>
   </main>
+</div>
 </div>
 <div id="sheet" onclick="if(event.target===this)fecharSheet()"><div class="sh" id="sh"></div></div>
 <div id="toast"></div>
@@ -364,7 +402,7 @@ auth.onAuthStateChanged(async u=>{
   try{ROLE=(await db.ref("usuarios/"+u.uid+"/role").once("value")).val()}catch(e){ROLE=null}
   if(ROLE!=="admin"&&ROLE!=="logistica"){document.getElementById("login").style.display="flex";document.getElementById("l-msg").textContent="Seu usuário não tem perfil de logística. Peça ao administrador para liberar (role: logistica).";auth.signOut();return}
   NOME=(u.email||"").split("@")[0];
-  document.getElementById("who").textContent=u.email;
+  document.getElementById("who").textContent=u.email;document.getElementById("who2").textContent=u.email;
   document.getElementById("login").style.display="none";document.getElementById("app").style.display="flex";
   iniciar();
 });
@@ -381,9 +419,9 @@ function iniciar(){
 
 /* ================= Navegação ================= */
 let VIEW="cargas",DIA=hoje(),EDIT=null,_rt=null;
-function tab(v){VIEW=v;document.querySelectorAll(".tab").forEach(b=>b.classList.toggle("on",b.dataset.v===v));document.querySelectorAll(".view").forEach(s=>s.classList.toggle("on",s.id==="v-"+v));render(true);window.scrollTo(0,0)}
+function tab(v){VIEW=v;document.querySelectorAll("[data-v]").forEach(b=>b.classList.toggle("on",b.dataset.v===v));document.querySelectorAll(".view").forEach(s=>s.classList.toggle("on",s.id==="v-"+v));render(true);window.scrollTo(0,0)}
 function render(now){clearTimeout(_rt);_rt=setTimeout(()=>{
-  const at=Object.values(S.cargas).filter(cargaAtrasada).length;const b=document.getElementById("b-atraso");b.style.display=at?"inline":"none";b.textContent=at;
+  const at=Object.values(S.cargas).filter(cargaAtrasada).length;const b=document.getElementById("b-atraso");b.style.display=at?"inline":"none";b.textContent=at;const sa=document.getElementById("sb-atraso");sa.textContent=at||"";sa.style.display=at?"":"none";const nf=pendentesAte(hoje()).length;const sf=document.getElementById("sb-fila");sf.textContent=nf||"";sf.style.display=nf?"":"none";
   if(VIEW==="cargas")renderCargas();else if(VIEW==="editor")renderEditor();else if(VIEW==="pedidos")renderPedidos();else if(VIEW==="contratos")renderContratos();else if(VIEW==="clientes")renderClientes();else if(VIEW==="historico"&&now)renderHistorico();else if(VIEW==="indicadores"){if(now)carregarIndicadores();else if(IND.dados)renderIndicadores()}
 },now?0:80)}
 
@@ -391,8 +429,21 @@ function render(now){clearTimeout(_rt);_rt=setTimeout(()=>{
 const VEL_KMH=55,DESC_MIN=40,FATOR_ESTRADA=1.3;
 function hav(a,b){const r=x=>x*Math.PI/180;const dLa=r(b.lat-a.lat),dLo=r(b.lng-a.lng);const s=Math.sin(dLa/2)**2+Math.cos(r(a.lat))*Math.cos(r(b.lat))*Math.sin(dLo/2)**2;return 2*6371*Math.asin(Math.sqrt(s))}
 function kmEntre(a,b){return hav(a,b)*FATOR_ESTRADA}
-function origem(){const o=S.config&&S.config.origem;return o&&isFinite(+o.lat)&&+o.lat?{lat:+o.lat,lng:+o.lng,nome:o.nome||"Fábrica"}:null}
-function ptCliente(id){const c=S.clientes[id];return c&&c.lat&&c.lng?{lat:+c.lat,lng:+c.lng}:null}
+const ORIGEM_PADRAO={lat:-25.5758,lng:-52.0408,nome:"Fábrica — Candói-PR"};
+function origem(){const o=S.config&&S.config.origem;return o&&isFinite(+o.lat)&&+o.lat?{lat:+o.lat,lng:+o.lng,nome:o.nome||"Fábrica"}:ORIGEM_PADRAO}
+/* centro aproximado das cidades da região (fallback quando o cliente não tem localização fixada) */
+const CIDADES={"CANDOI":[-25.5758,-52.0408],"GUARAPUAVA":[-25.3953,-51.4581],"CANTAGALO":[-25.3733,-52.1258],"PINHAO":[-25.6956,-51.6597],"RESERVA DO IGUACU":[-25.8317,-52.0283],"FOZ DO JORDAO":[-25.7417,-52.1189],"VIRMOND":[-25.3814,-52.1986],"GOIOXIM":[-25.1928,-51.9911],"LARANJEIRAS DO SUL":[-25.4083,-52.4167],"NOVA LARANJEIRAS":[-25.3053,-52.5447],"MARQUINHO":[-25.11,-52.25],"PORTO BARREIRO":[-25.5475,-52.4058],"RIO BONITO DO IGUACU":[-25.4878,-52.5292],"QUEDAS DO IGUACU":[-25.4492,-52.9103],"ESPIGAO ALTO DO IGUACU":[-25.4236,-52.8336],"PITANGA":[-24.7572,-51.7614],"GUARANIACU":[-25.0969,-52.8783],"IBEMA":[-25.1197,-53.0136],"CATANDUVAS":[-25.2044,-53.1547],"CASCAVEL":[-24.9556,-53.4553],"TOLEDO":[-24.7136,-53.7431],"CEU AZUL":[-25.1478,-53.8453],"MARECHAL CANDIDO RONDON":[-24.5558,-54.0569],"QUATRO PONTES":[-24.5753,-53.9733],"MISSAL":[-25.0919,-54.2475],"MARIPA":[-24.42,-53.8286],"PALOTINA":[-24.2836,-53.8403],"NOVA SANTA ROSA":[-24.4692,-53.955],"PATO BRAGADO":[-24.6272,-54.2253],"TRES BARRAS DO PARANA":[-25.4183,-53.1833],"VERA CRUZ DO OESTE":[-25.0578,-53.8772],"MANGUEIRINHA":[-25.9411,-52.1756],"HONORIO SERPA":[-26.1389,-52.3847],"CORONEL VIVIDA":[-25.98,-52.5678],"CHOPINZINHO":[-25.8556,-52.5172],"SULINA":[-25.7064,-52.73],"SAUDADE DO IGUACU":[-25.6919,-52.6186],"SAO JOAO":[-25.8214,-52.725],"VERE":[-25.8806,-52.905],"SAO JORGE DOESTE":[-25.7008,-52.9183],"ITAPEJARA DOESTE":[-25.9622,-52.8153],"PATO BRANCO":[-26.2292,-52.6706],"VITORINO":[-26.2683,-52.7847],"MARIOPOLIS":[-26.355,-52.5564],"CLEVELANDIA":[-26.4044,-52.3508],"PALMAS":[-26.4842,-51.9906],"BOM SUCESSO DO SUL":[-26.0731,-52.8353],"RENASCENCA":[-26.1586,-52.97],"FRANCISCO BELTRAO":[-26.0817,-53.0553],"MARMELEIRO":[-26.1472,-53.0261],"ENEAS MARQUES":[-25.9447,-53.1653],"NOVA ESPERANCA DO SUDOESTE":[-25.9036,-53.2617],"DOIS VIZINHOS":[-25.7333,-53.0572],"CRUZEIRO DO IGUACU":[-25.6192,-53.1289],"BOA ESPERANCA DO IGUACU":[-25.6325,-53.2128],"SALTO DO LONTRA":[-25.7814,-53.3133],"NOVA PRATA DO IGUACU":[-25.6306,-53.3469],"MANFRINOPOLIS":[-26.1464,-53.3114],"SANTA IZABEL DO OESTE":[-25.8256,-53.48],"REALEZA":[-25.7686,-53.5325],"AMPERE":[-25.9156,-53.4686],"CAPITAO LEONIDAS MARQUES":[-25.4817,-53.6111],"CAPANEMA":[-25.6719,-53.8089],"PLANALTO":[-25.7214,-53.7642],"PEROLA DOESTE":[-25.8278,-53.7433],"PRANCHITA":[-26.0219,-53.7397],"SANTO ANTONIO DO SUDOESTE":[-26.0736,-53.7253],"PINHAL DE SAO BENTO":[-26.0325,-53.4819],"SALGADO FILHO":[-26.1775,-53.3631],"FLOR DA SERRA DO SUL":[-26.2525,-53.3092],"BARRACAO":[-26.2539,-53.6325],"DIONISIO CERQUEIRA":[-26.255,-53.64],"PALMA SOLA":[-26.3472,-53.2775],"CAMPO ERE":[-26.3931,-53.0856],"SAO BERNARDINO":[-26.4739,-52.9686],"ANCHIETA":[-26.5383,-53.3317],"SAO JOSE DO CEDRO":[-26.4553,-53.4953],"PRINCESA":[-26.4425,-53.5992],"GUARACIABA":[-26.6008,-53.5181],"SAO LOURENCO DO OESTE":[-26.3594,-52.8511],"CORONEL MARTINS":[-26.51,-52.67],"GALVAO":[-26.4545,-52.6876],"SAO DOMINGOS":[-26.5547,-52.5314],"SANTIAGO DO SUL":[-26.6386,-52.68],"QUILOMBO":[-26.7264,-52.7206],"ABELARDO LUZ":[-26.5653,-52.3283],"OURO VERDE":[-26.6942,-52.31],"BOM JESUS":[-26.7333,-52.3917],"IPUACU":[-26.635,-52.4553],"PASSOS MAIA":[-26.7828,-52.0567],"XANXERE":[-26.8775,-52.4036],"FAXINAL DOS GUEDES":[-26.8519,-52.2603],"PINHALZINHO":[-26.8481,-52.9919],"AGUA DOCE":[-26.9978,-51.5547],"CHAPECO":[-27.1004,-52.6152]};
+const CID_ALIAS=[[/^(F\.? ?B|BELTRAO|F\.? ?BELTRAO)$/,"FRANCISCO BELTRAO"],[/^(DV|D\.? ?VIZINHOS|DOIZ VIZINHOS|DV STA LUCIA)$/,"DOIS VIZINHOS"],[/^LARANJEIRAS?$/,"LARANJEIRAS DO SUL"],[/^N\.? ?LARANJEIRAS$/,"NOVA LARANJEIRAS"],[/^QUEDAS/,"QUEDAS DO IGUACU"],[/^(S\.? ?LONTRA|SALTO LONTRA)/,"SALTO DO LONTRA"],[/^CAPITAO/,"CAPITAO LEONIDAS MARQUES"],[/^(N\.? ?ESP|NOVA ESPERANCA)/,"NOVA ESPERANCA DO SUDOESTE"],[/^SAUDADES?( D)?( DO)? IGUACU/,"SAUDADE DO IGUACU"],[/^BOA ESPERANCA/,"BOA ESPERANCA DO IGUACU"],[/^(STA|SANTA) IZABEL/,"SANTA IZABEL DO OESTE"],[/^(N\.? ?PRATA|NOVA PRATA)/,"NOVA PRATA DO IGUACU"],[/^S\.? ?JOSE( DO| D)? CEDRO|^SAO JOSE CEDRO/,"SAO JOSE DO CEDRO"],[/^(E\.? ?MARQ|ENEAS)/,"ENEAS MARQUES"],[/^P\.? ?BARREIRO/,"PORTO BARREIRO"],[/^SANTIAGO/,"SANTIAGO DO SUL"],[/^DIONI/,"DIONISIO CERQUEIRA"],[/^(S\.? ?DOMINGOS|SAO DOMINGOS)/,"SAO DOMINGOS"],[/^OURO VERDE/,"OURO VERDE"],[/^PINHALZINHO/,"PINHALZINHO"],[/^FAXINAL/,"FAXINAL DOS GUEDES"],[/^SAO LOURENCO/,"SAO LOURENCO DO OESTE"],[/^(C\.? ?MARTINS|CORONEL MARTINS)/,"CORONEL MARTINS"],[/^(CORONEL V|CEL VIVIDA)/,"CORONEL VIVIDA"],[/^HONORIO/,"HONORIO SERPA"],[/^RIO BONITO/,"RIO BONITO DO IGUACU"],[/^ITAPEJARA/,"ITAPEJARA DOESTE"],[/^SAO JORGE/,"SAO JORGE DOESTE"],[/^PEROLA/,"PEROLA DOESTE"],[/^MARECHAL/,"MARECHAL CANDIDO RONDON"],[/^BOM SUCESSO/,"BOM SUCESSO DO SUL"],[/^TRES BARRAS/,"TRES BARRAS DO PARANA"],[/^MANGUERINHA/,"MANGUEIRINHA"],[/^ESPIGAO/,"ESPIGAO ALTO DO IGUACU"],[/^PED\/?/,""],[/^ENTR /,""]];
+const _cidCache={};
+function coordCidade(nome){
+  let n=norm(nome).replace(/['’]/g,"").replace(/\s*[-\/]\s*(SC|PR)$|\s+(SC|PR)$|\s*\/\s*SC$/,"").replace(/\s*\/.*$/,"").replace(/[.,;:\s]+$/,"").trim();if(!n)return null;
+  if(n in _cidCache)return _cidCache[n];let k=n;
+  for(const[re,v]of CID_ALIAS){if(re.test(k)){k=v||k.replace(re,"").trim();break}}
+  let c=CIDADES[k];if(!c){const hit=Object.keys(CIDADES).find(x=>x.startsWith(k)&&k.length>=5);if(hit)c=CIDADES[hit]}
+  return(_cidCache[n]=c?{lat:c[0],lng:c[1],aprox:true}:null);
+}
+function ptCliente(id){const c=S.clientes[id];if(c&&c.lat&&c.lng)return{lat:+c.lat,lng:+c.lng};return c?coordCidade(c.cidade):null}
+function ptExato(id){const c=S.clientes[id];return!!(c&&c.lat&&c.lng)}
 function fmtHora(m){m=Math.round(m);m=((m%1440)+1440)%1440;return String(Math.floor(m/60)).padStart(2,"0")+":"+String(m%60).padStart(2,"0")}
 function fmtKm(v){return v==null?"—":Math.round(v).toLocaleString("pt-BR")+" km"}
 function rotaInfo(c){
@@ -413,7 +464,8 @@ function otimizarOrdemIds(ids){
   let melhorou=true,g=0;while(melhorou&&g++<60){melhorou=false;for(let i=0;i<ord.length-1;i++)for(let j=i+1;j<ord.length;j++){const n=ord.length;const antes=D(i-1,i)+(j+1<n?D(j,j+1):0);const depois=D(i-1,j)+(j+1<n?D(i,j+1):0);if(depois+0.05<antes){const seg=ord.slice(i,j+1).reverse();ord.splice(i,seg.length,...seg);melhorou=true}}}
   return ord.concat(sem);
 }
-function capTotal(c){const cam=S.caminhoes[c.caminhaoId];return arr(c.caixas).reduce((s,b,i)=>s+capCaixa(cam,i,b&&b.produto),0)}
+function camKey(c){if(S.caminhoes[c.caminhaoId])return c.caminhaoId;const p=norm(c.placa);if(!p)return null;return Object.keys(S.caminhoes).find(k=>{const x=norm(S.caminhoes[k].placa);return x&&(x===p||p.startsWith(x)||x.startsWith(p))})||null}
+function capTotal(c){const cam=S.caminhoes[camKey(c)];return arr(c.caixas).reduce((s,b,i)=>s+capCaixa(cam,i,b&&b.produto),0)}
 function freteCarga(c){return arr(c.caixas).reduce((s,b)=>{if(!b||!b.clienteId)return s;const f=+((S.clientes[b.clienteId]||{}).frete)||0;return s+(+b.kg||0)/1000*f},0)}
 function brl(v){return"R$ "+Math.round(v).toLocaleString("pt-BR")}
 function pendentesAte(dia){const al=alocacoes();return Object.entries(S.pedidos).filter(([,p])=>!p.cancelado&&p.dataEntrega&&p.dataEntrega<=dia).map(([id,p])=>({id,p,resta:(+p.kg||0)-((al[id]||{}).aloc||0)})).filter(x=>x.resta>=50).sort((a,b)=>(a.p.dataEntrega||"").localeCompare(b.p.dataEntrega||""))}
@@ -421,11 +473,11 @@ function pendentesAte(dia){const al=alocacoes();return Object.entries(S.pedidos)
 /* ================= PAINEL DE DESPACHO ================= */
 let PV="frota";
 function truckHTML(c,mini,onclickFn){
-  const cam=S.caminhoes[c.caminhaoId];
+  const cam=S.caminhoes[camKey(c)];
   return '<div class="truck'+(mini?" mini":"")+'"><div class="cab"></div>'+arr(c.caixas).map((b,i)=>{
     if(!b||!b.clienteId)return'<button class="box free" '+(onclickFn?'onclick="'+onclickFn+'('+i+')"':'tabindex="-1"')+'><span class="cx">CX'+(i+1)+'</span><span class="cl">livre</span><span class="kg">'+t(b&&b.cap||capCaixa(cam,i,""))+'</span></button>';
     const cor=corCliente(c,b.clienteId);const cap=capCaixa(cam,i,b.produto);const pct=Math.min(100,(+b.kg||0)/cap*100);
-    return'<button class="box'+((+b.kg||0)>cap+1?" over":"")+'" style="color:'+cor+';background:'+cor+'14;border-color:'+cor+'55" '+(onclickFn?'onclick="'+onclickFn+'('+i+')"':'tabindex="-1"')+' title="'+esc("CX"+(i+1)+" · "+b.cliente+" · "+b.produto+" · "+t(b.kg))+'"><span class="cx">CX'+(i+1)+'</span>'+(b.carregada?'<span class="ok">✓</span>':'')+'<span class="cl" style="color:var(--text)">'+esc((b.cliente||"").split(" ").slice(0,2).join(" "))+'</span><span class="kg" style="color:var(--text)">'+t(b.kg)+'</span><span class="fill" style="width:'+pct+'%"></span></button>';
+    return'<button class="box'+((+b.kg||0)>cap+1&&!c.importado?" over":"")+'" style="color:'+cor+';background:'+cor+'14;border-color:'+cor+'55" '+(onclickFn?'onclick="'+onclickFn+'('+i+')"':'tabindex="-1"')+' title="'+esc("CX"+(i+1)+" · "+b.cliente+" · "+b.produto+" · "+t(b.kg))+'"><span class="cx">CX'+(i+1)+'</span>'+(b.carregada?'<span class="ok">✓</span>':'')+'<span class="cl" style="color:var(--text)">'+esc((b.cliente||"").split(" ").slice(0,2).join(" "))+'</span><span class="kg" style="color:var(--text)">'+t(b.kg)+'</span><span class="fill" style="width:'+pct+'%"></span></button>';
   }).join("")+'</div>';
 }
 function legendHTML(c){return'<div class="legend">'+clientesDaCarga(c).map(id=>{const b=arr(c.caixas).find(x=>x&&x.clienteId===id);const kg=arr(c.caixas).filter(x=>x&&x.clienteId===id).reduce((s,x)=>s+(+x.kg||0),0);const e=(c.entregas||{})[id];return'<span><i style="background:'+corCliente(c,id)+'"></i>'+esc(b.cliente)+' <span class="muted num">'+t(kg)+'</span>'+(e&&e.status==="entregue"?' <span class="pill p-entregue">entregue</span>':'')+'</span>'}).join("")+'</div>'}
@@ -450,7 +502,7 @@ function cargaCompacta(id,c,semCaminhao){
 function kpisDia(doDia,pend){
   let kg=0,cap=0,km=0,fr=0,paradas=0,feitas=0,semKm=0;const st={montagem:0,fechada:0,carregada:0,a_caminho:0,entregue:0};
   doDia.forEach(([,c])=>{kg+=kgTotal(c);cap+=capTotal(c);fr+=freteCarga(c);const r=rotaInfo(c);if(r.ok)km+=r.total;else semKm++;const ids=clientesDaCarga(c);paradas+=ids.length;feitas+=ids.filter(i=>(c.entregas||{})[i]&&c.entregas[i].status==="entregue").length;st[c.status]=(st[c.status]||0)+1});
-  const usados=new Set(doDia.map(([,c])=>c.caminhaoId)).size;const frota=Object.keys(S.caminhoes).length;
+  const usados=new Set(doDia.map(([,c])=>camKey(c)).filter(Boolean)).size;const frota=Object.keys(S.caminhoes).length;
   const pt=pend.reduce((s,x)=>s+x.resta,0),atr=pend.filter(x=>x.p.dataEntrega<hoje()).length;const oc=cap?Math.round(kg/cap*100):0;
   const tile=(lb,v,sub,cls)=>'<div class="kpi'+(cls?" "+cls:"")+'"><span>'+lb+'</span><b class="num">'+v+'</b><small>'+sub+'</small></div>';
   return'<div class="kpis">'+
@@ -458,7 +510,7 @@ function kpisDia(doDia,pend){
    tile("Frota em uso",usados+"/"+frota,doDia.length+" carga"+(doDia.length!==1?"s":"")+" no dia")+
    tile("Sem carga até "+fData(DIA),t(pt,1),pend.length+" pedido"+(pend.length!==1?"s":"")+(atr?" · "+atr+" atrasado"+(atr>1?"s":""):""),atr?"redk":pt?"warnk":"")+
    tile("Entregas",feitas+"/"+paradas,st.a_caminho+" a caminho · "+(st.carregada)+" prontas")+
-   tile("Km estimados",km?Math.round(km).toLocaleString("pt-BR"):"—",!origem()?"defina a fábrica em Caminhões":semKm?semKm+" carga"+(semKm>1?"s":"")+" sem localização completa":"ida e volta")+
+   tile("Km estimados",km?Math.round(km).toLocaleString("pt-BR"):"—",semKm?semKm+" carga"+(semKm>1?"s":"")+" sem cidade conhecida":"ida e volta a partir de Candói")+
    tile("Frete estimado",fr?brl(fr):"—",fr&&km?"R$ "+(fr/km).toFixed(2).replace(".",",")+" por km":"pelo R$/t do cliente")+
   '</div>';
 }
@@ -471,7 +523,7 @@ function renderCargas(){
   let html='<div class="bar"><h2>'+(DIA===h?"Hoje, "+fData(DIA):fDataL(DIA))+'</h2><input class="inp" type="date" value="'+DIA+'" style="width:auto" onchange="DIA=this.value;renderCargas()"><button class="btn btn-o" onclick="abrirPlanejamento()">Sugerir cargas</button><button class="btn btn-g" onclick="novaCarga()">+ Nova carga</button></div><div class="days">'+days+'</div>'+kpisDia(doDia,pend);
   html+='<div class="painel"><div class="pmain"><div class="seg">'+[["frota","Frota"],["status","Por status"],["mapa","Mapa"],["semana","Semana"]].map(([k,l])=>'<button class="'+(PV===k?"on":"")+'" onclick="PV=\''+k+'\';renderCargas()">'+l+'</button>').join("")+'</div><div id="pv"></div>';
   if(atrasadas.length&&PV!=="semana")html+='<div class="group-h red">Cargas de dias anteriores ainda não entregues</div>'+atrasadas.map(([id,c])=>cargaCompacta(id,c,true)).join("");
-  html+='</div><aside class="fila"><div class="fila-h"><b>Fila de pedidos</b><span class="num muted small">'+t(pend.reduce((s,x)=>s+x.resta,0))+'</span></div><div class="small muted" style="margin-bottom:6px">Sem carga, com entrega até '+fData(DIA)+'.</div>'+(pend.length?pend.slice(0,40).map(x=>{const late=x.p.dataEntrega<h;return'<div class="fq"><div class="main"><b>'+esc(x.p.cliente)+'</b><span>'+esc(x.p.cidade||"")+' · '+esc(x.p.produto.replace(/^\d+\s*-\s*/,""))+'</span><span class="'+(late?"late":"")+'">'+(late?"atrasado "+difDias(h,x.p.dataEntrega)+"d":"entrega "+fData(x.p.dataEntrega))+(ptCliente(x.p.clienteId)?"":" · sem local")+'</span></div><div class="r"><div class="t-big">'+t(x.resta)+'</div><button class="btn btn-o btn-sm" onclick="escolherCargaPara(\''+x.id+'\')">Encaixar</button></div></div>'}).join(""):'<div class="empty" style="padding:24px 8px"><b>Fila vazia</b>Tudo que vence até '+fData(DIA)+' já está em carga.</div>')+'</aside></div>';
+  html+='</div><aside class="fila"><div class="fila-h"><b>Fila de pedidos</b><span class="num muted small">'+t(pend.reduce((s,x)=>s+x.resta,0))+'</span></div><div class="small muted" style="margin-bottom:6px">Sem carga, com entrega até '+fData(DIA)+'.</div>'+(pend.length?pend.slice(0,40).map(x=>{const late=x.p.dataEntrega<h;return'<div class="fq"><div class="main"><b>'+esc(x.p.cliente)+'</b><span>'+esc(x.p.cidade||"")+' · '+esc(x.p.produto.replace(/^\d+\s*-\s*/,""))+'</span><span class="'+(late?"late":"")+'">'+(late?"atrasado "+difDias(h,x.p.dataEntrega)+"d":"entrega "+fData(x.p.dataEntrega))+(ptExato(x.p.clienteId)?"":ptCliente(x.p.clienteId)?" · local pela cidade":" · sem local")+'</span></div><div class="r"><div class="t-big">'+t(x.resta)+'</div><button class="btn btn-o btn-sm" onclick="escolherCargaPara(\''+x.id+'\')">Encaixar</button></div></div>'}).join(""):'<div class="empty" style="padding:24px 8px"><b>Fila vazia</b>Tudo que vence até '+fData(DIA)+' já está em carga.</div>')+'</aside></div>';
   el.innerHTML=html;
   const pv=document.getElementById("pv");
   if(PV==="frota")pv.innerHTML=viewFrota(doDia);
@@ -480,11 +532,11 @@ function renderCargas(){
   else{pv.innerHTML='<div class="maparea"><div id="mapa" class="mapa"></div><div class="small muted" id="mapa-nota" style="margin-top:6px"></div></div>';desenharMapa("mapa",doDia,pend)}
 }
 function viewFrota(doDia){
-  const usados={};doDia.forEach(([id,c])=>{(usados[c.caminhaoId]=usados[c.caminhaoId]||[]).push([id,c])});
+  const usados={};doDia.forEach(([id,c])=>{const k=camKey(c);if(k)(usados[k]=usados[k]||[]).push([id,c])});
   let html=Object.entries(S.caminhoes).sort((a,b)=>(a[1].apelido||"").localeCompare(b[1].apelido||"")).map(([k,cam])=>{
     const cs=usados[k]||[];const capT=(cam.caixas||[]).reduce((s,x)=>s+x,0);
     return'<div class="fr"><div class="fr-t"><div class="tk">'+esc(cam.apelido||cam.placa)+'</div><div class="small muted">'+esc(cam.placa||"")+' · '+(cam.caixas||[]).length+' cx · '+t(capT)+'</div>'+(cam.motoristaNome?'<div class="small">'+esc(cam.motoristaNome)+'</div>':"")+(cam.obs?'<div class="small" style="color:var(--amber)">'+esc(cam.obs)+'</div>':"")+'</div><div class="fr-c">'+(cs.length?cs.map(([id,c])=>cargaCompacta(id,c)).join(""):'<div class="livre"><span>Disponível em '+fData(DIA)+'</span><button class="btn btn-o btn-sm" onclick="novaCarga(\''+k+'\')">Montar carga</button></div>')+'</div></div>'}).join("");
-  const orf=doDia.filter(([,c])=>!S.caminhoes[c.caminhaoId]);
+  const orf=doDia.filter(([,c])=>!camKey(c));
   if(orf.length)html+='<div class="group-h">Sem caminhão cadastrado</div>'+orf.map(([id,c])=>cargaCompacta(id,c,true)).join("");
   return html||'<div class="empty"><b>Nenhum caminhão cadastrado</b>Cadastre em "Caminhões".</div>';
 }
@@ -496,7 +548,7 @@ function viewSemana(){
   const d0=new Date(DIA+"T12:00:00");const ini=addDias(DIA,-((d0.getDay()+6)%7));const dias=[0,1,2,3,4,5].map(i=>addDias(ini,i));
   const al=alocacoes();const capFrota=Object.values(S.caminhoes).reduce((s,c)=>s+(c.caixas||[]).reduce((a,b)=>a+b,0),0);
   let html='<div class="wk"><table><thead><tr><th>Caminhão</th>'+dias.map(d=>'<th class="'+(d===DIA?"on":"")+'" onclick="DIA=\''+d+'\';PV=\'frota\';renderCargas()">'+fDataL(d)+'</th>').join("")+'</tr></thead><tbody>';
-  Object.entries(S.caminhoes).forEach(([k,cam])=>{html+='<tr><td><b>'+esc(cam.apelido||cam.placa)+'</b></td>'+dias.map(d=>{const cs=Object.entries(S.cargas).filter(([,c])=>c.data===d&&c.caminhaoId===k);return'<td>'+(cs.length?cs.map(([id,c])=>{const oc=Math.round(kgTotal(c)/(capTotal(c)||1)*100);return'<div class="wc p-'+(cargaAtrasada(c)?"atraso":c.status)+'" onclick="abrirEditor(\''+id+'\')"><b class="num">'+oc+'%</b><span>'+clientesDaCarga(c).length+' cli · '+esc((arr(c.caixas).find(b=>b&&b.cidade)||{}).cidade||"")+'</span></div>'}).join(""):'<span class="muted">livre</span>')+'</td>'}).join("")+'</tr>'});
+  Object.entries(S.caminhoes).forEach(([k,cam])=>{html+='<tr><td><b>'+esc(cam.apelido||cam.placa)+'</b></td>'+dias.map(d=>{const cs=Object.entries(S.cargas).filter(([,c])=>c.data===d&&camKey(c)===k);return'<td>'+(cs.length?cs.map(([id,c])=>{const oc=Math.round(kgTotal(c)/(capTotal(c)||1)*100);return'<div class="wc p-'+(cargaAtrasada(c)?"atraso":c.status)+'" onclick="abrirEditor(\''+id+'\')"><b class="num">'+oc+'%</b><span>'+clientesDaCarga(c).length+' cli · '+esc((arr(c.caixas).find(b=>b&&b.cidade)||{}).cidade||"")+'</span></div>'}).join(""):'<span class="muted">livre</span>')+'</td>'}).join("")+'</tr>'});
   const lin=(lb,fn)=>'<tr class="tot"><td>'+lb+'</td>'+dias.map(d=>'<td class="num">'+fn(d)+'</td>').join("")+'</tr>';
   const tz=v=>v>50?t(v):"—";
   html+=lin("Pedidos com entrega no dia",d=>tz(Object.values(S.pedidos).filter(p=>!p.cancelado&&p.dataEntrega===d).reduce((s,p)=>s+(+p.kg||0),0)));
@@ -507,7 +559,7 @@ function viewSemana(){
 }
 
 /* ================= MAPA (Leaflet / OpenStreetMap) ================= */
-function pinIcon(txt,cor,hollow){return L.divIcon({className:"",html:'<div class="pin'+(hollow?" ho":"")+'" style="'+(hollow?"border-color:"+cor+";color:"+cor:"background:"+cor)+'">'+txt+'</div>',iconSize:[26,26],iconAnchor:[13,13]})}
+function pinIcon(txt,cor,hollow,aprox){return L.divIcon({className:"",html:'<div class="pin'+(hollow?" ho":"")+(aprox?" ax":"")+'" style="'+(hollow?"border-color:"+cor+";color:"+cor:"background:"+cor)+'">'+txt+'</div>',iconSize:[26,26],iconAnchor:[13,13]})}
 function desenharMapa(elId,cargas,pend){
   const el=document.getElementById(elId);if(!el)return;
   if(!window.L){el.innerHTML='<div class="empty"><b>Mapa indisponível</b>Sem conexão para carregar o mapa.</div>';return}
@@ -516,12 +568,12 @@ function desenharMapa(elId,cargas,pend){
   if(o){L.marker([o.lat,o.lng],{icon:pinIcon("F","#052e16")}).addTo(m).bindPopup("<b>"+esc(o.nome)+"</b><br>ponto de saída");bounds.push([o.lat,o.lng])}
   cargas.forEach(([id,c],ci)=>{const cor=CORES[ci%CORES.length];const pts=o?[[o.lat,o.lng]]:[];const r=rotaInfo(c);
     r.legs.forEach((lg,i)=>{const p=ptCliente(lg.id);if(!p){semLoc++;return}const b=arr(c.caixas).find(x=>x&&x.clienteId===lg.id);pts.push([p.lat,p.lng]);bounds.push([p.lat,p.lng]);
-      L.marker([p.lat,p.lng],{icon:pinIcon(i+1,cor)}).addTo(m).bindPopup("<b>"+esc(b.cliente)+"</b><br>"+esc(c.numero?"Carga "+c.numero:(S.caminhoes[c.caminhaoId]||{}).apelido||"")+" · parada "+(i+1)+(lg.eta!=null?"<br>chegada ~"+fmtHora(lg.eta):"")+'<br><a href="#" onclick="abrirEditor(\''+id+'\');return false">abrir carga</a>')});
+      L.marker([p.lat,p.lng],{icon:pinIcon(i+1,cor,false,p.aprox),title:p.aprox?"Posição aproximada (centro da cidade)":""}).addTo(m).bindPopup("<b>"+esc(b.cliente)+"</b><br>"+esc(c.numero?"Carga "+c.numero:(S.caminhoes[c.caminhaoId]||{}).apelido||"")+" · parada "+(i+1)+(lg.eta!=null?"<br>chegada ~"+fmtHora(lg.eta):"")+'<br><a href="#" onclick="abrirEditor(\''+id+'\');return false">abrir carga</a>')});
     if(pts.length>1)L.polyline(pts,{color:cor,weight:4,opacity:.85}).addTo(m)});
   pend.forEach(x=>{const p=ptCliente(x.p.clienteId);if(!p){semLoc++;return}bounds.push([p.lat,p.lng]);L.marker([p.lat,p.lng],{icon:pinIcon("•","#64748b",true)}).addTo(m).bindPopup("<b>"+esc(x.p.cliente)+"</b><br>"+t(x.resta)+" sem carga · "+fData(x.p.dataEntrega)+'<br><a href="#" onclick="escolherCargaPara(\''+x.id+'\');return false">encaixar numa carga</a>')});
   if(bounds.length)m.fitBounds(bounds,{padding:[30,30],maxZoom:12});else m.setView([-26.08,-53.05],8);
   setTimeout(()=>m.invalidateSize(),60);
-  const n=document.getElementById(elId+"-nota");if(n)n.textContent=(o?"":"Defina o ponto de saída (fábrica) em Caminhões para traçar as rotas. ")+(semLoc?semLoc+" cliente(s) sem localização não aparecem no mapa.":"")+" Pontos cinza = pedidos ainda sem carga.";
+  const n=document.getElementById(elId+"-nota");if(n)n.textContent="Pino tracejado = posição aproximada pelo centro da cidade (o motorista fixa a exata na entrega). "+(semLoc?semLoc+" cliente(s) sem cidade conhecida não aparecem. ":"")+"Pontos cinza = pedidos ainda sem carga.";
 }
 
 /* ================= ENCAIXAR A PARTIR DA FILA ================= */
@@ -536,7 +588,7 @@ function escolherCargaPara(pid){
 /* ================= SUGESTÃO AUTOMÁTICA DE CARGAS ================= */
 function planejarCargas(dia){
   const fila=pendentesAte(addDias(dia,1)).map(x=>Object.assign({},x));
-  const ocupados=new Set(Object.values(S.cargas).filter(c=>c.data===dia).map(c=>c.caminhaoId));
+  const ocupados=new Set(Object.values(S.cargas).filter(c=>c.data===dia).map(c=>camKey(c)));
   const trucks=Object.entries(S.caminhoes).filter(([k])=>!ocupados.has(k)).sort((a,b)=>(b[1].caixas||[]).reduce((s,x)=>s+x,0)-(a[1].caixas||[]).reduce((s,x)=>s+x,0));
   const props=[];const h=hoje();
   const prio=x=>(x.p.dataEntrega<h?1000+difDias(h,x.p.dataEntrega)*20:0)+(x.p.dataEntrega<=dia?300:0)+x.resta/100;
@@ -594,7 +646,7 @@ function novaCarga(camId,pid){
   ref.set(c).then(()=>{abrirEditor(ref.key);if(pid)setTimeout(()=>encaixar(pid,ref.key),150)}).catch(e=>toast("Erro ao criar carga: "+e.message,true));
 }
 function montarCaixasVazias(cam){const n=cam&&cam.caixas?cam.caixas.length:6;const o={};for(let i=0;i<n;i++)o[i]={cx:i+1,cap:cam?cam.caixas[i]:3000};return o}
-function abrirEditor(id){EDIT=id;VIEW="editor";document.querySelectorAll(".tab").forEach(b=>b.classList.remove("on"));document.querySelectorAll(".view").forEach(s=>s.classList.toggle("on",s.id==="v-editor"));renderEditor();window.scrollTo(0,0)}
+function abrirEditor(id){EDIT=id;VIEW="editor";document.querySelectorAll("[data-v]").forEach(b=>b.classList.remove("on"));document.querySelectorAll(".view").forEach(s=>s.classList.toggle("on",s.id==="v-editor"));renderEditor();window.scrollTo(0,0)}
 function salvarCarga(id,c,msg){
   c.status=calcStatus(c);
   const up={data:c.data,caminhaoId:c.caminhaoId||"",placa:c.placa||"",motoristaUid:c.motoristaUid||"",motoristaNome:c.motoristaNome||"",numero:c.numero||"",regiao:c.regiao||"",obs:c.obs||"",horaSaida:c.horaSaida||"07:00",ordemManual:!!c.ordemManual,caixas:arr(c.caixas),ordem:clientesDaCarga(c),status:c.status,fechadaComVazia:!!c.fechadaComVazia,atualizadoEm:Date.now(),atualizadoPor:USER.email};
@@ -627,9 +679,9 @@ function renderEditor(){
   if(ids.length){const r=rotaInfo(c);const fr=freteCarga(c);const o=origem();
     html+='<div class="card stops"><div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap"><b style="flex:1">Rota de entrega</b><label class="small muted">Saída <input class="inp" type="time" value="'+esc(c.horaSaida||"07:00")+'" style="width:auto;padding:5px 8px" onchange="edCampo(\'horaSaida\',this.value)"></label>'+(!trav&&ids.length>1?'<button class="btn btn-o btn-sm" onclick="otimizarRota()">Otimizar rota</button>':"")+'</div>'+
     '<div class="mets" style="margin:8px 0 2px"><span>'+(o?'Ida <b class="num">'+fmtKm(r.ida)+'</b> · volta <b class="num">'+fmtKm(r.volta)+'</b>':'<span style="color:var(--amber)">Defina a fábrica em Caminhões para calcular km</span>')+'</span>'+(r.retorno?'<span>retorno ~<b class="num">'+fmtHora(r.retorno)+'</b></span>':"")+(fr?'<span>frete <b class="num">'+brl(fr)+'</b>'+(r.total?' · R$ '+(fr/r.total).toFixed(2).replace(".",",")+'/km':"")+'</span>':"")+(c.ordemManual?'<span class="muted">ordem manual</span>':"")+'</div>'+
-    '<div class="small muted" style="margin-bottom:4px">Sequência que o motorista vê. Distâncias em linha reta × 1,3; '+VEL_KMH+' km/h e '+DESC_MIN+' min por descarga.</div>'+
+    '<div class="small muted" style="margin-bottom:4px">Sequência que o motorista vê. Distâncias em linha reta × 1,3; '+VEL_KMH+' km/h e '+DESC_MIN+' min por descarga. Cliente sem localização fixada usa o centro da cidade.</div>'+
     (o?'<div class="row"><span class="pill" style="background:var(--GD);color:#fff">F</span><div class="main"><b>'+esc(o.nome)+'</b><span>saída '+esc(c.horaSaida||"07:00")+'</span></div></div>':"")+
-    r.legs.map((lg,i)=>{const id=lg.id;const b=cx.filter(x=>x&&x.clienteId===id);const kg=b.reduce((s,x)=>s+(+x.kg||0),0);const e=(c.entregas||{})[id];return'<div class="row"><span class="pill" style="background:'+corCliente(c,id)+';color:#fff">'+(i+1)+'</span><div class="main"><b>'+esc(b[0].cliente)+'</b><span>'+esc(b[0].cidade||"")+' · '+b.map(x=>"CX"+x.cx).join(", ")+' · '+(lg.km!=null?'+'+fmtKm(lg.km)+(lg.eta!=null?' · chega ~'+fmtHora(lg.eta):""):ptCliente(id)?"":'<span style="color:var(--amber)">sem localização</span>')+'</span></div><span class="num small">'+t(kg)+'</span>'+(e&&e.status==="entregue"?'<span class="pill p-entregue">'+(e.ts?new Date(e.ts).toLocaleTimeString("pt-BR",{hour:"2-digit",minute:"2-digit"}):"entregue")+'</span>':'')+(trav?"":'<button class="mv" onclick="moverParada(\''+id+'\',-1)" aria-label="Subir">↑</button><button class="mv" onclick="moverParada(\''+id+'\',1)" aria-label="Descer">↓</button>')+'</div>'}).join("")+
+    r.legs.map((lg,i)=>{const id=lg.id;const b=cx.filter(x=>x&&x.clienteId===id);const kg=b.reduce((s,x)=>s+(+x.kg||0),0);const e=(c.entregas||{})[id];return'<div class="row"><span class="pill" style="background:'+corCliente(c,id)+';color:#fff">'+(i+1)+'</span><div class="main"><b>'+esc(b[0].cliente)+'</b><span>'+esc(b[0].cidade||"")+' · '+b.map(x=>"CX"+x.cx).join(", ")+' · '+(lg.km!=null?'+'+fmtKm(lg.km)+(lg.eta!=null?' · chega ~'+fmtHora(lg.eta):"")+(ptExato(id)?"":' <span style="color:var(--amber)">(pelo centro da cidade)</span>'):'<span style="color:var(--red)">sem localização nem cidade conhecida</span>')+'</span></div><span class="num small">'+t(kg)+'</span>'+(e&&e.status==="entregue"?'<span class="pill p-entregue">'+(e.ts?new Date(e.ts).toLocaleTimeString("pt-BR",{hour:"2-digit",minute:"2-digit"}):"entregue")+'</span>':'')+(trav?"":'<button class="mv" onclick="moverParada(\''+id+'\',-1)" aria-label="Subir">↑</button><button class="mv" onclick="moverParada(\''+id+'\',1)" aria-label="Descer">↓</button>')+'</div>'}).join("")+
     (ids.some(ptCliente)?'<div id="edmapa" class="mapa" style="height:260px;margin-top:10px"></div>':"")+'</div>'}
   html+='<div class="card"><b>Observações e atrasos</b><textarea class="inp" rows="2" style="margin-top:8px" placeholder="Observação da carga" onchange="edCampo(\'obs\',this.value)">'+esc(c.obs||"")+'</textarea>'+Object.values(c.atrasos||{}).sort((a,b)=>(b.ts||0)-(a.ts||0)).map(a=>'<div class="row"><span class="pill p-atraso">atraso</span><div class="main"><b style="white-space:normal">'+esc(a.obs)+'</b><span>'+new Date(a.ts).toLocaleString("pt-BR",{day:"2-digit",month:"2-digit",hour:"2-digit",minute:"2-digit"})+' · '+esc(a.por||"")+'</span></div></div>').join("")+'<button class="btn btn-a btn-sm" style="margin-top:10px" onclick="registrarAtraso()">Registrar atraso</button></div>';
   if(!trav)html+='<button class="btn btn-r btn-sm" onclick="excluirCarga()">Excluir carga</button>';
@@ -891,7 +943,7 @@ function mesIni(m){return m+"-01"}
 function mesFim(m){const d=new Date(m+"-01T12:00:00");d.setMonth(d.getMonth()+1);d.setDate(0);return iso(d)}
 function addMes(m,n){const d=new Date(m+"-15T12:00:00");d.setMonth(d.getMonth()+n);return iso(d).slice(0,7)}
 function nomeMes(m,curto){const d=new Date(m+"-15T12:00:00");return curto?d.toLocaleDateString("pt-BR",{month:"short"}).replace(".","")+"/"+m.slice(2,4):d.toLocaleDateString("pt-BR",{month:"long",year:"numeric"})}
-function camDaCarga(c){if(S.caminhoes[c.caminhaoId])return S.caminhoes[c.caminhaoId];const p=norm(c.placa);return p?Object.values(S.caminhoes).find(x=>norm(x.placa)===p||p.startsWith(norm(x.placa))):null}
+function camDaCarga(c){return S.caminhoes[camKey(c)]||null}
 function capCargaH(c){const cam=camDaCarga(c);if(!cam)return 0;return arr(c.caixas).reduce((s,b,i)=>s+capCaixa(cam,i,b&&b.produto),0)}
 function camLabel(c){const cam=camDaCarga(c);return cam?(cam.apelido||cam.placa):(c.placa||"Sem placa")}
 function catProd(p){p=norm(p);if(/MILHO/.test(p))return"Milho";if(/PNDR|FARELO|SOJA/.test(p))return"Farelos / PNDR";if(/PRE.?PARTO|BEZERR|CORTE|AVES|SUIN|POEDEIR/.test(p))return"Outras rações";if(/FAREL/.test(p))return"Ração farelada";if(/PELET|ORION|LEITE/.test(p))return"Ração peletizada";return"Outros"}
@@ -940,7 +992,7 @@ function renderIndicadores(){
     kpi("Entregas no prazo",pct(s.pont),s.avaliadas?s.noPrazo+" de "+s.avaliadas+" com pedido no app":"aparece com pedidos lançados no app",delta(s.pont,a.pont,false,true),s.pont!=null&&s.pont<0.9?"warnk":"")+
     kpi("Clientes atendidos",s.cli.size,s.paradas+" entregas · "+(s.n?(s.paradas/s.n).toFixed(1).replace(".",","):"0")+" por carga",delta(s.cli.size,a.cli.size))+
     kpi("Cargas com atraso",s.atrasoReg,s.n?Math.round(s.atrasoReg/s.n*100)+"% das cargas":"—",delta(s.atrasoReg,a.atrasoReg,true),s.atrasoReg?"redk":"")+
-    kpi("Km estimados",s.km?Math.round(s.km).toLocaleString("pt-BR"):"—",s.km?(s.km/(s.kgKm/1000)).toFixed(1).replace(".",",")+" km/t"+(s.nKm<s.n?" · em "+s.nKm+" de "+s.n+" cargas (faltam localizações)":""):"depende da fábrica e das localizações")+
+    kpi("Km estimados",s.km?Math.round(s.km).toLocaleString("pt-BR"):"—",s.km?(s.km/(s.kgKm/1000)).toFixed(1).replace(".",",")+" km/t · saindo de Candói"+(s.nKm<s.n?" · "+(s.n-s.nKm)+" carga(s) sem cidade":""):"sem cargas no mês")+
     kpi("Frete estimado",s.fr?brl(s.fr):"—",s.fr&&s.kg?"R$ "+(s.fr/(s.kg/1000)).toFixed(0)+"/t"+(s.km&&s.nKm===s.n?" · R$ "+(s.fr/s.km).toFixed(2).replace(".",",")+"/km":""):"pelo R$/t do cliente",delta(s.fr,a.fr))+
   '</div>'+(s.lead!=null?'<div class="small muted" style="margin:-6px 0 12px">Tempo médio do pedido lançado até a entrega: <b class="num">'+s.lead.toFixed(1).replace(".",",")+' dias</b></div>':"");
   html+='<div class="charts"><div class="chc wide"><div class="chh"><b>Toneladas por dia</b><span class="small muted">entregue × programado</span></div><div class="cv"><canvas id="ch-dia"></canvas></div></div>'+
@@ -957,10 +1009,10 @@ function desenharGraficos(C,s){
   if(!window.Chart){document.querySelectorAll(".cv").forEach(x=>x.innerHTML='<div class="small muted" style="padding:20px">Gráfico indisponível sem conexão.</div>');return}
   Chart.defaults.font.family="Inter, sans-serif";Chart.defaults.font.size=11;Chart.defaults.color="#64748b";
   const G="#15803d",GL="#bbf7d0",AM="#d97706";const tt=v=>(v/1000).toLocaleString("pt-BR",{maximumFractionDigits:1})+" t";
-  const base=(extra)=>Object.assign({responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>(c.dataset.label?c.dataset.label+": ":"")+(c.dataset.fmt?c.dataset.fmt(c.raw):tt(c.raw))}}},scales:{x:{grid:{display:false}},y:{grid:{color:"#eef2f0"},ticks:{callback:v=>(v/1000)+" t"}}}},extra||{});
+  const base=(extra)=>Object.assign({responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>(c.dataset.label?c.dataset.label+": ":"")+(c.dataset.fmt?c.dataset.fmt(c.raw):tt(c.raw))}}},scales:{x:{grid:{display:false}},y:{suggestedMax:1000,grid:{color:"#eef2f0"},ticks:{callback:v=>(v/1000).toLocaleString("pt-BR",{maximumFractionDigits:1})+" t"}}}},extra||{});
   const mk=(id,cfg)=>{const e=document.getElementById(id);if(e)IND.charts.push(new Chart(e,cfg))};
   const dias=[];for(let d=mesIni(IND.mes);d<=mesFim(IND.mes);d=addDias(d,1))dias.push(d);
-  mk("ch-dia",{type:"bar",data:{labels:dias.map(d=>+d.slice(8)),datasets:[{label:"Entregue",data:dias.map(d=>s.porDiaEnt[d]||0),backgroundColor:G,stack:"a",borderRadius:3},{label:"Programado",data:dias.map(d=>(s.porDia[d]||0)-(s.porDiaEnt[d]||0)),backgroundColor:GL,stack:"a",borderRadius:3}]},options:base({plugins:{legend:{display:true,position:"bottom",labels:{boxWidth:10}},tooltip:{callbacks:{title:i=>fDataL(dias[i[0].dataIndex]),label:c=>c.dataset.label+": "+tt(c.raw)}}},scales:{x:{stacked:true,grid:{display:false}},y:{stacked:true,grid:{color:"#eef2f0"},ticks:{callback:v=>(v/1000)+" t"}}}})});
+  mk("ch-dia",{type:"bar",data:{labels:dias.map(d=>+d.slice(8)),datasets:[{label:"Entregue",data:dias.map(d=>s.porDiaEnt[d]||0),backgroundColor:G,stack:"a",borderRadius:3},{label:"Programado",data:dias.map(d=>(s.porDia[d]||0)-(s.porDiaEnt[d]||0)),backgroundColor:GL,stack:"a",borderRadius:3}]},options:base({plugins:{legend:{display:true,position:"bottom",labels:{boxWidth:10}},tooltip:{callbacks:{title:i=>fDataL(dias[i[0].dataIndex]),label:c=>c.dataset.label+": "+tt(c.raw)}}},scales:{x:{stacked:true,grid:{display:false}},y:{stacked:true,suggestedMax:1000,grid:{color:"#eef2f0"},ticks:{callback:v=>(v/1000).toLocaleString("pt-BR",{maximumFractionDigits:1})+" t"}}}})});
   const meses=[];for(let i=11;i>=0;i--)meses.push(addMes(IND.mes,-i));const sm=meses.map(mm=>statsMes(C,mm));
   mk("ch-12m",{type:"bar",data:{labels:meses.map(mm=>nomeMes(mm,true)),datasets:[{label:"Toneladas",data:sm.map(x=>x.kg),backgroundColor:meses.map(mm=>mm===IND.mes?G:"#86efac"),borderRadius:4,yAxisID:"y"},{type:"line",label:"Cargas",data:sm.map(x=>x.n),borderColor:AM,backgroundColor:AM,pointRadius:3,tension:.3,yAxisID:"y1",fmt:v=>v+" cargas"}]},options:base({plugins:{legend:{display:true,position:"bottom",labels:{boxWidth:10}}},scales:{x:{grid:{display:false}},y:{grid:{color:"#eef2f0"},ticks:{callback:v=>(v/1000)+" t"}},y1:{position:"right",grid:{display:false},beginAtZero:true}}})});
   const cams=Object.entries(s.porCam).sort((a,b)=>b[1]-a[1]);const ocm=k=>{const l=s.camOc[k]||[];return l.length?Math.round(l.reduce((a,b)=>a+b,0)/l.length*100):null};
@@ -980,7 +1032,7 @@ function alertasHTML(){
   Object.entries(S.cargas).filter(([,c])=>(c.data===h||c.data===am)&&c.status==="montagem").forEach(([id,c])=>{const l=arr(c.caixas).filter(b=>!b||!b.clienteId).length;item("var(--amber)",'Carga de '+(c.data===h?"hoje":"amanhã")+' no '+esc(camLabel(c))+' com <b>'+l+' caixa'+(l>1?"s":"")+' livre'+(l>1?"s":"")+'</b>',"abrirEditor('"+id+"')","Completar")});
   Object.entries(S.cargas).filter(([,c])=>c.data>=h&&c.data<=am&&STAGE[c.status]<3).forEach(([id,c])=>{const cap=capTotal(c);const o=cap?kgTotal(c)/cap:1;if(c.status!=="montagem"&&o<0.75)item("var(--amber)",'Carga de '+fData(c.data)+' no '+esc(camLabel(c))+' com ocupação de <b>'+Math.round(o*100)+'%</b>',"abrirEditor('"+id+"')","Abrir")});
   const semLoc=new Set();Object.values(S.pedidos).forEach(p=>{if(!p.cancelado&&p.dataEntrega>=h&&p.dataEntrega<=addDias(h,7)&&!ptCliente(p.clienteId))semLoc.add(p.clienteId)});if(semLoc.size)item("#64748b",'<b>'+semLoc.size+' cliente'+(semLoc.size>1?"s":"")+'</b> com entrega nos próximos 7 dias sem localização',"KLOC='sem';tab('clientes')","Ver");
-  if(!origem())item("#64748b","Ponto de saída (fábrica) não definido: sem km e sem otimização de rota","abrirCaminhoes()","Definir");
+  if(!(S.config&&S.config.origem))item("#64748b","Km calculados a partir do centro de Candói. Fixe o ponto exato da fábrica para mais precisão","abrirCaminhoes()","Fixar");
   Object.entries(S.contratos).filter(([,c])=>c.ativo!==false).forEach(([id,c])=>{const sc=saldoContrato(id);if(sc.aRetirar<=0)item("var(--G)",'Contrato '+esc(c.numero||"")+' de '+esc(c.cliente)+' <b>totalmente entregue</b>',"abrirContrato('"+id+"')","Encerrar");else if(sc.livre>0&&sc.pendente===0)item("#64748b",'Contrato '+esc(c.numero||"")+' de '+esc(c.cliente)+': '+t(sc.livre)+' <b>sem programação</b>',"abrirProgramacao('"+id+"')","Programar")});
   return out.join("")||'<div class="small muted" style="padding:8px 0">Nada pendente. Tudo em dia.</div>';
 }
@@ -1014,7 +1066,7 @@ function imprimirFechamento(){
 
 /* ================= CAMINHÕES ================= */
 function abrirCaminhoes(){
-  abrirSheet('<div class="sh-h"><h3>Caminhões</h3><button class="x" onclick="fecharSheet()">×</button></div><div class="card" style="margin-top:8px"><b>Ponto de saída (fábrica)</b><div class="small muted" style="margin:2px 0 8px">'+(origem()?esc(origem().nome)+' · '+origem().lat.toFixed(5)+', '+origem().lng.toFixed(5):'Ainda não definido. Sem ele não há cálculo de km nem otimização a partir da fábrica.')+'</div><input class="inp" id="or-n" placeholder="Nome (ex: Fábrica Coacan)" value="'+esc((S.config.origem||{}).nome||"")+'"><input class="inp" id="or-ll" placeholder="Link do Google Maps ou lat, lng" style="margin-top:6px"><div style="display:flex;gap:8px;margin-top:8px"><button class="btn btn-g btn-sm" onclick="salvarOrigem()">Salvar</button><button class="btn btn-o btn-sm" onclick="salvarOrigem(1)">Usar minha localização</button></div></div><div class="small muted">Capacidade por caixa para ração peletizada, milho moído e PNDR. A farelada usa a coluna própria (ou −10% se vazia).</div>'+Object.entries(S.caminhoes).map(([k,v])=>'<div class="card" style="margin-top:10px"><div class="grid3"><div><label class="f">Apelido</label><input class="inp" id="cm-a-'+k+'" value="'+esc(v.apelido||"")+'"></div><div><label class="f">Placa</label><input class="inp" id="cm-p-'+k+'" value="'+esc(v.placa||"")+'"></div><div><label class="f">Motorista padrão</label><select class="inp" id="cm-m-'+k+'"><option value="">—</option>'+Object.entries(S.motoristas).map(([u,m])=>'<option value="'+u+'"'+(u===v.motoristaUid?" selected":"")+'>'+esc(m.nome||m.email)+'</option>').join("")+'</select></div></div><label class="f">Caixas pelet (kg, separadas por vírgula)</label><input class="inp num" id="cm-c-'+k+'" value="'+(v.caixas||[]).join(", ")+'"><label class="f">Caixas farelada (kg)</label><input class="inp num" id="cm-f-'+k+'" value="'+(v.caixasFarel||[]).join(", ")+'"><label class="f">Observação</label><input class="inp" id="cm-o-'+k+'" value="'+esc(v.obs||"")+'"><button class="btn btn-g btn-sm" style="margin-top:10px" onclick="salvarCaminhao(\''+k+'\')">Salvar</button></div>').join("")+'<button class="btn btn-o" style="width:100%;margin-top:10px" onclick="novoCaminhao()">+ Adicionar caminhão</button>');
+  abrirSheet('<div class="sh-h"><h3>Caminhões</h3><button class="x" onclick="fecharSheet()">×</button></div><div class="card" style="margin-top:8px"><b>Ponto de saída (fábrica)</b><div class="small muted" style="margin:2px 0 8px">'+(origem()?esc(origem().nome)+' · '+origem().lat.toFixed(5)+', '+origem().lng.toFixed(5):'Usando o centro de Candói-PR. Cole o link da fábrica no Maps (ou use o GPS estando lá) para ficar exato.')+'</div><input class="inp" id="or-n" placeholder="Nome (ex: Fábrica Coacan)" value="'+esc((S.config.origem||{}).nome||"")+'"><input class="inp" id="or-ll" placeholder="Link do Google Maps ou lat, lng" style="margin-top:6px"><div style="display:flex;gap:8px;margin-top:8px"><button class="btn btn-g btn-sm" onclick="salvarOrigem()">Salvar</button><button class="btn btn-o btn-sm" onclick="salvarOrigem(1)">Usar minha localização</button></div></div><div class="small muted">Capacidade por caixa para ração peletizada, milho moído e PNDR. A farelada usa a coluna própria (ou −10% se vazia).</div>'+Object.entries(S.caminhoes).map(([k,v])=>'<div class="card" style="margin-top:10px"><div class="grid3"><div><label class="f">Apelido</label><input class="inp" id="cm-a-'+k+'" value="'+esc(v.apelido||"")+'"></div><div><label class="f">Placa</label><input class="inp" id="cm-p-'+k+'" value="'+esc(v.placa||"")+'"></div><div><label class="f">Motorista padrão</label><select class="inp" id="cm-m-'+k+'"><option value="">—</option>'+Object.entries(S.motoristas).map(([u,m])=>'<option value="'+u+'"'+(u===v.motoristaUid?" selected":"")+'>'+esc(m.nome||m.email)+'</option>').join("")+'</select></div></div><label class="f">Caixas pelet (kg, separadas por vírgula)</label><input class="inp num" id="cm-c-'+k+'" value="'+(v.caixas||[]).join(", ")+'"><label class="f">Caixas farelada (kg)</label><input class="inp num" id="cm-f-'+k+'" value="'+(v.caixasFarel||[]).join(", ")+'"><label class="f">Observação</label><input class="inp" id="cm-o-'+k+'" value="'+esc(v.obs||"")+'"><button class="btn btn-g btn-sm" style="margin-top:10px" onclick="salvarCaminhao(\''+k+'\')">Salvar</button></div>').join("")+'<button class="btn btn-o" style="width:100%;margin-top:10px" onclick="novoCaminhao()">+ Adicionar caminhão</button>');
 }
 function salvarOrigem(gps){
   const nome=document.getElementById("or-n").value.trim()||"Fábrica";
