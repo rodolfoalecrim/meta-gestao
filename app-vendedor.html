@@ -109,6 +109,7 @@
       <div id="rs-lista-atrasadas" style="margin-top:16px"></div>
       <div id="rs-lista-insumos" style="margin-top:16px"></div>
       <div id="rs-lista-atualizacoes" style="margin-top:16px"></div>
+      <div id="rs-km" style="margin-top:16px"></div>
       <div id="rs-cargas" style="margin-top:16px"></div>
       <button class="btn-action btn-primary" style="margin-top:20px" onclick="navTo('lista','Propriedades')">🏡 Ver Meus Clientes</button>
     </div>
@@ -1431,6 +1432,58 @@ function renderCargasVendedor(){
  sc.innerHTML=html;
 }
 (function(){const _ia=iniciarApp;iniciarApp=function(){_ia.apply(this,arguments);carregarCargasVendedor()}})();
+</script>
+<script>
+/* ===== Km do carro: lançamento semanal (toda segunda) e acompanhamento da meta do mês ===== */
+/* km por mês a partir das leituras semanais do odômetro: cada intervalo entre duas leituras é dividido igualmente pelos dias */
+function kmCarroMes(lanc,mes){
+  const L=Object.values(lanc||{});const tot=L.find(x=>x.tipo==="total"&&x.mes===mes);
+  const porDia={};L.forEach(x=>{if(x.tipo!=="total"&&x.km&&x.data&&(!porDia[x.data]||(x.ts||0)>=(porDia[x.data].ts||0)))porDia[x.data]=x});
+  const R=Object.values(porDia).sort((a,b)=>a.data.localeCompare(b.data));
+  const ini=mes+"-01";const d=new Date(mes+"-15T12:00:00");d.setMonth(d.getMonth()+1);d.setDate(0);const fim=KMC.iso(d);const nd=+fim.slice(8);
+  let km=0,cobIni=null,cobFim=null;
+  for(let i=1;i<R.length;i++){const a=R[i-1],b=R[i];const dias=KMC.dif(b.data,a.data);if(dias<=0)continue;const por=(b.km-a.km)/dias;
+    const s=a.data>=ini?a.data:KMC.add(ini,-1),e=b.data<=fim?b.data:fim;const ov=KMC.dif(e,s);if(ov>0){km+=por*ov;cobIni=cobIni&&cobIni<s?cobIni:s;cobFim=cobFim&&cobFim>e?cobFim:e}}
+  const ult=R[R.length-1];
+  if(tot)return{km:+tot.km,proj:null,fechado:true,total:true,ult,leituras:R};
+  const cob=cobIni?KMC.dif(cobFim,cobIni):0;const hoje=KMC.hoje();const atual=hoje>=ini&&hoje<=fim;
+  const proj=cob>=7&&(atual||cobFim<fim)?km/cob*nd:null;
+  return{km,proj,cob,fechado:!atual&&cobFim===fim,ult,leituras:R};
+}
+const KMC={iso(d){return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0")},hoje(){return KMC.iso(new Date())},add(s,n){const d=new Date(s+"T12:00:00");d.setDate(d.getDate()+n);return KMC.iso(d)},dif(a,b){return Math.round((new Date(a+"T12:00:00")-new Date(b+"T12:00:00"))/864e5)},segunda(){const d=new Date();const w=(d.getDay()+6)%7;d.setDate(d.getDate()-w);return KMC.iso(d)}};
+function metaCarro(v,metas,mes,vk){const m=metas&&metas[mes]&&metas[mes][vk];return m!=null?+m:(+v.metaPadrao||null)}
+function statusKm(km,proj,meta){if(!meta)return{k:"sem",txt:"sem meta"};const p=(proj!=null?proj:km)/meta;if(km>meta)return{k:"acima",txt:"passou da meta"};if(p>1.1)return{k:"acima",txt:"vai passar da meta"};if(p>1)return{k:"atencao",txt:"no limite"};return{k:"ok",txt:"dentro da meta"}}
+
+const KMV={vk:null,v:null,lanc:{},metas:{},iniciado:false};
+function kmEsc(s){return String(s==null?"":s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]))}
+function iniciarKmVendedor(){
+  if(KMV.iniciado||!usuarioAtual)return;KMV.iniciado=true;const em=(usuarioAtual.email||"").toLowerCase();
+  db.ref("veiculos_equipe").once("value").then(s=>{const v=s.val()||{};const hit=Object.entries(v).find(([,x])=>x.ativo!==false&&(x.email||"").toLowerCase()===em);if(!hit){renderKmVendedor();return}
+    KMV.vk=hit[0];KMV.v=hit[1];
+    db.ref("km_lancamentos/"+KMV.vk).on("value",x=>{KMV.lanc=x.val()||{};renderKmVendedor()},e=>console.warn("km",e.message));
+    db.ref("km_metas").once("value").then(x=>{KMV.metas=x.val()||{};renderKmVendedor()}).catch(()=>{});
+  }).catch(e=>console.warn("veiculos",e.message));
+}
+function renderKmVendedor(){
+  const el=document.getElementById("rs-km");if(!el)return;if(!KMV.vk){el.innerHTML="";return}
+  const mes=KMC.hoje().slice(0,7);const r=kmCarroMes(KMV.lanc,mes);const meta=metaCarro(KMV.v,KMV.metas,mes,KMV.vk);const st=statusKm(r.km,r.proj,meta);
+  const pend=!r.ult||r.ult.data<KMC.segunda();const pct=meta?Math.min(100,r.km/meta*100):0;const cor=st.k==="acima"?"#dc2626":st.k==="atencao"?"#d97706":"#15803d";const n0=x=>Math.round(x).toLocaleString("pt-BR");
+  el.innerHTML='<div style="background:#fff;border:1px solid '+(pend?"#fcd34d":"var(--border)")+';border-radius:14px;padding:14px;box-shadow:var(--shadow)"><div style="display:flex;align-items:center;gap:8px;margin-bottom:8px"><div style="font-size:14px;font-weight:800;flex:1">🚗 Km do carro · '+kmEsc(KMV.v.placa)+'</div><div style="font-size:11px;font-weight:800;color:'+cor+'">'+st.txt+'</div></div><div style="display:flex;align-items:baseline;gap:6px"><span style="font-size:22px;font-weight:900">'+n0(r.km)+'</span><span style="font-size:12px;color:var(--muted)">km em '+new Date().toLocaleDateString("pt-BR",{month:"long"})+(meta?" de "+n0(meta):"")+'</span></div>'+(meta?'<div style="height:8px;border-radius:5px;background:#eef2f0;overflow:hidden;margin:8px 0 4px"><div style="height:100%;width:'+pct+'%;background:'+cor+'"></div></div>':"")+'<div style="font-size:11.5px;color:var(--muted)">'+(r.proj!=null?"No ritmo atual fecha o mês com ~"+n0(r.proj)+" km":r.ult?"Projeção do mês aparece a partir de 7 dias de leituras":"")+(r.ult?" · última leitura "+r.ult.data.slice(8)+"/"+r.ult.data.slice(5,7)+": "+n0(r.ult.km)+" km":"Faça o primeiro lançamento: ele vira o ponto de partida.")+'</div><button onclick="abrirLancKm()" style="width:100%;margin-top:12px;border:none;border-radius:12px;padding:12px;font-size:14px;font-weight:800;font-family:inherit;cursor:pointer;'+(pend?"background:#d97706;color:#fff":"background:#f1f5f9;color:var(--text)")+'">'+(pend?"Lançar km desta semana":"Atualizar km")+'</button></div>';
+}
+function abrirLancKm(){
+  const r=kmCarroMes(KMV.lanc,KMC.hoje().slice(0,7));let ov=document.getElementById("kmv-ov");if(ov)ov.remove();
+  ov=document.createElement("div");ov.id="kmv-ov";ov.style.cssText="position:fixed;inset:0;background:rgba(15,23,42,.5);z-index:9999;display:flex;align-items:flex-end;justify-content:center";
+  ov.innerHTML='<div style="background:#fff;width:100%;max-width:520px;border-radius:20px 20px 0 0;padding:20px 18px calc(20px + env(safe-area-inset-bottom,0px))"><div style="font-size:18px;font-weight:800">Km do carro</div><div style="font-size:13px;color:var(--muted);margin:4px 0 12px">'+kmEsc(KMV.v.placa)+(r.ult?" · última leitura: "+Math.round(r.ult.km).toLocaleString("pt-BR")+" km em "+r.ult.data.slice(8)+"/"+r.ult.data.slice(5,7):"")+'</div><label style="font-size:13px;font-weight:700;color:var(--muted)">Km que aparece no painel agora</label><input id="kmv-k" type="number" inputmode="numeric" style="width:100%;border:1px solid var(--border);border-radius:12px;padding:13px;font-size:18px;font-family:inherit;margin-top:6px;box-sizing:border-box"><div id="kmv-p" style="font-size:12.5px;color:var(--muted);margin-top:6px;min-height:16px"></div><div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:14px"><button onclick="document.getElementById(\'kmv-ov\').remove()" style="border:1px solid var(--border);background:#fff;border-radius:12px;padding:13px;font-weight:700;font-family:inherit">Cancelar</button><button onclick="salvarLancKm()" style="border:none;background:var(--G);color:#fff;border-radius:12px;padding:13px;font-weight:800;font-family:inherit">Salvar</button></div></div>';
+  ov.onclick=e=>{if(e.target===ov)ov.remove()};document.body.appendChild(ov);const i=document.getElementById("kmv-k");i.focus();
+  i.oninput=()=>{const v=parseInt(i.value,10);document.getElementById("kmv-p").textContent=r.ult&&v>r.ult.km?"Rodou "+(v-r.ult.km).toLocaleString("pt-BR")+" km desde "+r.ult.data.slice(8)+"/"+r.ult.data.slice(5,7):""};
+}
+function salvarLancKm(){
+  const km=parseInt(document.getElementById("kmv-k").value,10);const r=kmCarroMes(KMV.lanc,KMC.hoje().slice(0,7));if(!km){showToast("Informe o km do painel",true);return}
+  if(r.ult&&km<r.ult.km){showToast("O km precisa ser maior que a última leitura ("+Math.round(r.ult.km).toLocaleString("pt-BR")+")",true);return}
+  if(r.ult){const d=km-r.ult.km,dias=Math.max(1,KMC.dif(KMC.hoje(),r.ult.data));if(d/dias>800&&!confirm("Deu "+d.toLocaleString("pt-BR")+" km em "+dias+" dia(s). Está certo?"))return}
+  db.ref("km_lancamentos/"+KMV.vk).push({data:KMC.hoje(),km,ts:Date.now(),por:(usuarioAtual.email||"").toLowerCase()}).then(()=>{document.getElementById("kmv-ov").remove();showToast("Km lançado")}).catch(e=>showToast("Não salvou: "+e.message,true));
+}
+(function(){const _ia=iniciarApp;iniciarApp=function(){_ia.apply(this,arguments);iniciarKmVendedor()}})();
 </script>
 </body>
 </html>
