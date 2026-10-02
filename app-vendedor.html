@@ -12,7 +12,7 @@
 <meta name="apple-mobile-web-app-title" content="Meta Vendedor">
 <link rel="apple-touch-icon" href="meta_logo.jpg">
 <link rel="icon" href="meta_logo.jpg">
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@600;700;800&display=swap" rel="stylesheet">
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
@@ -64,6 +64,62 @@
 
 .agenda-wrap{position:relative}
 #agenda-frame{width:100%;border:0;display:block;border-radius:14px;background:#fff}
+
+/* ===================== ORGANIZAÇÃO VISUAL (out/2026) ===================== */
+:root{--mono:'JetBrains Mono',ui-monospace,monospace}
+/* cor só com significado: some a faixa colorida decorativa dos cards */
+.kpi-card:before{display:none}
+.kpi-val{color:var(--text);font-family:var(--mono);letter-spacing:-.5px}
+.kpi-card[style*="dc2626"] .kpi-val{color:var(--red)}
+.kpi-card[style*="15803d"] .kpi-val{color:var(--G)}
+.kpi-sm:before{display:none}
+.kpi-sm-val{color:var(--text);font-family:var(--mono)}
+.qual-val{color:var(--text)!important;font-family:var(--mono)}
+.dash-lista-item>div:first-child{background:var(--GL)!important;color:var(--GD)!important}
+.kpi-card,.kpi-sm,.qual-card,.dash-lista-card,.rank-card{box-shadow:none}
+/* Início mais enxuto */
+.resumo-greeting.compacto{text-align:left;padding:4px 2px 2px}
+.resumo-greeting.compacto .resumo-emoji{display:none}
+.resumo-greeting.compacto .resumo-titulo{font-size:20px}
+#inicio-kpis{margin-top:12px}
+#inicio-kpis .kpi-card{padding:12px 14px;display:grid;grid-template-columns:auto 1fr;grid-template-rows:auto auto;column-gap:10px;align-items:center}
+#inicio-kpis .kpi-icon{grid-row:1/3;margin:0;font-size:20px}
+#inicio-kpis .kpi-val{font-size:22px}
+#inicio-kpis .kpi-lbl{margin-top:2px}
+#rs-lista-atrasadas,#rs-lista-insumos,#rs-lista-atualizacoes{margin-top:14px!important}
+#rs-lista-atrasadas:empty,#rs-lista-insumos:empty,#rs-lista-atualizacoes:empty{display:none}
+.rs-atraso-item{padding:10px 12px;margin-bottom:6px;box-shadow:none}
+#inicio-hub{grid-template-columns:repeat(4,1fr);gap:8px}
+#inicio-hub .tile{min-height:80px;padding:10px 4px 8px;box-shadow:none}
+#inicio-hub .tile .ti{font-size:21px}
+#inicio-hub .tile small{font-size:10px}
+.quick button{box-shadow:none}
+#inicio-quick .quick{grid-template-columns:repeat(3,1fr)}
+.banner{margin-top:8px}
+#inicio-agenda>div{margin-top:10px!important}
+/* lista de clientes: mais densa, avatar neutro, filtros numa linha */
+.chips{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none;margin-left:-16px;margin-right:-16px;padding:0 16px}
+.chips::-webkit-scrollbar{display:none}
+.chip{flex-shrink:0;white-space:nowrap}
+.card-cliente{padding:10px 12px;gap:10px;margin-bottom:7px;box-shadow:none;border-radius:12px}
+.card-avatar{width:38px!important;height:38px!important;border-radius:10px!important;font-size:12.5px!important;background:var(--GL)!important;color:var(--GD)!important}
+.card-cliente.needs-attention{border-left:3px solid var(--red)}
+.card-nome{font-size:13.5px}
+.card-prod{font-family:var(--mono);font-size:13.5px}
+.lista-header{margin-bottom:8px}
+/* telas internas: só a barra de voltar no topo */
+#app.tem-voltar .topbar{display:none}
+#app.tem-voltar .back-header{padding-top:var(--safe-top,0px);height:auto;min-height:50px}
+.back-title{font-size:15.5px;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+/* detalhe da propriedade: ferramentas em 3 colunas, excluir discreto */
+.detail-stat-val{font-family:var(--mono)}
+.action-grid{grid-template-columns:repeat(3,1fr);gap:8px}
+.action-tile{padding:12px 6px;gap:6px;box-shadow:none;border-radius:13px}
+.action-tile-icon{width:36px;height:36px;font-size:17px;border-radius:10px}
+.action-tile-label{font-size:11px}
+#btn-del-cli{background:none!important;border:none!important;color:var(--muted)!important;font-size:12.5px!important;font-weight:600!important;margin-top:18px;text-decoration:underline}
+/* topo */
+.topbar-title{font-size:15px;font-weight:800}
 </style>
 </head>
 <body>
@@ -130,15 +186,14 @@
       </div>
       <div id="inicio-alertas"></div>
       <div id="inicio-agenda"></div>
-      <div class="hub-tit">Ferramentas</div>
+      <div class="hub-tit">Mais ferramentas</div>
       <div class="hub" id="inicio-hub"></div>
-      <div class="hub-tit">Ações rápidas</div>
+      <div id="inicio-quick" style="display:none"><div class="hub-tit">Meu carro</div>
       <div class="quick">
-        <button onclick="novoClienteBtn()"><span>➕</span>Nova propriedade</button>
-        <button onclick="if(KMV.vk)abrirAbastCarro();else semCarro()"><span>⛽</span>Abasteci</button>
-        <button onclick="if(KMV.vk)abrirLancKm();else semCarro()"><span>📍</span>Lançar km</button>
-        <button onclick="if(KMV.vk)abrirServCarro();else semCarro()"><span>🔧</span>Serviço no carro</button>
-      </div>
+        <button onclick="abrirAbastCarro()"><span>⛽</span>Abasteci</button>
+        <button onclick="abrirLancKm()"><span>📍</span>Lançar km</button>
+        <button onclick="abrirServCarro()"><span>🔧</span>Serviço</button>
+      </div></div>
       <div class="kpi-grid" style="margin-top:14px">
         <div class="kpi-card" style="--kpi-color:#15803d">
           <div class="kpi-icon">🏡</div>
@@ -1608,13 +1663,13 @@ function abrirMais(){const sh=document.getElementById("mais-sh");sh.innerHTML='<
 function renderInicio(){
   const hub=document.getElementById("inicio-hub");if(!hub)return;const sr=document.getElementById("screen-resumo");if(sr&&sr.classList.contains("active"))document.getElementById("topbar-title").textContent="Início";const c=infoCarro(),e=infoEntregas();const n0=x=>Math.round(x).toLocaleString("pt-BR");
   const tiles=[
-    {ico:"🏡",t:"Clientes",sub:"carteira e visitas",acao:"navTo('lista','Propriedades')"},
-    {ico:"📅",t:"Agenda",sub:AGV.resumoCurto(),badge:AGV.badge(),acao:"abrirAgenda(AGV.hojeItens().length?'hoje':'semana')"},
-    {ico:"🚗",t:"Meu carro",sub:c?n0(c.r.km)+" km no mês":"sem carro vinculado",badge:c&&(c.pend||c.al.length)?(c.pend?"lançar km":c.al.length+" aviso(s)"):"",cor:c&&c.st.k==="acima"?"#dc2626":"",acao:"abrirCarro()"},
-    {ico:"🚚",t:"Entregas",sub:e?(e.cam?e.cam+" a caminho":e.ag+" aguardando"):"ração dos clientes",badge:e&&e.atr?e.atr+" atrasado(s)":"",acao:"navTo('cargas','Entregas de ração');renderCargasVendedor()"},
-    {ico:"📊",t:"Resultado",sub:"meu desempenho",acao:"navTo('dash','Meu Resultado');renderDash()"},
-    {ico:"🗂️",t:"Pipeline",sub:"prospectos",acao:"navTo('pipeline','Pipeline');renderPipelineVendedor()"}];
+    {ico:"🗂️",t:"Pipeline",sub:"prospectos",acao:"navTo('pipeline','Pipeline');renderPipelineVendedor()"},
+    {ico:"🚚",t:"Entregas",sub:e?(e.cam?e.cam+" a caminho":e.ag+" aguardando"):"ração",badge:e&&e.atr?e.atr+" atrasada"+(e.atr>1?"s":""):"",acao:"navTo('cargas','Entregas de ração');renderCargasVendedor()"},
+    c?{ico:"🚗",t:"Meu carro",sub:n0(c.r.km)+" km no mês",badge:c.pend?"lançar km":c.al.length?c.al.length+" aviso"+(c.al.length>1?"s":""):"",cor:c.st.k==="acima"?"#dc2626":"",acao:"abrirCarro()"}:null,
+    {ico:"🏅",t:"Equipe",sub:"ranking do mês",acao:"navTo('equipe','Equipe');renderEquipe()"},
+    c?null:{ico:"🎯",t:"Benchmarks",sub:"comparar fazendas",acao:"navTo('bench','Benchmarks');renderBench()"}].filter(Boolean);
   hub.innerHTML=tiles.map(x=>'<button class="tile" onclick="'+x.acao+'"><span class="ti">'+x.ico+'</span><b>'+x.t+'</b><small'+(x.cor?' style="color:'+x.cor+'"':'')+'>'+kmEsc(x.sub)+'</small>'+(x.badge?'<em>'+kmEsc(x.badge)+'</em>':'')+'</button>').join("");
+  const qk=document.getElementById("inicio-quick");if(qk)qk.style.display=c?"":"none";
   const al=document.getElementById("inicio-alertas");let h="";
   if(c&&c.pend)h+='<button class="banner amb" onclick="abrirLancKm()"><span>📍</span><span><b>Lance o km do carro desta semana</b><small>'+(c.r.ult?"última leitura "+c.r.ult.data.slice(8)+"/"+c.r.ult.data.slice(5,7):"primeiro lançamento")+'</small></span><i>›</i></button>';
   if(c)c.al.filter(a=>a.k==="venc").forEach(a=>{h+='<button class="banner red" onclick="abrirCarro()"><span>🔧</span><span><b>'+kmEsc(a.txt)+'</b><small>toque para ver o carro</small></span><i>›</i></button>'});
@@ -1678,6 +1733,25 @@ function abrirAgenda(view){
 }
 window.addEventListener("resize",tamanhoAgenda);
 (function(){const _ia=iniciarApp;iniciarApp=function(){_ia.apply(this,arguments);iniciarAgendaVendedor()}})();
+</script>
+<script>
+/* ===== Organização visual do app (out/2026) ===== */
+(function(){
+  /* Início: ordem = saudação → avisos → agenda de hoje → números → quem precisa de visita → carro → mais ferramentas */
+  const sr=document.getElementById("screen-resumo");if(!sr)return;
+  const g=id=>document.getElementById(id);
+  const kpi=sr.querySelector(".kpi-grid");if(kpi){kpi.id="inicio-kpis";kpi.style.marginTop=""}
+  const hubT=[...sr.querySelectorAll(".hub-tit")].find(x=>x.textContent==="Mais ferramentas");
+  const ordem=[sr.querySelector(".resumo-greeting"),g("inicio-alertas"),g("inicio-agenda"),kpi,g("rs-lista-atrasadas"),g("rs-lista-insumos"),g("rs-lista-atualizacoes"),g("inicio-quick"),hubT,g("inicio-hub")];
+  ordem.forEach(el=>{if(el)sr.appendChild(el)});
+  ["rs-cargas"].forEach(id=>{const el=g(id);if(el)el.style.display="none"});
+  [...sr.querySelectorAll(".btn-action")].forEach(b=>{if(/Ver Meus Clientes/.test(b.textContent))b.style.display="none"});
+  const sd=sr.querySelector(".resumo-greeting");if(sd)sd.classList.add("compacto");
+})();
+/* telas internas (detalhe, visita, dieta...) escondem a barra superior: fica só a barra com "voltar" */
+(function(){const ap=document.getElementById("app");const _ss=showScreen,_nt=navTo;
+  showScreen=function(n,t){_ss(n,t);const bh=document.getElementById("back-header");ap.classList.toggle("tem-voltar",bh&&bh.style.display==="flex")};
+  navTo=function(n,t){_nt(n,t);ap.classList.remove("tem-voltar")}})();
 </script>
 </body>
 </html>
