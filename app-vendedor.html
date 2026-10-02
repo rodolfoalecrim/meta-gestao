@@ -1453,8 +1453,45 @@ function kmCarroMes(lanc,mes){
 const KMC={iso(d){return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0")},hoje(){return KMC.iso(new Date())},add(s,n){const d=new Date(s+"T12:00:00");d.setDate(d.getDate()+n);return KMC.iso(d)},dif(a,b){return Math.round((new Date(a+"T12:00:00")-new Date(b+"T12:00:00"))/864e5)},segunda(){const d=new Date();const w=(d.getDay()+6)%7;d.setDate(d.getDate()-w);return KMC.iso(d)}};
 function metaCarro(v,metas,mes,vk){const m=metas&&metas[mes]&&metas[mes][vk];return m!=null?+m:(+v.metaPadrao||null)}
 function statusKm(km,proj,meta){if(!meta)return{k:"sem",txt:"sem meta"};const p=(proj!=null?proj:km)/meta;if(km>meta)return{k:"acima",txt:"passou da meta"};if(p>1.1)return{k:"acima",txt:"vai passar da meta"};if(p>1)return{k:"atencao",txt:"no limite"};return{k:"ok",txt:"dentro da meta"}}
+/* ---- manutenção, pneus e combustível dos carros ---- */
+const PLANO_CARRO_PADRAO={revisao:{nome:"Revisão (óleo e filtros)",cadaKm:10000},rodizio:{nome:"Rodízio de pneus",cadaKm:10000},alinhamento:{nome:"Alinhamento e balanceamento",cadaKm:10000}};
+const TIPOS_SERV_CARRO={revisao:"Revisão (óleo e filtros)",rodizio:"Rodízio de pneus",alinhamento:"Alinhamento e balanceamento",pneus:"Troca de pneus",freios:"Freios",outro:"Outro"};
+function kmAtualCarro(lanc,serv){let m=0;Object.values(lanc||{}).forEach(x=>{if(x.tipo!=="total")m=Math.max(m,+x.km||0)});Object.values(serv||{}).forEach(x=>{m=Math.max(m,+x.km||0)});return m}
+/* km/L de tanque cheio a tanque cheio; intervalos absurdos (lançamento esquecido) são descartados */
+function consumoCarro(lanc,ini,fim){
+  const A=Object.values(lanc||{}).filter(x=>x.tipo==="abast"&&x.km&&x.litros).sort((a,b)=>a.km-b.km);let ult=null,l=0;const iv=[];
+  A.forEach(a=>{if(!ult){if(a.cheio!==false)ult=a;return}l+=+a.litros;if(a.cheio!==false){const km=a.km-ult.km;if(km>0&&km/l>3&&km/l<30)iv.push({km,litros:l,kml:km/l,data:a.data});l=0;ult=a}});
+  const dentro=x=>(!ini||x.data>=ini)&&(!fim||x.data<=fim);const f=iv.filter(dentro),all=A.filter(dentro);
+  const km=f.reduce((s,x)=>s+x.km,0),li=f.reduce((s,x)=>s+x.litros,0);const kmT=iv.reduce((s,x)=>s+x.km,0),liT=iv.reduce((s,x)=>s+x.litros,0);
+  return{kml:li?km/li:null,kmlRef:liT?kmT/liT:null,iv,ultIv:iv[iv.length-1],litros:all.reduce((s,x)=>s+(+x.litros||0),0),valor:all.reduce((s,x)=>s+(+x.valor||0),0),n:all.length,ultAbast:A[A.length-1]};
+}
+function planoCarro(serv,kmAtual,plano){
+  plano=plano||PLANO_CARRO_PADRAO;const L=Object.values(serv||{});
+  return Object.entries(plano).map(([tipo,it])=>{
+    const ult=L.filter(x=>x.km&&(x.tipo===tipo||(x.itens&&x.itens[tipo])||(tipo!=="revisao"&&x.tipo==="pneus"&&x.posicao==="todos"))).sort((a,b)=>b.km-a.km)[0];
+    if(!ult)return{tipo,it,k:"sem",txt:"sem registro"};const prox=(+ult.km)+(+it.cadaKm);const rest=prox-kmAtual;
+    return{tipo,it,ult,prox,rest,k:rest<0?"venc":rest<=1000?"prox":"ok",txt:rest<0?"passou "+(-rest).toLocaleString("pt-BR")+" km":"em "+rest.toLocaleString("pt-BR")+" km"};
+  });
+}
+/* pneus: cada troca fecha o jogo anterior daquela posição e dá o rendimento em km */
+function pneusCarro(serv,kmAtual){
+  const T=Object.values(serv||{}).filter(x=>x.tipo==="pneus"&&x.km).sort((a,b)=>a.km-b.km);const pos={dianteiros:null,traseiros:null};const jogos=[];
+  T.forEach(t=>{(t.posicao==="todos"?["dianteiros","traseiros"]:[t.posicao]).forEach(p=>{if(!(p in pos))return;if(pos[p])jogos.push({pos:p,km:t.km-pos[p].km,ini:pos[p],fim:t});pos[p]=t})});
+  const atual=Object.entries(pos).filter(([,v])=>v).map(([p,v])=>({pos:p,desde:v,rodou:Math.max(0,kmAtual-v.km)}));
+  const media=jogos.length?jogos.reduce((s,j)=>s+j.km,0)/jogos.length:null;
+  const custo=T.reduce((s,x)=>s+(+x.valor||0),0);
+  return{atual,jogos,media,custo,trocas:T};
+}
+function alertasCarro(lanc,serv,plano){
+  const out=[];const km=kmAtualCarro(lanc,serv);if(!km)return out;
+  planoCarro(serv,km,plano).forEach(p=>{if(p.k==="venc"||p.k==="prox")out.push({k:p.k,txt:p.it.nome+" "+p.txt})});
+  const pn=pneusCarro(serv,km);pn.atual.forEach(a=>{const lim=pn.media?pn.media*0.9:45000;if(a.rodou>=lim)out.push({k:"prox",txt:"Pneus "+a.pos+" já rodaram "+a.rodou.toLocaleString("pt-BR")+" km"+(pn.media?" (média dos jogos: "+Math.round(pn.media).toLocaleString("pt-BR")+")":"")+" — verificar desgaste"})});
+  const c=consumoCarro(lanc);if(c.ultAbast&&km-c.ultAbast.km>900)out.push({k:"prox",txt:"Rodou "+(km-c.ultAbast.km).toLocaleString("pt-BR")+" km sem abastecimento lançado"});
+  if(c.ultIv&&c.kmlRef&&c.iv.length>=3&&c.ultIv.kml<c.kmlRef*0.85)out.push({k:"prox",txt:"Último tanque fez "+c.ultIv.kml.toFixed(1).replace(".",",")+" km/L (média "+c.kmlRef.toFixed(1).replace(".",",")+")"});
+  return out;
+}
 
-const KMV={vk:null,v:null,lanc:{},metas:{},iniciado:false};
+const KMV={vk:null,v:null,lanc:{},metas:{},serv:{},plano:null,iniciado:false};
 function kmEsc(s){return String(s==null?"":s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]))}
 function iniciarKmVendedor(){
   if(KMV.iniciado||!usuarioAtual)return;KMV.iniciado=true;const em=(usuarioAtual.email||"").toLowerCase();
@@ -1462,13 +1499,16 @@ function iniciarKmVendedor(){
     KMV.vk=hit[0];KMV.v=hit[1];
     db.ref("km_lancamentos/"+KMV.vk).on("value",x=>{KMV.lanc=x.val()||{};renderKmVendedor()},e=>console.warn("km",e.message));
     db.ref("km_metas").once("value").then(x=>{KMV.metas=x.val()||{};renderKmVendedor()}).catch(()=>{});
+    db.ref("veiculos_servicos/"+KMV.vk).on("value",x=>{KMV.serv=x.val()||{};renderKmVendedor()},e=>console.warn("serv",e.message));
+    db.ref("veiculos_config/plano").once("value").then(x=>{KMV.plano=x.val();renderKmVendedor()}).catch(()=>{});
   }).catch(e=>console.warn("veiculos",e.message));
 }
 function renderKmVendedor(){
   const el=document.getElementById("rs-km");if(!el)return;if(!KMV.vk){el.innerHTML="";return}
   const mes=KMC.hoje().slice(0,7);const r=kmCarroMes(KMV.lanc,mes);const meta=metaCarro(KMV.v,KMV.metas,mes,KMV.vk);const st=statusKm(r.km,r.proj,meta);
-  const pend=!r.ult||r.ult.data<KMC.segunda();const pct=meta?Math.min(100,r.km/meta*100):0;const cor=st.k==="acima"?"#dc2626":st.k==="atencao"?"#d97706":"#15803d";const n0=x=>Math.round(x).toLocaleString("pt-BR");
-  el.innerHTML='<div style="background:#fff;border:1px solid '+(pend?"#fcd34d":"var(--border)")+';border-radius:14px;padding:14px;box-shadow:var(--shadow)"><div style="display:flex;align-items:center;gap:8px;margin-bottom:8px"><div style="font-size:14px;font-weight:800;flex:1">🚗 Km do carro · '+kmEsc(KMV.v.placa)+'</div><div style="font-size:11px;font-weight:800;color:'+cor+'">'+st.txt+'</div></div><div style="display:flex;align-items:baseline;gap:6px"><span style="font-size:22px;font-weight:900">'+n0(r.km)+'</span><span style="font-size:12px;color:var(--muted)">km em '+new Date().toLocaleDateString("pt-BR",{month:"long"})+(meta?" de "+n0(meta):"")+'</span></div>'+(meta?'<div style="height:8px;border-radius:5px;background:#eef2f0;overflow:hidden;margin:8px 0 4px"><div style="height:100%;width:'+pct+'%;background:'+cor+'"></div></div>':"")+'<div style="font-size:11.5px;color:var(--muted)">'+(r.proj!=null?"No ritmo atual fecha o mês com ~"+n0(r.proj)+" km":r.ult?"Projeção do mês aparece a partir de 7 dias de leituras":"")+(r.ult?" · última leitura "+r.ult.data.slice(8)+"/"+r.ult.data.slice(5,7)+": "+n0(r.ult.km)+" km":"Faça o primeiro lançamento: ele vira o ponto de partida.")+'</div><button onclick="abrirLancKm()" style="width:100%;margin-top:12px;border:none;border-radius:12px;padding:12px;font-size:14px;font-weight:800;font-family:inherit;cursor:pointer;'+(pend?"background:#d97706;color:#fff":"background:#f1f5f9;color:var(--text)")+'">'+(pend?"Lançar km desta semana":"Atualizar km")+'</button></div>';
+  const pend=!r.ult||r.ult.data<KMC.segunda();const kmA=kmAtualCarro(KMV.lanc,KMV.serv);const c=consumoCarro(KMV.lanc);const pls=planoCarro(KMV.serv,kmA,KMV.plano||PLANO_CARRO_PADRAO).filter(p=>p.k!=="sem").sort((a,b)=>a.rest-b.rest);const prox=pls[0];const al=alertasCarro(KMV.lanc,KMV.serv,KMV.plano||PLANO_CARRO_PADRAO).filter(a=>!/sem abastecimento/.test(a.txt)||true);
+  const bt=(fn,l,dest)=>'<button onclick="'+fn+'" style="border:none;border-radius:11px;padding:11px 4px;font-size:12.5px;font-weight:800;font-family:inherit;cursor:pointer;'+(dest?"background:#d97706;color:#fff":"background:#f1f5f9;color:var(--text)")+'">'+l+'</button>';const pct=meta?Math.min(100,r.km/meta*100):0;const cor=st.k==="acima"?"#dc2626":st.k==="atencao"?"#d97706":"#15803d";const n0=x=>Math.round(x).toLocaleString("pt-BR");
+  el.innerHTML='<div style="background:#fff;border:1px solid '+(pend?"#fcd34d":"var(--border)")+';border-radius:14px;padding:14px;box-shadow:var(--shadow)"><div style="display:flex;align-items:center;gap:8px;margin-bottom:8px"><div style="font-size:14px;font-weight:800;flex:1">🚗 Km do carro · '+kmEsc(KMV.v.placa)+'</div><div style="font-size:11px;font-weight:800;color:'+cor+'">'+st.txt+'</div></div><div style="display:flex;align-items:baseline;gap:6px"><span style="font-size:22px;font-weight:900">'+n0(r.km)+'</span><span style="font-size:12px;color:var(--muted)">km em '+new Date().toLocaleDateString("pt-BR",{month:"long"})+(meta?" de "+n0(meta):"")+'</span></div>'+(meta?'<div style="height:8px;border-radius:5px;background:#eef2f0;overflow:hidden;margin:8px 0 4px"><div style="height:100%;width:'+pct+'%;background:'+cor+'"></div></div>':"")+'<div style="font-size:11.5px;color:var(--muted)">'+(r.proj!=null?"No ritmo atual fecha o mês com ~"+n0(r.proj)+" km":r.ult?"Projeção do mês aparece a partir de 7 dias de leituras":"")+(r.ult?" · última leitura "+r.ult.data.slice(8)+"/"+r.ult.data.slice(5,7)+": "+n0(r.ult.km)+" km":"Faça o primeiro lançamento: ele vira o ponto de partida.")+'</div><div style="font-size:11.5px;color:var(--muted);margin-top:6px">'+[c.kmlRef?"Média "+c.kmlRef.toFixed(1).replace(".",",")+" km/L":"",prox&&prox.k==="ok"?"Próxima: "+prox.it.nome.split(" (")[0].toLowerCase()+" "+prox.txt:""].filter(Boolean).join(" · ")+'</div>'+(al.length?'<div style="margin-top:8px;background:#fffbeb;color:#92400e;border-radius:9px;padding:7px 9px;font-size:12px;font-weight:600">'+al.map(a=>kmEsc(a.txt)).join("<br>")+'</div>':"")+'<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin-top:12px">'+bt("abrirAbastCarro()","⛽ Abasteci",false)+bt("abrirServCarro()","🔧 Serviço",false)+bt("abrirLancKm()",pend?"Lançar km":"Km",pend)+'</div></div>';
 }
 function abrirLancKm(){
   const r=kmCarroMes(KMV.lanc,KMC.hoje().slice(0,7));let ov=document.getElementById("kmv-ov");if(ov)ov.remove();
@@ -1477,6 +1517,20 @@ function abrirLancKm(){
   ov.onclick=e=>{if(e.target===ov)ov.remove()};document.body.appendChild(ov);const i=document.getElementById("kmv-k");i.focus();
   i.oninput=()=>{const v=parseInt(i.value,10);document.getElementById("kmv-p").textContent=r.ult&&v>r.ult.km?"Rodou "+(v-r.ult.km).toLocaleString("pt-BR")+" km desde "+r.ult.data.slice(8)+"/"+r.ult.data.slice(5,7):""};
 }
+function kmOverlay(titulo,sub,corpo,acao){let ov=document.getElementById("kmv-ov");if(ov)ov.remove();ov=document.createElement("div");ov.id="kmv-ov";ov.style.cssText="position:fixed;inset:0;background:rgba(15,23,42,.5);z-index:9999;display:flex;align-items:flex-end;justify-content:center";
+  const IN="width:100%;border:1px solid var(--border);border-radius:12px;padding:12px;font-size:16px;font-family:inherit;margin-top:5px;box-sizing:border-box;background:#fff";
+  ov.innerHTML='<div style="background:#fff;width:100%;max-width:520px;max-height:90vh;overflow:auto;border-radius:20px 20px 0 0;padding:20px 18px calc(20px + env(safe-area-inset-bottom,0px))"><div style="font-size:18px;font-weight:800">'+titulo+'</div><div style="font-size:13px;color:var(--muted);margin:4px 0 6px">'+sub+'</div>'+corpo.replace(/INSTYLE/g,IN)+'<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:16px"><button onclick="document.getElementById(\'kmv-ov\').remove()" style="border:1px solid var(--border);background:#fff;border-radius:12px;padding:13px;font-weight:700;font-family:inherit">Cancelar</button><button onclick="'+acao+'" style="border:none;background:var(--G);color:#fff;border-radius:12px;padding:13px;font-weight:800;font-family:inherit">Salvar</button></div></div>';
+  ov.onclick=e=>{if(e.target===ov)ov.remove()};document.body.appendChild(ov)}
+const LBL='style="display:block;font-size:13px;font-weight:700;color:var(--muted);margin-top:12px"';
+function abrirAbastCarro(){const kmA=kmAtualCarro(KMV.lanc,KMV.serv);
+  kmOverlay("Abastecimento",kmEsc(KMV.v.placa)+(kmA?" · último km registrado: "+kmA.toLocaleString("pt-BR"):""),'<label '+LBL+'>Km no painel</label><input id="ka-k" type="number" inputmode="numeric" style="INSTYLE"><div style="display:grid;grid-template-columns:1fr 1fr;gap:8px"><div><label '+LBL+'>Litros</label><input id="ka-l" type="number" inputmode="decimal" step="0.01" style="INSTYLE"></div><div><label '+LBL+'>Valor R$ (opcional)</label><input id="ka-v" type="number" inputmode="decimal" step="0.01" style="INSTYLE"></div></div><label style="display:flex;gap:8px;align-items:center;margin-top:12px;font-weight:600;font-size:14px"><input type="checkbox" id="ka-c" checked style="width:20px;height:20px"> Completei o tanque</label><div style="font-size:12px;color:var(--muted);margin-top:4px">Marque quando encher até a boca: é assim que o sistema calcula o km/L.</div>',"salvarAbastCarro()")}
+function salvarAbastCarro(){const km=parseInt(document.getElementById("ka-k").value,10),l=parseFloat(document.getElementById("ka-l").value),v=parseFloat(document.getElementById("ka-v").value)||null;const kmA=kmAtualCarro(KMV.lanc,KMV.serv);
+  if(!km||!l){showToast("Informe km e litros",true);return}if(kmA&&km<kmA){showToast("O km precisa ser maior que o último registrado ("+kmA.toLocaleString("pt-BR")+")",true);return}if(l>90&&!confirm(l+" litros num carro? Está certo?"))return;
+  db.ref("km_lancamentos/"+KMV.vk).push({tipo:"abast",data:KMC.hoje(),km,litros:l,valor:v,cheio:document.getElementById("ka-c").checked,ts:Date.now(),por:(usuarioAtual.email||"").toLowerCase()}).then(()=>{document.getElementById("kmv-ov").remove();const c=consumoCarro(Object.assign({},KMV.lanc));showToast("Abastecimento lançado"+(c.ultIv?" · "+c.ultIv.kml.toFixed(1).replace(".",",")+" km/L":""))}).catch(e=>showToast("Não salvou: "+e.message,true))}
+function abrirServCarro(){const kmA=kmAtualCarro(KMV.lanc,KMV.serv);
+  kmOverlay("Manutenção ou pneus",kmEsc(KMV.v.placa),'<label '+LBL+'>O que foi feito</label><select id="ks-t" style="INSTYLE" onchange="document.getElementById(\'ks-pn\').style.display=this.value===\'pneus\'?\'\':\'none\'">'+Object.entries(TIPOS_SERV_CARRO).map(([t,l])=>'<option value="'+t+'">'+l+'</option>').join("")+'</select><div id="ks-pn" style="display:none"><label '+LBL+'>Quais pneus</label><select id="ks-p" style="INSTYLE"><option value="todos">Os 4 (jogo completo)</option><option value="dianteiros">Dianteiros</option><option value="traseiros">Traseiros</option></select></div><div style="display:grid;grid-template-columns:1fr 1fr;gap:8px"><div><label '+LBL+'>Km no painel</label><input id="ks-k" type="number" inputmode="numeric" value="'+(kmA||"")+'" style="INSTYLE"></div><div><label '+LBL+'>Valor R$</label><input id="ks-v" type="number" inputmode="decimal" step="0.01" style="INSTYLE"></div></div><label '+LBL+'>Data</label><input id="ks-d" type="date" value="'+KMC.hoje()+'" style="INSTYLE"><label '+LBL+'>Oficina / observação</label><input id="ks-o" style="INSTYLE"><div style="font-size:12px;color:var(--muted);margin-top:6px">Primeiro lançamento? Registre também a última revisão e a última troca de pneus que você lembra, com o km da época.</div>',"salvarServCarro()")}
+function salvarServCarro(){const d={tipo:document.getElementById("ks-t").value,km:parseInt(document.getElementById("ks-k").value,10),valor:parseFloat(document.getElementById("ks-v").value)||null,data:document.getElementById("ks-d").value||KMC.hoje(),obs:document.getElementById("ks-o").value.trim(),ts:Date.now(),por:(usuarioAtual.email||"").toLowerCase()};if(d.tipo==="pneus")d.posicao=document.getElementById("ks-p").value;
+  if(!d.km){showToast("Informe o km",true);return}db.ref("veiculos_servicos/"+KMV.vk).push(d).then(()=>{document.getElementById("kmv-ov").remove();showToast("Serviço registrado")}).catch(e=>showToast("Não salvou: "+e.message,true))}
 function salvarLancKm(){
   const km=parseInt(document.getElementById("kmv-k").value,10);const r=kmCarroMes(KMV.lanc,KMC.hoje().slice(0,7));if(!km){showToast("Informe o km do painel",true);return}
   if(r.ult&&km<r.ult.km){showToast("O km precisa ser maior que a última leitura ("+Math.round(r.ult.km).toLocaleString("pt-BR")+")",true);return}
