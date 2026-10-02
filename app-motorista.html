@@ -60,6 +60,16 @@ main{flex:1;padding:14px 14px calc(30px + env(safe-area-inset-bottom,0px));max-w
 .chip{border:1px solid var(--border);background:#fff;border-radius:999px;padding:9px 13px;font-size:14px;font-weight:600}
 #toast{position:fixed;left:50%;bottom:calc(26px + env(safe-area-inset-bottom,0px));transform:translateX(-50%) translateY(90px);background:var(--G);color:#fff;padding:12px 18px;border-radius:12px;font-weight:700;z-index:99;transition:transform .25s;max-width:90vw;text-align:center}
 #toast.on{transform:translateX(-50%) translateY(0)}
+
+.lbl{display:block;font-size:13px;font-weight:700;color:var(--muted);margin:12px 0 5px}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.ckl{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.ck{display:flex;justify-content:space-between;align-items:center;gap:6px;border:1px solid var(--border);background:#fff;border-radius:11px;padding:11px 12px;font-size:13.5px;font-weight:600;text-align:left}
+.ck b{font-size:12px;color:var(--G)}.ck.bad{border-color:#fca5a5;background:var(--redL)}.ck.bad b{color:var(--red)}
+.chk{display:flex;align-items:center;gap:8px;margin-top:12px;font-weight:600;font-size:14px}.chk input{width:20px;height:20px}
+.foto{display:block;margin-top:12px;border:1.5px dashed #cbd5e1;border-radius:12px;padding:12px;text-align:center;font-weight:700;color:var(--muted);cursor:pointer}
+.foto input{display:none}.foto img{display:none;max-width:100%;max-height:180px;margin:8px auto 0;border-radius:8px}
+.chip.on{background:var(--GD);color:#fff;border-color:var(--GD)}
 </style>
 </head>
 <body>
@@ -75,10 +85,11 @@ main{flex:1;padding:14px 14px calc(30px + env(safe-area-inset-bottom,0px));max-w
 const firebaseConfig={apiKey:"AIzaSyClpsHjO8OLThD--hDOfg7Fg3t6hhuM-To",authDomain:"meta-gestao-608d7.firebaseapp.com",databaseURL:"https://meta-gestao-608d7-default-rtdb.firebaseio.com",projectId:"meta-gestao-608d7",storageBucket:"meta-gestao-608d7.firebasestorage.app",messagingSenderId:"318618053627",appId:"1:318618053627:web:ae289200bd1e87be29395e"};
 firebase.initializeApp(firebaseConfig);
 const auth=firebase.auth(),db=firebase.database();
-let U=null,NOME="",CARGAS={},CLI={},ABERTA=null;
+let U=null,NOME="",CARGAS={},CLI={},ABERTA=null,CAMS={};
 const QK="meta_motorista_fila",CK="meta_motorista_cache";
 const STATUS_TXT={montagem:"Em montagem",fechada:"Aguardando carregamento",carregada:"Pronta para sair",a_caminho:"A caminho",entregue:"Entregue"};
 function esc(s){return String(s==null?"":s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]))}
+function norm(s){return String(s||"").normalize("NFD").replace(/[\u0300-\u036f]/g,"").toUpperCase().replace(/\s+/g,"")}
 function iso(d){return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0")}
 function hoje(){return iso(new Date())}
 function addDias(s,n){const d=new Date(s+"T12:00:00");d.setDate(d.getDate()+n);return iso(d)}
@@ -101,7 +112,7 @@ function enviar(up,msg){
   if(!navigator.onLine){const q=fila();q.push(up);setFila(q);net();return}
   db.ref().update(up).catch(e=>{if(/permission/i.test(e.message)){toast("Sem permissão para salvar. Fale com a logística.",true);return}const q=fila();q.push(up);setFila(q);net()});
 }
-async function sincronizar(){const q=fila();if(!q.length||!navigator.onLine)return;let ok=0;for(const up of q){try{await db.ref().update(up);ok++}catch(e){break}}setFila(q.slice(ok));net();if(ok)toast(ok+" registro"+(ok>1?"s":"")+" enviado"+(ok>1?"s":""))}
+async function sincronizar(){const q=fila();if(!q.length||!navigator.onLine)return;let ok=0;for(const up of q){try{await db.ref().update(up);ok++}catch(e){if(/permission/i.test(e.message)){console.warn("descartado (sem permissão ou já enviado)",e.message);ok++;continue}break}}setFila(q.slice(ok));net();if(ok)toast(ok+" registro"+(ok>1?"s":"")+" enviado"+(ok>1?"s":""))}
 function net(){const e=document.getElementById("net");const n=fila().length;e.className="net"+(navigator.onLine?"":" off");e.textContent=navigator.onLine?(n?"enviando "+n:"online"):"sem sinal"+(n?" · "+n+" na fila":"")}
 window.addEventListener("online",()=>{net();sincronizar()});window.addEventListener("offline",net);
 function salvarCache(){try{localStorage.setItem(CK,JSON.stringify({CARGAS,CLI}))}catch(e){}}
@@ -129,6 +140,8 @@ function iniciar(){
     Object.values(CARGAS).forEach(c=>paradas(c).forEach(id=>{if(!CLI["_l"+id]){CLI["_l"+id]=1;db.ref("cargas_clientes/"+id).on("value",x=>{const d=x.val()||{};CLI[id]={nome:d.nome,lat:d.lat,lng:d.lng,localObs:d.localObs,cidade:d.cidade};salvarCache();render()})}}));
     salvarCache();render();
   });
+  db.ref("cargas_caminhoes").on("value",x=>{CAMS=x.val()||{};try{localStorage.setItem("meta_mot_cams",JSON.stringify(CAMS))}catch(e){}});
+  try{CAMS=JSON.parse(localStorage.getItem("meta_mot_cams")||"{}")}catch(e){}
   sincronizar();
 }
 
@@ -140,7 +153,10 @@ function render(){
   ABERTA=null;document.getElementById("tt").textContent="Olá, "+NOME.split(" ")[0];
   const l=Object.entries(CARGAS).sort((a,b)=>(a[1].data||"").localeCompare(b[1].data||""));
   const ativas=l.filter(([,c])=>c.status!=="entregue"),feitas=l.filter(([,c])=>c.status==="entregue").reverse();
-  let h=ativas.length?'<div class="h2">Para entregar</div>'+ativas.map(([k,c])=>cardLista(k,c)).join(""):'<div class="empty"><b>Nenhuma carga para você agora</b>Quando a logística montar uma carga no seu nome, ela aparece aqui.</div>';
+  let h='<div class="acts" style="margin:0 0 4px"><button class="btn btn-o btn-sm" style="width:100%" onclick="abastecer()">⛽ Abastecimento</button><button class="btn btn-o btn-sm" style="width:100%" onclick="despesa()">🧾 Despesa</button></div>';
+  h+=ativas.length?'<div class="h2">Para entregar</div>'+ativas.map(([k,c])=>cardLista(k,c)).join(""):'<div class="empty"><b>Nenhuma carga para você agora</b>Quando a logística montar uma carga no seu nome, ela aparece aqui.</div>';
+  const semKm=feitas.filter(([,c])=>c.saidaEm&&c.kmSaida&&!c.kmChegada);
+  semKm.forEach(([k,c])=>{h+='<div class="card" style="border-color:#fcd34d;background:var(--amberL)"><b>Voltou para a fábrica?</b><div class="s" style="font-size:13px;color:#78350f;margin:4px 0 10px">Carga de '+fDataL(c.data)+' · saiu com '+c.kmSaida.toLocaleString("pt-BR")+' km no painel.</div><button class="btn btn-d btn-sm" style="width:100%" onclick="chegada(\''+k+'\')">Informar km de chegada</button></div>'});
   if(feitas.length)h+='<div class="h2">Entregues nos últimos dias</div>'+feitas.map(([k,c])=>cardLista(k,c)).join("");
   m.innerHTML=h;
 }
@@ -163,7 +179,7 @@ function renderCarga(m,k,c){
     h+='<div class="card stop'+(done?" done":"")+'"><div class="ch"><div class="n">'+(i+1)+'</div><div class="t"><b>'+esc(bs[0].cliente)+'</b><div class="s">'+esc(bs[0].cidade||cl.cidade||"")+'</div></div><div class="tot">'+t(kgC)+'</div></div>';
     if(cl.localObs)h+='<div class="note">'+esc(cl.localObs)+'</div>';
     h+='<div style="margin-top:10px">'+bs.map(b=>'<div class="cx"><span>CX'+b.cx+' · '+esc(b.produto)+'</span><b>'+t(b.kg)+'</b></div>').join("")+'</div>';
-    if(done)h+='<div style="margin-top:10px;font-weight:700;color:var(--G)">Entregue às '+hora(e.ts)+(e.obs?' — <span style="font-weight:500">'+esc(e.obs)+'</span>':"")+'</div>'+(Date.now()-e.ts<15*60e3?'<button class="btn btn-o btn-sm" style="margin-top:8px" onclick="desfazer(\''+k+'\',\''+id+'\')">Desfazer</button>':"");
+    if(done)h+='<div style="margin-top:10px;font-weight:700;color:var(--G)">Entregue às '+hora(e.ts)+(e.recebedor?' para '+esc(e.recebedor):"")+(e.temFoto?" · 📷":"")+(e.obs?' — <span style="font-weight:500">'+esc(e.obs)+'</span>':"")+'</div>'+(Date.now()-e.ts<15*60e3?'<button class="btn btn-o btn-sm" style="margin-top:8px" onclick="desfazer(\''+k+'\',\''+id+'\')">Desfazer</button>':"");
     else h+='<div class="acts">'+(cl.lat?'<a class="btn btn-o btn-sm" style="width:100%;text-decoration:none" href="https://www.google.com/maps/dir/?api=1&travelmode=driving&destination='+cl.lat+','+cl.lng+'" target="_blank" rel="noopener">Navegar</a>':'<button class="btn btn-o btn-sm" style="width:100%" onclick="fixar(\''+id+'\')">Fixar localização aqui</button>')+(c.saidaEm?'<button class="btn btn-g btn-sm" style="width:100%" onclick="entregar(\''+k+'\',\''+id+'\')">Entregue</button>':'<button class="btn btn-g btn-sm" style="width:100%;opacity:.45" disabled title="Confirme a saída da fábrica primeiro">Entregue</button>')+'</div>'+(cl.lat?'<button style="background:none;border:none;color:var(--muted);font-size:12.5px;margin-top:8px;text-decoration:underline" onclick="fixar(\''+id+'\',1)">Localização errada? Corrigir para onde estou</button>':"");
     h+='</div>';
   });
@@ -171,16 +187,70 @@ function renderCarga(m,k,c){
 }
 
 /* ---------- ações ---------- */
-function sair(k){const c=CARGAS[k];if(c.status!=="carregada"&&!confirm("Nem todas as caixas estão marcadas como carregadas. Confirmar a saída assim mesmo?"))return;const up={};up["cargas/"+k+"/saidaEm"]=Date.now();up["cargas/"+k+"/status"]="a_caminho";enviar(up,"Saída registrada. Boa viagem!")}
+const CHECK=[["pneus","Pneus"],["luzes","Luzes e setas"],["freios","Freios"],["vazamento","Sem vazamento"],["documentos","Documentos no caminhão"],["lonas","Lonas e tampas das caixas"]];
+function ultimoKm(placa){let m=0;Object.values(CARGAS).forEach(c=>{if(norm(c.placa)===norm(placa)){m=Math.max(m,+c.kmChegada||0,+c.kmSaida||0)}});return m}
+function sair(k){
+  const c=CARGAS[k];window._ck={};const ult=ultimoKm(c.placa);
+  abrir('<h3>Saída da fábrica</h3>'+(c.status!=="carregada"?'<div class="note">A logística ainda não marcou todas as caixas como carregadas.</div>':"")+'<label class="lbl">Km no painel do caminhão</label><input class="inp num" id="km" type="number" inputmode="numeric" placeholder="'+(ult?"último: "+ult.toLocaleString("pt-BR"):"ex: 412350")+'"><label class="lbl">Checagem rápida — toque no que tiver problema</label><div class="ckl">'+CHECK.map(([k2,l])=>'<button class="ck" id="ck-'+k2+'" onclick="toggleCk(\''+k2+'\')"><span>'+l+'</span><b>OK</b></button>').join("")+'</div><textarea class="inp" id="ckobs" rows="2" placeholder="Descreva o problema" style="display:none;margin-top:8px"></textarea><div class="acts"><button class="btn btn-o" onclick="fechar()">Cancelar</button><button class="btn btn-g" onclick="confirmarSaida(\''+k+'\')">Confirmar saída</button></div>');
+}
+function toggleCk(k){window._ck[k]=!window._ck[k];const b=document.getElementById("ck-"+k);b.classList.toggle("bad",!!window._ck[k]);b.querySelector("b").textContent=window._ck[k]?"Problema":"OK";document.getElementById("ckobs").style.display=Object.values(window._ck).some(Boolean)?"":"none"}
+function confirmarSaida(k){
+  const c=CARGAS[k];const km=parseInt(document.getElementById("km").value,10);const ult=ultimoKm(c.placa);
+  if(!km){toast("Informe o km do painel",true);return}
+  if(ult&&km<ult&&!confirm("O km informado ("+km.toLocaleString("pt-BR")+") é menor que o último registrado ("+ult.toLocaleString("pt-BR")+"). Está certo?"))return;
+  const prob=Object.keys(window._ck).filter(x=>window._ck[x]);const obs=document.getElementById("ckobs").value.trim();
+  if(prob.length&&!obs){toast("Descreva o problema encontrado",true);return}
+  const ck={ts:Date.now(),por:NOME,itens:{}};CHECK.forEach(([x])=>ck.itens[x]=prob.includes(x)?"problema":"ok");if(obs)ck.obs=obs;
+  const up={};up["cargas/"+k+"/saidaEm"]=Date.now();up["cargas/"+k+"/status"]="a_caminho";up["cargas/"+k+"/kmSaida"]=km;up["cargas/"+k+"/checklist"]=ck;
+  fechar();enviar(up,prob.length?"Saída registrada. A logística foi avisada do problema.":"Saída registrada. Boa viagem!");
+}
+function chegada(k){
+  const c=CARGAS[k];abrir('<h3>Chegada na fábrica</h3><div style="color:var(--muted);font-size:14px">Saiu com '+(+c.kmSaida).toLocaleString("pt-BR")+' km.</div><label class="lbl">Km no painel agora</label><input class="inp num" id="kmc" type="number" inputmode="numeric"><div class="acts"><button class="btn btn-o" onclick="fechar()">Cancelar</button><button class="btn btn-g" onclick="confirmarChegada(\''+k+'\')">Salvar</button></div>');
+}
+function confirmarChegada(k){const c=CARGAS[k];const km=parseInt(document.getElementById("kmc").value,10);if(!km){toast("Informe o km",true);return}const rod=km-(+c.kmSaida||0);if(rod<=0){toast("O km de chegada precisa ser maior que o de saída",true);return}if(rod>1500&&!confirm("Deu "+rod.toLocaleString("pt-BR")+" km rodados nesta carga. Está certo?"))return;const up={};up["cargas/"+k+"/kmChegada"]=km;up["cargas/"+k+"/chegadaEm"]=Date.now();fechar();enviar(up,rod.toLocaleString("pt-BR")+" km rodados nesta carga")}
+/* foto: reduz para ~1000px antes de enviar */
+function lerFoto(input,cb){const f=input.files&&input.files[0];if(!f)return cb(null);const r=new FileReader();r.onload=()=>{const img=new Image();img.onload=()=>{const M=1000;let w=img.width,h=img.height;if(w>M||h>M){const k=M/Math.max(w,h);w=Math.round(w*k);h=Math.round(h*k)}const cv=document.createElement("canvas");cv.width=w;cv.height=h;cv.getContext("2d").drawImage(img,0,0,w,h);cb(cv.toDataURL("image/jpeg",0.55))};img.onerror=()=>cb(null);img.src=r.result};r.readAsDataURL(f)}
+function fotoInput(id,rotulo){return'<label class="foto"><input type="file" accept="image/*" capture="environment" id="'+id+'" onchange="previewFoto(this)"><span>📷 '+rotulo+'</span><img alt=""></label>'}
+function previewFoto(i){lerFoto(i,u=>{const im=i.parentNode.querySelector("img");if(u){im.src=u;im.style.display="block";i._data=u;if(i.id==="en-f")window._foto=u;i.parentNode.querySelector("span").textContent="📷 Trocar foto"}})}
+function camOpts(sel){return Object.entries(CAMS).map(([k,v])=>'<option value="'+k+'"'+(k===sel?" selected":"")+'>'+esc(v.apelido||v.placa)+' ('+esc(v.placa||"")+')</option>').join("")}
+function camAtual(){const at=Object.values(CARGAS).filter(c=>c.status!=="entregue").sort((a,b)=>(a.data||"").localeCompare(b.data||""))[0]||Object.values(CARGAS).sort((a,b)=>(b.data||"").localeCompare(a.data||""))[0];if(!at)return localStorage.getItem("meta_mot_cam")||"";if(CAMS[at.caminhaoId])return at.caminhaoId;const p=norm(at.placa);return Object.keys(CAMS).find(k=>norm(CAMS[k].placa)===p)||localStorage.getItem("meta_mot_cam")||""}
+function abastecer(){
+  abrir('<h3>Abastecimento</h3><label class="lbl">Caminhão</label><select class="inp" id="ab-c">'+camOpts(camAtual())+'</select><div class="g2"><div><label class="lbl">Km no painel</label><input class="inp num" id="ab-km" type="number" inputmode="numeric"></div><div><label class="lbl">Litros</label><input class="inp num" id="ab-l" type="number" inputmode="decimal" step="0.01"></div></div><div class="g2"><div><label class="lbl">Valor total (R$)</label><input class="inp num" id="ab-v" type="number" inputmode="decimal" step="0.01"></div><div><label class="lbl">Posto</label><input class="inp" id="ab-p" placeholder="ex: Posto Delta"></div></div><label class="chk"><input type="checkbox" id="ab-cheio" checked> Completou o tanque</label>'+fotoInput("ab-f","Foto do cupom")+'<div class="acts"><button class="btn btn-o" onclick="fechar()">Cancelar</button><button class="btn btn-g" onclick="salvarAbast()">Salvar</button></div>');
+}
+function salvarAbast(){
+  const cam=document.getElementById("ab-c").value,km=parseInt(document.getElementById("ab-km").value,10),l=parseFloat(document.getElementById("ab-l").value),v=parseFloat(document.getElementById("ab-v").value);
+  if(!cam||!km||!l||!v){toast("Preencha caminhão, km, litros e valor",true);return}
+  if(v/l<3||v/l>15){if(!confirm("Deu R$ "+(v/l).toFixed(2)+" por litro. Está certo?"))return}
+  localStorage.setItem("meta_mot_cam",cam);const id=db.ref("frota_abastecimentos").push().key;const foto=document.getElementById("ab-f")._data;
+  const up={};up["frota_abastecimentos/"+id]={caminhaoId:cam,placa:(CAMS[cam]||{}).placa||"",km,litros:l,valor:v,cheio:document.getElementById("ab-cheio").checked,posto:document.getElementById("ab-p").value.trim(),data:hoje(),ts:Date.now(),motoristaUid:U.uid,motoristaNome:NOME,temFoto:!!foto};
+  if(foto)up["frota_fotos/"+id]={img:foto,ts:Date.now(),motoristaUid:U.uid};
+  fechar();enviar(up,"Abastecimento salvo");
+}
+const TIPOS_DESP=["Pedágio","Refeição","Diária","Lavagem","Borracharia","Peça / reparo","Outro"];
+function despesa(){
+  const ativa=Object.entries(CARGAS).filter(([,c])=>c.status!=="entregue"||c.data>=addDias(hoje(),-2)).sort((a,b)=>(b[1].data||"").localeCompare(a[1].data||""));
+  abrir('<h3>Despesa</h3><div class="chips" id="dp-t">'+TIPOS_DESP.map(x=>'<button class="chip" onclick="document.querySelectorAll(\'#dp-t .chip\').forEach(c=>c.classList.remove(\'on\'));this.classList.add(\'on\')">'+x+'</button>').join("")+'</div><div class="g2"><div><label class="lbl">Valor (R$)</label><input class="inp num" id="dp-v" type="number" inputmode="decimal" step="0.01"></div><div><label class="lbl">Caminhão</label><select class="inp" id="dp-c">'+camOpts(camAtual())+'</select></div></div><label class="lbl">Carga</label><select class="inp" id="dp-k"><option value="">Não é de uma carga</option>'+ativa.map(([k,c])=>'<option value="'+k+'">'+fDataL(c.data)+(c.numero?" · "+esc(c.numero):"")+'</option>').join("")+'</select><input class="inp" id="dp-o" placeholder="Observação" style="margin-top:8px">'+fotoInput("dp-f","Foto do comprovante")+'<div class="acts"><button class="btn btn-o" onclick="fechar()">Cancelar</button><button class="btn btn-g" onclick="salvarDesp()">Salvar</button></div>');
+  if(ativa.length)document.getElementById("dp-k").value=ativa[0][0];
+}
+function salvarDesp(){
+  const tp=(document.querySelector("#dp-t .chip.on")||{}).textContent;const v=parseFloat(document.getElementById("dp-v").value);const cam=document.getElementById("dp-c").value;
+  if(!tp||!v){toast("Escolha o tipo e informe o valor",true);return}
+  const id=db.ref("frota_despesas").push().key;const foto=document.getElementById("dp-f")._data;
+  const up={};up["frota_despesas/"+id]={tipo:tp,valor:v,caminhaoId:cam,placa:(CAMS[cam]||{}).placa||"",cargaId:document.getElementById("dp-k").value||"",obs:document.getElementById("dp-o").value.trim(),data:hoje(),ts:Date.now(),motoristaUid:U.uid,motoristaNome:NOME,temFoto:!!foto};
+  if(foto)up["frota_fotos/"+id]={img:foto,ts:Date.now(),motoristaUid:U.uid};
+  fechar();enviar(up,"Despesa salva");
+}
 function abrir(h){document.getElementById("sh").innerHTML=h;document.getElementById("sheet").classList.add("on")}
 function fechar(){document.getElementById("sheet").classList.remove("on")}
 function obsSheet(titulo,sub,motivos,obrig,cb){
-  window._cb=cb;abrir('<h3>'+titulo+'</h3><div style="color:var(--muted);font-size:14px">'+sub+'</div><div class="chips">'+motivos.map(x=>'<button class="chip" onclick="document.getElementById(\'ob\').value=this.textContent">'+x+'</button>').join("")+'</div><textarea class="inp" id="ob" rows="3" placeholder="'+(obrig?"Observação (obrigatória)":"Observação (opcional)")+'"></textarea><div class="acts"><button class="btn btn-o" onclick="fechar()">Cancelar</button><button class="btn btn-g" onclick="const v=document.getElementById(\'ob\').value.trim();if('+(obrig?1:0)+'&&!v){toast(\'Escreva o motivo\',true);return}fechar();window._cb(v)">Confirmar</button></div>');
+  window._cb=cb;window._rec="";window._foto=null;const ent=titulo==="Confirmar entrega";abrir('<h3>'+titulo+'</h3>'+(ent?'<label class="lbl">Quem recebeu</label><input class="inp" placeholder="Nome de quem recebeu" oninput="window._rec=this.value">'+fotoInput("en-f","Foto da descarga ou do canhoto"):"")+'<div style="color:var(--muted);font-size:14px;margin-top:10px">'+sub+'</div><div class="chips">'+motivos.map(x=>'<button class="chip" onclick="document.getElementById(\'ob\').value=this.textContent">'+x+'</button>').join("")+'</div><textarea class="inp" id="ob" rows="3" placeholder="'+(obrig?"Observação (obrigatória)":"Observação (opcional)")+'"></textarea><div class="acts"><button class="btn btn-o" onclick="fechar()">Cancelar</button><button class="btn btn-g" onclick="const v=document.getElementById(\'ob\').value.trim();if('+(obrig?1:0)+'&&!v){toast(\'Escreva o motivo\',true);return}fechar();window._cb(v)">Confirmar</button></div>');
 }
 function entregar(k,id){
   const c=CARGAS[k];const late=c.data<hoje();
   obsSheet("Confirmar entrega",late?"A carga era para "+fDataL(c.data)+". Diga o motivo do atraso.":"Alguma observação da entrega?",late?["Chuva / estrada ruim","Cliente pediu para adiar","Saída atrasada da fábrica","Problema no caminhão"]:["Descarregado no silo","Cliente não estava, deixei com funcionário"],late,v=>{
-    const up={};up["cargas/"+k+"/entregas/"+id]={status:"entregue",ts:Date.now(),obs:v||"",por:NOME};
+    const rec=(window._rec||"").trim(),foto=window._foto;
+    const up={};up["cargas/"+k+"/entregas/"+id]={status:"entregue",ts:Date.now(),obs:v||"",por:NOME,recebedor:rec,temFoto:!!foto};
+    if(foto)up["cargas_fotos/"+k+"/"+id]={img:foto,ts:Date.now(),por:NOME};
     const tmp=JSON.parse(JSON.stringify(c));tmp.entregas=tmp.entregas||{};tmp.entregas[id]={status:"entregue"};
     up["cargas/"+k+"/entregueEm"]=Date.now();if(calcStatus(tmp)==="entregue")up["cargas/"+k+"/status"]="entregue";
     if(late)up["cargas/"+k+"/atrasos/"+db.ref().push().key]={obs:v,ts:Date.now(),por:NOME,clienteId:id};
