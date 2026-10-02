@@ -12,6 +12,7 @@
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <style>
 :root{--bg:#f3f6f3;--surface:#fff;--border:#e2e8f0;--text:#0f172a;--muted:#64748b;--dim:#94a3b8;--G:#15803d;--GD:#052e16;--GL:#f0fdf4;--amber:#d97706;--amberL:#fffbeb;--red:#dc2626;--redL:#fef2f2;--blue:#2563eb;--blueL:#eff6ff;--mono:'JetBrains Mono',ui-monospace,monospace}
 *{box-sizing:border-box;margin:0;padding:0}
@@ -213,6 +214,26 @@ label.f{display:block;font-size:12px;font-weight:700;color:var(--muted);margin:1
 @media(max-width:1100px){.kpis{grid-template-columns:repeat(3,1fr)}}
 @media(max-width:900px){.painel{grid-template-columns:1fr}.fila{position:static;max-height:none}}
 @media(max-width:600px){.kpis{grid-template-columns:1fr 1fr}.fr{grid-template-columns:1fr}.mapa{height:420px}.seg{display:flex}.seg button{flex:1;padding:7px 6px}}
+
+/* ===== indicadores ===== */
+.kpis8{grid-template-columns:repeat(4,1fr)}
+.kpi .dl{font-size:10.5px;font-weight:700;color:var(--muted)}.kpi .dl.up{color:var(--G)}.kpi .dl.down{color:var(--red)}
+.charts{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin-bottom:12px}
+.chc{background:#fff;border:1px solid var(--border);border-radius:14px;padding:12px 14px;min-width:0}
+.chc.wide{grid-column:1/-1}
+.chh{display:flex;align-items:baseline;gap:10px;margin-bottom:8px}.chh b{font-size:14px}
+.cv{position:relative;height:250px}.chc.wide .cv{height:230px}
+.rks{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+.rk{display:grid;grid-template-columns:22px 1fr auto 40px;gap:8px;padding:6px 0;border-bottom:1px solid #f1f5f9;font-size:12.5px;align-items:center}
+.rk:last-child{border:none}.rk .nm{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-weight:600}.rk span:last-child{text-align:right}
+.tools{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.al{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid #f1f5f9;font-size:13px}.al:last-child{border:none}
+.al i{width:8px;height:8px;border-radius:50%;flex-shrink:0}.al span{flex:1}
+.pv-l{max-height:460px;overflow:auto}
+.pvr{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid #f1f5f9}.pvr .main{flex:1;min-width:0}
+.pvr .main b{display:block;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.pvr .main span{font-size:11.5px;color:var(--muted)}
+.pvr .r{text-align:right;white-space:nowrap}.pvr .late{color:var(--red);font-weight:700}
+@media(max-width:900px){.kpis8{grid-template-columns:1fr 1fr}.charts,.tools{grid-template-columns:1fr}.rks{grid-template-columns:1fr}}
 </style>
 </head>
 <body>
@@ -239,6 +260,7 @@ label.f{display:block;font-size:12px;font-weight:700;color:var(--muted);margin:1
     </div>
     <nav class="tabs" id="tabs">
       <button class="tab on" data-v="cargas" onclick="tab('cargas')">Cargas<span class="badge" id="b-atraso" style="display:none"></span></button>
+      <button class="tab" data-v="indicadores" onclick="tab('indicadores')">Indicadores</button>
       <button class="tab" data-v="pedidos" onclick="tab('pedidos')">Pedidos</button>
       <button class="tab" data-v="contratos" onclick="tab('contratos')">Contratos</button>
       <button class="tab" data-v="clientes" onclick="tab('clientes')">Clientes</button>
@@ -248,6 +270,7 @@ label.f{display:block;font-size:12px;font-weight:700;color:var(--muted);margin:1
   <main>
     <section class="view on" id="v-cargas"></section>
     <section class="view" id="v-editor"></section>
+    <section class="view" id="v-indicadores"></section>
     <section class="view" id="v-pedidos"></section>
     <section class="view" id="v-contratos"></section>
     <section class="view" id="v-clientes"></section>
@@ -361,7 +384,7 @@ let VIEW="cargas",DIA=hoje(),EDIT=null,_rt=null;
 function tab(v){VIEW=v;document.querySelectorAll(".tab").forEach(b=>b.classList.toggle("on",b.dataset.v===v));document.querySelectorAll(".view").forEach(s=>s.classList.toggle("on",s.id==="v-"+v));render(true);window.scrollTo(0,0)}
 function render(now){clearTimeout(_rt);_rt=setTimeout(()=>{
   const at=Object.values(S.cargas).filter(cargaAtrasada).length;const b=document.getElementById("b-atraso");b.style.display=at?"inline":"none";b.textContent=at;
-  if(VIEW==="cargas")renderCargas();else if(VIEW==="editor")renderEditor();else if(VIEW==="pedidos")renderPedidos();else if(VIEW==="contratos")renderContratos();else if(VIEW==="clientes")renderClientes();else if(VIEW==="historico"&&now)renderHistorico();
+  if(VIEW==="cargas")renderCargas();else if(VIEW==="editor")renderEditor();else if(VIEW==="pedidos")renderPedidos();else if(VIEW==="contratos")renderContratos();else if(VIEW==="clientes")renderClientes();else if(VIEW==="historico"&&now)renderHistorico();else if(VIEW==="indicadores"){if(now)carregarIndicadores();else if(IND.dados)renderIndicadores()}
 },now?0:80)}
 
 /* ================= ROTA: distância, ETA e otimização ================= */
@@ -860,6 +883,133 @@ function renderHistRes(){
   html+=l.slice(0,150).map(([id,c])=>'<div class="card"><div class="cc-h"><div class="t"><b>'+fDataL(c.data)+(c.numero?" · Carga "+esc(c.numero):"")+'</b><div>'+esc(c.placa||"")+(c.motoristaNome?" · "+esc(c.motoristaNome):"")+' · <span class="num">'+t(kgTotal(c))+'</span>'+(c.importado?" · da planilha":"")+'</div></div><span class="pill p-'+c.status+'">'+STATUS_TXT[c.status]+'</span></div>'+truckHTML(c,true)+legendHTML(c)+(lastAtraso(c)?'<div class="warn red">Atraso: '+esc(lastAtraso(c).obs)+'</div>':"")+(!c.importado?'<button class="btn btn-o btn-sm" style="margin-top:8px" onclick="abrirEditor(\''+id+'\')">Abrir</button>':"")+'</div>').join("")||'<div class="empty"><b>Nenhuma carga no período</b>Ajuste as datas ou os filtros.</div>';
   if(l.length>150)html+='<div class="small muted">Mostrando 150 de '+l.length+'. Refine o período.</div>';
   document.getElementById("h-res").innerHTML=html;
+}
+
+/* ================= INDICADORES (painel do mês) ================= */
+const IND={mes:hoje().slice(0,7),dados:null,peds:{},ini:null,fim:null,charts:[],carregando:false};
+function mesIni(m){return m+"-01"}
+function mesFim(m){const d=new Date(m+"-01T12:00:00");d.setMonth(d.getMonth()+1);d.setDate(0);return iso(d)}
+function addMes(m,n){const d=new Date(m+"-15T12:00:00");d.setMonth(d.getMonth()+n);return iso(d).slice(0,7)}
+function nomeMes(m,curto){const d=new Date(m+"-15T12:00:00");return curto?d.toLocaleDateString("pt-BR",{month:"short"}).replace(".","")+"/"+m.slice(2,4):d.toLocaleDateString("pt-BR",{month:"long",year:"numeric"})}
+function camDaCarga(c){if(S.caminhoes[c.caminhaoId])return S.caminhoes[c.caminhaoId];const p=norm(c.placa);return p?Object.values(S.caminhoes).find(x=>norm(x.placa)===p||p.startsWith(norm(x.placa))):null}
+function capCargaH(c){const cam=camDaCarga(c);if(!cam)return 0;return arr(c.caixas).reduce((s,b,i)=>s+capCaixa(cam,i,b&&b.produto),0)}
+function camLabel(c){const cam=camDaCarga(c);return cam?(cam.apelido||cam.placa):(c.placa||"Sem placa")}
+function catProd(p){p=norm(p);if(/MILHO/.test(p))return"Milho";if(/PNDR|FARELO|SOJA/.test(p))return"Farelos / PNDR";if(/PRE.?PARTO|BEZERR|CORTE|AVES|SUIN|POEDEIR/.test(p))return"Outras rações";if(/FAREL/.test(p))return"Ração farelada";if(/PELET|ORION|LEITE/.test(p))return"Ração peletizada";return"Outros"}
+function prodNome(p){return norm(p).replace(/^\d+\s*-\s*/,"").slice(0,32)}
+function addTo(o,k,v){o[k]=(o[k]||0)+v}
+function cargasIndicadores(){const C=Object.assign({},IND.dados||{});Object.entries(S.cargas).forEach(([k,c])=>{if(c.data>=IND.ini&&c.data<=IND.fim)C[k]=c});return C}
+function pedidoPorId(pid){return S.pedidos[pid]||IND.peds[pid]}
+function statsMes(C,m,ateDia){
+  const ini=mesIni(m);let fim=mesFim(m);if(ateDia){const f=m+"-"+String(ateDia).padStart(2,"0");if(f<fim)fim=f}const L=Object.entries(C).filter(([,c])=>c.data>=ini&&c.data<=fim);
+  const r={kgKm:0,nKm:0,n:L.length,kg:0,kgEnt:0,ocS:0,ocN:0,baixa:0,km:0,fr:0,paradas:0,atrasoReg:0,cli:new Set(),noPrazo:0,avaliadas:0,leadS:0,leadN:0,porDia:{},porDiaEnt:{},porCam:{},camOc:{},porCli:{},porCid:{},porVend:{},porProd:{},porCat:{}};
+  L.forEach(([,c])=>{const k=kgTotal(c);r.kg+=k;const ent=c.entregas||{};
+    const cap=capCargaH(c);if(cap&&k){const o=Math.min(1,k/cap);r.ocS+=o;r.ocN++;if(o<0.8)r.baixa++;const lb=camLabel(c);(r.camOc[lb]=r.camOc[lb]||[]).push(o)}
+    const ro=rotaInfo(c);if(ro.ok){r.km+=ro.total;r.kgKm+=k;r.nKm++}r.fr+=freteCarga(c);if(Object.keys(c.atrasos||{}).length)r.atrasoReg++;
+    const ids=clientesDaCarga(c);r.paradas+=ids.length;
+    ids.forEach(cid=>{const e=ent[cid];if(!e||e.status!=="entregue"||!e.ts)return;const pz=arr(c.caixas).filter(b=>b&&b.clienteId===cid&&b.pedidoId).map(b=>pedidoPorId(b.pedidoId)).filter(Boolean);if(!pz.length)return;const prazo=pz.map(p=>p.dataEntrega).sort().pop();r.avaliadas++;if(iso(new Date(e.ts))<=prazo)r.noPrazo++;pz.forEach(p=>{if(p.criadoEm){r.leadS+=(e.ts-p.criadoEm)/864e5;r.leadN++}})});
+    arr(c.caixas).forEach(b=>{if(!b||!b.clienteId)return;const q=+b.kg||0;const isEnt=ent[b.clienteId]&&ent[b.clienteId].status==="entregue";if(isEnt){r.kgEnt+=q;addTo(r.porDiaEnt,c.data,q)}
+      r.cli.add(b.clienteId);addTo(r.porDia,c.data,q);addTo(r.porCam,camLabel(c),q);addTo(r.porCli,b.clienteId,q);addTo(r.porCid,b.cidade||"—",q);addTo(r.porVend,b.vendedor||"Sem vendedor",q);addTo(r.porProd,prodNome(b.produto),q);addTo(r.porCat,catProd(b.produto),q)})});
+  r.oc=r.ocN?r.ocS/r.ocN:null;r.pont=r.avaliadas?r.noPrazo/r.avaliadas:null;r.lead=r.leadN?r.leadS/r.leadN:null;r.media=r.n?r.kg/r.n:0;
+  return r;
+}
+function delta(a,b,inverso,pp){if(a==null||b==null||!b&&!pp)return"";const d=pp?(a-b)*100:(a-b)/b*100;if(!isFinite(d)||Math.abs(d)<0.5)return'<small class="dl">= mês anterior</small>';const bom=inverso?d<0:d>0;return'<small class="dl '+(bom?"up":"down")+'">'+(d>0?"▲ ":"▼ ")+Math.abs(d).toFixed(0)+(pp?" p.p.":"%")+' vs '+IND.cmp+'</small>'}
+async function carregarIndicadores(forcar){
+  const ini=mesIni(addMes(IND.mes,-11)),fim=mesFim(IND.mes);
+  if(!forcar&&IND.dados&&IND.ini===ini&&IND.fim===fim){renderIndicadores();return}
+  IND.carregando=true;renderIndicadores();
+  try{const[cs,ps]=await Promise.all([db.ref("cargas").orderByChild("data").startAt(ini).endAt(fim).once("value"),db.ref("cargas_pedidos").orderByChild("dataEntrega").startAt(mesIni(addMes(IND.mes,-2))).endAt(addDias(fim,45)).once("value")]);
+    IND.dados=cs.val()||{};IND.peds=ps.val()||{};IND.ini=ini;IND.fim=fim}
+  catch(e){toast("Não consegui carregar: "+e.message,true)}
+  IND.carregando=false;renderIndicadores();
+}
+function rankHTML(obj,n,nomeFn){const tot=Object.values(obj).reduce((s,v)=>s+v,0)||1;return Object.entries(obj).sort((a,b)=>b[1]-a[1]).slice(0,n).map(([k,v],i)=>'<div class="rk"><span class="muted num">'+(i+1)+'</span><span class="nm">'+esc(nomeFn?nomeFn(k):k)+'</span><span class="num">'+t(v)+'</span><span class="num muted">'+(v/tot*100).toFixed(0)+'%</span></div>').join("")||'<div class="small muted">Sem dados</div>'}
+function nomeCli(k){return(S.clientes[k]||{}).nome||k}
+function renderIndicadores(){
+  const el=document.getElementById("v-indicadores");if(!el)return;
+  IND.charts.forEach(c=>{try{c.destroy()}catch(e){}});IND.charts=[];
+  const m=IND.mes;
+  let html='<div class="bar"><h2>Indicadores de '+nomeMes(m)+'</h2><button class="btn btn-o btn-sm" onclick="IND.mes=addMes(IND.mes,-1);carregarIndicadores()" aria-label="Mês anterior">←</button><input class="inp" type="month" value="'+m+'" style="width:auto" onchange="if(this.value){IND.mes=this.value;carregarIndicadores()}"><button class="btn btn-o btn-sm" onclick="IND.mes=addMes(IND.mes,1);carregarIndicadores()" aria-label="Próximo mês">→</button><button class="btn btn-o btn-sm" onclick="carregarIndicadores(true)">Atualizar</button><button class="btn btn-o btn-sm" onclick="exportarCSVMes()">Exportar CSV</button><button class="btn btn-g btn-sm" onclick="imprimirFechamento()">Relatório do mês</button></div>';
+  if(IND.carregando&&!IND.dados){el.innerHTML=html+'<div class="empty"><b>Carregando o mês…</b></div>';return}
+  const C=cargasIndicadores();const atual=m===hoje().slice(0,7);const s=statsMes(C,m),a=statsMes(C,addMes(m,-1),atual?+hoje().slice(8):null);IND.cmp=atual?"mesmo período de "+nomeMes(addMes(m,-1),true):nomeMes(addMes(m,-1),true);
+  const kpi=(lb,v,sub,dl,cls)=>'<div class="kpi'+(cls?" "+cls:"")+'"><span>'+lb+'</span><b class="num">'+v+'</b><small>'+sub+'</small>'+(dl||"")+'</div>';
+  const pct=v=>v==null?"—":Math.round(v*100)+"%";
+  html+='<div class="kpis kpis8">'+
+    kpi("Toneladas no mês",t(s.kg,0),t(s.kgEnt,0)+" já entregues",delta(s.kg,a.kg))+
+    kpi("Cargas",s.n,"média "+t(s.media)+" por carga",delta(s.n,a.n))+
+    kpi("Ocupação média",pct(s.oc),s.baixa+" carga"+(s.baixa!==1?"s":"")+" abaixo de 80%",delta(s.oc,a.oc,false,true),s.oc!=null&&s.oc<0.85?"warnk":"")+
+    kpi("Entregas no prazo",pct(s.pont),s.avaliadas?s.noPrazo+" de "+s.avaliadas+" com pedido no app":"aparece com pedidos lançados no app",delta(s.pont,a.pont,false,true),s.pont!=null&&s.pont<0.9?"warnk":"")+
+    kpi("Clientes atendidos",s.cli.size,s.paradas+" entregas · "+(s.n?(s.paradas/s.n).toFixed(1).replace(".",","):"0")+" por carga",delta(s.cli.size,a.cli.size))+
+    kpi("Cargas com atraso",s.atrasoReg,s.n?Math.round(s.atrasoReg/s.n*100)+"% das cargas":"—",delta(s.atrasoReg,a.atrasoReg,true),s.atrasoReg?"redk":"")+
+    kpi("Km estimados",s.km?Math.round(s.km).toLocaleString("pt-BR"):"—",s.km?(s.km/(s.kgKm/1000)).toFixed(1).replace(".",",")+" km/t"+(s.nKm<s.n?" · em "+s.nKm+" de "+s.n+" cargas (faltam localizações)":""):"depende da fábrica e das localizações")+
+    kpi("Frete estimado",s.fr?brl(s.fr):"—",s.fr&&s.kg?"R$ "+(s.fr/(s.kg/1000)).toFixed(0)+"/t"+(s.km&&s.nKm===s.n?" · R$ "+(s.fr/s.km).toFixed(2).replace(".",",")+"/km":""):"pelo R$/t do cliente",delta(s.fr,a.fr))+
+  '</div>'+(s.lead!=null?'<div class="small muted" style="margin:-6px 0 12px">Tempo médio do pedido lançado até a entrega: <b class="num">'+s.lead.toFixed(1).replace(".",",")+' dias</b></div>':"");
+  html+='<div class="charts"><div class="chc wide"><div class="chh"><b>Toneladas por dia</b><span class="small muted">entregue × programado</span></div><div class="cv"><canvas id="ch-dia"></canvas></div></div>'+
+    '<div class="chc"><div class="chh"><b>Últimos 12 meses</b><span class="small muted">toneladas e nº de cargas</span></div><div class="cv"><canvas id="ch-12m"></canvas></div></div>'+
+    '<div class="chc"><div class="chh"><b>Por caminhão</b><span class="small muted">toneladas e ocupação média</span></div><div class="cv"><canvas id="ch-cam"></canvas></div></div>'+
+    '<div class="chc"><div class="chh"><b>Mix de produtos</b></div><div class="cv"><canvas id="ch-mix"></canvas></div></div>'+
+    '<div class="chc"><div class="chh"><b>Por vendedor</b></div><div class="cv"><canvas id="ch-vend"></canvas></div></div></div>';
+  html+='<div class="rks"><div class="card"><b>Top clientes</b>'+rankHTML(s.porCli,10,nomeCli)+'</div><div class="card"><b>Top cidades</b>'+rankHTML(s.porCid,10)+'</div><div class="card"><b>Top produtos</b>'+rankHTML(s.porProd,10)+'</div></div>';
+  html+='<div class="tools"><div class="card"><div class="chh"><b>Atenção agora</b><span class="small muted">o que precisa de ação</span></div><div id="alertas">'+alertasHTML()+'</div></div><div class="card"><div class="chh"><b>Previsão de pedidos</b><span class="small muted">pela frequência de cada cliente</span></div>'+previsaoHTML(C)+'</div></div>';
+  el.innerHTML=html;
+  desenharGraficos(C,s);
+}
+function desenharGraficos(C,s){
+  if(!window.Chart){document.querySelectorAll(".cv").forEach(x=>x.innerHTML='<div class="small muted" style="padding:20px">Gráfico indisponível sem conexão.</div>');return}
+  Chart.defaults.font.family="Inter, sans-serif";Chart.defaults.font.size=11;Chart.defaults.color="#64748b";
+  const G="#15803d",GL="#bbf7d0",AM="#d97706";const tt=v=>(v/1000).toLocaleString("pt-BR",{maximumFractionDigits:1})+" t";
+  const base=(extra)=>Object.assign({responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>(c.dataset.label?c.dataset.label+": ":"")+(c.dataset.fmt?c.dataset.fmt(c.raw):tt(c.raw))}}},scales:{x:{grid:{display:false}},y:{grid:{color:"#eef2f0"},ticks:{callback:v=>(v/1000)+" t"}}}},extra||{});
+  const mk=(id,cfg)=>{const e=document.getElementById(id);if(e)IND.charts.push(new Chart(e,cfg))};
+  const dias=[];for(let d=mesIni(IND.mes);d<=mesFim(IND.mes);d=addDias(d,1))dias.push(d);
+  mk("ch-dia",{type:"bar",data:{labels:dias.map(d=>+d.slice(8)),datasets:[{label:"Entregue",data:dias.map(d=>s.porDiaEnt[d]||0),backgroundColor:G,stack:"a",borderRadius:3},{label:"Programado",data:dias.map(d=>(s.porDia[d]||0)-(s.porDiaEnt[d]||0)),backgroundColor:GL,stack:"a",borderRadius:3}]},options:base({plugins:{legend:{display:true,position:"bottom",labels:{boxWidth:10}},tooltip:{callbacks:{title:i=>fDataL(dias[i[0].dataIndex]),label:c=>c.dataset.label+": "+tt(c.raw)}}},scales:{x:{stacked:true,grid:{display:false}},y:{stacked:true,grid:{color:"#eef2f0"},ticks:{callback:v=>(v/1000)+" t"}}}})});
+  const meses=[];for(let i=11;i>=0;i--)meses.push(addMes(IND.mes,-i));const sm=meses.map(mm=>statsMes(C,mm));
+  mk("ch-12m",{type:"bar",data:{labels:meses.map(mm=>nomeMes(mm,true)),datasets:[{label:"Toneladas",data:sm.map(x=>x.kg),backgroundColor:meses.map(mm=>mm===IND.mes?G:"#86efac"),borderRadius:4,yAxisID:"y"},{type:"line",label:"Cargas",data:sm.map(x=>x.n),borderColor:AM,backgroundColor:AM,pointRadius:3,tension:.3,yAxisID:"y1",fmt:v=>v+" cargas"}]},options:base({plugins:{legend:{display:true,position:"bottom",labels:{boxWidth:10}}},scales:{x:{grid:{display:false}},y:{grid:{color:"#eef2f0"},ticks:{callback:v=>(v/1000)+" t"}},y1:{position:"right",grid:{display:false},beginAtZero:true}}})});
+  const cams=Object.entries(s.porCam).sort((a,b)=>b[1]-a[1]);const ocm=k=>{const l=s.camOc[k]||[];return l.length?Math.round(l.reduce((a,b)=>a+b,0)/l.length*100):null};
+  mk("ch-cam",{type:"bar",data:{labels:cams.map(([k])=>k+(ocm(k)!=null?" · "+ocm(k)+"%":"")),datasets:[{data:cams.map(([,v])=>v),backgroundColor:cams.map(([k])=>{const o=ocm(k);return o==null?"#94a3b8":o>=90?G:o>=80?"#65a30d":AM}),borderRadius:4}]},options:base({indexAxis:"y",scales:{x:{grid:{color:"#eef2f0"},ticks:{callback:v=>(v/1000)+" t"}},y:{grid:{display:false}}}})});
+  const cats=Object.entries(s.porCat).sort((a,b)=>b[1]-a[1]);const totc=cats.reduce((a,[,v])=>a+v,0)||1;
+  mk("ch-mix",{type:"doughnut",data:{labels:cats.map(([k,v])=>k+" "+Math.round(v/totc*100)+"%"),datasets:[{data:cats.map(([,v])=>v),backgroundColor:["#15803d","#65a30d","#d97706","#0e7490","#7c3aed","#94a3b8"],borderWidth:2,borderColor:"#fff"}]},options:{responsive:true,maintainAspectRatio:false,cutout:"62%",plugins:{legend:{position:"right",labels:{boxWidth:10}},tooltip:{callbacks:{label:c=>c.label+" · "+tt(c.raw)}}}}});
+  const vs=Object.entries(s.porVend).sort((a,b)=>b[1]-a[1]).slice(0,10);
+  mk("ch-vend",{type:"bar",data:{labels:vs.map(([k])=>k.split(" ")[0]),datasets:[{data:vs.map(([,v])=>v),backgroundColor:G,borderRadius:4}]},options:base()});
+}
+/* alertas operacionais (estado atual, não depende do mês) */
+function alertasHTML(){
+  const h=hoje(),am=addDias(h,1);const out=[];const al=alocacoes();
+  const item=(cor,txt,acao,btn)=>out.push('<div class="al"><i style="background:'+cor+'"></i><span>'+txt+'</span>'+(acao?'<button class="btn btn-o btn-sm" onclick="'+acao+'">'+btn+'</button>':"")+'</div>');
+  Object.entries(S.cargas).filter(([,c])=>cargaAtrasada(c)&&!Object.keys(c.atrasos||{}).length).forEach(([id,c])=>item("var(--red)",'Carga '+esc(c.numero||camLabel(c))+' de '+fData(c.data)+' atrasada <b>sem observação</b>',"abrirEditor('"+id+"')","Abrir"));
+  const pa=pendentesAte(addDias(h,-1));if(pa.length)item("var(--red)",'<b>'+pa.length+' pedido'+(pa.length>1?"s":"")+' atrasado'+(pa.length>1?"s":"")+'</b> sem carga ('+t(pa.reduce((s,x)=>s+x.resta,0))+')',"DIA=hoje();PV='frota';tab('cargas')","Ver fila");
+  Object.entries(S.cargas).filter(([,c])=>(c.data===h||c.data===am)&&STAGE[c.status]<3&&!c.motoristaUid).forEach(([id,c])=>item("var(--amber)",'Carga de '+(c.data===h?"hoje":"amanhã")+' no '+esc(camLabel(c))+' <b>sem motorista no app</b>',"abrirEditor('"+id+"')","Definir"));
+  Object.entries(S.cargas).filter(([,c])=>(c.data===h||c.data===am)&&c.status==="montagem").forEach(([id,c])=>{const l=arr(c.caixas).filter(b=>!b||!b.clienteId).length;item("var(--amber)",'Carga de '+(c.data===h?"hoje":"amanhã")+' no '+esc(camLabel(c))+' com <b>'+l+' caixa'+(l>1?"s":"")+' livre'+(l>1?"s":"")+'</b>',"abrirEditor('"+id+"')","Completar")});
+  Object.entries(S.cargas).filter(([,c])=>c.data>=h&&c.data<=am&&STAGE[c.status]<3).forEach(([id,c])=>{const cap=capTotal(c);const o=cap?kgTotal(c)/cap:1;if(c.status!=="montagem"&&o<0.75)item("var(--amber)",'Carga de '+fData(c.data)+' no '+esc(camLabel(c))+' com ocupação de <b>'+Math.round(o*100)+'%</b>',"abrirEditor('"+id+"')","Abrir")});
+  const semLoc=new Set();Object.values(S.pedidos).forEach(p=>{if(!p.cancelado&&p.dataEntrega>=h&&p.dataEntrega<=addDias(h,7)&&!ptCliente(p.clienteId))semLoc.add(p.clienteId)});if(semLoc.size)item("#64748b",'<b>'+semLoc.size+' cliente'+(semLoc.size>1?"s":"")+'</b> com entrega nos próximos 7 dias sem localização',"KLOC='sem';tab('clientes')","Ver");
+  if(!origem())item("#64748b","Ponto de saída (fábrica) não definido: sem km e sem otimização de rota","abrirCaminhoes()","Definir");
+  Object.entries(S.contratos).filter(([,c])=>c.ativo!==false).forEach(([id,c])=>{const sc=saldoContrato(id);if(sc.aRetirar<=0)item("var(--G)",'Contrato '+esc(c.numero||"")+' de '+esc(c.cliente)+' <b>totalmente entregue</b>',"abrirContrato('"+id+"')","Encerrar");else if(sc.livre>0&&sc.pendente===0)item("#64748b",'Contrato '+esc(c.numero||"")+' de '+esc(c.cliente)+': '+t(sc.livre)+' <b>sem programação</b>',"abrirProgramacao('"+id+"')","Programar")});
+  return out.join("")||'<div class="small muted" style="padding:8px 0">Nada pendente. Tudo em dia.</div>';
+}
+/* previsão de recompra: intervalo mediano entre entregas de cada cliente */
+function previsaoClientes(C){
+  const ent={};Object.values(C).forEach(c=>{const kgCli={};arr(c.caixas).forEach(b=>{if(b&&b.clienteId)addTo(kgCli,b.clienteId,+b.kg||0)});Object.entries(kgCli).forEach(([k,kg])=>{(ent[k]=ent[k]||{})[c.data]=(ent[k][c.data]||0)+kg})});
+  const al=alocacoes();const temPedido={};Object.entries(S.pedidos).forEach(([id,p])=>{if(!p.cancelado&&p.dataEntrega>=addDias(hoje(),-3)&&(+p.kg||0)-(((al[id]||{}).entregue)||0)>50)temPedido[p.clienteId]=p.dataEntrega});
+  const med=a=>{const s=a.slice().sort((x,y)=>x-y);const n=s.length;return n?(n%2?s[(n-1)/2]:(s[n/2-1]+s[n/2])/2):0};
+  const out=[];
+  Object.entries(ent).forEach(([k,o])=>{const ds=Object.keys(o).sort();if(ds.length<3)return;const iv=[];for(let i=1;i<ds.length;i++){const d=difDias(ds[i],ds[i-1]);if(d>0)iv.push(d)}if(iv.length<2)return;const f=Math.max(1,Math.round(med(iv)));const ult=ds[ds.length-1];const prev=addDias(ult,f);const falta=difDias(prev,hoje());
+    if(falta>7||falta<-Math.max(20,f))return;out.push({k,f,ult,prev,falta,kg:med(Object.values(o)),ped:temPedido[k]})});
+  return out.sort((a,b)=>a.falta-b.falta);
+}
+function previsaoHTML(C){
+  const l=previsaoClientes(C);if(!l.length)return'<div class="small muted" style="padding:8px 0">Sem clientes com previsão para os próximos 7 dias.</div>';
+  return'<div class="pv-l">'+l.slice(0,25).map(x=>{const c=S.clientes[x.k]||{};return'<div class="pvr"><div class="main"><b>'+esc(c.nome||x.k)+'</b><span>'+esc(c.cidade||"")+(c.vendedor?" · "+esc(c.vendedor):"")+' · a cada ~'+x.f+' dias · última '+fData(x.ult)+'</span></div><div class="r"><div class="num" style="font-weight:700">'+t(x.kg)+'</div><span class="small '+(x.falta<0?"late":"")+'">'+(x.falta<0?"venceu há "+(-x.falta)+"d":x.falta===0?"previsto hoje":"em "+x.falta+"d ("+fData(x.prev)+")")+'</span></div>'+(x.ped?'<span class="pill p-entregue">pedido '+fData(x.ped)+'</span>':'<button class="btn btn-o btn-sm" onclick="novoPedidoCliente(\''+x.k+'\')">Lançar pedido</button>')+'</div>'}).join("")+'</div><div class="small muted" style="margin-top:6px">Baseado nos últimos 12 meses. Serve para o vendedor ligar antes do cliente ficar sem ração.</div>';
+}
+function exportarCSVMes(){
+  const C=cargasIndicadores();const ini=mesIni(IND.mes),fim=mesFim(IND.mes);const L=Object.values(C).filter(c=>c.data>=ini&&c.data<=fim).sort((a,b)=>(a.data||"").localeCompare(b.data||""));
+  const q=v=>'"'+String(v==null?"":v).replace(/"/g,'""')+'"';const rows=[["Data","Carga","Caminhão","Placa","Motorista","Caixa","Cliente","Cidade","Produto","Kg","Vendedor","Tabela","Status","Entregue em","Frete R$/t"]];
+  L.forEach(c=>arr(c.caixas).forEach((b,i)=>{if(!b||!b.clienteId)return;const e=(c.entregas||{})[b.clienteId];rows.push([fData(c.data)+"/"+c.data.slice(0,4),c.numero||"",camLabel(c),c.placa||"",c.motoristaNome||"","CX"+(b.cx||i+1),b.cliente,b.cidade||"",b.produto,(+b.kg||0),b.vendedor||"",b.tabela||"",STATUS_TXT[c.status]||c.status,e&&e.ts?new Date(e.ts).toLocaleString("pt-BR"):"",((S.clientes[b.clienteId]||{}).frete)||""])}));
+  const blob=new Blob(["\ufeff"+rows.map(r=>r.map(q).join(";")).join("\r\n")],{type:"text/csv;charset=utf-8"});const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="cargas-"+IND.mes+".csv";document.body.appendChild(a);a.click();a.remove();toast(rows.length-1+" linhas exportadas");
+}
+function imprimirFechamento(){
+  const C=cargasIndicadores();const s=statsMes(C,IND.mes);const w=window.open("","_blank");if(!w){toast("Libere pop-ups para gerar o relatório",true);return}
+  const imgs=["ch-dia","ch-12m","ch-cam","ch-mix"].map(id=>{const e=document.getElementById(id);try{return e&&e.toDataURL?'<img src="'+e.toDataURL("image/png")+'">':""}catch(x){return""}}).join("");
+  const rk=(o,n,f)=>'<table>'+Object.entries(o).sort((a,b)=>b[1]-a[1]).slice(0,n).map(([k,v])=>'<tr><td>'+esc(f?f(k):k)+'</td><td style="text-align:right">'+t(v)+'</td></tr>').join("")+'</table>';
+  const pct=v=>v==null?"—":Math.round(v*100)+"%";
+  w.document.write('<html><head><title>Fechamento '+nomeMes(IND.mes)+'</title><style>body{font-family:Arial;padding:24px;color:#0f172a}h1{font-size:20px;margin:0}h2{font-size:14px;margin:18px 0 6px}.k{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}.k div{border:1px solid #ddd;border-radius:8px;padding:8px;font-size:11px;color:#555}.k b{display:block;font-size:17px;color:#000}img{width:48%;margin:1%;border:1px solid #eee}table{width:100%;border-collapse:collapse;font-size:12px}td{border-bottom:1px solid #eee;padding:4px}.c{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px}</style></head><body><img src="meta_logo.jpg" style="height:36px;width:auto;border:none;margin:0 0 6px" onerror="this.remove()"><h1>Fechamento logístico — '+nomeMes(IND.mes)+'</h1><div style="font-size:12px;color:#666">Gerado em '+new Date().toLocaleString("pt-BR")+'</div><h2>Resumo</h2><div class="k"><div>Toneladas<b>'+t(s.kg,0)+'</b></div><div>Cargas<b>'+s.n+'</b></div><div>Ocupação média<b>'+pct(s.oc)+'</b></div><div>Entregas no prazo<b>'+pct(s.pont)+'</b></div><div>Clientes atendidos<b>'+s.cli.size+'</b></div><div>Cargas com atraso<b>'+s.atrasoReg+'</b></div><div>Km estimados<b>'+(s.km?Math.round(s.km).toLocaleString("pt-BR"):"—")+'</b></div><div>Frete estimado<b>'+(s.fr?brl(s.fr):"—")+'</b></div></div><h2>Gráficos</h2>'+imgs+'<div class="c"><div><h2>Top clientes</h2>'+rk(s.porCli,10,nomeCli)+'</div><div><h2>Por caminhão</h2>'+rk(s.porCam,10)+'</div><div><h2>Por vendedor</h2>'+rk(s.porVend,10)+'</div></div><script>setTimeout(()=>print(),400)<\/script></body></html>');w.document.close();
 }
 
 /* ================= CAMINHÕES ================= */
