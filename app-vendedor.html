@@ -61,6 +61,9 @@
 .crow{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid #f1f5f9;font-size:13px}.crow:last-child{border:none}
 .crow small{display:block;font-size:11px;color:var(--muted)}.crow b{text-align:right;white-space:nowrap;font-size:13px}
 .cempty{font-size:12.5px;color:var(--muted);padding:8px 0}
+
+.agenda-wrap{position:relative}
+#agenda-frame{width:100%;border:0;display:block;border-radius:14px;background:#fff}
 </style>
 </head>
 <body>
@@ -126,6 +129,7 @@
         <div class="resumo-data" id="resumo-data"></div>
       </div>
       <div id="inicio-alertas"></div>
+      <div id="inicio-agenda"></div>
       <div class="hub-tit">Ferramentas</div>
       <div class="hub" id="inicio-hub"></div>
       <div class="hub-tit">Ações rápidas</div>
@@ -155,6 +159,7 @@
     </div>
 
     <div class="screen" id="screen-cargas"></div>
+    <div class="screen" id="screen-agenda"><div id="agenda-wrap" class="agenda-wrap"></div></div>
     <div class="screen" id="screen-carro"><div id="rs-km"></div><div id="carro-det"></div></div>
 
     <div class="screen" id="screen-lista">
@@ -501,8 +506,8 @@
     <button class="nav-btn" id="nav-lista" onclick="navTo('lista','Propriedades')">
       <span class="ico">🏡</span>Clientes
     </button>
-    <button class="nav-btn" id="nav-pipeline" onclick="navTo('pipeline','Pipeline');renderPipelineVendedor()">
-      <span class="ico">🗂️</span>Pipeline
+    <button class="nav-btn" id="nav-agenda" onclick="abrirAgenda()">
+      <span class="ico">📅</span>Agenda<span class="nav-dot" id="nd-agenda"></span>
     </button>
     <button class="nav-btn" id="nav-dash" onclick="navTo('dash','Meu Resultado');renderDash()">
       <span class="ico">📊</span>Resultado
@@ -1583,7 +1588,7 @@ function salvarLancKm(){
 </script>
 <script>
 /* ===== Navegação: Início como central de ferramentas + menu "Mais" ===== */
-const GRUPO_MAIS=["bench","equipe","analise","carro","cargas"];
+const GRUPO_MAIS=["bench","equipe","analise","carro","cargas","pipeline"];
 (function(){const _nt=navTo;navTo=function(sc,ti){_nt(sc,ti);if(GRUPO_MAIS.includes(sc)){const b=document.getElementById("nav-mais");if(b)b.classList.add("active")}fecharMais()}})();
 function fecharMais(){const o=document.getElementById("mais-ov");if(o)o.classList.remove("on")}
 function infoCarro(){if(!KMV.vk)return null;const mes=KMC.hoje().slice(0,7);const r=kmCarroMes(KMV.lanc,mes);const meta=metaCarro(KMV.v,KMV.metas,mes,KMV.vk);const pend=!r.ult||r.ult.data<KMC.segunda();const al=alertasCarro(KMV.lanc,KMV.serv,KMV.plano||PLANO_CARRO_PADRAO);return{r,meta,pend,al,st:statusKm(r.km,r.proj,meta)}}
@@ -1593,6 +1598,7 @@ function itensMais(){const c=infoCarro(),e=infoEntregas();const n0=x=>Math.round
   return[
    {ico:"🚗",t:"Meu carro",sub:c?(n0(c.r.km)+" km no mês"+(c.meta?" de "+n0(c.meta):"")+(c.pend?" · lançar km da semana":"")):"sem carro vinculado",badge:c?(c.pend?1:0)+c.al.length:0,acao:"abrirCarro()"},
    {ico:"🚚",t:"Entregas de ração",sub:e?(e.cam+" a caminho · "+e.ag+" aguardando"+(e.atr?" · "+e.atr+" atrasado(s)":"")):"status das cargas dos seus clientes",badge:e?e.atr:0,acao:"navTo('cargas','Entregas de ração');renderCargasVendedor()"},
+   {ico:"🗂️",t:"Pipeline",sub:"prospectos e funil de vendas",acao:"navTo('pipeline','Pipeline');renderPipelineVendedor()"},
    {ico:"🎯",t:"Benchmarks",sub:"comparar fazendas da carteira",acao:"navTo('bench','Benchmarks');renderBench()"},
    {ico:"🏅",t:"Equipe",sub:"ranking do mês",acao:"navTo('equipe','Equipe');renderEquipe()"},
    {ico:"📈",t:"Análise",sub:"indicadores da carteira",acao:"navTo('analise','Análise');if(typeof renderAnalise==='function')renderAnalise()"}
@@ -1603,11 +1609,11 @@ function renderInicio(){
   const hub=document.getElementById("inicio-hub");if(!hub)return;const sr=document.getElementById("screen-resumo");if(sr&&sr.classList.contains("active"))document.getElementById("topbar-title").textContent="Início";const c=infoCarro(),e=infoEntregas();const n0=x=>Math.round(x).toLocaleString("pt-BR");
   const tiles=[
     {ico:"🏡",t:"Clientes",sub:"carteira e visitas",acao:"navTo('lista','Propriedades')"},
-    {ico:"🗂️",t:"Pipeline",sub:"prospectos",acao:"navTo('pipeline','Pipeline');renderPipelineVendedor()"},
+    {ico:"📅",t:"Agenda",sub:AGV.resumoCurto(),badge:AGV.badge(),acao:"abrirAgenda(AGV.hojeItens().length?'hoje':'semana')"},
     {ico:"🚗",t:"Meu carro",sub:c?n0(c.r.km)+" km no mês":"sem carro vinculado",badge:c&&(c.pend||c.al.length)?(c.pend?"lançar km":c.al.length+" aviso(s)"):"",cor:c&&c.st.k==="acima"?"#dc2626":"",acao:"abrirCarro()"},
     {ico:"🚚",t:"Entregas",sub:e?(e.cam?e.cam+" a caminho":e.ag+" aguardando"):"ração dos clientes",badge:e&&e.atr?e.atr+" atrasado(s)":"",acao:"navTo('cargas','Entregas de ração');renderCargasVendedor()"},
     {ico:"📊",t:"Resultado",sub:"meu desempenho",acao:"navTo('dash','Meu Resultado');renderDash()"},
-    {ico:"🏅",t:"Equipe",sub:"ranking do mês",acao:"navTo('equipe','Equipe');renderEquipe()"}];
+    {ico:"🗂️",t:"Pipeline",sub:"prospectos",acao:"navTo('pipeline','Pipeline');renderPipelineVendedor()"}];
   hub.innerHTML=tiles.map(x=>'<button class="tile" onclick="'+x.acao+'"><span class="ti">'+x.ico+'</span><b>'+x.t+'</b><small'+(x.cor?' style="color:'+x.cor+'"':'')+'>'+kmEsc(x.sub)+'</small>'+(x.badge?'<em>'+kmEsc(x.badge)+'</em>':'')+'</button>').join("");
   const al=document.getElementById("inicio-alertas");let h="";
   if(c&&c.pend)h+='<button class="banner amb" onclick="abrirLancKm()"><span>📍</span><span><b>Lance o km do carro desta semana</b><small>'+(c.r.ult?"última leitura "+c.r.ult.data.slice(8)+"/"+c.r.ult.data.slice(5,7):"primeiro lançamento")+'</small></span><i>›</i></button>';
@@ -1636,6 +1642,42 @@ function renderCarroDet(){
 (function(){const _rk=renderKmVendedor;renderKmVendedor=function(){_rk();renderInicio();const sc=document.getElementById("screen-carro");if(sc&&sc.classList.contains("active"))renderCarroDet()}})();
 (function(){const _cr=cgRender;cgRender=function(){_cr();renderInicio()}})();
 (function(){const _ia=iniciarApp;iniciarApp=function(){_ia.apply(this,arguments);setTimeout(renderInicio,300)}})();
+</script>
+<script>
+/* ===== Agenda integrada: a página app-agenda.html roda dentro do app (mesmo login) + resumo do dia no Início ===== */
+const AGV={dados:null,uid:null,wk:null,ref:null,
+  iso(d){return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0")},
+  segunda(d){const x=new Date(d);const w=x.getDay();x.setDate(x.getDate()-w+(w===0?-6:1));x.setHours(0,0,0,0);return x},
+  wkKey(m){const d=new Date(Date.UTC(m.getFullYear(),m.getMonth(),m.getDate()));const n=d.getUTCDay()||7;d.setUTCDate(d.getUTCDate()+4-n);const y=new Date(Date.UTC(d.getUTCFullYear(),0,1));return d.getUTCFullYear()+"-W"+String(Math.ceil((((d-y)/864e5)+1)/7)).padStart(2,"0")},
+  itens(){return Object.entries((this.dados&&this.dados.itens)||{}).map(([id,v])=>Object.assign({id},v))},
+  hojeItens(){const h=this.iso(new Date());return this.itens().filter(i=>i.data===h)},
+  marca(){const h=this.iso(new Date());const d=this.dados||{};if(d.folgas&&d.folgas[h])return{t:"OFF",txt:d.folgas[h].motivo||"folga"};if(d.acompanhamentos&&d.acompanhamentos[h]){const a=d.acompanhamentos[h];return{t:"ACOMP",txt:"acompanhando "+(a.vendedorNome||a.vendedor||"vendedor")+(a.cidade?" em "+a.cidade:"")}}if(d.eventos&&d.eventos[h]){const e=d.eventos[h];return{t:"EVENTO",txt:(e.titulo||e.tipo||"evento")}}return null},
+  resumoCurto(){if(!this.dados)return"planejamento e check-in";const m=this.marca();if(m)return m.t==="OFF"?"dia OFF":m.txt;const l=this.hojeItens();if(!l.length)return this.itens().length?"nada hoje":"semana sem plano";return l.filter(i=>i.status!=="planejado").length+" de "+l.length+" hoje"},
+  badge(){if(!this.dados)return"";const l=this.hojeItens();const pend=l.filter(i=>i.status==="planejado").length;if(pend)return pend+" check-in";const dw=new Date().getDay();if(!this.itens().length&&dw>=1&&dw<=5&&!this.marca())return"planejar";return""}
+};
+function iniciarAgendaVendedor(){if(!usuarioAtual||AGV.uid)return;AGV.uid=usuarioAtual.uid;AGV.wk=AGV.wkKey(AGV.segunda(new Date()));
+  AGV.ref=db.ref("agendas/"+AGV.uid+"/"+AGV.wk);AGV.ref.on("value",s=>{AGV.dados=s.val()||{};renderAgendaInicio();if(typeof renderInicio==="function")renderInicio()},e=>console.warn("agenda",e.message))}
+const ST_AG={planejado:["Planejada","#64748b","#f1f5f9"],realizado:["Realizada","#15803d","#f0fdf4"],nao_realizado:["Não realizada","#dc2626","#fef2f2"],remarcado:["Remarcada","#b45309","#fffbeb"]};
+function renderAgendaInicio(){
+  const el=document.getElementById("inicio-agenda");if(!el||!AGV.dados)return;const l=AGV.hojeItens().sort((a,b)=>(a.criado_em||"").localeCompare(b.criado_em||""));const m=AGV.marca();const feitas=l.filter(i=>i.status!=="planejado").length;
+  const dw=new Date().getDay();const semPlano=!AGV.itens().length;
+  let corpo="";
+  if(m)corpo='<div style="font-size:13px;color:var(--muted);padding:4px 0">'+(m.t==="OFF"?"🏖️ Dia OFF — "+kmEsc(m.txt):m.t==="ACOMP"?"👥 "+kmEsc(m.txt):"📅 "+kmEsc(m.txt))+'</div>';
+  else if(!l.length)corpo='<div style="font-size:13px;color:var(--muted);padding:4px 0">'+(semPlano?"Sua semana ainda não tem planejamento.":"Nenhuma visita planejada para hoje.")+'</div>';
+  else corpo=l.slice(0,5).map(i=>{const st=ST_AG[i.status]||ST_AG.planejado;return'<div style="display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:1px solid #f1f5f9"><div style="flex:1;min-width:0"><div style="font-size:13px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+kmEsc(i.farmNome||"—")+'</div><div style="font-size:11px;color:var(--muted)">'+kmEsc(i.farmCidade||"")+'</div></div><span style="font-size:10.5px;font-weight:800;border-radius:8px;padding:3px 8px;color:'+st[1]+';background:'+st[2]+'">'+st[0]+'</span></div>'}).join("")+(l.length>5?'<div style="font-size:11.5px;color:var(--muted);padding-top:6px">+ '+(l.length-5)+' visita(s)</div>':"");
+  const pend=l.filter(i=>i.status==="planejado").length;
+  el.innerHTML='<div style="background:#fff;border:1px solid '+((pend||(semPlano&&dw>=1&&dw<=5))?"#fcd34d":"var(--border)")+';border-radius:14px;padding:14px;margin-top:12px;box-shadow:var(--shadow)"><div style="display:flex;align-items:center;gap:8px;margin-bottom:4px"><div style="font-size:14px;font-weight:800;flex:1">📅 Agenda de hoje</div>'+(l.length?'<div style="font-size:12px;font-weight:800;color:'+(feitas===l.length?"#15803d":"#b45309")+'">'+feitas+' de '+l.length+'</div>':"")+'</div>'+corpo+'<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px"><button onclick="abrirAgenda(\'hoje\')" style="border:none;border-radius:11px;padding:11px;font-weight:800;font-family:inherit;cursor:pointer;'+(pend?"background:#d97706;color:#fff":"background:#f1f5f9;color:var(--text)")+'">'+(pend?"📍 Fazer check-in":"Ver hoje")+'</button><button onclick="abrirAgenda(\'semana\')" style="border:none;border-radius:11px;padding:11px;font-weight:800;font-family:inherit;cursor:pointer;'+(semPlano&&!pend?"background:#d97706;color:#fff":"background:#f1f5f9;color:var(--text)")+'">🗂️ '+(semPlano?"Planejar semana":"Semana")+'</button></div></div>';
+  const d=document.getElementById("nd-agenda");if(d)d.style.display=pend?"block":"none";
+}
+function tamanhoAgenda(){const f=document.getElementById("agenda-frame");const mc=document.getElementById("main-content");if(!f||!mc)return;const cs=getComputedStyle(mc);f.style.height=(mc.clientHeight-parseFloat(cs.paddingTop)-parseFloat(cs.paddingBottom))+"px"}
+function abrirAgenda(view){
+  navTo("agenda","Agenda");const w=document.getElementById("agenda-wrap");let f=document.getElementById("agenda-frame");
+  if(!f){w.innerHTML='<div id="agenda-load" style="text-align:center;padding:40px;color:var(--muted)">Carregando agenda…</div><iframe id="agenda-frame" title="Agenda" src="app-agenda.html?embed=1'+(view?"&view="+view:"")+'" onload="const l=document.getElementById(\'agenda-load\');if(l)l.remove()"></iframe>';f=document.getElementById("agenda-frame")}
+  else if(view){try{f.contentWindow.postMessage({agendaView:view},"*")}catch(e){}}
+  tamanhoAgenda();
+}
+window.addEventListener("resize",tamanhoAgenda);
+(function(){const _ia=iniciarApp;iniciarApp=function(){_ia.apply(this,arguments);iniciarAgendaVendedor()}})();
 </script>
 </body>
 </html>
