@@ -10,6 +10,7 @@
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-functions-compat.js"></script>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
@@ -310,6 +311,25 @@ label.f{display:block;font-size:12px;font-weight:700;color:var(--muted);margin:1
 @media(max-width:1200px){.dks{grid-template-columns:repeat(3,minmax(0,1fr))}}
 @media(max-width:900px){.lanes{grid-template-columns:repeat(2,minmax(0,1fr))}.lane:not(:last-child)::after{display:none}.dg,.dg+.dg{grid-template-columns:1fr}.srch{min-width:0;flex:1}.srch kbd{display:none}}
 @media(max-width:560px){.dh>div{flex:1 1 100%}.srch{flex:1 1 100%;order:3}.dh .btn{flex:1}.flow-h{flex-wrap:wrap}.flow-h .lnk{margin-left:0}.lane{min-height:0}.lane-v{display:none}.dks{grid-template-columns:1fr 1fr}.lanes{grid-template-columns:1fr}.dh h1{font-size:20px}.dk b{font-size:20px}.dk .spk{display:none}}
+
+/* ===== sequência / completar / IA ===== */
+.sq{display:flex;align-items:center;gap:10px;background:#fff;border:1px solid var(--border);border-radius:13px;padding:10px 12px;margin-bottom:8px}
+.sq.drag{opacity:.45}.sq.over{border-color:var(--G);box-shadow:0 -3px 0 var(--G)}
+.sq-h{cursor:grab;color:var(--dim);font-size:14px;letter-spacing:-2px;user-select:none}
+.sq-n{font-family:var(--mono);font-size:20px;font-weight:700;min-width:38px;color:var(--GD)}
+.sq-m{flex:1;min-width:0;cursor:pointer}
+.sq-t{display:flex;align-items:center;gap:8px;flex-wrap:wrap}.sq-t b{font-size:14px}
+.sq-c{font-size:12px;color:var(--muted);margin:3px 0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sq-k{display:flex;align-items:center;gap:8px}.sq-k .ocb{width:120px}
+.sq-b{display:flex;flex-direction:column;gap:4px}
+.cmp{border-color:#fde68a;background:#fffdf5}
+.ia-bt{background:linear-gradient(135deg,#052e16,#15803d);color:#fff}
+.ia-load{margin-top:10px;padding:14px;border-radius:12px;background:var(--GL);color:var(--GD);font-weight:600;font-size:13px;animation:iapulse 1.4s ease-in-out infinite}
+@keyframes iapulse{50%{opacity:.6}}
+@media(prefers-reduced-motion:reduce){.ia-load{animation:none}}
+.ia-card ul{margin:6px 0 0 18px;font-size:13px;line-height:1.5}
+.ia-mot{font-size:12.5px;background:var(--GL);color:var(--GD);border-radius:9px;padding:7px 10px;margin:4px 0 8px}
+@media(max-width:600px){.sq{flex-wrap:wrap}.sq-k .ocb{width:80px}}
 /* ===== indicadores ===== */
 .kpis8{grid-template-columns:repeat(5,1fr)}
 .kpi .dl{font-size:10.5px;font-weight:700;color:var(--muted)}.kpi .dl.up{color:var(--G)}.kpi .dl.down{color:var(--red)}
@@ -592,7 +612,7 @@ function brl(v){return"R$ "+Math.round(v).toLocaleString("pt-BR")}
 function pendentesAte(dia){const al=alocacoes();return Object.entries(S.pedidos).filter(([,p])=>!p.cancelado&&p.dataEntrega&&p.dataEntrega<=dia).map(([id,p])=>({id,p,resta:(+p.kg||0)-((al[id]||{}).aloc||0)})).filter(x=>x.resta>=50).sort((a,b)=>(a.p.dataEntrega||"").localeCompare(b.p.dataEntrega||""))}
 
 /* ================= PAINEL DE DESPACHO ================= */
-let PV="frota";
+let PV="seq";
 function truckHTML(c,mini,onclickFn){
   const cam=S.caminhoes[camKey(c)];
   return '<div class="truck'+(mini?" mini":"")+'"><div class="cab"></div>'+arr(c.caixas).map((b,i)=>{
@@ -618,7 +638,7 @@ function stTag(c){return'<span class="pill p-'+(cargaAtrasada(c)?"atraso":c.stat
 function cargaCompacta(id,c,semCaminhao){
   const kg=kgTotal(c),cap=capTotal(c)||1,oc=Math.round(kg/cap*100);const r=rotaInfo(c);const fr=freteCarga(c);const ids=clientesDaCarga(c);const ent=c.entregas||{};
   const ocCor=oc>=95?"var(--G)":oc>=80?"#65a30d":oc>=60?"var(--amber)":"var(--red)";
-  return'<div class="cb" onclick="abrirEditor(\''+id+'\')"><div class="cb-h"><b>'+(c.numero?"Carga "+esc(c.numero):"Carga s/ nº")+'</b>'+(semCaminhao?'<span class="muted small">'+esc(c.placa||"")+'</span>':"")+'<span class="muted small">'+(c.motoristaNome?esc(c.motoristaNome):"<span style=\"color:var(--amber)\">sem motorista</span>")+'</span><span style="flex:1"></span>'+stTag(c)+'</div>'+truckHTML(c,true)+
+  const _ps=posNoDia(id);return'<div class="cb" onclick="abrirEditor(\''+id+'\')"><div class="cb-h">'+(_ps&&_ps.total>1?'<span class="pill" style="background:var(--GD);color:#fff">'+_ps.n+'º'+(_ps.viagem>1?" · "+_ps.viagem+"ª viagem":"")+'</span>':"")+'<b>'+(c.numero?"Carga "+esc(c.numero):"Carga s/ nº")+'</b>'+(semCaminhao?'<span class="muted small">'+esc(c.placa||"")+'</span>':"")+'<span class="muted small">'+(c.motoristaNome?esc(c.motoristaNome):"<span style=\"color:var(--amber)\">sem motorista</span>")+'</span><span style="flex:1"></span>'+stTag(c)+'</div>'+truckHTML(c,true)+
   '<div class="chain">'+(ids.length?ids.map((cid,i)=>{const b=arr(c.caixas).find(x=>x&&x.clienteId===cid);const d=ent[cid]&&ent[cid].status==="entregue";return'<span class="st'+(d?" done":"")+'"><i style="background:'+corCliente(c,cid)+'">'+(i+1)+'</i>'+esc(b.cliente.split(" ").slice(0,2).join(" "))+'<small>'+esc((b.cidade||"").toLowerCase())+'</small></span>'}).join('<span class="arr">›</span>'):'<span class="muted small">Nenhum cliente ainda</span>')+'</div>'+
   '<div class="mets"><div class="oc"><div class="ocb"><i style="width:'+Math.min(100,oc)+'%;background:'+ocCor+'"></i></div><span class="num">'+t(kg)+' / '+t(cap)+' · <b style="color:'+ocCor+'">'+oc+'%</b></span></div><span class="num">'+(r.total?fmtKm(r.total):(origem()?"—":""))+'</span>'+(r.retorno?'<span class="num muted">volta '+fmtHora(r.retorno)+'</span>':"")+(fr?'<span class="num muted">'+brl(fr)+'</span>':"")+'</div>'+avisosCarga(c)+'</div>';
 }
@@ -644,12 +664,13 @@ function renderCargas(){
   const porDia={};Object.values(S.cargas).forEach(c=>{porDia[c.data]=(porDia[c.data]||0)+1});
   let days="";for(let i=-2;i<=9;i++){const d=addDias(h,i);const dt=new Date(d+"T12:00:00");days+='<button class="day'+(d===DIA?" on":"")+(d===h?" today":"")+'" onclick="DIA=\''+d+'\';renderCargas()"><div class="w">'+(d===h?"hoje":dt.toLocaleDateString("pt-BR",{weekday:"short"}).replace(".",""))+'</div><div class="d">'+dt.getDate()+'</div><div class="n">'+(porDia[d]?porDia[d]+" carga"+(porDia[d]>1?"s":""):"")+'</div></button>'}
   let html='<div class="bar"><h2>'+(DIA===h?"Hoje, "+fData(DIA):fDataL(DIA))+'</h2><input class="inp" type="date" value="'+DIA+'" style="width:auto" onchange="DIA=this.value;renderCargas()"><button class="btn '+(diaChuva(DIA)?"btn-a":"btn-o")+'" onclick="alternarChuva()" title="Marca o dia como chuvoso: clientes que não recebem com chuva ficam bloqueados">☔ '+(diaChuva(DIA)?"Dia de chuva":"Chuva?")+'</button><button class="btn btn-o" onclick="abrirOrdemCarregamento()">Ordem de carregamento</button><button class="btn btn-o" onclick="abrirPlanejamento()">Sugerir cargas</button><button class="btn btn-g" onclick="novaCarga()">+ Nova carga</button></div><div class="days">'+days+'</div>'+(diaChuva(DIA)?'<div class="card" style="background:var(--amberL);border-color:#fde68a;padding:10px 14px"><b>Dia de chuva em '+fData(DIA)+'.</b> <span class="small">Clientes marcados como "não recebe com chuva" ficam fora da sugestão e aparecem bloqueados nas cargas.</span></div>':"")+kpisDia(doDia,pend);
-  html+='<div class="painel"><div class="pmain"><div class="seg">'+[["frota","Frota"],["status","Por status"],["mapa","Mapa"],["semana","Semana"]].map(([k,l])=>'<button class="'+(PV===k?"on":"")+'" onclick="PV=\''+k+'\';renderCargas()">'+l+'</button>').join("")+'</div><div id="pv"></div>';
+  html+='<div class="painel"><div class="pmain"><div class="seg">'+[["seq","Sequência"],["frota","Frota"],["status","Por status"],["mapa","Mapa"],["semana","Semana"]].map(([k,l])=>'<button class="'+(PV===k?"on":"")+'" onclick="PV=\''+k+'\';renderCargas()">'+l+'</button>').join("")+'</div><div id="pv"></div>';
   if(atrasadas.length&&PV!=="semana")html+='<div class="group-h red">Cargas de dias anteriores ainda não entregues</div>'+atrasadas.map(([id,c])=>cargaCompacta(id,c,true)).join("");
   html+='</div><aside class="fila"><div class="fila-h"><b>Fila de pedidos</b><span class="num muted small">'+t(pend.reduce((s,x)=>s+x.resta,0))+'</span></div><div class="small muted" style="margin-bottom:6px">Sem carga, com entrega até '+fData(DIA)+'.</div>'+(pend.length?pend.slice(0,40).map(x=>{const late=x.p.dataEntrega<h;return'<div class="fq"><div class="main"><b>'+esc(x.p.cliente)+'</b><span>'+esc(x.p.cidade||"")+' · '+esc(x.p.produto.replace(/^\d+\s*-\s*/,""))+'</span><span class="'+(late?"late":"")+'">'+(late?"atrasado "+difDias(h,x.p.dataEntrega)+"d":"entrega "+fData(x.p.dataEntrega))+(ptExato(x.p.clienteId)?"":ptCliente(x.p.clienteId)?" · local pela cidade":" · sem local")+'</span></div><div class="r"><div class="t-big">'+t(x.resta)+'</div><button class="btn btn-o btn-sm" onclick="escolherCargaPara(\''+x.id+'\')">Encaixar</button></div></div>'}).join(""):'<div class="empty" style="padding:24px 8px"><b>Fila vazia</b>Tudo que vence até '+fData(DIA)+' já está em carga.</div>')+'</aside></div>';
   el.innerHTML=html;
   const pv=document.getElementById("pv");
-  if(PV==="frota")pv.innerHTML=viewFrota(doDia);
+  if(PV==="seq")pv.innerHTML=viewSeq();
+  else if(PV==="frota")pv.innerHTML=viewFrota(doDia);
   else if(PV==="status")pv.innerHTML=viewStatus(doDia);
   else if(PV==="semana")pv.innerHTML=viewSemana();
   else{pv.innerHTML='<div class="maparea"><div id="mapa" class="mapa"></div><div class="small muted" id="mapa-nota" style="margin-top:6px"></div></div>';desenharMapa("mapa",doDia,pend)}
@@ -746,18 +767,23 @@ function planejarCargas(dia){
   return props;
 }
 let _props=[];
-function abrirPlanejamento(){
-  _props=planejarCargas(DIA);const livres=Object.keys(S.caminhoes).length-new Set(Object.values(S.cargas).filter(c=>c.data===DIA).map(c=>c.caminhaoId)).size;
-  let html='<div class="sh-h"><h3>Sugestão de cargas para '+fData(DIA)+'</h3><button class="x" onclick="fecharSheet()">×</button></div><div class="small muted">Usa os pedidos sem carga até '+fData(addDias(DIA,1))+', os caminhões livres no dia ('+livres+'), quem costuma ir junto, cidade e distância. A ordem de entrega já vem otimizada. Revise antes de criar.</div>';
+function abrirPlanejamento(){_props=planejarCargas(DIA);_ia={carregando:false,dicas:[],adiar:[],avisos:[]};renderPropostas(false)}
+function renderPropostas(ia){
+  const livres=Object.keys(S.caminhoes).length-new Set(Object.values(S.cargas).filter(c=>c.data===DIA).map(c=>camKey(c))).size;
+  let html='<div class="sh-h"><h3>'+(ia?"✨ Sugestão da IA":"Sugestão de cargas")+' para '+fData(DIA)+'</h3><button class="x" onclick="fecharSheet()">×</button></div><div class="small muted">'+(ia?"A IA analisou pedidos, histórico de quem vai junto, rotas e caminhões. Tudo foi conferido contra a capacidade das caixas e as restrições antes de aparecer aqui.":"Usa os pedidos sem carga até "+fData(addDias(DIA,1))+", os caminhões livres no dia ("+livres+"), quem costuma ir junto, cidade e distância. A ordem de entrega já vem otimizada.")+'</div>';
+  html+='<div style="display:flex;gap:8px;margin:10px 0 0">'+(ia?'<button class="btn btn-o btn-sm" onclick="abrirPlanejamento()">Ver sugestão automática</button>':'')+'<button class="btn btn-sm ia-bt" onclick="pedirIA()">✨ '+(ia?"Pedir de novo":"Pedir sugestão à IA")+'</button></div><div id="ia-res"></div>';
+  if(ia&&_ia.dicas.length)html+='<div class="card ia-card" style="margin-top:12px"><b>Dicas da IA</b><ul>'+_ia.dicas.map(d=>'<li>'+esc(d)+'</li>').join("")+'</ul></div>';
+  if(ia&&_ia.adiar.length)html+='<div class="card" style="margin-top:8px"><b>Deixar para outro dia</b>'+_ia.adiar.map(a=>{const p=S.pedidos[a.pedido_id];return'<div class="row"><div class="main"><b>'+esc(p?p.cliente:a.pedido_id)+'</b><span>'+esc(a.motivo||"")+'</span></div></div>'}).join("")+'</div>';
+  if(ia&&_ia.avisos&&_ia.avisos.length)html+='<div class="small" style="margin-top:8px;color:var(--amber)">'+_ia.avisos.map(esc).join("<br>")+'</div>';
   if(!_props.length)html+='<div class="empty"><b>Nada a sugerir</b>'+(livres?"Não há pedidos sem carga até "+fData(addDias(DIA,1))+".":"Todos os caminhões já têm carga neste dia.")+'</div>';
   _props.forEach((pr,i)=>{const r=rotaInfo(pr.carga);const oc=Math.round(pr.kg/pr.cap*100);const baixa=oc<50;
-    html+='<div class="card" style="margin-top:12px"><div class="cc-h"><div class="t"><b>'+esc(pr.cam.apelido||pr.cam.placa)+'</b><div><span class="num">'+t(pr.kg)+' / '+t(pr.cap)+' · '+oc+'%</span>'+(r.ok?' · '+fmtKm(r.total):"")+'</div></div><button class="btn btn-g btn-sm" id="pp-'+i+'" onclick="criarProposta('+i+')">Criar carga</button></div>'+(baixa?'<div class="warn">Ocupação baixa ('+oc+'%). Vale esperar mais pedidos ou juntar com outra carga.</div>':"")+truckHTML(pr.carga,true)+pr.carga.ordem.map((cid,j)=>{const s=pr.sel.filter(x=>x.x.p.clienteId===cid);const kg=s.reduce((a,x)=>a+x.kg,0);return'<div class="row"><span class="pill" style="background:'+corCliente(pr.carga,cid)+';color:#fff">'+(j+1)+'</span><div class="main"><b>'+esc(s[0].x.p.cliente)+'</b><span>'+esc(s[0].x.p.cidade||"")+' · entrega '+fData(s[0].x.p.dataEntrega)+(s[0].x.resta>=50?' · <span style="color:var(--amber)">sobram '+t(s[0].x.resta)+'</span>':"")+'</span><div class="why">'+(s[0].why||[]).slice(0,3).map(w=>'<em'+(/^atrasad/.test(w)?' class="a"':'')+'>'+esc(w)+'</em>').join("")+'</div></div><span class="num small">'+t(kg)+'</span></div>'}).join("")+'</div>'});
+    html+='<div class="card" style="margin-top:12px"><div class="cc-h"><div class="t"><b>'+esc(pr.cam.apelido||pr.cam.placa)+'</b><div><span class="num">'+t(pr.kg)+' / '+t(pr.cap)+' · '+oc+'%</span>'+(r.ok?' · '+fmtKm(r.total):"")+'</div></div><button class="btn btn-g btn-sm" id="pp-'+i+'" onclick="criarProposta('+i+')">Criar carga</button></div>'+(pr.motivo?'<div class="ia-mot">✨ '+esc(pr.motivo)+'</div>':"")+(baixa?'<div class="warn">Ocupação baixa ('+oc+'%). Vale esperar mais pedidos ou juntar com outra carga.</div>':"")+truckHTML(pr.carga,true)+pr.carga.ordem.map((cid,j)=>{const ss=pr.sel.filter(x=>x.x.p.clienteId===cid);if(!ss.length)return"";const kg=ss.reduce((a,x)=>a+x.kg,0);return'<div class="row"><span class="pill" style="background:'+corCliente(pr.carga,cid)+';color:#fff">'+(j+1)+'</span><div class="main"><b>'+esc(ss[0].x.p.cliente)+'</b><span>'+esc(ss[0].x.p.cidade||"")+' · entrega '+fData(ss[0].x.p.dataEntrega)+'</span><div class="why">'+(ss[0].why||[]).slice(0,3).map(w=>'<em'+(/^atrasad/.test(w)?' class="a"':'')+'>'+esc(w)+'</em>').join("")+'</div></div><span class="num small">'+t(kg)+'</span></div>'}).join("")+'</div>'});
   if(_props.filter(p=>p.kg/p.cap>=0.5).length>1)html+='<div class="sh-f"><button class="btn btn-o" onclick="fecharSheet()">Fechar</button><button class="btn btn-g" onclick="_props.forEach((p,i)=>{if(p.kg/p.cap>=0.5)criarProposta(i)})">Criar as com ocupação ≥ 50%</button></div>';
   abrirSheet(html);
 }
 function criarProposta(i){
   const pr=_props[i];if(!pr||pr.criada)return;pr.criada=true;const b=document.getElementById("pp-"+i);if(b){b.disabled=true;b.textContent="Criada"}
-  const c=Object.assign({},pr.carga,{criadoEm:Date.now(),criadoPor:USER.email,origemSugestao:true});c.status=calcStatus(c);
+  const c=Object.assign({},pr.carga,{ordemCarregamento:proxOrdem(pr.carga.data)+i*0,criadoEm:Date.now(),criadoPor:USER.email,origemSugestao:true,origemIA:!!pr.ia});c.status=calcStatus(c);
   db.ref("cargas").push(c).then(()=>toast("Carga criada para "+(pr.cam.apelido||pr.cam.placa))).catch(e=>{pr.criada=false;toast("Não salvou: "+e.message,true)});
 }
 
@@ -765,7 +791,7 @@ function criarProposta(i){
 function primeiroCaminhao(){return Object.keys(S.caminhoes)[0]||""}
 function novaCarga(camId,pid){
   camId=camId||Object.keys(S.caminhoes).find(k=>!Object.values(S.cargas).some(c=>c.data===DIA&&c.caminhaoId===k))||primeiroCaminhao();const cam=S.caminhoes[camId];
-  const c={data:DIA<hoje()?hoje():DIA,caminhaoId:camId,placa:cam?cam.placa:"",motoristaUid:cam&&cam.motoristaUid||"",motoristaNome:cam&&cam.motoristaNome||"",numero:"",regiao:"",horaSaida:"07:00",status:"montagem",caixas:montarCaixasVazias(cam),ordem:[],criadoEm:Date.now(),criadoPor:USER.email};
+  const c={ordemCarregamento:proxOrdem(DIA<hoje()?hoje():DIA),data:DIA<hoje()?hoje():DIA,caminhaoId:camId,placa:cam?cam.placa:"",motoristaUid:cam&&cam.motoristaUid||"",motoristaNome:cam&&cam.motoristaNome||"",numero:"",regiao:"",horaSaida:"07:00",status:"montagem",caixas:montarCaixasVazias(cam),ordem:[],criadoEm:Date.now(),criadoPor:USER.email};
   const ref=db.ref("cargas").push();
   ref.set(c).then(()=>{abrirEditor(ref.key);if(pid)setTimeout(()=>encaixar(pid,ref.key),150)}).catch(e=>toast("Erro ao criar carga: "+e.message,true));
 }
@@ -810,7 +836,7 @@ function renderEditor(){
   if(c.saidaEm||c.kmSaida)html+=cardViagem(EDIT,c);
   html+='<div class="card"><b>Observações e atrasos</b><textarea class="inp" rows="2" style="margin-top:8px" placeholder="Observação da carga" onchange="edCampo(\'obs\',this.value)">'+esc(c.obs||"")+'</textarea>'+Object.values(c.atrasos||{}).sort((a,b)=>(b.ts||0)-(a.ts||0)).map(a=>'<div class="row"><span class="pill p-atraso">atraso</span><div class="main"><b style="white-space:normal">'+esc(a.obs)+'</b><span>'+new Date(a.ts).toLocaleString("pt-BR",{day:"2-digit",month:"2-digit",hour:"2-digit",minute:"2-digit"})+' · '+esc(a.por||"")+'</span></div></div>').join("")+'<button class="btn btn-a btn-sm" style="margin-top:10px" onclick="registrarAtraso()">Registrar atraso</button></div>';
   if(!trav)html+='<button class="btn btn-r btn-sm" onclick="excluirCarga()">Excluir carga</button>';
-  html+='</div><div class="side">'+(trav?'<div class="card"><b>Carga saiu da fábrica</b><div class="small muted" style="margin-top:4px">As caixas ficam travadas depois da saída. Entregas são confirmadas pelo motorista.</div></div>':painelSugestoes(EDIT,c))+'</div></div>';
+  html+='</div><div class="side">'+(trav?"":painelCompletar(EDIT,c))+(trav?'<div class="card"><b>Carga saiu da fábrica</b><div class="small muted" style="margin-top:4px">As caixas ficam travadas depois da saída. Entregas são confirmadas pelo motorista.</div></div>':painelSugestoes(EDIT,c))+'</div></div>';
   el.innerHTML=html;
   if(document.getElementById("edmapa"))desenharMapa("edmapa",[[EDIT,c]],[]);
 }
@@ -895,6 +921,103 @@ function painelSugestoes(id,c){
 }
 function filtrarSug(q){q=norm(q);document.querySelectorAll("#sug .row").forEach(r=>r.style.display=!q||r.dataset.q.includes(q)?"":"none")}
 
+/* ================= SEQUÊNCIA DAS CARGAS DO DIA ================= */
+function ordemDoDia(d){return Object.entries(S.cargas).filter(([,c])=>c.data===d).sort((a,b)=>((a[1].ordemCarregamento??999)-(b[1].ordemCarregamento??999))||(a[1].criadoEm||0)-(b[1].criadoEm||0))}
+function proxOrdem(d){const l=Object.values(S.cargas).filter(c=>c.data===d);return l.length?Math.max(...l.map(c=>c.ordemCarregamento??-1),l.length-1)+1:0}
+function posNoDia(id){const c=S.cargas[id];if(!c)return null;const l=ordemDoDia(c.data);const i=l.findIndex(([k])=>k===id);const k=camKey(c);const viagem=l.slice(0,i+1).filter(([,x])=>camKey(x)&&camKey(x)===k).length;return{n:i+1,total:l.length,viagem}}
+function salvarOrdem(ids){const up={};ids.forEach((k,n)=>up["cargas/"+k+"/ordemCarregamento"]=n);return db.ref().update(up)}
+function moverSeq(id,d){const ids=ordemDoDia(DIA).map(([k])=>k);const i=ids.indexOf(id),j=i+d;if(j<0||j>=ids.length)return;[ids[i],ids[j]]=[ids[j],ids[i]];salvarOrdem(ids)}
+let _arr=null;
+function seqDrag(e,id){_arr=id;e.dataTransfer.effectAllowed="move";e.currentTarget.classList.add("drag")}
+function seqOver(e){e.preventDefault();e.currentTarget.classList.add("over")}
+function seqLeave(e){e.currentTarget.classList.remove("over")}
+function seqDrop(e,id){e.preventDefault();e.currentTarget.classList.remove("over");if(!_arr||_arr===id)return;const ids=ordemDoDia(DIA).map(([k])=>k).filter(k=>k!==_arr);ids.splice(ids.indexOf(id),0,_arr);_arr=null;salvarOrdem(ids)}
+function viewSeq(){
+  const l=ordemDoDia(DIA);if(!l.length)return'<div class="empty"><b>Nenhuma carga em '+fData(DIA)+'</b>Crie cargas ou use "Sugerir cargas".</div>';
+  const vezes={};l.forEach(([,c])=>{const k=camKey(c);if(k)vezes[k]=(vezes[k]||0)+1});
+  return'<div class="small muted" style="margin:-4px 0 10px">É a ordem em que os caminhões carregam na fábrica. Arraste ou use as setas. Um caminhão pode aparecer mais de uma vez: ele carrega, entrega e volta para a próxima.</div>'+l.map(([id,c],i)=>{const k=camKey(c);const cam=S.caminhoes[k]||{};const p=posNoDia(id);const ids=clientesDaCarga(c);const kg=kgTotal(c),cap=capTotal(c)||1;
+    return'<div class="sq" draggable="true" ondragstart="seqDrag(event,\''+id+'\')" ondragend="this.classList.remove(\'drag\')" ondragover="seqOver(event)" ondragleave="seqLeave(event)" ondrop="seqDrop(event,\''+id+'\')"><span class="sq-h" aria-hidden="true">⋮⋮</span><span class="sq-n">'+(i+1)+'º</span><div class="sq-m" onclick="abrirEditor(\''+id+'\')"><div class="sq-t"><b>'+esc(cam.apelido||c.placa||"Sem caminhão")+'</b>'+(vezes[k]>1?'<span class="pill p-fechada">'+p.viagem+'ª viagem</span>':"")+'<span class="muted small">'+esc(c.motoristaNome||"sem motorista")+'</span>'+stTag(c)+'</div><div class="sq-c">'+(ids.map(x=>esc(((S.clientes[x]||{}).nome||"").split(" ").slice(0,2).join(" "))).join(" › ")||'<span class="muted">sem clientes</span>')+'</div><div class="sq-k"><span class="ocb"><i style="width:'+Math.min(100,kg/cap*100)+'%;background:var(--G)"></i></span><span class="num small">'+t(kg)+' / '+t(cap)+'</span></div></div><input class="inp" type="time" value="'+esc(c.horaSaida||"")+'" title="Hora de saída" style="width:auto;padding:5px 7px" onchange="db.ref(\'cargas/'+id+'/horaSaida\').set(this.value)"><div class="sq-b"><button class="mv" onclick="moverSeq(\''+id+'\',-1)" aria-label="Subir">↑</button><button class="mv" onclick="moverSeq(\''+id+'\',1)" aria-label="Descer">↓</button></div></div>'}).join("");
+}
+/* ================= COMPLETAR CARGA: quem poderia pedir agora ================= */
+function historicoClientes(){
+  const H={};Object.values(Object.assign({},(typeof IND!=="undefined"&&IND.dados)||{},S.cargas)).forEach(c=>{const kgCli={};const prod={};arr(c.caixas).forEach(b=>{if(b&&b.clienteId){kgCli[b.clienteId]=(kgCli[b.clienteId]||0)+(+b.kg||0);(prod[b.clienteId]=prod[b.clienteId]||{})[b.produto]=((prod[b.clienteId]||{})[b.produto]||0)+(+b.kg||0)}});
+    Object.entries(kgCli).forEach(([k,kg])=>{const h=H[k]||(H[k]={dias:{},prod:{}});h.dias[c.data]=(h.dias[c.data]||0)+kg;Object.entries(prod[k]||{}).forEach(([p,v])=>h.prod[p]=(h.prod[p]||0)+v)})});
+  const med=a=>{const s=a.slice().sort((x,y)=>x-y);const n=s.length;return n?(n%2?s[(n-1)/2]:(s[n/2-1]+s[n/2])/2):0};
+  Object.values(H).forEach(h=>{const ds=Object.keys(h.dias).sort();h.ult=ds[ds.length-1];const iv=[];for(let i=1;i<ds.length;i++){const d=difDias(ds[i],ds[i-1]);if(d>0)iv.push(d)}h.freq=iv.length?Math.round(med(iv)):null;h.kg=med(Object.values(h.dias));h.produto=Object.entries(h.prod).sort((a,b)=>b[1]-a[1])[0][0]});
+  return H;
+}
+function candidatosCompletar(c){
+  const ids=clientesDaCarga(c);const pts=ids.map(ptCliente).filter(Boolean);const cids=new Set(arr(c.caixas).filter(b=>b&&b.cidade).map(b=>norm(b.cidade)));const k=camKey(c);
+  const livreKg=arr(c.caixas).reduce((s,b,i)=>s+((!b||!b.clienteId)?capCaixa(S.caminhoes[k],i,""):0),0);if(livreKg<500)return{livreKg,l:[]};
+  const al=alocacoes();const comPedido=new Set();Object.entries(S.pedidos).forEach(([pid,p])=>{if(!p.cancelado&&p.dataEntrega>=addDias(hoje(),-3)&&(+p.kg||0)-((al[pid]||{}).entregue||0)>50)comPedido.add(p.clienteId)});
+  const H=historicoClientes();const out=[];
+  Object.entries(S.clientes).forEach(([cid,cl])=>{
+    if(ids.includes(cid)||comPedido.has(cid)||!(cl.nCargas>0))return;if(restricoes(cid,cl.cidade,k,c.data).length)return;
+    let sc=0;const why=[];let pa=0;ids.forEach(x=>{pa+=((cl.parceiros||{})[x]||0)});if(pa){sc+=Math.min(pa,15)*3;why.push("já foi junto "+pa+"×")}
+    const p=ptCliente(cid);let dist=null;if(p&&pts.length){dist=Math.min(...pts.map(q=>kmEntre(p,q)));if(dist<15){sc+=16;why.push(Math.round(dist)+" km da rota")}else if(dist<35){sc+=8;why.push(Math.round(dist)+" km da rota")}else if(dist>80&&!pa)return}
+    else if(cids.has(norm(cl.cidade))){sc+=12;why.push("mesma cidade")}else if(!pa)return;
+    const h=H[cid];let precisa="";
+    if(h&&h.freq){const desde=difDias(c.data,h.ult);const r=desde/h.freq;if(r>=0.8){sc+=Math.min(20,Math.round(r*12));precisa=r>=1.2?"já passou do ciclo de compra":"no ciclo de compra";why.push("compra a cada ~"+h.freq+" dias · última há "+desde+" dias")}else if(r<0.4)sc-=10}
+    else if(cl.ultimaCarga){const desde=difDias(c.data,cl.ultimaCarga);if(desde>25&&desde<120){sc+=6;why.push("última carga há "+desde+" dias")}}
+    if(sc<10)return;
+    out.push({cid,cl,sc,why,precisa,dist,kg:h?h.kg:null,produto:h?h.produto:null,vend:cl.vendedor||""});
+  });
+  return{livreKg,l:out.sort((a,b)=>b.sc-a.sc).slice(0,8)};
+}
+function painelCompletar(id,c){
+  const r=candidatosCompletar(c);if(r.livreKg<500)return"";
+  return'<div class="card cmp"><div style="display:flex;align-items:baseline;gap:8px"><b style="flex:1">Ajudar a fechar a carga</b><span class="small muted">'+t(r.livreKg)+' livres</span></div><div class="small muted" style="margin:2px 0 6px">Clientes sem pedido em aberto que costumam ir junto, estão na rota e no ciclo de compra. Fale com o vendedor ou com o cliente.</div>'+(r.l.length?r.l.map(x=>'<div class="row"><div class="main"><b>'+esc(x.cl.nome)+'</b><span>'+esc(x.cl.cidade||"")+(x.vend?" · vend. "+esc(x.vend):"")+(x.produto?" · costuma levar "+t(x.kg)+" de "+esc(x.produto.replace(/^\d+\s*-\s*/,"")):"")+'</span><div class="why">'+x.why.slice(0,3).map(w=>'<em>'+esc(w)+'</em>').join("")+(x.precisa?'<em class="a">'+esc(x.precisa)+'</em>':"")+'</div></div><div class="r" style="display:flex;flex-direction:column;gap:4px"><button class="btn btn-g btn-sm" onclick="pedidoParaCarga(\''+id+'\',\''+x.cid+'\')">Lançar pedido</button><button class="btn btn-o btn-sm" onclick="msgCompletar(\''+id+'\',\''+x.cid+'\')">Mensagem</button></div></div>').join(""):'<div class="vazio">Nenhum cliente encaixa bem nesta rota agora.</div>')+'</div>';
+}
+function pedidoParaCarga(id,cid){const c=S.cargas[id];const H=historicoClientes()[cid];novoPedidoCliente(cid);setTimeout(()=>{const f=document.getElementById("pf");if(!f)return;f.dataEntrega.value=c.data;if(H){if(H.produto)f.produto.value=H.produto;if(H.kg)f.ton.value=(Math.round(H.kg/100)/10)}},60)}
+function msgCompletar(id,cid){const c=S.cargas[id];const cl=S.clientes[cid];const H=historicoClientes()[cid];const cidades=[...new Set(arr(c.caixas).filter(b=>b&&b.cidade).map(b=>b.cidade))].join(", ");
+  const txt="Olá"+(cl.vendedor?" "+cl.vendedor.charAt(0)+cl.vendedor.slice(1).toLowerCase():"")+"! Temos espaço na carga de "+fDataL(c.data)+" que vai para "+(cidades||"a região")+". O cliente "+cl.nome+(H&&H.produto?" costuma levar uns "+t(H.kg)+" de "+H.produto.replace(/^\d+\s*-\s*/,""):"")+". Consegue ver se ele quer aproveitar e fechar um pedido para ir junto?";
+  (navigator.clipboard?navigator.clipboard.writeText(txt):Promise.reject()).then(()=>toast("Mensagem copiada. Cole no WhatsApp do vendedor.")).catch(()=>{abrirSheet('<div class="sh-h"><h3>Mensagem</h3><button class="x" onclick="fecharSheet()">×</button></div><textarea class="inp" rows="6">'+esc(txt)+'</textarea>')})}
+/* ================= SUGESTÃO COM IA ================= */
+let _ia={carregando:false,dicas:[],adiar:[]};
+function dadosParaIA(dia){
+  const fila=pendentesAte(addDias(dia,1));const cl=new Set(fila.map(x=>x.p.clienteId));
+  const usados={};ordemDoDia(dia).forEach(([,c])=>{const k=camKey(c);if(k)usados[k]=(usados[k]||0)+1});
+  const caminhoes=Object.entries(S.caminhoes).map(([k,v])=>({id:k,nome:v.apelido||v.placa,caixas_pelet_kg:v.caixas,caixas_farelado_kg:(v.caixas||[]).map((_,i)=>capCaixa(v,i,"FAREL")),nao_vai_para:v.cidadesBloq||"",cargas_ja_no_dia:usados[k]||0}));
+  const pedidos=fila.map(x=>{const p=ptCliente(x.p.clienteId);const c=S.clientes[x.p.clienteId]||{};return{pedido_id:x.id,cliente_id:x.p.clienteId,cliente:x.p.cliente,cidade:x.p.cidade,lat:p?+p.lat.toFixed(4):null,lng:p?+p.lng.toFixed(4):null,local_aproximado:p?!!p.aprox:null,produto:x.p.produto,farelado:farelado(x.p.produto),kg:Math.round(x.resta),entrega:x.p.dataEntrega,atrasado:x.p.dataEntrega<hoje(),nao_recebe_chuva:!!c.naoChuva,janela:c.janela||"",caminhoes_bloqueados:Object.keys(c.camBloq||{})}});
+  const parceiros=[];[...cl].forEach(a=>Object.entries((S.clientes[a]||{}).parceiros||{}).forEach(([b,n])=>{if(cl.has(b)&&a<b&&n>=2)parceiros.push([a,b,n])}));
+  const montadas=ordemDoDia(dia).map(([id,c])=>({carga_id:id,caminhao_id:camKey(c),clientes:clientesDaCarga(c),kg:Math.round(kgTotal(c)),caixas_livres:arr(c.caixas).filter(b=>!b||!b.clienteId).length}));
+  const completar=montadas.filter(m=>m.caixas_livres).map(m=>({carga_id:m.carga_id,candidatos:candidatosCompletar(S.cargas[m.carga_id]).l.slice(0,5).map(x=>({cliente:x.cl.nome,cidade:x.cl.cidade,motivo:x.why.join("; ")}))}));
+  const o=origem();
+  return{dia,chuva:diaChuva(dia),origem:{nome:o.nome,lat:o.lat,lng:o.lng},caminhoes,pedidos,parceiros_historicos:parceiros,cargas_ja_montadas:montadas,candidatos_para_completar:completar,proposta_automatica:planejarCargas(dia).map(pr=>({caminhao_id:pr.tk,pedidos:pr.sel.map(s=>({pedido_id:s.x.id,kg:Math.round(s.kg)}))}))};
+}
+/* a IA propõe; o código confere caixas, capacidade e restrições antes de mostrar */
+function validarPropostaIA(resp,dia){
+  const props=[];const usado={};const avisos=[];
+  (resp.cargas||[]).forEach(cg=>{
+    const tk=cg.caminhao_id;const cam=S.caminhoes[tk];if(!cam){avisos.push("Caminhão desconhecido ignorado: "+tk);return}
+    const boxes=(cam.caixas||[]).map(()=>null);const sel=[];
+    (cg.pedidos||[]).forEach(pp=>{const p=S.pedidos[pp.pedido_id];if(!p){avisos.push("Pedido inexistente ignorado");return}
+      const rs=restricoes(p.clienteId,p.cidade,tk,dia);if(rs.length){avisos.push(p.cliente+" fora do "+(cam.apelido||tk)+": "+rs.join(", "));return}
+      const al=alocacoes()[pp.pedido_id];let resta=Math.min(+pp.kg||Infinity,(+p.kg||0)-((al||{}).aloc||0)-(usado[pp.pedido_id]||0));if(resta<50)return;const r0=resta;
+      for(let i=0;i<boxes.length&&resta>1;i++){if(boxes[i])continue;const kg=Math.min(capCaixa(cam,i,p.produto),resta);boxes[i]={pid:pp.pedido_id,p,kg};resta-=kg}
+      const u=r0-resta;if(u>0){usado[pp.pedido_id]=(usado[pp.pedido_id]||0)+u;sel.push({x:{id:pp.pedido_id,p,resta:resta},kg:u,why:[]})}
+      if(resta>50)avisos.push("Não coube tudo de "+p.cliente+" no "+(cam.apelido||tk)+" ("+t(resta)+" ficam na fila)")});
+    if(!sel.length)return;
+    const caixas={};boxes.forEach((b,i)=>{caixas[i]=b?linhaCaixa(i,b.p,b.pid,b.kg,cam):{cx:i+1,cap:cam.caixas[i]}});
+    const cliIds=[];sel.forEach(s=>{if(!cliIds.includes(s.x.p.clienteId))cliIds.push(s.x.p.clienteId)});
+    const ordIA=(cg.ordem_entrega||[]).filter(x=>cliIds.includes(x));const ordem=ordIA.length===cliIds.length?ordIA:otimizarOrdemIds(cliIds);
+    const carga={data:dia,caminhaoId:tk,placa:cam.placa||"",motoristaUid:cam.motoristaUid||"",motoristaNome:cam.motoristaNome||"",numero:"",regiao:"",caixas,ordem,status:"montagem",fechadaComVazia:false};
+    const kg=sel.reduce((s,x)=>s+x.kg,0);sel.forEach(s=>s.why=cg.motivo?[]:[]);
+    props.push({tk,cam,sel,kg,cap:capTotal(carga)||1,carga,motivo:cg.motivo||"",ia:true});
+  });
+  return{props,avisos};
+}
+async function pedirIA(){
+  if(_ia.carregando)return;_ia.carregando=true;const box=document.getElementById("ia-res");if(box)box.innerHTML='<div class="ia-load">✨ A IA está analisando pedidos, rotas e caminhões…</div>';
+  try{
+    const fn=firebase.app().functions("southamerica-east1").httpsCallable("sugerirCargasIA");
+    const r=await fn(dadosParaIA(DIA));const v=validarPropostaIA(r.data||{},DIA);
+    _props=v.props;_ia.dicas=(r.data&&r.data.dicas)||[];const naCarga=new Set();v.props.forEach(pr=>pr.sel.forEach(x=>naCarga.add(x.x.id)));_ia.adiar=((r.data&&r.data.deixar_para_outro_dia)||[]).filter(a=>!naCarga.has(a.pedido_id));_ia.avisos=v.avisos;
+    renderPropostas(true);
+  }catch(e){if(box)box.innerHTML='<div class="warn red">Não consegui falar com a IA: '+esc(e.message||String(e))+'. Se a função "sugerirCargasIA" ainda não foi publicada no Firebase, a sugestão automática acima continua funcionando.</div>'}
+  _ia.carregando=false;
+}
+
 /* ================= REMANEJAR CARGA PARA OUTRO CAMINHÃO ================= */
 /* refaz a distribuição nas caixas do caminhão de destino, mantendo a ordem de entrega e um pedido por caixa */
 function redistribuir(c,camIdDest){
@@ -933,7 +1056,7 @@ function remanejar(dest,trocar){
 }
 /* ================= ORDEM DE CARREGAMENTO (relatório para a fábrica) ================= */
 let OC={dia:null};
-function cargasDoDiaOrdenadas(d){return Object.entries(S.cargas).filter(([,c])=>c.data===d&&kgTotal(c)>0).sort((a,b)=>((a[1].ordemCarregamento??99)-(b[1].ordemCarregamento??99))||(a[1].horaSaida||"99").localeCompare(b[1].horaSaida||"99")||(a[1].criadoEm||0)-(b[1].criadoEm||0))}
+function cargasDoDiaOrdenadas(d){return ordemDoDia(d).filter(([,c])=>kgTotal(c)>0)||Object.entries(S.cargas).filter(([,c])=>c.data===d&&kgTotal(c)>0).sort((a,b)=>((a[1].ordemCarregamento??99)-(b[1].ordemCarregamento??99))||(a[1].horaSaida||"99").localeCompare(b[1].horaSaida||"99")||(a[1].criadoEm||0)-(b[1].criadoEm||0))}
 function abrirOrdemCarregamento(d){
   OC.dia=d||(DIA===hoje()?addDias(hoje(),1):DIA);const l=cargasDoDiaOrdenadas(OC.dia);
   let html='<div class="sh-h"><h3>Ordem de carregamento</h3><button class="x" onclick="fecharSheet()">×</button></div><div class="small muted">Relatório para a fábrica com a sequência dos caminhões e o que vai em cada caixa. Ajuste a ordem e a hora de saída antes de gerar.</div><label class="f">Dia do carregamento</label><input class="inp" type="date" value="'+OC.dia+'" style="width:auto" onchange="abrirOrdemCarregamento(this.value)">';
