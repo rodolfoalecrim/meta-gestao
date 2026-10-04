@@ -4235,24 +4235,34 @@ function crmParse(linhas){
   r.previsao=crmIso(prev);
   r.prazo=crmIso(g(/Prazo\s*(?:de\s*)?Pagamento:\s*(\d{2}\/\d{2}\/\d{4})/i));
   r.parcelamento=g(/Parcelamento:\s*(.+)/);
+  /* itens: a descrição pode vir quebrada em várias linhas (antes e/ou depois da linha com código e números) */
   const iIt=L.findIndex(l=>/^C[óo]digo\s+Descri/i.test(l));
-  if(iIt>=0)for(let i=iIt+1;i<L.length&&!/^Itens/i.test(L[i]);i++){const m=L[i].match(/^(\d+)\s+(.+?)\s+([\d.]+,\d+)\s+(KG|TON|TN|T|SC|UN)\s+([\d.,]+)\s+([\d.,]+)\s+([\d.]+,\d{2})$/i);
-    if(m){const un=m[4].toUpperCase();const q=crmNum(m[3]);const kg=un==="KG"?q:(un==="TON"||un==="TN"||un==="T")?q*1000:q;r.itens.push({codigo:m[1],descricao:m[2].trim(),kg:Math.round(kg),un,vlUn:crmNum(m[5]),desc:crmNum(m[6]),total:crmNum(m[7])})}}
+  if(iIt>=0){let buf=[],ab=null;const aberto=s=>(s.match(/\(/g)||[]).length>(s.match(/\)/g)||[]).length;
+    for(let i=iIt+1;i<L.length&&!/^Itens\b/i.test(L[i]);i++){const m=L[i].match(/^(\d+)\s*(.*?)\s*([\d.]+,\d+)\s+(KG|TON|TN|T|SC|UN)\s+([\d.,]+)\s+([\d.,]+)\s+([\d.]+,\d{2})$/i);
+      if(m){const un=m[4].toUpperCase();const q=crmNum(m[3]);const kg=un==="KG"?q:(un==="TON"||un==="TN"||un==="T")?q*1000:q;const d=((m[2]||"").trim()||buf.join(" ")).trim();buf=[];
+        const it={codigo:m[1],descricao:d,kg:Math.round(kg),un,vlUn:crmNum(m[5]),desc:crmNum(m[6]),total:crmNum(m[7])};r.itens.push(it);ab=aberto(d)?it:null}
+      else if(ab){ab.descricao=(ab.descricao+" "+L[i]).trim();if(!aberto(ab.descricao))ab=null}
+      else buf.push(L[i])}}
   r.total=crmNum(g(/Total:\s*([\d.]+,\d{2})/));
   const iV=L.findIndex(l=>/^Vencimento\b/i.test(l));
   if(iV>=0)for(let i=iV+1;i<L.length;i++){const m=L[i].match(/^(\d{2}\/\d{2}\/\d{4})\s+R\$\s+([\d.]+,\d{2})/);if(!m)break;r.vencimentos.push({data:crmIso(m[1]),valor:crmNum(m[2])})}
   if(!r.prazo&&r.vencimentos.length)r.prazo=r.vencimentos[r.vencimentos.length-1].data;
-  const iM=L.findIndex(l=>/Mensagem transbordo/i.test(l));
+  const iM=L.findIndex(l=>/Mensagem\s+(de\s+)?transbordo/i.test(l));
   if(iM>=0){const out=[];for(let i=iM+1;i<L.length&&!/^Declaro/i.test(L[i]);i++)out.push(L[i]);r.mensagem=out.join(" · ")}
   if(!r.controle)r.avisos.push("Número do pedido (controle) não encontrado");
   if(!r.cliente)r.avisos.push("Cliente não encontrado no PDF");
   if(!r.itens.length)r.avisos.push("Nenhum item de ração encontrado");
+  const soma=r.itens.reduce((a,x)=>a+x.total,0);if(r.total&&r.itens.length&&Math.abs(soma-r.total)>1)r.avisos.push("A soma dos itens lidos ("+soma.toLocaleString("pt-BR",{minimumFractionDigits:2})+") não bate com o total do pedido ("+r.total.toLocaleString("pt-BR",{minimumFractionDigits:2})+"). Confira as rações.");
+  const nIt=parseInt((T.match(/Itens:?\s*(\d+)/i)||[])[1]||"0",10);if(nIt&&nIt!==r.itens.length)r.avisos.push("O pedido diz "+nIt+" ite"+(nIt>1?"ns":"m")+", mas foram lidos "+r.itens.length+".");
+  r.contratoSugerido=/CONTRATO/i.test((r.mensagem||"")+" "+T.slice(0,400))||r.itens.reduce((a,x)=>a+x.kg,0)>=30000;
   r.ok=!!(r.controle&&r.cliente&&r.itens.length);
   return r;
 }
 /* nome do produto no padrão das cargas: "CÓDIGO - DESCRIÇÃO", sem o prefixo "RAÇÃO ULTRAMAX" e com o tipo (pelet/farelada) */
 function crmProduto(it){let d=crmNorm(it.descricao).replace(/^RACAO\s+(ULTRAMAX\s+)?/,"").replace(/\s*\(\s*(PELETIZADA|FARELADA)\s+A\s+GRANEL\s*\)/," $1").replace(/PELETIZADA/,"PELET").replace(/FARELADA/,"FAREL").trim();return it.codigo+" - "+d}
-function crmCarregarPdfJs(){if(window.pdfjsLib)return Promise.resolve(window.pdfjsLib);return new Promise((ok,err)=>{const s=document.createElement("script");s.src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js";s.onload=()=>{window.pdfjsLib.GlobalWorkerOptions.workerSrc="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";ok(window.pdfjsLib)};s.onerror=()=>err(new Error("Sem internet para abrir o leitor de PDF"));document.head.appendChild(s)})}
+const CRM_PDFJS=[["https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js","https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js"],["https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.min.js","https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.worker.min.js"]];
+function crmCarregarPdfJs(i){i=i||0;if(window.pdfjsLib)return Promise.resolve(window.pdfjsLib);if(i>=CRM_PDFJS.length)return Promise.reject(new Error("não consegui abrir o leitor de PDF (verifique a internet)"));
+  return new Promise((ok,err)=>{const s=document.createElement("script");s.src=CRM_PDFJS[i][0];s.onload=()=>{if(!window.pdfjsLib){err(new Error("leitor indisponível"));return}window.pdfjsLib.GlobalWorkerOptions.workerSrc=CRM_PDFJS[i][1];ok(window.pdfjsLib)};s.onerror=()=>{s.remove();crmCarregarPdfJs(i+1).then(ok,err)};document.head.appendChild(s)})}
 async function crmLerArquivo(file){
   const buf=await file.arrayBuffer();const lib=await crmCarregarPdfJs();const doc=await lib.getDocument({data:new Uint8Array(buf.slice(0))}).promise;let linhas=[];
   for(let p=1;p<=Math.min(doc.numPages,3);p++){const pg=await doc.getPage(p);const tc=await pg.getTextContent();const Y={};tc.items.forEach(it=>{if(!it.str||!it.str.trim())return;const y=Math.round(it.transform[5]/3)*3;(Y[y]=Y[y]||[]).push({x:it.transform[4],s:it.str})});
@@ -4272,7 +4282,7 @@ async function crmVendLer(f){
     if(!cl){const h=C.find(([,c])=>crmNorm(c.nome)===r.cliente);if(h)cl={id:h[0],c:h[1]}}
     const dup=Object.values(CG.pedidos||{}).some(p=>p.crmControle===r.controle&&!p.cancelado);
     let d=r.previsao||"";const hj=dvHoje();if(!d||d<hj){const x=new Date();x.setDate(x.getDate()+1);d=x.toISOString().slice(0,10)}
-    _crmV={r,cl,dup,data:d};crmVendConfirmar();
+    _crmV={r,cl,dup,data:d,contrato:!!r.contratoSugerido};crmVendConfirmar();
   }catch(e){showToast("Não consegui ler o PDF: "+e.message,true)}
 }
 function crmVendConfirmar(){
@@ -4282,18 +4292,23 @@ function crmVendConfirmar(){
    r.itens.map(it=>'<div class="crm-vi"><span>'+kmEsc(crmProduto(it))+'</span><b>'+(it.kg/1000).toLocaleString("pt-BR",{maximumFractionDigits:2})+' t</b></div>').join("")+
    '<div class="crm-vd"><div><span>Valor</span><b>'+dvBrl(r.total)+'</b></div><div><span>Tabela</span><b>'+kmEsc(r.tabela||"—")+'</b></div><div><span>Vencimento</span><b>'+kmEsc(pz)+'</b></div></div>'+
    (r.mensagem?'<div style="font-size:12.5px;color:var(--muted);margin-top:8px"><i>'+kmEsc(r.mensagem)+'</i></div>':"")+
-   '<label '+LBL+'>Entrega desejada</label><input id="crm-d" type="date" value="'+data+'" style="INSTYLE" onchange="_crmV.data=this.value">',dup?"document.getElementById('kmv-ov').remove()":"crmVendEnviar()");
+   ((r.avisos||[]).length?'<div style="margin-top:8px;background:#fffbeb;color:#92400e;border-radius:9px;padding:8px 10px;font-size:12.5px">'+kmEsc(r.avisos.join(" · "))+'</div>':'')+
+   '<label style="display:flex;gap:8px;align-items:flex-start;margin-top:12px;font-size:14px;font-weight:700"><input type="checkbox" id="crm-ct" '+(_crmV.contrato?"checked":"")+' onchange="_crmV.contrato=this.checked;document.getElementById(\'crm-dw\').style.display=this.checked?\'none\':\'\'" style="width:20px;height:20px;margin-top:1px"><span>É contrato<br><small style="font-weight:400;color:var(--muted)">o saldo fica guardado e as entregas são programadas depois, sem novo pedido no CRM</small></span></label>'+
+   '<div id="crm-dw" style="'+(_crmV.contrato?"display:none":"")+'"><label '+LBL+'>Entrega desejada</label><input id="crm-d" type="date" value="'+data+'" style="INSTYLE" onchange="_crmV.data=this.value"></div>',dup?"document.getElementById('kmv-ov').remove()":"crmVendEnviar()");
   if(dup){const b=[...document.querySelectorAll("#kmv-ov button")].pop();if(b)b.textContent="Fechar"}else{const b=[...document.querySelectorAll("#kmv-ov button")].pop();if(b)b.textContent="Enviar para a logística"}
 }
 function crmVendEnviar(){
   const {r,cl}=_crmV;const v=(typeof volMeuNome==="function"&&volMeuNome())||((typeof nomeVendedor!=="undefined"&&nomeVendedor)||"").toUpperCase();
   const pz=r.vencimentos.length>1?r.vencimentos.map(x=>dvFData(x.data)).join(" e ")+(r.parcelamento?" ("+r.parcelamento.replace(/\s*Mobille CRM/i,"")+")":""):(r.prazo?dvFData(r.prazo)+"/"+r.prazo.slice(2,4):"");
   const cid=cl?cl.id:crmNorm(r.cliente).replace(/[^A-Z0-9]+/g,"-").replace(/^-+|-+$/g,"").toLowerCase().slice(0,60);const up={};
-  r.itens.forEach(it=>{const id=db.ref("cargas_pedidos").push().key;
+  r.itens.forEach(it=>{
+    if(_crmV.contrato){const kid=db.ref("cargas_contratos").push().key;up["cargas_contratos/"+kid]={clienteId:cid,cliente:cl?cl.c.nome:r.cliente,numero:"CRM "+r.controle,totalKg:it.kg,retiradoAnteriorKg:0,produto:crmProduto(it),cidade:r.cidade||"",vendedor:v,tabela:r.tabela||"",obs:[r.mensagem,pz?"prazo "+pz:""].filter(Boolean).join(" · "),crmControle:r.controle,crmValorTon:Math.round(it.vlUn*100000)/100,crmTotal:it.total,ativo:true,origem:"crm-vendedor",enviadoPorUid:usuarioAtual.uid,criadoEm:Date.now(),criadoPor:(usuarioAtual.email||"").toLowerCase()};
+      if(r.pdfB64)up["cargas_pedidos_pdf/"+kid]={nome:r.arquivo||"pedido.pdf",b64:r.pdfB64,enviadoPorUid:usuarioAtual.uid};return}
+    const id=db.ref("cargas_pedidos").push().key;
     up["cargas_pedidos/"+id]={clienteId:cid,cliente:cl?cl.c.nome:r.cliente,cidade:r.cidade||"",vendedor:v,produto:crmProduto(it),kg:it.kg,dataEntrega:_crmV.data,dataTexto:"",prazo:pz,tabela:r.tabela||"",contratoId:"",obs:r.mensagem||"",crmControle:r.controle,crmValorTon:Math.round(it.vlUn*100000)/100,crmTotal:it.total,crmEmissao:r.emissao||"",origem:"crm-vendedor",enviadoPorUid:usuarioAtual.uid,criadoEm:Date.now(),criadoPor:(usuarioAtual.email||"").toLowerCase()};
     if(r.pdfB64)up["cargas_pedidos_pdf/"+id]={nome:r.arquivo||"pedido.pdf",b64:r.pdfB64,enviadoPorUid:usuarioAtual.uid}});
   if(!cl){up["cargas_clientes/"+cid]={nome:r.cliente,cidade:r.cidade||"",vendedor:v,nCargas:0,criadoEm:Date.now(),codigos:r.codigo?{[r.codigo]:true}:null}}
-  db.ref().update(up).then(()=>{document.getElementById("kmv-ov").remove();showToast("Pedido "+r.controle+" enviado para a logística");if(_crmCli&&!cl)_crmCli[cid]={nome:r.cliente}}).catch(e=>showToast("Não enviou: "+e.message,true));
+  db.ref().update(up).then(()=>{document.getElementById("kmv-ov").remove();showToast((_crmV.contrato?"Contrato ":"Pedido ")+r.controle+" enviado para a logística");if(_crmCli&&!cl)_crmCli[cid]={nome:r.cliente}}).catch(e=>showToast("Não enviou: "+e.message,true));
 }
 </script>
 </body>

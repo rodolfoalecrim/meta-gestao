@@ -348,7 +348,7 @@ label.f{display:block;font-size:12px;font-weight:700;color:var(--muted);margin:1
 .crm-bt{cursor:pointer}
 .crm-drop{border:1.5px dashed #cbd5e1;border-radius:12px;padding:10px 14px;margin:-4px 0 12px;font-size:12.5px;color:var(--muted);text-align:center}.crm-drop.on{border-color:var(--G);background:var(--GL);color:var(--GD)}
 @media(max-width:700px){.crm-drop{display:none}}
-.crm-c{margin-top:10px}.crm-c.off{opacity:.55}.crm-c.erro{border-color:#fca5a5}
+.crm-c{margin-top:10px}.crm-ct{display:flex;align-items:center;gap:6px;margin-top:8px;font-size:13px;font-weight:700;cursor:pointer}.crm-ct span{font-weight:400;font-size:11.5px;color:var(--muted)}.crm-c.off{opacity:.55}.crm-c.erro{border-color:#fca5a5}
 .crm-h{display:flex;align-items:center;gap:8px;flex-wrap:wrap;cursor:pointer}.crm-h b{font-size:14px}
 .crm-g{display:grid;grid-template-columns:2fr 1fr 1.2fr 1.2fr;gap:8px;margin-top:8px}.crm-g span{display:block;font-size:11px;color:var(--muted);font-weight:700}.crm-g b{font-size:13px}.crm-g .inp{padding:6px 8px}
 @media(max-width:700px){.crm-g{grid-template-columns:1fr 1fr}}
@@ -2050,24 +2050,34 @@ function crmParse(linhas){
   r.previsao=crmIso(prev);
   r.prazo=crmIso(g(/Prazo\s*(?:de\s*)?Pagamento:\s*(\d{2}\/\d{2}\/\d{4})/i));
   r.parcelamento=g(/Parcelamento:\s*(.+)/);
+  /* itens: a descrição pode vir quebrada em várias linhas (antes e/ou depois da linha com código e números) */
   const iIt=L.findIndex(l=>/^C[óo]digo\s+Descri/i.test(l));
-  if(iIt>=0)for(let i=iIt+1;i<L.length&&!/^Itens/i.test(L[i]);i++){const m=L[i].match(/^(\d+)\s+(.+?)\s+([\d.]+,\d+)\s+(KG|TON|TN|T|SC|UN)\s+([\d.,]+)\s+([\d.,]+)\s+([\d.]+,\d{2})$/i);
-    if(m){const un=m[4].toUpperCase();const q=crmNum(m[3]);const kg=un==="KG"?q:(un==="TON"||un==="TN"||un==="T")?q*1000:q;r.itens.push({codigo:m[1],descricao:m[2].trim(),kg:Math.round(kg),un,vlUn:crmNum(m[5]),desc:crmNum(m[6]),total:crmNum(m[7])})}}
+  if(iIt>=0){let buf=[],ab=null;const aberto=s=>(s.match(/\(/g)||[]).length>(s.match(/\)/g)||[]).length;
+    for(let i=iIt+1;i<L.length&&!/^Itens\b/i.test(L[i]);i++){const m=L[i].match(/^(\d+)\s*(.*?)\s*([\d.]+,\d+)\s+(KG|TON|TN|T|SC|UN)\s+([\d.,]+)\s+([\d.,]+)\s+([\d.]+,\d{2})$/i);
+      if(m){const un=m[4].toUpperCase();const q=crmNum(m[3]);const kg=un==="KG"?q:(un==="TON"||un==="TN"||un==="T")?q*1000:q;const d=((m[2]||"").trim()||buf.join(" ")).trim();buf=[];
+        const it={codigo:m[1],descricao:d,kg:Math.round(kg),un,vlUn:crmNum(m[5]),desc:crmNum(m[6]),total:crmNum(m[7])};r.itens.push(it);ab=aberto(d)?it:null}
+      else if(ab){ab.descricao=(ab.descricao+" "+L[i]).trim();if(!aberto(ab.descricao))ab=null}
+      else buf.push(L[i])}}
   r.total=crmNum(g(/Total:\s*([\d.]+,\d{2})/));
   const iV=L.findIndex(l=>/^Vencimento\b/i.test(l));
   if(iV>=0)for(let i=iV+1;i<L.length;i++){const m=L[i].match(/^(\d{2}\/\d{2}\/\d{4})\s+R\$\s+([\d.]+,\d{2})/);if(!m)break;r.vencimentos.push({data:crmIso(m[1]),valor:crmNum(m[2])})}
   if(!r.prazo&&r.vencimentos.length)r.prazo=r.vencimentos[r.vencimentos.length-1].data;
-  const iM=L.findIndex(l=>/Mensagem transbordo/i.test(l));
+  const iM=L.findIndex(l=>/Mensagem\s+(de\s+)?transbordo/i.test(l));
   if(iM>=0){const out=[];for(let i=iM+1;i<L.length&&!/^Declaro/i.test(L[i]);i++)out.push(L[i]);r.mensagem=out.join(" · ")}
   if(!r.controle)r.avisos.push("Número do pedido (controle) não encontrado");
   if(!r.cliente)r.avisos.push("Cliente não encontrado no PDF");
   if(!r.itens.length)r.avisos.push("Nenhum item de ração encontrado");
+  const soma=r.itens.reduce((a,x)=>a+x.total,0);if(r.total&&r.itens.length&&Math.abs(soma-r.total)>1)r.avisos.push("A soma dos itens lidos ("+soma.toLocaleString("pt-BR",{minimumFractionDigits:2})+") não bate com o total do pedido ("+r.total.toLocaleString("pt-BR",{minimumFractionDigits:2})+"). Confira as rações.");
+  const nIt=parseInt((T.match(/Itens:?\s*(\d+)/i)||[])[1]||"0",10);if(nIt&&nIt!==r.itens.length)r.avisos.push("O pedido diz "+nIt+" ite"+(nIt>1?"ns":"m")+", mas foram lidos "+r.itens.length+".");
+  r.contratoSugerido=/CONTRATO/i.test((r.mensagem||"")+" "+T.slice(0,400))||r.itens.reduce((a,x)=>a+x.kg,0)>=30000;
   r.ok=!!(r.controle&&r.cliente&&r.itens.length);
   return r;
 }
 /* nome do produto no padrão das cargas: "CÓDIGO - DESCRIÇÃO", sem o prefixo "RAÇÃO ULTRAMAX" e com o tipo (pelet/farelada) */
 function crmProduto(it){let d=crmNorm(it.descricao).replace(/^RACAO\s+(ULTRAMAX\s+)?/,"").replace(/\s*\(\s*(PELETIZADA|FARELADA)\s+A\s+GRANEL\s*\)/," $1").replace(/PELETIZADA/,"PELET").replace(/FARELADA/,"FAREL").trim();return it.codigo+" - "+d}
-function crmCarregarPdfJs(){if(window.pdfjsLib)return Promise.resolve(window.pdfjsLib);return new Promise((ok,err)=>{const s=document.createElement("script");s.src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js";s.onload=()=>{window.pdfjsLib.GlobalWorkerOptions.workerSrc="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";ok(window.pdfjsLib)};s.onerror=()=>err(new Error("Sem internet para abrir o leitor de PDF"));document.head.appendChild(s)})}
+const CRM_PDFJS=[["https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js","https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js"],["https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.min.js","https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.worker.min.js"]];
+function crmCarregarPdfJs(i){i=i||0;if(window.pdfjsLib)return Promise.resolve(window.pdfjsLib);if(i>=CRM_PDFJS.length)return Promise.reject(new Error("não consegui abrir o leitor de PDF (verifique a internet)"));
+  return new Promise((ok,err)=>{const s=document.createElement("script");s.src=CRM_PDFJS[i][0];s.onload=()=>{if(!window.pdfjsLib){err(new Error("leitor indisponível"));return}window.pdfjsLib.GlobalWorkerOptions.workerSrc=CRM_PDFJS[i][1];ok(window.pdfjsLib)};s.onerror=()=>{s.remove();crmCarregarPdfJs(i+1).then(ok,err)};document.head.appendChild(s)})}
 async function crmLerArquivo(file){
   const buf=await file.arrayBuffer();const lib=await crmCarregarPdfJs();const doc=await lib.getDocument({data:new Uint8Array(buf.slice(0))}).promise;let linhas=[];
   for(let p=1;p<=Math.min(doc.numPages,3);p++){const pg=await doc.getPage(p);const tc=await pg.getTextContent();const Y={};tc.items.forEach(it=>{if(!it.str||!it.str.trim())return;const y=Math.round(it.transform[5]/3)*3;(Y[y]=Y[y]||[]).push({x:it.transform[4],s:it.str})});
@@ -2090,30 +2100,35 @@ function importarCrm(files){
   files=[...(files||[])].filter(f=>/pdf$/i.test(f.name)||f.type==="application/pdf");if(!files.length){toast("Escolha arquivos PDF do pedido",true);return}
   abrirSheet('<div class="sh-h"><h3>Lendo '+files.length+' PDF'+(files.length>1?"s":"")+'…</h3></div><div class="ia-load">Extraindo cliente, produto e quantidades</div>');
   Promise.all(files.map(f=>crmLerArquivo(f).catch(e=>({ok:false,arquivo:f.name,avisos:["Não consegui ler: "+e.message],itens:[]})))).then(rs=>{
-    _crm=[];rs.forEach(r=>{(r.itens.length?r.itens:[null]).forEach((it,i)=>{const cl=r.ok?crmAcharCliente(r,S.clientes):null;const dup=r.controle&&it&&Object.values(S.pedidos).some(p=>p.crmControle===r.controle&&String(p.produto||"").startsWith(it.codigo+" ")&&!p.cancelado);
-      _crm.push({r,it,cl,dup,incluir:r.ok&&!dup,vendedor:(cl&&cl.c.vendedor)||"",data:crmDataEntrega(r),kg:it?it.kg:0})})});
+    _crm=[];rs.forEach(r=>{(r.itens.length?r.itens:[null]).forEach((it,i)=>{const cl=r.ok?crmAcharCliente(r,S.clientes):null;const dup=r.controle&&it&&(Object.values(S.pedidos).some(p=>p.crmControle===r.controle&&String(p.produto||"").startsWith(it.codigo+" ")&&!p.cancelado)||Object.values(S.contratos||{}).some(c=>c.crmControle===r.controle&&String(c.produto||"").startsWith(it.codigo+" ")));
+      _crm.push({r,it,cl,dup,incluir:r.ok&&!dup,vendedor:(cl&&cl.c.vendedor)||"",data:crmDataEntrega(r),kg:it?it.kg:0,contrato:!!r.contratoSugerido})})});
     renderCrm();
   });
 }
 function renderCrm(){
-  const n=_crm.filter(x=>x.incluir).length;
+  const n=_crm.filter(x=>x.incluir).length;const nc=_crm.filter(x=>x.incluir&&x.contrato).length;
   abrirSheet('<div class="sh-h"><h3>Pedidos do CRM</h3><button class="x" onclick="fecharSheet()">×</button></div><div class="small muted">Confira antes de lançar. Os pedidos entram na fila "A montar" com o número do CRM, para não duplicar.</div>'+
   _crm.map((x,i)=>{const r=x.r,it=x.it;if(!it)return'<div class="card crm-c erro"><b>'+esc(r.arquivo)+'</b><div class="warn red">'+esc((r.avisos||[]).join(" · "))+'</div></div>';
     return'<div class="card crm-c'+(x.incluir?"":" off")+'"><label class="crm-h"><input type="checkbox" '+(x.incluir?"checked":"")+(x.dup?" disabled":"")+' onchange="_crm['+i+'].incluir=this.checked;renderCrm()"><b>'+esc(r.cliente)+'</b><span class="pill p-aberto">CRM '+esc(r.controle)+'</span>'+(x.dup?'<span class="pill p-atraso">já importado</span>':"")+'</label>'+
     '<div class="small muted">'+esc(r.cidade||"")+(x.cl?' · cliente encontrado por '+x.cl.como:' · <b style="color:#b45309">cliente novo nas cargas</b>')+'</div>'+
     '<div class="crm-g"><div><span>Ração</span><b>'+esc(crmProduto(it))+'</b></div><div><span>Quantidade</span><input class="inp num" type="number" step="0.1" value="'+(x.kg/1000)+'" onchange="_crm['+i+'].kg=Math.round(parseFloat(this.value)*1000)||0"> t</div><div><span>Entrega</span><input class="inp" type="date" value="'+x.data+'" onchange="_crm['+i+'].data=this.value"></div><div><span>Vendedor</span><input class="inp" list="dl-vend" value="'+esc(x.vendedor)+'" placeholder="quem vendeu" onchange="_crm['+i+'].vendedor=this.value"></div></div>'+
+    '<label class="crm-ct"><input type="checkbox" '+(x.contrato?"checked":"")+' onchange="_crm['+i+'].contrato=this.checked;renderCrm()"> É contrato <span>(vira contrato com saldo; as entregas são programadas depois, sem novo pedido no CRM)</span></label>'+
+    ((r.avisos||[]).length?'<div class="warn">'+esc(r.avisos.join(" · "))+'</div>':'')+
     '<div class="small" style="margin-top:6px">Tabela '+esc(r.tabela||"—")+' · '+brl(it.vlUn*1000).replace("R$ ","R$ ")+'/t · total '+brl(it.total)+' · prazo '+esc(crmPrazoTxt(r)||"—")+(r.mensagem?'<br><i>'+esc(r.mensagem)+'</i>':"")+'</div></div>'}).join("")+
-  '<datalist id="dl-vend">'+VEND_SUG.map(v=>'<option value="'+v+'">').join("")+'</datalist><div class="sh-f"><button class="btn btn-o" onclick="fecharSheet()">Cancelar</button><button class="btn btn-g" '+(n?"":"disabled")+' onclick="lancarCrm()">Lançar '+n+' pedido'+(n!==1?"s":"")+'</button></div>');
+  '<datalist id="dl-vend">'+VEND_SUG.map(v=>'<option value="'+v+'">').join("")+'</datalist><div class="sh-f"><button class="btn btn-o" onclick="fecharSheet()">Cancelar</button><button class="btn btn-g" '+(n?"":"disabled")+' onclick="lancarCrm()">Lançar '+(n-nc?(n-nc)+' pedido'+(n-nc!==1?"s":""):"")+(n-nc&&nc?" e ":"")+(nc?nc+' contrato'+(nc!==1?"s":""):"")+(n?"":"0 pedidos")+'</button></div>');
 }
 function lancarCrm(){
   const sel=_crm.filter(x=>x.incluir&&x.it);if(sel.some(x=>!x.vendedor.trim())&&!confirm("Há pedido sem vendedor. Lançar assim mesmo?"))return;
   const up={};const novos={};
-  sel.forEach(x=>{const r=x.r,it=x.it;const id=db.ref("cargas_pedidos").push().key;const cid=x.cl?x.cl.id:slug(r.cliente);
-    up["cargas_pedidos/"+id]={clienteId:cid,cliente:x.cl?x.cl.c.nome:r.cliente,cidade:r.cidade||"",vendedor:volNormV(x.vendedor),produto:crmProduto(it),kg:x.kg,dataEntrega:x.data,dataTexto:"",prazo:crmPrazoTxt(r),tabela:r.tabela||"",contratoId:"",obs:r.mensagem||"",crmControle:r.controle,crmValorTon:Math.round(it.vlUn*100000)/100,crmTotal:it.total,crmEmissao:r.emissao||"",origem:"crm",criadoEm:Date.now(),criadoPor:USER.email};
-    if(r.pdfB64)up["cargas_pedidos_pdf/"+id]={nome:r.arquivo||("pedido-"+r.controle+".pdf"),b64:r.pdfB64};
+  sel.forEach(x=>{const r=x.r,it=x.it;const cid=x.cl?x.cl.id:slug(r.cliente);
+    if(x.contrato){const kid=db.ref("cargas_contratos").push().key;up["cargas_contratos/"+kid]={clienteId:cid,cliente:x.cl?x.cl.c.nome:r.cliente,numero:"CRM "+r.controle,totalKg:x.kg,retiradoAnteriorKg:0,produto:crmProduto(it),cidade:r.cidade||"",vendedor:volNormV(x.vendedor),tabela:r.tabela||"",obs:[r.mensagem,crmPrazoTxt(r)?"prazo "+crmPrazoTxt(r):""].filter(Boolean).join(" · "),crmControle:r.controle,crmValorTon:Math.round(it.vlUn*100000)/100,crmTotal:it.total,ativo:true,origem:"crm",criadoEm:Date.now(),criadoPor:USER.email};
+      if(r.pdfB64)up["cargas_pedidos_pdf/"+kid]={nome:r.arquivo||("pedido-"+r.controle+".pdf"),b64:r.pdfB64}}
+    const id=x.contrato?null:db.ref("cargas_pedidos").push().key;
+    if(id)up["cargas_pedidos/"+id]={clienteId:cid,cliente:x.cl?x.cl.c.nome:r.cliente,cidade:r.cidade||"",vendedor:volNormV(x.vendedor),produto:crmProduto(it),kg:x.kg,dataEntrega:x.data,dataTexto:"",prazo:crmPrazoTxt(r),tabela:r.tabela||"",contratoId:"",obs:r.mensagem||"",crmControle:r.controle,crmValorTon:Math.round(it.vlUn*100000)/100,crmTotal:it.total,crmEmissao:r.emissao||"",origem:"crm",criadoEm:Date.now(),criadoPor:USER.email};
+    if(id&&r.pdfB64)up["cargas_pedidos_pdf/"+id]={nome:r.arquivo||("pedido-"+r.controle+".pdf"),b64:r.pdfB64};
     if(!x.cl&&!novos[cid]){novos[cid]=1;up["cargas_clientes/"+cid+"/nome"]=r.cliente;up["cargas_clientes/"+cid+"/cidade"]=r.cidade||"";if(x.vendedor)up["cargas_clientes/"+cid+"/vendedor"]=volNormV(x.vendedor);if(r.codigo)up["cargas_clientes/"+cid+"/codigos/"+r.codigo]=true}
     else if(x.cl&&r.codigo&&!(x.cl.c.codigos||{})[r.codigo])up["cargas_clientes/"+cid+"/codigos/"+r.codigo]=true;});
-  db.ref().update(up).then(()=>{fecharSheet();toast(sel.length+" pedido"+(sel.length>1?"s":"")+" do CRM lançado"+(sel.length>1?"s":""));PF="montar";tab("pedidos")}).catch(e=>toast("Não salvou: "+e.message,true));
+  db.ref().update(up).then(()=>{fecharSheet();const nc=sel.filter(x=>x.contrato).length,np=sel.length-nc;toast([np?np+" pedido"+(np>1?"s":""):"",nc?nc+" contrato"+(nc>1?"s":""):""].filter(Boolean).join(" e ")+" do CRM lançado"+(sel.length>1?"s":""));if(np){PF="montar";tab("pedidos")}else tab("contratos")}).catch(e=>toast("Não salvou: "+e.message,true));
 }
 function verPdfPedido(id){db.ref("cargas_pedidos_pdf/"+id).once("value").then(s=>{const v=s.val();if(!v||!v.b64){toast("PDF não encontrado",true);return}const bin=atob(v.b64);const u8=new Uint8Array(bin.length);for(let i=0;i<bin.length;i++)u8[i]=bin.charCodeAt(i);const url=URL.createObjectURL(new Blob([u8],{type:"application/pdf"}));window.open(url,"_blank")||toast("Libere pop-ups para abrir o PDF",true)})}
 
