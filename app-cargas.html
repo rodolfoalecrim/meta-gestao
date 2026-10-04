@@ -345,6 +345,13 @@ label.f{display:block;font-size:12px;font-weight:700;color:var(--muted);margin:1
 .day.fds{opacity:.45;background:#f1f5f9}.day.fds .n{color:var(--muted)}.day.fds.on{opacity:1}
 .day.extra .n{color:#b45309;font-weight:800}
 .fdsb{display:flex;align-items:center;gap:10px;flex-wrap:wrap;background:#f8fafc;border-color:#e2e8f0;padding:10px 14px}.fdsb span{flex:1;min-width:200px}.fdsb.ok{background:#fffbeb;border-color:#fde68a}
+.crm-bt{cursor:pointer}
+.crm-drop{border:1.5px dashed #cbd5e1;border-radius:12px;padding:10px 14px;margin:-4px 0 12px;font-size:12.5px;color:var(--muted);text-align:center}.crm-drop.on{border-color:var(--G);background:var(--GL);color:var(--GD)}
+@media(max-width:700px){.crm-drop{display:none}}
+.crm-c{margin-top:10px}.crm-c.off{opacity:.55}.crm-c.erro{border-color:#fca5a5}
+.crm-h{display:flex;align-items:center;gap:8px;flex-wrap:wrap;cursor:pointer}.crm-h b{font-size:14px}
+.crm-g{display:grid;grid-template-columns:2fr 1fr 1.2fr 1.2fr;gap:8px;margin-top:8px}.crm-g span{display:block;font-size:11px;color:var(--muted);font-weight:700}.crm-g b{font-size:13px}.crm-g .inp{padding:6px 8px}
+@media(max-width:700px){.crm-g{grid-template-columns:1fr 1fr}}
 /* ===== indicadores ===== */
 .kpis8{grid-template-columns:repeat(5,1fr)}
 .kpi .dl{font-size:10.5px;font-weight:700;color:var(--muted)}.kpi .dl.up{color:var(--G)}.kpi .dl.down{color:var(--red)}
@@ -1138,12 +1145,12 @@ function renderPedidos(){
   if(PCID)f=f.filter(r=>norm(r.p.cidade)===PCID);
   f.sort((a,b)=>(a.p.dataEntrega||"").localeCompare(b.p.dataEntrega||""));if(PF==="entregues"||PF==="cancelados")f.reverse();
   const grp=r=>{if(PF==="entregues"||PF==="cancelados")return fDataL(r.p.dataEntrega);const d=r.p.dataEntrega;if(!d)return"Sem data";if(d<h)return"Atrasados";if(d===h)return"Hoje";if(d===proxDiaUtil(h,1))return difDias(d,h)===1?"Amanhã":"Próximo dia útil ("+fDataL(d)+")";if(d<=addDias(h,7))return"Próximos 7 dias";return"Programados — "+new Date(d+"T12:00:00").toLocaleDateString("pt-BR",{month:"long"})};
-  let html='<div class="bar"><h2>Pedidos</h2><button class="btn btn-o" onclick="abrirProgramacao()">Programar várias datas</button><button class="btn btn-g" onclick="abrirPedido()">+ Novo pedido</button></div><div class="bar"><div class="chips">'+[["montar","A montar"],["andamento","Em andamento"],["entregues","Entregues"],["cancelados","Cancelados"]].map(([k,l])=>'<button class="chip'+(PF===k?" on":"")+'" onclick="PF=\''+k+'\';renderPedidos()">'+l+'</button>').join("")+'</div><select class="inp" style="width:auto" onchange="PCID=this.value;renderPedidos()"><option value="">Todas as cidades</option>'+cidades.map(c=>'<option'+(c===PCID?" selected":"")+'>'+esc(c)+'</option>').join("")+'</select><input class="inp" style="max-width:260px" placeholder="Buscar cliente, produto, vendedor" value="'+esc(PQ)+'" oninput="PQ=this.value;clearTimeout(this._t);this._t=setTimeout(renderPedidos,250)"></div>';
+  let html='<div class="bar"><h2>Pedidos</h2><label class="btn btn-o crm-bt" title="Arraste aqui os PDFs dos pedidos que chegam no WhatsApp">📄 Importar PDF do CRM<input type="file" accept="application/pdf,.pdf" multiple style="display:none" onchange="importarCrm(this.files);this.value=\'\'"></label><button class="btn btn-o" onclick="abrirProgramacao()">Programar várias datas</button><button class="btn btn-g" onclick="abrirPedido()">+ Novo pedido</button></div><div class="crm-drop" ondragover="event.preventDefault();this.classList.add(\'on\')" ondragleave="this.classList.remove(\'on\')" ondrop="event.preventDefault();this.classList.remove(\'on\');importarCrm(event.dataTransfer.files)">Arraste aqui os PDFs dos pedidos do CRM (os que chegam no WhatsApp) para lançar sem digitar</div><div class="bar"><div class="chips">'+[["montar","A montar"],["andamento","Em andamento"],["entregues","Entregues"],["cancelados","Cancelados"]].map(([k,l])=>'<button class="chip'+(PF===k?" on":"")+'" onclick="PF=\''+k+'\';renderPedidos()">'+l+'</button>').join("")+'</div><select class="inp" style="width:auto" onchange="PCID=this.value;renderPedidos()"><option value="">Todas as cidades</option>'+cidades.map(c=>'<option'+(c===PCID?" selected":"")+'>'+esc(c)+'</option>').join("")+'</select><input class="inp" style="max-width:260px" placeholder="Buscar cliente, produto, vendedor" value="'+esc(PQ)+'" oninput="PQ=this.value;clearTimeout(this._t);this._t=setTimeout(renderPedidos,250)"></div>';
   if(!f.length){html+='<div class="empty"><b>Nenhum pedido aqui</b>'+(PF==="montar"?"Cadastre um pedido para começar a montar cargas.":"")+'</div>';el.innerHTML=html;return}
   let last=null;
   f.forEach(r=>{const g=grp(r);if(g!==last){const tot=f.filter(x=>grp(x)===g).reduce((s,x)=>s+(+x.p.kg||0),0);html+='<div class="group-h'+(g==="Atrasados"?" red":"")+'">'+esc(g)+' <span class="num muted">'+t(tot)+'</span></div>';last=g}
     const p=r.p;const ct=p.contratoId&&S.contratos[p.contratoId];
-    html+='<div class="card" style="padding:10px 14px;cursor:pointer" onclick="abrirPedido(\''+r.id+'\')"><div class="row" style="padding:0;border:none"><div class="main"><b>'+esc(p.cliente)+'</b><span>'+esc(p.produto)+' · '+esc(p.cidade||"")+' · '+esc(p.vendedor||"sem vendedor")+' · tab. '+esc(p.tabela||"—")+'</span><div class="small muted" style="margin-top:2px">Entrega '+fData(p.dataEntrega)+(p.dataTexto?" ("+esc(p.dataTexto)+")":"")+' · prazo '+esc(p.prazo||"—")+(ct?' · contrato '+esc(ct.numero||""):"")+(p.programado?' · programado':"")+'</div>'+(p.obs?'<div class="small" style="margin-top:2px">'+esc(p.obs)+'</div>':"")+'</div><div class="r"><div class="t-big">'+t(p.kg)+'</div><span class="pill p-'+(r.late?"atraso":r.st.k)+'" style="margin-top:4px">'+(r.late?"Atrasado · ":"")+esc(r.st.txt)+'</span></div></div></div>'});
+    html+='<div class="card" style="padding:10px 14px;cursor:pointer" onclick="abrirPedido(\''+r.id+'\')"><div class="row" style="padding:0;border:none"><div class="main"><b>'+esc(p.cliente)+'</b><span>'+esc(p.produto)+' · '+esc(p.cidade||"")+' · '+esc(p.vendedor||"sem vendedor")+' · tab. '+esc(p.tabela||"—")+'</span><div class="small muted" style="margin-top:2px">Entrega '+fData(p.dataEntrega)+(p.dataTexto?" ("+esc(p.dataTexto)+")":"")+' · prazo '+esc(p.prazo||"—")+(ct?' · contrato '+esc(ct.numero||""):"")+(p.programado?' · programado':"")+(p.crmControle?' · CRM '+esc(p.crmControle):"")+'</div>'+(p.obs?'<div class="small" style="margin-top:2px">'+esc(p.obs)+'</div>':"")+'</div><div class="r"><div class="t-big">'+t(p.kg)+'</div><span class="pill p-'+(r.late?"atraso":r.st.k)+'" style="margin-top:4px">'+(r.late?"Atrasado · ":"")+esc(r.st.txt)+'</span></div></div></div>'});
   el.innerHTML=html;
 }
 
@@ -1169,7 +1176,7 @@ function lerFormPedido(){
 }
 function garantirCliente(p){const c=S.clientes[p.clienteId];const up={};if(!c){up.nome=p.cliente;up.cidade=p.cidade;up.vendedor=p.vendedor;up.nCargas=0;up.criadoEm=Date.now()}else{if(p.cidade&&!c.cidade)up.cidade=p.cidade;if(p.vendedor&&!c.vendedor)up.vendedor=p.vendedor}return Object.keys(up).length?db.ref("cargas_clientes/"+p.clienteId).update(up):Promise.resolve()}
 function abrirPedido(id){
-  const p=id?S.pedidos[id]:null;const al=id?alocacoes()[id]:null;
+  const p=id?S.pedidos[id]:null;const al=id?alocacoes()[id]:null;setTimeout(()=>{if(p&&p.crmControle){const h=document.querySelector("#sh .sh-h");if(h&&!document.getElementById("crm-info")){const d=document.createElement("div");d.id="crm-info";d.className="small";d.style.cssText="margin:-2px 0 8px;color:var(--muted)";d.innerHTML="Pedido CRM <b>"+esc(p.crmControle)+"</b>"+(p.crmValorTon?" · "+brl(p.crmValorTon)+"/t":"")+(p.crmEmissao?" · emitido "+fData(p.crmEmissao):"")+' · <a href="#" onclick="verPdfPedido(\''+id+'\');return false">ver PDF</a>';h.after(d)}}},0);
   abrirSheet('<div class="sh-h"><h3>'+(id?"Editar pedido":"Novo pedido")+'</h3><button class="x" onclick="fecharSheet()">×</button></div>'+(al&&al.aloc?'<div class="warn">Este pedido já está em carga ('+t(al.aloc)+'). Alterar aqui não mexe nas caixas.</div>':"")+formPedidoHTML(p,id)+'<div class="sh-f">'+(id?'<button class="btn btn-r" onclick="cancelarPedido(\''+id+'\')">'+(p.cancelado?"Reativar":"Cancelar pedido")+'</button>':'<button class="btn btn-o" onclick="fecharSheet()">Fechar</button>')+'<button class="btn btn-g" onclick="salvarPedido('+(id?"'"+id+"'":"")+')">Salvar pedido</button></div>');
   if(p&&p.clienteId)atualizarContratosForm(p.clienteId);
 }
@@ -2023,6 +2030,92 @@ function dvfPdf(uid){const m=DVF.mes;const x=dvfPessoas(m).find(p=>p.uid===uid);
 function dvfPdfResumo(){const m=DVF.mes;const P=dvfPessoas(m);const w=window.open("","_blank");if(!w){toast("Libere pop-ups",true);return}const tot=P.reduce((a,x)=>a+x.s.reemb,0);
   w.document.write('<!DOCTYPE html><html lang="pt-BR"><head><meta charset="utf-8"><title>Despesas de viagem '+m+'</title><style>@page{size:A4;margin:14mm}body{font-family:Arial,sans-serif;font-size:12px;color:#0f172a}h1{font-size:18px;margin:0}table{width:100%;border-collapse:collapse;margin-top:12px}td,th{border-bottom:1px solid #e2e8f0;padding:6px;text-align:left}th{background:#f0fdf4}.r{text-align:right}</style></head><body><img src="meta_logo.jpg" style="height:30px" onerror="this.remove()"><h1>Despesas de viagem — '+dvNomeMes(m)+'</h1><div style="color:#475569;font-size:11px">Resumo para pagamento · gerado em '+new Date().toLocaleString("pt-BR")+'</div><table><thead><tr><th>Pessoa</th><th class="r">Notas</th><th class="r">Valor das notas</th><th class="r">A reembolsar</th><th>Situação</th></tr></thead><tbody>'+P.map(x=>'<tr><td>'+esc(x.nome)+'</td><td class="r">'+x.s.n+'</td><td class="r">'+dvBrl(x.s.lancado)+'</td><td class="r"><b>'+dvBrl(x.s.reemb)+'</b></td><td>'+(x.mi.status==="pago"?"Pago em "+dvFData(x.mi.pagoEm):x.mi.status==="enviado"?"Enviado":"Em aberto")+(x.s.pend?" · "+x.s.pend+" aguardando":"")+'</td></tr>').join("")+'<tr><td colspan="3"><b>Total</b></td><td class="r"><b>'+dvBrl(tot)+'</b></td><td></td></tr></tbody></table><script>setTimeout(function(){print()},400)<\/script></body></html>');w.document.close()}
 function dvfLimites(){const c=Object.assign({},DV_PADRAO,DVF.cfg);abrirSheet('<div class="sh-h"><h3>Limites de reembolso</h3><button class="x" onclick="fecharSheet()">×</button></div><div class="small muted">Valem para todos os vendedores e técnicos. A mudança vale para os cálculos a partir de agora, inclusive para notas ainda não pagas.</div><div class="grid2"><div><label class="f">Alimentação por dia (R$)</label><input class="inp num" id="dl-a" type="number" step="0.01" value="'+c.alimentacaoDia+'"></div><div><label class="f">Hospedagem por diária (R$)</label><input class="inp num" id="dl-h" type="number" step="0.01" value="'+c.hospedagemDia+'"></div></div><div class="sh-f"><button class="btn btn-g" onclick="const a=parseFloat(document.getElementById(\'dl-a\').value),h=parseFloat(document.getElementById(\'dl-h\').value);if(!(a>0&&h>0)){toast(\'Valores inválidos\',true);return}db.ref(\'despesas_config\').update({alimentacaoDia:a,hospedagemDia:h}).then(()=>{fecharSheet();toast(\'Limites salvos\')})">Salvar</button></div>')}
+
+/* ===== Leitura do PDF de pedido do CRM da fábrica (Coacan) — mesma regra no app de cargas e no dos vendedores ===== */
+function crmNorm(s){return String(s||"").normalize("NFD").replace(/[\u0300-\u036f]/g,"").toUpperCase().replace(/\s+/g," ").trim()}
+function crmNum(s){s=String(s||"").trim();if(!s)return 0;return parseFloat(s.replace(/\./g,"").replace(",","."))||0}
+function crmIso(d){const m=String(d||"").match(/(\d{2})\/(\d{2})\/(\d{4})/);return m?m[3]+"-"+m[2]+"-"+m[1]:""}
+function crmParse(linhas){
+  const L=linhas.map(l=>l.replace(/ fi /g,"fi").replace(/\s+/g," ").trim()).filter(Boolean);const T=L.join("\n");const r={itens:[],vencimentos:[],avisos:[]};
+  const g=(re,i)=>{const m=T.match(re);return m?m[i||1].trim():""};
+  r.controle=g(/Controle:\s*(\d+)/);
+  const iCli=L.findIndex(l=>/DADOS DO CLIENTE/i.test(l)),iPed=L.findIndex(l=>/DADOS DO PEDIDO/i.test(l));const cli=L.slice(iCli+1,iPed>0?iPed:iCli+8).join("\n");
+  const mn=cli.match(/Nome:\s*(?:(\d+)\s*-\s*)?(.+?)\s+CPF\/CNPJ/);if(mn){r.codigo=mn[1]||"";r.cliente=crmNorm(mn[2])}
+  r.cpf=(cli.match(/CPF\/CNPJ:\s*([\d.\/-]+)/)||[])[1]||"";
+  const mc=cli.match(/Cidade:\s*(.+?)\s*-\s*([A-Z]{2})\b/);if(mc){r.cidade=crmNorm(mc[1]);r.uf=mc[2]}
+  r.tabela=(T.match(/Tabela de pre[çc]o:\s*\d+\s*-\s*([A-Z0-9.,]+)/i)||[])[1]||"";
+  r.emissao=crmIso(g(/Emiss[ãa]o em:\s*(\d{2}\/\d{2}\/\d{4})/));
+  let prev=g(/Previs[ãa]o\s*(?:de\s*)?Entrega:\s*(\d{2}\/\d{2}\/\d{4})/i);
+  if(!prev){const i=L.findIndex(l=>/Previs[ãa]o de/i.test(l));if(i>=0){const ds=(L[i+1]||"").match(/\d{2}\/\d{2}\/\d{4}/g);if(ds)prev=ds[ds.length-1]}}
+  r.previsao=crmIso(prev);
+  r.prazo=crmIso(g(/Prazo\s*(?:de\s*)?Pagamento:\s*(\d{2}\/\d{2}\/\d{4})/i));
+  r.parcelamento=g(/Parcelamento:\s*(.+)/);
+  const iIt=L.findIndex(l=>/^C[óo]digo\s+Descri/i.test(l));
+  if(iIt>=0)for(let i=iIt+1;i<L.length&&!/^Itens/i.test(L[i]);i++){const m=L[i].match(/^(\d+)\s+(.+?)\s+([\d.]+,\d+)\s+(KG|TON|TN|T|SC|UN)\s+([\d.,]+)\s+([\d.,]+)\s+([\d.]+,\d{2})$/i);
+    if(m){const un=m[4].toUpperCase();const q=crmNum(m[3]);const kg=un==="KG"?q:(un==="TON"||un==="TN"||un==="T")?q*1000:q;r.itens.push({codigo:m[1],descricao:m[2].trim(),kg:Math.round(kg),un,vlUn:crmNum(m[5]),desc:crmNum(m[6]),total:crmNum(m[7])})}}
+  r.total=crmNum(g(/Total:\s*([\d.]+,\d{2})/));
+  const iV=L.findIndex(l=>/^Vencimento\b/i.test(l));
+  if(iV>=0)for(let i=iV+1;i<L.length;i++){const m=L[i].match(/^(\d{2}\/\d{2}\/\d{4})\s+R\$\s+([\d.]+,\d{2})/);if(!m)break;r.vencimentos.push({data:crmIso(m[1]),valor:crmNum(m[2])})}
+  if(!r.prazo&&r.vencimentos.length)r.prazo=r.vencimentos[r.vencimentos.length-1].data;
+  const iM=L.findIndex(l=>/Mensagem transbordo/i.test(l));
+  if(iM>=0){const out=[];for(let i=iM+1;i<L.length&&!/^Declaro/i.test(L[i]);i++)out.push(L[i]);r.mensagem=out.join(" · ")}
+  if(!r.controle)r.avisos.push("Número do pedido (controle) não encontrado");
+  if(!r.cliente)r.avisos.push("Cliente não encontrado no PDF");
+  if(!r.itens.length)r.avisos.push("Nenhum item de ração encontrado");
+  r.ok=!!(r.controle&&r.cliente&&r.itens.length);
+  return r;
+}
+/* nome do produto no padrão das cargas: "CÓDIGO - DESCRIÇÃO", sem o prefixo "RAÇÃO ULTRAMAX" e com o tipo (pelet/farelada) */
+function crmProduto(it){let d=crmNorm(it.descricao).replace(/^RACAO\s+(ULTRAMAX\s+)?/,"").replace(/\s*\(\s*(PELETIZADA|FARELADA)\s+A\s+GRANEL\s*\)/," $1").replace(/PELETIZADA/,"PELET").replace(/FARELADA/,"FAREL").trim();return it.codigo+" - "+d}
+function crmCarregarPdfJs(){if(window.pdfjsLib)return Promise.resolve(window.pdfjsLib);return new Promise((ok,err)=>{const s=document.createElement("script");s.src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js";s.onload=()=>{window.pdfjsLib.GlobalWorkerOptions.workerSrc="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";ok(window.pdfjsLib)};s.onerror=()=>err(new Error("Sem internet para abrir o leitor de PDF"));document.head.appendChild(s)})}
+async function crmLerArquivo(file){
+  const buf=await file.arrayBuffer();const lib=await crmCarregarPdfJs();const doc=await lib.getDocument({data:new Uint8Array(buf.slice(0))}).promise;let linhas=[];
+  for(let p=1;p<=Math.min(doc.numPages,3);p++){const pg=await doc.getPage(p);const tc=await pg.getTextContent();const Y={};tc.items.forEach(it=>{if(!it.str||!it.str.trim())return;const y=Math.round(it.transform[5]/3)*3;(Y[y]=Y[y]||[]).push({x:it.transform[4],s:it.str})});
+    linhas=linhas.concat(Object.keys(Y).map(Number).sort((a,b)=>b-a).map(y=>Y[y].sort((a,b)=>a.x-b.x).map(o=>o.s).join(" ")))}
+  const r=crmParse(linhas);r.arquivo=file.name;
+  let bin="";const u8=new Uint8Array(buf);for(let i=0;i<u8.length;i+=8192)bin+=String.fromCharCode.apply(null,u8.subarray(i,i+8192));r.pdfB64=btoa(bin);
+  return r;
+}
+/* ================= IMPORTAR PEDIDOS DO CRM (PDF) ================= */
+let _crm=[];
+function crmAcharCliente(r,clientes){
+  const C=Object.entries(clientes||{});if(r.codigo){const h=C.find(([,c])=>c.codigos&&c.codigos[r.codigo]);if(h)return{id:h[0],c:h[1],como:"código "+r.codigo}}
+  const n=crmNorm(r.cliente);let h=C.find(([,c])=>crmNorm(c.nome)===n);if(h)return{id:h[0],c:h[1],como:"nome"};
+  const p=n.split(" ").filter(x=>x.length>2);if(p.length>=2){h=C.find(([,c])=>{const m=crmNorm(c.nome);return m.startsWith(p[0]+" ")&&p.slice(1).filter(x=>m.includes(x)).length>=Math.min(2,p.length-1)});if(h)return{id:h[0],c:h[1],como:"nome parecido"}}
+  return null;
+}
+function crmDataEntrega(r){let d=r.previsao||proxDiaUtil(hoje(),1);if(d<hoje())d=proxDiaUtil(hoje(),1);if(typeof diaUtil==="function"&&!diaUtil(d))d=proxDiaUtil(d,1);return d}
+function crmPrazoTxt(r){return r.vencimentos.length>1?r.vencimentos.map(v=>fData(v.data)).join(" e ")+(r.parcelamento?" ("+r.parcelamento.replace(/\s*Mobille CRM/i,"")+")":""):(r.prazo?fData(r.prazo)+"/"+r.prazo.slice(2,4):"")}
+function importarCrm(files){
+  files=[...(files||[])].filter(f=>/pdf$/i.test(f.name)||f.type==="application/pdf");if(!files.length){toast("Escolha arquivos PDF do pedido",true);return}
+  abrirSheet('<div class="sh-h"><h3>Lendo '+files.length+' PDF'+(files.length>1?"s":"")+'…</h3></div><div class="ia-load">Extraindo cliente, produto e quantidades</div>');
+  Promise.all(files.map(f=>crmLerArquivo(f).catch(e=>({ok:false,arquivo:f.name,avisos:["Não consegui ler: "+e.message],itens:[]})))).then(rs=>{
+    _crm=[];rs.forEach(r=>{(r.itens.length?r.itens:[null]).forEach((it,i)=>{const cl=r.ok?crmAcharCliente(r,S.clientes):null;const dup=r.controle&&it&&Object.values(S.pedidos).some(p=>p.crmControle===r.controle&&String(p.produto||"").startsWith(it.codigo+" ")&&!p.cancelado);
+      _crm.push({r,it,cl,dup,incluir:r.ok&&!dup,vendedor:(cl&&cl.c.vendedor)||"",data:crmDataEntrega(r),kg:it?it.kg:0})})});
+    renderCrm();
+  });
+}
+function renderCrm(){
+  const n=_crm.filter(x=>x.incluir).length;
+  abrirSheet('<div class="sh-h"><h3>Pedidos do CRM</h3><button class="x" onclick="fecharSheet()">×</button></div><div class="small muted">Confira antes de lançar. Os pedidos entram na fila "A montar" com o número do CRM, para não duplicar.</div>'+
+  _crm.map((x,i)=>{const r=x.r,it=x.it;if(!it)return'<div class="card crm-c erro"><b>'+esc(r.arquivo)+'</b><div class="warn red">'+esc((r.avisos||[]).join(" · "))+'</div></div>';
+    return'<div class="card crm-c'+(x.incluir?"":" off")+'"><label class="crm-h"><input type="checkbox" '+(x.incluir?"checked":"")+(x.dup?" disabled":"")+' onchange="_crm['+i+'].incluir=this.checked;renderCrm()"><b>'+esc(r.cliente)+'</b><span class="pill p-aberto">CRM '+esc(r.controle)+'</span>'+(x.dup?'<span class="pill p-atraso">já importado</span>':"")+'</label>'+
+    '<div class="small muted">'+esc(r.cidade||"")+(x.cl?' · cliente encontrado por '+x.cl.como:' · <b style="color:#b45309">cliente novo nas cargas</b>')+'</div>'+
+    '<div class="crm-g"><div><span>Ração</span><b>'+esc(crmProduto(it))+'</b></div><div><span>Quantidade</span><input class="inp num" type="number" step="0.1" value="'+(x.kg/1000)+'" onchange="_crm['+i+'].kg=Math.round(parseFloat(this.value)*1000)||0"> t</div><div><span>Entrega</span><input class="inp" type="date" value="'+x.data+'" onchange="_crm['+i+'].data=this.value"></div><div><span>Vendedor</span><input class="inp" list="dl-vend" value="'+esc(x.vendedor)+'" placeholder="quem vendeu" onchange="_crm['+i+'].vendedor=this.value"></div></div>'+
+    '<div class="small" style="margin-top:6px">Tabela '+esc(r.tabela||"—")+' · '+brl(it.vlUn*1000).replace("R$ ","R$ ")+'/t · total '+brl(it.total)+' · prazo '+esc(crmPrazoTxt(r)||"—")+(r.mensagem?'<br><i>'+esc(r.mensagem)+'</i>':"")+'</div></div>'}).join("")+
+  '<datalist id="dl-vend">'+VEND_SUG.map(v=>'<option value="'+v+'">').join("")+'</datalist><div class="sh-f"><button class="btn btn-o" onclick="fecharSheet()">Cancelar</button><button class="btn btn-g" '+(n?"":"disabled")+' onclick="lancarCrm()">Lançar '+n+' pedido'+(n!==1?"s":"")+'</button></div>');
+}
+function lancarCrm(){
+  const sel=_crm.filter(x=>x.incluir&&x.it);if(sel.some(x=>!x.vendedor.trim())&&!confirm("Há pedido sem vendedor. Lançar assim mesmo?"))return;
+  const up={};const novos={};
+  sel.forEach(x=>{const r=x.r,it=x.it;const id=db.ref("cargas_pedidos").push().key;const cid=x.cl?x.cl.id:slug(r.cliente);
+    up["cargas_pedidos/"+id]={clienteId:cid,cliente:x.cl?x.cl.c.nome:r.cliente,cidade:r.cidade||"",vendedor:volNormV(x.vendedor),produto:crmProduto(it),kg:x.kg,dataEntrega:x.data,dataTexto:"",prazo:crmPrazoTxt(r),tabela:r.tabela||"",contratoId:"",obs:r.mensagem||"",crmControle:r.controle,crmValorTon:Math.round(it.vlUn*100000)/100,crmTotal:it.total,crmEmissao:r.emissao||"",origem:"crm",criadoEm:Date.now(),criadoPor:USER.email};
+    if(r.pdfB64)up["cargas_pedidos_pdf/"+id]={nome:r.arquivo||("pedido-"+r.controle+".pdf"),b64:r.pdfB64};
+    if(!x.cl&&!novos[cid]){novos[cid]=1;up["cargas_clientes/"+cid+"/nome"]=r.cliente;up["cargas_clientes/"+cid+"/cidade"]=r.cidade||"";if(x.vendedor)up["cargas_clientes/"+cid+"/vendedor"]=volNormV(x.vendedor);if(r.codigo)up["cargas_clientes/"+cid+"/codigos/"+r.codigo]=true}
+    else if(x.cl&&r.codigo&&!(x.cl.c.codigos||{})[r.codigo])up["cargas_clientes/"+cid+"/codigos/"+r.codigo]=true;});
+  db.ref().update(up).then(()=>{fecharSheet();toast(sel.length+" pedido"+(sel.length>1?"s":"")+" do CRM lançado"+(sel.length>1?"s":""));PF="montar";tab("pedidos")}).catch(e=>toast("Não salvou: "+e.message,true));
+}
+function verPdfPedido(id){db.ref("cargas_pedidos_pdf/"+id).once("value").then(s=>{const v=s.val();if(!v||!v.b64){toast("PDF não encontrado",true);return}const bin=atob(v.b64);const u8=new Uint8Array(bin.length);for(let i=0;i<bin.length;i++)u8[i]=bin.charCodeAt(i);const url=URL.createObjectURL(new Blob([u8],{type:"application/pdf"}));window.open(url,"_blank")||toast("Libere pop-ups para abrir o PDF",true)})}
 
 /* ================= CAMINHÕES ================= */
 function abrirCaminhoes(){

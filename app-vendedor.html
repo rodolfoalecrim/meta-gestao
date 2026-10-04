@@ -212,7 +212,7 @@ body{background:var(--bg)}
 
 /* ===== Início: lançar ===== */
 #inicio-lancar{margin-top:12px}
-.lanc{display:grid;gap:8px}.lanc-2{grid-template-columns:repeat(2,minmax(0,1fr))}.lanc-4{grid-template-columns:repeat(4,minmax(0,1fr))}.lanc-b{min-width:0}
+.lanc{display:grid;gap:8px}.lanc-2{grid-template-columns:repeat(2,minmax(0,1fr))}.lanc-3,.lanc-5{grid-template-columns:repeat(3,minmax(0,1fr))}.lanc-4{grid-template-columns:repeat(4,minmax(0,1fr))}.lanc-b{min-width:0}
 .lanc-b{background:#fff;border:1px solid #e3e9e4;border-radius:16px;padding:12px 6px 10px;display:flex;flex-direction:column;align-items:center;gap:3px;font-family:inherit;cursor:pointer;text-align:center;min-height:96px}
 .lanc-b:active{transform:scale(.97)}
 .lanc-i{width:42px;height:42px;border-radius:13px;background:var(--GL);color:var(--GD);display:flex;align-items:center;justify-content:center;margin-bottom:2px}
@@ -220,6 +220,10 @@ body{background:var(--bg)}
 .lanc-b.hot{border-color:#fcd34d;background:#fffbeb}.lanc-b.hot .lanc-i{background:#fbbf24;color:#422006}.lanc-b.hot small{color:#92400e;font-weight:700}
 #rs-lista-atrasadas:not(.all) .rs-atraso-item:nth-of-type(n+5){display:none}
 .ver-todas{width:100%;margin-top:4px;border:1px dashed #cbd5e1;background:none;border-radius:12px;padding:10px;font-family:inherit;font-weight:700;font-size:12.5px;color:var(--GD);cursor:pointer}
+
+.crm-v b{display:block;font-size:16px}.crm-v span{font-size:12.5px;color:var(--muted)}
+.crm-vi{display:flex;justify-content:space-between;gap:10px;padding:10px 0;border-bottom:1px solid #f1f5f9;font-size:13.5px}.crm-vi b{white-space:nowrap}
+.crm-vd{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:10px}.crm-vd span{display:block;font-size:11px;color:var(--muted)}.crm-vd b{font-size:13px}
 </style>
 </head>
 <body>
@@ -1862,6 +1866,7 @@ function abrirAgenda(view){
 <script>
 /* ===== Visual moderno: ícones de traço, avatar, cartão "Hoje" ===== */
 const ICO={
+ pedido:'<path d="M7 3h7l5 5v13H7z"/><path d="M14 3v5h5"/><path d="M10 13h6M10 17h4"/>',
  visita:'<rect x="5" y="4" width="14" height="17" rx="2"/><path d="M9 4h6v3H9z"/><path d="M9 13l2 2 4-4"/>',
  recibo:'<path d="M6 3h12v18l-3-2-3 2-3-2-3 2z"/><path d="M9 8h6M9 12h6M9 16h3"/>',
  home:'<path d="M3 11l9-8 9 8"/><path d="M5 10v10h14V10"/><path d="M10 20v-6h4v6"/>',
@@ -4197,6 +4202,7 @@ function lancarDespesa(){if(typeof DVV==="undefined"||!DVV.ok){showToast("Carreg
 function renderLancar(){
   const el=document.getElementById("inicio-lancar");if(!el)return;const c=typeof infoCarro==="function"?infoCarro():null;const p=proxVisitaHoje();
   const bts=[["visita","Visita",p?"check-in "+String(p.farmNome||"").split(" ")[0]:"registrar visita","lancarVisita()",!!p],
+             ["pedido","Pedido","PDF do CRM","crmVendEscolher()",false],
              ["recibo","Despesa",(typeof DVV!=="undefined"&&DVV.ok)?dvBrl(dvAReceber(DVV.mes)).replace(",00","")+" a receber":"nota de viagem","lancarDespesa()",false]];
   if(c){bts.push(["abast","Abasteci","litros e km","abrirAbastCarro()",false]);bts.push(["km","Km",c.pend?"pendente":"em dia","abrirLancKm()",c.pend])}
   el.innerHTML='<div class="lanc lanc-'+bts.length+'">'+bts.map(([ic,t,sub,ac,hot])=>'<button class="lanc-b'+(hot?" hot":"")+'" onclick="'+ac+'"><span class="lanc-i">'+svg(ic,22)+'</span><b>'+t+'</b><small>'+kmEsc(sub)+'</small></button>').join("")+'</div>';
@@ -4208,6 +4214,87 @@ function encurtarPrecisamVisita(){const w=document.getElementById("rs-lista-atra
 (function(){const w=document.getElementById("rs-lista-atrasadas");if(w)new MutationObserver(()=>encurtarPrecisamVisita()).observe(w,{childList:true,subtree:true});
   const _ri=renderInicio;renderInicio=function(){_ri();try{renderLancar()}catch(e){console.warn(e)}const q=document.getElementById("inicio-quick");if(q)q.style.display="none";encurtarPrecisamVisita()}})();
 (function(){if(typeof usuarioAtual!=="undefined"&&usuarioAtual)setTimeout(()=>{try{renderInicio()}catch(e){}},500)})();
+</script>
+<script>
+/* ===== Leitura do PDF de pedido do CRM da fábrica (Coacan) — mesma regra no app de cargas e no dos vendedores ===== */
+function crmNorm(s){return String(s||"").normalize("NFD").replace(/[\u0300-\u036f]/g,"").toUpperCase().replace(/\s+/g," ").trim()}
+function crmNum(s){s=String(s||"").trim();if(!s)return 0;return parseFloat(s.replace(/\./g,"").replace(",","."))||0}
+function crmIso(d){const m=String(d||"").match(/(\d{2})\/(\d{2})\/(\d{4})/);return m?m[3]+"-"+m[2]+"-"+m[1]:""}
+function crmParse(linhas){
+  const L=linhas.map(l=>l.replace(/ fi /g,"fi").replace(/\s+/g," ").trim()).filter(Boolean);const T=L.join("\n");const r={itens:[],vencimentos:[],avisos:[]};
+  const g=(re,i)=>{const m=T.match(re);return m?m[i||1].trim():""};
+  r.controle=g(/Controle:\s*(\d+)/);
+  const iCli=L.findIndex(l=>/DADOS DO CLIENTE/i.test(l)),iPed=L.findIndex(l=>/DADOS DO PEDIDO/i.test(l));const cli=L.slice(iCli+1,iPed>0?iPed:iCli+8).join("\n");
+  const mn=cli.match(/Nome:\s*(?:(\d+)\s*-\s*)?(.+?)\s+CPF\/CNPJ/);if(mn){r.codigo=mn[1]||"";r.cliente=crmNorm(mn[2])}
+  r.cpf=(cli.match(/CPF\/CNPJ:\s*([\d.\/-]+)/)||[])[1]||"";
+  const mc=cli.match(/Cidade:\s*(.+?)\s*-\s*([A-Z]{2})\b/);if(mc){r.cidade=crmNorm(mc[1]);r.uf=mc[2]}
+  r.tabela=(T.match(/Tabela de pre[çc]o:\s*\d+\s*-\s*([A-Z0-9.,]+)/i)||[])[1]||"";
+  r.emissao=crmIso(g(/Emiss[ãa]o em:\s*(\d{2}\/\d{2}\/\d{4})/));
+  let prev=g(/Previs[ãa]o\s*(?:de\s*)?Entrega:\s*(\d{2}\/\d{2}\/\d{4})/i);
+  if(!prev){const i=L.findIndex(l=>/Previs[ãa]o de/i.test(l));if(i>=0){const ds=(L[i+1]||"").match(/\d{2}\/\d{2}\/\d{4}/g);if(ds)prev=ds[ds.length-1]}}
+  r.previsao=crmIso(prev);
+  r.prazo=crmIso(g(/Prazo\s*(?:de\s*)?Pagamento:\s*(\d{2}\/\d{2}\/\d{4})/i));
+  r.parcelamento=g(/Parcelamento:\s*(.+)/);
+  const iIt=L.findIndex(l=>/^C[óo]digo\s+Descri/i.test(l));
+  if(iIt>=0)for(let i=iIt+1;i<L.length&&!/^Itens/i.test(L[i]);i++){const m=L[i].match(/^(\d+)\s+(.+?)\s+([\d.]+,\d+)\s+(KG|TON|TN|T|SC|UN)\s+([\d.,]+)\s+([\d.,]+)\s+([\d.]+,\d{2})$/i);
+    if(m){const un=m[4].toUpperCase();const q=crmNum(m[3]);const kg=un==="KG"?q:(un==="TON"||un==="TN"||un==="T")?q*1000:q;r.itens.push({codigo:m[1],descricao:m[2].trim(),kg:Math.round(kg),un,vlUn:crmNum(m[5]),desc:crmNum(m[6]),total:crmNum(m[7])})}}
+  r.total=crmNum(g(/Total:\s*([\d.]+,\d{2})/));
+  const iV=L.findIndex(l=>/^Vencimento\b/i.test(l));
+  if(iV>=0)for(let i=iV+1;i<L.length;i++){const m=L[i].match(/^(\d{2}\/\d{2}\/\d{4})\s+R\$\s+([\d.]+,\d{2})/);if(!m)break;r.vencimentos.push({data:crmIso(m[1]),valor:crmNum(m[2])})}
+  if(!r.prazo&&r.vencimentos.length)r.prazo=r.vencimentos[r.vencimentos.length-1].data;
+  const iM=L.findIndex(l=>/Mensagem transbordo/i.test(l));
+  if(iM>=0){const out=[];for(let i=iM+1;i<L.length&&!/^Declaro/i.test(L[i]);i++)out.push(L[i]);r.mensagem=out.join(" · ")}
+  if(!r.controle)r.avisos.push("Número do pedido (controle) não encontrado");
+  if(!r.cliente)r.avisos.push("Cliente não encontrado no PDF");
+  if(!r.itens.length)r.avisos.push("Nenhum item de ração encontrado");
+  r.ok=!!(r.controle&&r.cliente&&r.itens.length);
+  return r;
+}
+/* nome do produto no padrão das cargas: "CÓDIGO - DESCRIÇÃO", sem o prefixo "RAÇÃO ULTRAMAX" e com o tipo (pelet/farelada) */
+function crmProduto(it){let d=crmNorm(it.descricao).replace(/^RACAO\s+(ULTRAMAX\s+)?/,"").replace(/\s*\(\s*(PELETIZADA|FARELADA)\s+A\s+GRANEL\s*\)/," $1").replace(/PELETIZADA/,"PELET").replace(/FARELADA/,"FAREL").trim();return it.codigo+" - "+d}
+function crmCarregarPdfJs(){if(window.pdfjsLib)return Promise.resolve(window.pdfjsLib);return new Promise((ok,err)=>{const s=document.createElement("script");s.src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js";s.onload=()=>{window.pdfjsLib.GlobalWorkerOptions.workerSrc="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";ok(window.pdfjsLib)};s.onerror=()=>err(new Error("Sem internet para abrir o leitor de PDF"));document.head.appendChild(s)})}
+async function crmLerArquivo(file){
+  const buf=await file.arrayBuffer();const lib=await crmCarregarPdfJs();const doc=await lib.getDocument({data:new Uint8Array(buf.slice(0))}).promise;let linhas=[];
+  for(let p=1;p<=Math.min(doc.numPages,3);p++){const pg=await doc.getPage(p);const tc=await pg.getTextContent();const Y={};tc.items.forEach(it=>{if(!it.str||!it.str.trim())return;const y=Math.round(it.transform[5]/3)*3;(Y[y]=Y[y]||[]).push({x:it.transform[4],s:it.str})});
+    linhas=linhas.concat(Object.keys(Y).map(Number).sort((a,b)=>b-a).map(y=>Y[y].sort((a,b)=>a.x-b.x).map(o=>o.s).join(" ")))}
+  const r=crmParse(linhas);r.arquivo=file.name;
+  let bin="";const u8=new Uint8Array(buf);for(let i=0;i<u8.length;i+=8192)bin+=String.fromCharCode.apply(null,u8.subarray(i,i+8192));r.pdfB64=btoa(bin);
+  return r;
+}
+/* ===== Vendedor: envia o PDF do pedido do CRM direto para a fila da logística ===== */
+let _crmV=null,_crmCli=null;
+function crmVendEscolher(){let i=document.getElementById("crm-file");if(!i){i=document.createElement("input");i.type="file";i.id="crm-file";i.accept="application/pdf,.pdf";i.style.display="none";i.onchange=()=>{const f=i.files&&i.files[0];i.value="";if(f)crmVendLer(f)};document.body.appendChild(i)}i.click()}
+async function crmVendLer(f){
+  showToast("Lendo o PDF do pedido…");
+  try{const [r,cs]=await Promise.all([crmLerArquivo(f),_crmCli?Promise.resolve(_crmCli):db.ref("cargas_clientes").once("value").then(s=>(_crmCli=s.val()||{}))]);
+    if(!r.ok){showToast("Não reconheci esse PDF como pedido do CRM: "+(r.avisos||[]).join(", "),true);return}
+    const C=Object.entries(cs);let cl=null;if(r.codigo){const h=C.find(([,c])=>c.codigos&&c.codigos[r.codigo]);if(h)cl={id:h[0],c:h[1]}}
+    if(!cl){const h=C.find(([,c])=>crmNorm(c.nome)===r.cliente);if(h)cl={id:h[0],c:h[1]}}
+    const dup=Object.values(CG.pedidos||{}).some(p=>p.crmControle===r.controle&&!p.cancelado);
+    let d=r.previsao||"";const hj=dvHoje();if(!d||d<hj){const x=new Date();x.setDate(x.getDate()+1);d=x.toISOString().slice(0,10)}
+    _crmV={r,cl,dup,data:d};crmVendConfirmar();
+  }catch(e){showToast("Não consegui ler o PDF: "+e.message,true)}
+}
+function crmVendConfirmar(){
+  const {r,cl,dup,data}=_crmV;const pz=r.vencimentos.length>1?r.vencimentos.map(v=>dvFData(v.data)).join(" e "):(r.prazo?dvFData(r.prazo):"—");
+  kmOverlay("Pedido CRM "+kmEsc(r.controle),dup?'<span style="color:#dc2626;font-weight:700">Este pedido já foi enviado para a logística.</span>':"Confira e envie. A logística recebe na fila de montagem de cargas.",
+   '<div class="crm-v"><b>'+kmEsc(r.cliente)+'</b><span>'+kmEsc(r.cidade||"")+(cl?' · cliente das cargas':' · cliente novo nas cargas')+'</span></div>'+
+   r.itens.map(it=>'<div class="crm-vi"><span>'+kmEsc(crmProduto(it))+'</span><b>'+(it.kg/1000).toLocaleString("pt-BR",{maximumFractionDigits:2})+' t</b></div>').join("")+
+   '<div class="crm-vd"><div><span>Valor</span><b>'+dvBrl(r.total)+'</b></div><div><span>Tabela</span><b>'+kmEsc(r.tabela||"—")+'</b></div><div><span>Vencimento</span><b>'+kmEsc(pz)+'</b></div></div>'+
+   (r.mensagem?'<div style="font-size:12.5px;color:var(--muted);margin-top:8px"><i>'+kmEsc(r.mensagem)+'</i></div>':"")+
+   '<label '+LBL+'>Entrega desejada</label><input id="crm-d" type="date" value="'+data+'" style="INSTYLE" onchange="_crmV.data=this.value">',dup?"document.getElementById('kmv-ov').remove()":"crmVendEnviar()");
+  if(dup){const b=[...document.querySelectorAll("#kmv-ov button")].pop();if(b)b.textContent="Fechar"}else{const b=[...document.querySelectorAll("#kmv-ov button")].pop();if(b)b.textContent="Enviar para a logística"}
+}
+function crmVendEnviar(){
+  const {r,cl}=_crmV;const v=(typeof volMeuNome==="function"&&volMeuNome())||((typeof nomeVendedor!=="undefined"&&nomeVendedor)||"").toUpperCase();
+  const pz=r.vencimentos.length>1?r.vencimentos.map(x=>dvFData(x.data)).join(" e ")+(r.parcelamento?" ("+r.parcelamento.replace(/\s*Mobille CRM/i,"")+")":""):(r.prazo?dvFData(r.prazo)+"/"+r.prazo.slice(2,4):"");
+  const cid=cl?cl.id:crmNorm(r.cliente).replace(/[^A-Z0-9]+/g,"-").replace(/^-+|-+$/g,"").toLowerCase().slice(0,60);const up={};
+  r.itens.forEach(it=>{const id=db.ref("cargas_pedidos").push().key;
+    up["cargas_pedidos/"+id]={clienteId:cid,cliente:cl?cl.c.nome:r.cliente,cidade:r.cidade||"",vendedor:v,produto:crmProduto(it),kg:it.kg,dataEntrega:_crmV.data,dataTexto:"",prazo:pz,tabela:r.tabela||"",contratoId:"",obs:r.mensagem||"",crmControle:r.controle,crmValorTon:Math.round(it.vlUn*100000)/100,crmTotal:it.total,crmEmissao:r.emissao||"",origem:"crm-vendedor",enviadoPorUid:usuarioAtual.uid,criadoEm:Date.now(),criadoPor:(usuarioAtual.email||"").toLowerCase()};
+    if(r.pdfB64)up["cargas_pedidos_pdf/"+id]={nome:r.arquivo||"pedido.pdf",b64:r.pdfB64,enviadoPorUid:usuarioAtual.uid}});
+  if(!cl){up["cargas_clientes/"+cid]={nome:r.cliente,cidade:r.cidade||"",vendedor:v,nCargas:0,criadoEm:Date.now(),codigos:r.codigo?{[r.codigo]:true}:null}}
+  db.ref().update(up).then(()=>{document.getElementById("kmv-ov").remove();showToast("Pedido "+r.controle+" enviado para a logística");if(_crmCli&&!cl)_crmCli[cid]={nome:r.cliente}}).catch(e=>showToast("Não enviou: "+e.message,true));
+}
 </script>
 </body>
 </html>
