@@ -124,7 +124,7 @@ function mostrar(id){["login","nome","app"].forEach(x=>document.getElementById(x
 auth.onAuthStateChanged(async u=>{
   if(!u){mostrar("login");return}
   U=u;let role=null;try{role=(await db.ref("usuarios/"+u.uid+"/role").once("value")).val()}catch(e){}
-  if(role&&role!=="motorista"&&role!=="admin"&&role!=="logistica"){document.getElementById("l-m").textContent="Este usuário não é de motorista.";auth.signOut();return}
+  if(role&&role!=="motorista"&&role!=="admin"&&role!=="logistica"){mostrar("login");document.getElementById("l-m").textContent="Você está conectado como "+(u.email||"")+", que não é um usuário de motorista. Entre abaixo com o login do motorista.";return}
   let me=null;try{me=(await db.ref("cargas_motoristas/"+u.uid).once("value")).val()}catch(e){}
   if(!me||!me.nome){mostrar("nome");return}
   NOME=me.nome;db.ref("cargas_motoristas/"+u.uid).update({ultimoAcesso:Date.now(),email:u.email});iniciar();

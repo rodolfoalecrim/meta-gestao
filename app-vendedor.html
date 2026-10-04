@@ -192,6 +192,23 @@ body{background:var(--bg)}
 .vol-mix{display:flex;height:10px;border-radius:5px;overflow:hidden;margin:6px 0 4px}.vol-mix i{display:block;height:100%}
 .vol-dot{display:inline-block;width:9px;height:9px;border-radius:3px;margin-right:7px;vertical-align:middle}
 .vol-bt{width:100%;margin-top:10px;border:none;border-radius:12px;padding:11px;font-weight:800;font-family:inherit;background:var(--GD);color:#fff;cursor:pointer}
+
+/* ===== despesas de viagem ===== */
+.dv-pill{font-size:11px;font-weight:800;border-radius:999px;padding:3px 9px}
+.dv-acts{display:flex;flex-direction:column;gap:8px;margin:12px 0 4px}.dv-acts .vol-bt{margin:0}
+.dv-bt2{width:100%;border:1px solid var(--border);border-radius:12px;padding:11px;font-weight:700;font-family:inherit;background:#fff;color:var(--text);cursor:pointer}
+.dv-info{font-size:12px;color:var(--muted);margin:8px 2px;line-height:1.45}
+.dv-it{all:unset;box-sizing:border-box;cursor:pointer;display:flex;align-items:center;gap:10px;width:100%;padding:9px 0;border-bottom:1px solid #f1f5f9}.dv-it:last-child{border:none}
+.dv-ic{width:36px;height:36px;border-radius:11px;background:var(--GL);display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0}
+.dv-m{flex:1;min-width:0}.dv-m b{display:block;font-size:13.5px}.dv-m small{display:block;font-size:11.5px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.dv-v{text-align:right;display:flex;flex-direction:column;align-items:flex-end;gap:2px}.dv-v b{font-size:14px}.dv-v small{font-size:11px;color:var(--muted)}.dv-v em{font-style:normal;font-size:10.5px;font-weight:800;border-radius:7px;padding:2px 7px}
+.dv-cam{font-size:11px}.dv-sf{font-size:10px;font-weight:700;color:#b45309;background:#fffbeb;border-radius:6px;padding:1px 5px}
+.dv-tipos{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:6px}
+.dv-tp{border:1.5px solid var(--border);background:#fff;border-radius:12px;padding:10px 8px;font-family:inherit;font-weight:700;font-size:13px;cursor:pointer;display:flex;align-items:center;gap:8px}.dv-tp span{font-size:18px}
+.dv-tp.on{border-color:var(--G);background:var(--GL);color:var(--GD)}
+.dv-chip{border:1px solid var(--border);background:#fff;border-radius:999px;padding:6px 11px;font-size:12.5px;font-family:inherit;cursor:pointer}
+.dv-foto{display:block;margin-top:14px;border:1.5px dashed #cbd5e1;border-radius:12px;padding:14px;text-align:center;font-weight:800;color:var(--GD);cursor:pointer}.dv-foto input{display:none}.dv-foto img{display:none;max-width:100%;max-height:200px;margin:8px auto 0;border-radius:8px}
+.dv-prev{margin-top:12px;font-size:13.5px;background:#f8faf9;border-radius:10px;padding:10px 12px;line-height:1.5}
 </style>
 </head>
 <body>
@@ -1718,7 +1735,7 @@ function salvarLancKm(){
 </script>
 <script>
 /* ===== Navegação: Início como central de ferramentas + menu "Mais" ===== */
-const GRUPO_MAIS=["bench","equipe","analise","carro","cargas","pipeline","volume"];
+const GRUPO_MAIS=["bench","equipe","analise","carro","cargas","pipeline","volume","despesas"];
 (function(){const _nt=navTo;navTo=function(sc,ti){_nt(sc,ti);if(GRUPO_MAIS.includes(sc)){const b=document.getElementById("nav-mais");if(b)b.classList.add("active")}fecharMais()}})();
 function fecharMais(){const o=document.getElementById("mais-ov");if(o)o.classList.remove("on")}
 function infoCarro(){if(!KMV.vk)return null;const mes=KMC.hoje().slice(0,7);const r=kmCarroMes(KMV.lanc,mes);const meta=metaCarro(KMV.v,KMV.metas,mes,KMV.vk);const pend=!r.ult||r.ult.data<KMC.segunda();const al=alertasCarro(KMV.lanc,KMV.serv,KMV.plano||PLANO_CARRO_PADRAO);return{r,meta,pend,al,st:statusKm(r.km,r.proj,meta)}}
@@ -1728,6 +1745,7 @@ function itensMais(){const c=infoCarro(),e=infoEntregas();const n0=x=>Math.round
   return[
    {ico:"🚗",t:"Meu carro",sub:c?(n0(c.r.km)+" km no mês"+(c.meta?" de "+n0(c.meta):"")+(c.pend?" · lançar km da semana":"")):"sem carro vinculado",badge:c?(c.pend?1:0)+c.al.length:0,acao:"abrirCarro()"},
    {ico:"🚚",t:"Entregas de ração",sub:e?(e.cam+" a caminho · "+e.ag+" aguardando"+(e.atr?" · "+e.atr+" atrasado(s)":"")):"status das cargas dos seus clientes",badge:e?e.atr:0,acao:"navTo('cargas','Entregas de ração');renderCargasVendedor()"},
+   {ico:"🧾",t:"Despesas de viagem",sub:(typeof DVV!=="undefined"&&DVV.ok)?dvBrl(dvAReceber(DVV.mes))+" a receber no mês":"alimentação, hotel e combustível",acao:"dvAbrir()"},
    {ico:"📦",t:"Meu volume",sub:"ração carregada no mês",acao:"volAbrir()"},
    {ico:"🗂️",t:"Pipeline",sub:"prospectos e funil de vendas",acao:"navTo('pipeline','Pipeline');renderPipelineVendedor()"},
    {ico:"🎯",t:"Benchmarks",sub:"comparar fazendas da carteira",acao:"navTo('bench','Benchmarks');renderBench()"},
@@ -1740,11 +1758,12 @@ function renderInicio(){
   if(typeof renderHero==="function")renderHero();
   const hub=document.getElementById("inicio-hub");if(!hub)return;const sr=document.getElementById("screen-resumo");if(sr&&sr.classList.contains("active"))document.getElementById("topbar-title").textContent="Início";const c=infoCarro(),e=infoEntregas();const n0=x=>Math.round(x).toLocaleString("pt-BR");
   const tiles=[
+    {ico:"🧾",t:"Despesas",sub:(typeof DVV!=="undefined"&&DVV.ok)?dvBrl(dvAReceber(DVV.mes)).replace(",00","")+" a receber":"lançar notas",acao:"dvAbrir()"},
     {ico:"🗂️",t:"Pipeline",sub:"prospectos",acao:"navTo('pipeline','Pipeline');renderPipelineVendedor()"},
     {ico:"🚚",t:"Entregas",sub:e?(e.cam?e.cam+" a caminho":e.ag+" aguardando"):"ração",badge:e&&e.atr?e.atr+" atrasada"+(e.atr>1?"s":""):"",acao:"navTo('cargas','Entregas de ração');renderCargasVendedor()"},
     c?{ico:"🚗",t:"Meu carro",sub:n0(c.r.km)+" km no mês",badge:c.pend?"lançar km":c.al.length?c.al.length+" aviso"+(c.al.length>1?"s":""):"",cor:c.st.k==="acima"?"#dc2626":"",acao:"abrirCarro()"}:null,
-    {ico:"🏅",t:"Equipe",sub:"ranking do mês",acao:"navTo('equipe','Equipe');renderEquipe()"},
-    c?null:{ico:"🎯",t:"Benchmarks",sub:"comparar fazendas",acao:"navTo('bench','Benchmarks');renderBench()"}].filter(Boolean);
+    c?null:{ico:"🏅",t:"Equipe",sub:"ranking do mês",acao:"navTo('equipe','Equipe');renderEquipe()"},
+    null&&{ico:"🎯",t:"Benchmarks",sub:"comparar fazendas",acao:"navTo('bench','Benchmarks');renderBench()"}].filter(Boolean);
   hub.innerHTML=tiles.map(x=>'<button class="tile" onclick="'+x.acao+'"><span class="ti">'+x.ico+'</span><b>'+x.t+'</b><small'+(x.cor?' style="color:'+x.cor+'"':'')+'>'+kmEsc(x.sub)+'</small>'+(x.badge?'<em>'+kmEsc(x.badge)+'</em>':'')+'</button>').join("");
   const qk=document.getElementById("inicio-quick");if(qk)qk.style.display=c?"":"none";
   const al=document.getElementById("inicio-alertas");let h="";
@@ -1832,6 +1851,7 @@ function abrirAgenda(view){
 <script>
 /* ===== Visual moderno: ícones de traço, avatar, cartão "Hoje" ===== */
 const ICO={
+ recibo:'<path d="M6 3h12v18l-3-2-3 2-3-2-3 2z"/><path d="M9 8h6M9 12h6M9 16h3"/>',
  home:'<path d="M3 11l9-8 9 8"/><path d="M5 10v10h14V10"/><path d="M10 20v-6h4v6"/>',
  clientes:'<path d="M3 21V9l7-5 7 5v12"/><path d="M8 21v-6h4v6"/><path d="M17 11h4v10h-4"/>',
  agenda:'<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/><path d="M8 14h3v3H8z"/>',
@@ -1861,7 +1881,7 @@ function svg(n,sz){return'<svg viewBox="0 0 24 24" width="'+(sz||22)+'" height="
   ["rs-ativos","rs-atrasadas"].forEach(id=>{const e=document.getElementById(id);if(e)new MutationObserver(()=>{if(typeof renderHero==="function")renderHero()}).observe(e,{childList:true,characterData:true,subtree:true})});
 })();
 /* ícones também no menu Mais e nos atalhos do Início */
-const ICO_EMO={"📦":"resultado","🚗":"carro","🚚":"entregas","🗂️":"pipeline","🎯":"bench","🏅":"equipe","📈":"analise","⏻":"sair"};
+const ICO_EMO={"🧾":"recibo","📦":"resultado","🚗":"carro","🚚":"entregas","🗂️":"pipeline","🎯":"bench","🏅":"equipe","📈":"analise","⏻":"sair"};
 (function(){const _am=abrirMais;abrirMais=function(){_am();document.querySelectorAll("#mais-sh .mi").forEach(x=>{const k=ICO_EMO[x.textContent.trim()];if(k)x.innerHTML=svg(k,20)})}})();
 (function(){const _ri=renderInicio;renderInicio=function(){_ri();document.querySelectorAll("#inicio-hub .ti").forEach(x=>{const k=ICO_EMO[x.textContent.trim()];if(k)x.innerHTML=svg(k,22)});document.querySelectorAll("#inicio-quick .quick button span").forEach((x,i)=>{x.innerHTML=svg(["abast","km","servico"][i],20)});document.querySelectorAll("#inicio-alertas .banner>span:first-child").forEach(x=>{const k={"📍":"km","🔧":"servico","🚚":"entregas"}[x.textContent.trim()];if(k)x.innerHTML=svg(k,22)})}})();
 function renderHero(){
@@ -4029,6 +4049,123 @@ function volRenderTela(){
 /* carrega em segundo plano depois do login e mostra o card no Resultado */
 (function(){const go=()=>{volRenderCard();setTimeout(()=>volCarregar(),1500)};if(typeof usuarioAtual!=="undefined"&&usuarioAtual)go();else{const _ia=iniciarApp;iniciarApp=function(){_ia.apply(this,arguments);go()}}})();
 (function(){const _cr=cgRender;cgRender=function(){_cr();if(VOLV.dados)volRenderCard()}})();
+</script>
+<script>
+/* ===== Despesas de viagem: regra de reembolso (idêntica no app dos vendedores e no app de cargas) ===== */
+const DV_TIPOS={alimentacao:{l:"Alimentação",ic:"🍽️"},hospedagem:{l:"Hospedagem",ic:"🛏️"},combustivel:{l:"Combustível",ic:"⛽"},outro:{l:"Pedágio / outros",ic:"🧾"}};
+const DV_PADRAO={alimentacaoDia:35,hospedagemDia:145};
+const DV_ST={lancada:{l:"Aguardando",c:"#b45309",bg:"#fffbeb"},aprovada:{l:"Aprovada",c:"#15803d",bg:"#f0fdf4"},glosada:{l:"Não aprovada",c:"#dc2626",bg:"#fef2f2"}};
+function dvEsc(s){return String(s==null?"":s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]))}
+function dvBrl(v){return"R$ "+(+v||0).toLocaleString("pt-BR",{minimumFractionDigits:2,maximumFractionDigits:2})}
+function dvLista(map){return Object.entries(map||{}).map(([id,v])=>Object.assign({id},v)).filter(x=>x&&x.data)}
+function dvDoMes(itens,mes){return itens.filter(x=>(x.data||"").slice(0,7)===mes).sort((a,b)=>a.data===b.data?(a.ts||0)-(b.ts||0):a.data.localeCompare(b.data))}
+/* aplica os limites diários: alimentação e hospedagem por dia; combustível e pedágio pelo valor da nota.
+   Se o financeiro ajustou o valor aprovado, vale o valor dele; nota não aprovada vale zero. */
+function dvCalcular(itens,cfg){
+  cfg=Object.assign({},DV_PADRAO,cfg||{});const usado={};const res={};
+  itens.slice().sort((a,b)=>a.data===b.data?(a.ts||0)-(b.ts||0):a.data.localeCompare(b.data)).forEach(it=>{
+    const v=+it.valor||0;let r=v,obs="";
+    if(it.status==="glosada"){r=0;obs=it.motivoGlosa?"Não aprovada: "+it.motivoGlosa:"Não aprovada"}
+    else if(it.valorAprovado!=null&&it.valorAprovado!==""){r=Math.max(0,+it.valorAprovado);if(r<v)obs="Valor ajustado pelo financeiro"}
+    else if(it.tipo==="alimentacao"||it.tipo==="hospedagem"){const k=it.data+"|"+it.tipo;const lim=it.tipo==="alimentacao"?+cfg.alimentacaoDia:+cfg.hospedagemDia;const u=usado[k]||0;r=Math.max(0,Math.min(v,lim-u));usado[k]=u+r;if(r<v)obs="Acima do limite de "+dvBrl(lim)+(it.tipo==="alimentacao"?" por dia":" por diária")}
+    res[it.id]={reemb:Math.round(r*100)/100,excesso:Math.round((v-r)*100)/100,obs};
+  });
+  return res;
+}
+function dvResumo(itens,cfg){
+  const c=dvCalcular(itens,cfg);const s={n:itens.length,lancado:0,reemb:0,excesso:0,glosado:0,pend:0,aprov:0,semFoto:0,porTipo:{}};
+  itens.forEach(it=>{const v=+it.valor||0,r=c[it.id].reemb;s.lancado+=v;s.reemb+=r;if(it.status==="glosada")s.glosado+=v;else s.excesso+=c[it.id].excesso;if(it.status==="aprovada")s.aprov++;else if(it.status!=="glosada")s.pend++;if(!it.temFoto)s.semFoto++;const t=s.porTipo[it.tipo]||(s.porTipo[it.tipo]={n:0,lancado:0,reemb:0});t.n++;t.lancado+=v;t.reemb+=r});
+  return s;
+}
+function dvNomeMes(m){const d=new Date(m+"-15T12:00:00");const s=d.toLocaleDateString("pt-BR",{month:"long",year:"numeric"});return s.charAt(0).toUpperCase()+s.slice(1)}
+function dvAddMes(m,n){const d=new Date(m+"-15T12:00:00");d.setMonth(d.getMonth()+n);return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")}
+function dvFData(s){return s?s.slice(8,10)+"/"+s.slice(5,7):""}
+/* relatório em PDF (janela de impressão): resumo, notas e as fotos das notas */
+function dvPdf(nome,email,mes,itens,fotos,cfg,mesInfo){
+  const w=window.open("","_blank");if(!w){alert("Libere as janelas pop-up para gerar o PDF");return}
+  const c=dvCalcular(itens,cfg),s=dvResumo(itens,cfg);
+  const tipos=Object.entries(s.porTipo).map(([t,v])=>'<tr><td>'+(DV_TIPOS[t]||{l:t}).l+'</td><td class="r">'+v.n+'</td><td class="r">'+dvBrl(v.lancado)+'</td><td class="r">'+dvBrl(v.reemb)+'</td></tr>').join("");
+  const linhas=itens.map((it,i)=>'<tr><td class="r">'+(i+1)+'</td><td>'+dvFData(it.data)+'</td><td>'+(DV_TIPOS[it.tipo]||{l:it.tipo}).l+'</td><td>'+dvEsc([it.cidade,it.descricao].filter(Boolean).join(" · "))+(c[it.id].obs?'<div class="o">'+dvEsc(c[it.id].obs)+'</div>':"")+'</td><td class="r">'+dvBrl(it.valor)+'</td><td class="r"><b>'+dvBrl(c[it.id].reemb)+'</b></td><td>'+(DV_ST[it.status]||DV_ST.lancada).l+'</td><td class="c">'+(it.temFoto?"sim":"—")+'</td></tr>').join("");
+  const fts=itens.filter(it=>fotos&&fotos[it.id]).map((it,i)=>'<figure><img src="'+fotos[it.id]+'"><figcaption>Nota '+(itens.indexOf(it)+1)+' · '+dvFData(it.data)+' · '+(DV_TIPOS[it.tipo]||{l:""}).l+' · '+dvBrl(it.valor)+'</figcaption></figure>').join("");
+  const st=mesInfo&&mesInfo.status==="pago"?"Pago em "+dvFData(mesInfo.pagoEm)+"/"+(mesInfo.pagoEm||"").slice(0,4):mesInfo&&mesInfo.status==="enviado"?"Enviado pelo colaborador em "+new Date(mesInfo.enviadoEm).toLocaleDateString("pt-BR"):"Mês em aberto";
+  w.document.write('<!DOCTYPE html><html lang="pt-BR"><head><meta charset="utf-8"><title>Despesas de viagem — '+dvEsc(nome)+' — '+mes+'</title><style>@page{size:A4;margin:14mm 12mm}body{font-family:Arial,sans-serif;color:#0f172a;font-size:11.5px}h1{font-size:18px;margin:0}h2{font-size:13px;margin:16px 0 6px;color:#052e16}.s{color:#475569;font-size:11px;margin:2px 0 10px}table{width:100%;border-collapse:collapse}td,th{border-bottom:1px solid #e2e8f0;padding:5px 6px;text-align:left;vertical-align:top}th{background:#f0fdf4;font-size:10.5px}.r{text-align:right}.c{text-align:center}.o{font-size:10px;color:#b45309}.k{display:flex;gap:26px;margin:10px 0}.k div{font-size:11px;color:#475569}.k b{display:block;font-size:17px;color:#0f172a}.tot{font-size:14px;font-weight:700;text-align:right;margin-top:8px}.ass{display:flex;gap:40px;margin-top:36px}.ass div{flex:1;border-top:1px solid #64748b;padding-top:4px;font-size:11px;color:#475569}.fot{display:grid;grid-template-columns:1fr 1fr;gap:12px}figure{margin:0;page-break-inside:avoid;border:1px solid #e2e8f0;border-radius:6px;padding:6px}figure img{width:100%;max-height:330px;object-fit:contain}figcaption{font-size:10.5px;color:#475569;margin-top:4px}.pb{page-break-before:always}</style></head><body><img src="meta_logo.jpg" style="height:32px" onerror="this.remove()"><h1>Despesas de viagem — '+dvNomeMes(mes)+'</h1><div class="s">'+dvEsc(nome)+(email?" · "+dvEsc(email):"")+' · '+st+' · gerado em '+new Date().toLocaleString("pt-BR")+'</div>'+
+   '<div class="k"><div>Total das notas<b>'+dvBrl(s.lancado)+'</b></div><div>A reembolsar<b>'+dvBrl(s.reemb)+'</b></div><div>Fora do reembolso<b>'+dvBrl(s.excesso+s.glosado)+'</b></div><div>Notas<b>'+s.n+'</b></div></div>'+
+   '<h2>Resumo por tipo</h2><table><thead><tr><th>Tipo</th><th class="r">Notas</th><th class="r">Valor das notas</th><th class="r">Reembolso</th></tr></thead><tbody>'+tipos+'</tbody></table>'+
+   '<h2>Notas</h2><table><thead><tr><th class="r">#</th><th>Data</th><th>Tipo</th><th>Local / descrição</th><th class="r">Valor</th><th class="r">Reembolso</th><th>Situação</th><th class="c">Foto</th></tr></thead><tbody>'+linhas+'</tbody></table><div class="tot">Total a reembolsar: '+dvBrl(s.reemb)+'</div>'+
+   '<div class="s">Limites: alimentação '+dvBrl((cfg||DV_PADRAO).alimentacaoDia||DV_PADRAO.alimentacaoDia)+' por dia · hospedagem '+dvBrl((cfg||DV_PADRAO).hospedagemDia||DV_PADRAO.hospedagemDia)+' por diária · combustível e pedágio pelo valor da nota.</div>'+
+   '<div class="ass"><div>'+dvEsc(nome)+'</div><div>Financeiro</div></div>'+(fts?'<h2 class="pb">Fotos das notas</h2><div class="fot">'+fts+'</div>':"")+'<script>setTimeout(function(){print()},600)<\/script></body></html>');w.document.close();
+}
+/* ===== Despesas de viagem — tela do vendedor ===== */
+const DVV={itens:{},meses:{},cfg:{},mes:new Date().toISOString().slice(0,7),uid:null,ok:false};
+function dvHoje(){const d=new Date();return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0")}
+function dvIniciar(){if(DVV.ok||typeof usuarioAtual==="undefined"||!usuarioAtual)return;DVV.ok=true;DVV.uid=usuarioAtual.uid;DVV.mes=dvHoje().slice(0,7);
+  db.ref("despesas_viagem/"+DVV.uid).on("value",s=>{DVV.itens=s.val()||{};dvAtualizar()},e=>console.warn("despesas",e.message));
+  db.ref("despesas_meses/"+DVV.uid).on("value",s=>{DVV.meses=s.val()||{};dvAtualizar()},e=>console.warn("despesas meses",e.message));
+  db.ref("despesas_config").once("value").then(s=>{DVV.cfg=s.val()||{};dvAtualizar()}).catch(()=>{});
+}
+function dvMesInfo(m){return DVV.meses[m]||{status:"aberto"}}
+function dvTravado(m){const st=dvMesInfo(m).status;return st==="enviado"||st==="pago"}
+function dvAtualizar(){const sc=document.getElementById("screen-despesas");if(sc&&sc.classList.contains("active"))dvRender();if(typeof renderInicio==="function"){try{renderInicio()}catch(e){}}}
+function dvAReceber(m){const it=dvDoMes(dvLista(DVV.itens),m);return dvResumo(it,DVV.cfg).reemb}
+function dvAbrir(){let sc=document.getElementById("screen-despesas");if(!sc){sc=document.createElement("div");sc.className="screen";sc.id="screen-despesas";document.getElementById("screen-dash").parentNode.appendChild(sc)}navTo("despesas","Despesas de viagem");dvRender()}
+function dvRender(){
+  const sc=document.getElementById("screen-despesas");if(!sc)return;const m=DVV.mes;const itens=dvDoMes(dvLista(DVV.itens),m);const c=dvCalcular(itens,DVV.cfg),s=dvResumo(itens,DVV.cfg);const mi=dvMesInfo(m);const trav=dvTravado(m);const cfg=Object.assign({},DV_PADRAO,DVV.cfg);
+  const stMes=mi.status==="pago"?'<span class="dv-pill" style="background:#f0fdf4;color:#15803d">Pago em '+dvFData(mi.pagoEm)+'</span>':mi.status==="enviado"?'<span class="dv-pill" style="background:#eff6ff;color:#1d4ed8">Enviado em '+new Date(mi.enviadoEm).toLocaleDateString("pt-BR",{day:"2-digit",month:"2-digit"})+'</span>':'<span class="dv-pill" style="background:rgba(255,255,255,.14);color:#fff">Em aberto</span>';
+  let h='<div class="vol-top"><button class="vol-nav" onclick="DVV.mes=dvAddMes(DVV.mes,-1);dvRender()" aria-label="Mês anterior">‹</button><b>'+dvNomeMes(m)+'</b><button class="vol-nav" onclick="DVV.mes=dvAddMes(DVV.mes,1);dvRender()" aria-label="Próximo mês">›</button></div>';
+  h+='<div class="vol-hero"><div style="display:flex;justify-content:space-between;align-items:center"><span>'+(mi.status==="pago"?"Reembolso recebido":"Você vai receber")+'</span>'+stMes+'</div><b class="num">'+dvBrl(s.reemb)+'</b><small>'+dvBrl(s.lancado)+' em '+s.n+' nota'+(s.n!==1?"s":"")+(s.excesso+s.glosado>0?' · '+dvBrl(s.excesso+s.glosado)+' fora do reembolso':'')+'</small><div class="vol-st"><div><b class="num">'+s.aprov+'</b><span>aprovadas</span></div><div><b class="num">'+s.pend+'</b><span>aguardando o financeiro</span></div><div class="'+(s.semFoto?"warn":"")+'"><b class="num">'+s.semFoto+'</b><span>sem foto da nota</span></div></div></div>';
+  h+='<div class="dv-acts">'+(trav?'':'<button class="vol-bt" onclick="dvForm()">+ Lançar despesa</button>')+(!trav&&s.n&&m<=dvHoje().slice(0,7)?'<button class="dv-bt2" onclick="dvEnviar()">Enviar '+dvNomeMes(m).split(" ")[0].toLowerCase()+' para o financeiro</button>':'')+(s.n?'<button class="dv-bt2" onclick="dvMeuPdf()">Meu relatório (PDF)</button>':'')+'</div>';
+  if(trav)h+='<div class="dv-info">'+(mi.status==="pago"?"Este mês já foi pago.":"Mês enviado ao financeiro: as notas ficam travadas. Se precisar corrigir algo, peça para o financeiro reabrir.")+'</div>';
+  h+='<div class="dv-info">Limites: alimentação até <b>'+dvBrl(cfg.alimentacaoDia)+'</b> por dia · hospedagem até <b>'+dvBrl(cfg.hospedagemDia)+'</b> por diária · combustível só fora de posto parceiro.</div>';
+  if(!itens.length)h+='<div class="cbox"><div class="cempty">Nenhuma despesa lançada em '+dvNomeMes(m).toLowerCase()+'. Lance cada nota no dia em que gastar: tira a foto, digita o valor e pronto.</div></div>';
+  const dias={};itens.forEach(it=>{(dias[it.data]=dias[it.data]||[]).push(it)});
+  Object.keys(dias).sort().reverse().forEach(d=>{const l=dias[d];const tot=l.reduce((a,x)=>a+c[x.id].reemb,0);
+    h+='<div class="cbox"><div class="cbox-t" style="display:flex;justify-content:space-between"><span>'+new Date(d+"T12:00:00").toLocaleDateString("pt-BR",{weekday:"long",day:"2-digit",month:"2-digit"})+'</span><span class="num">'+dvBrl(tot)+'</span></div>'+l.map(it=>{const st=DV_ST[it.status]||DV_ST.lancada;const r=c[it.id];return'<button class="dv-it" onclick="dvDetalhe(\''+it.id+'\')"><span class="dv-ic">'+(DV_TIPOS[it.tipo]||{ic:"🧾"}).ic+'</span><span class="dv-m"><b>'+(DV_TIPOS[it.tipo]||{l:it.tipo}).l+(it.temFoto?' <span class="dv-cam" title="Com foto">📷</span>':' <span class="dv-sf">sem foto</span>')+'</b><small>'+dvEsc([it.cidade,it.descricao].filter(Boolean).join(" · ")||"—")+'</small>'+(r.obs?'<small style="color:#b45309">'+dvEsc(r.obs)+'</small>':'')+'</span><span class="dv-v"><b class="num">'+dvBrl(r.reemb)+'</b>'+(r.reemb!==+it.valor?'<small class="num" style="text-decoration:line-through">'+dvBrl(it.valor)+'</small>':'')+'<em style="color:'+st.c+';background:'+st.bg+'">'+st.l+'</em></span></button>'}).join("")+'</div>'});
+  sc.innerHTML=h;
+}
+function dvForm(id){
+  const it=id?DVV.itens[id]:{tipo:"alimentacao",data:dvHoje()};window._dvFoto=null;window._dvId=id||null;
+  const vis=(typeof AGV!=="undefined"&&AGV.dados)?[...new Set(AGV.itens().filter(x=>x.data===it.data).map(x=>x.farmCidade).filter(Boolean))]:[];
+  kmOverlay(id?"Editar despesa":"Lançar despesa","A foto da nota é o seu comprovante. O valor a reembolsar aparece antes de salvar.",
+   '<div class="dv-tipos">'+Object.entries(DV_TIPOS).map(([k,t])=>'<button type="button" class="dv-tp'+(k===it.tipo?" on":"")+'" data-t="'+k+'" onclick="dvTipo(\''+k+'\')"><span>'+t.ic+'</span>'+t.l+'</button>').join("")+'</div>'+
+   '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px"><div><label '+LBL+'>Valor da nota (R$)</label><input id="dv-v" type="number" inputmode="decimal" step="0.01" value="'+(it.valor||"")+'" style="INSTYLE" oninput="dvPrevia()"></div><div><label '+LBL+'>Data</label><input id="dv-d" type="date" max="'+dvHoje()+'" value="'+it.data+'" style="INSTYLE" onchange="dvPrevia()"></div></div>'+
+   '<label '+LBL+'>Cidade / onde</label><input id="dv-c" value="'+dvEsc(it.cidade||"")+'" placeholder="ex: Chopinzinho" style="INSTYLE">'+(vis.length?'<div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:6px">'+vis.map(v=>'<button type="button" class="dv-chip" onclick="document.getElementById(\'dv-c\').value=this.textContent">'+dvEsc(v)+'</button>').join("")+'</div>':'')+
+   '<div id="dv-comb" style="display:'+(it.tipo==="combustivel"?"block":"none")+'"><label '+LBL+'>Por que não foi no posto parceiro?</label><select id="dv-mot" style="INSTYLE"><option>Longe de posto parceiro</option><option>Posto parceiro fechado</option><option>Emergência / reserva</option><option>Outro</option></select><div style="display:grid;grid-template-columns:1fr 1fr;gap:8px"><div><label '+LBL+'>Km do painel</label><input id="dv-km" type="number" inputmode="numeric" value="'+(it.km||"")+'" style="INSTYLE"></div><div><label '+LBL+'>Litros</label><input id="dv-l" type="number" inputmode="decimal" step="0.01" value="'+(it.litros||"")+'" style="INSTYLE"></div></div><label style="display:flex;gap:8px;align-items:center;margin-top:10px;font-weight:600;font-size:14px"><input type="checkbox" id="dv-ch" checked style="width:20px;height:20px"> Completei o tanque</label><div style="font-size:12px;color:var(--muted);margin-top:4px">Com km e litros, o abastecimento já entra no controle do seu carro.</div></div>'+
+   '<label '+LBL+'>Observação (opcional)</label><input id="dv-o" value="'+dvEsc(it.descricao||"")+'" placeholder="ex: almoço visita Fazenda X" style="INSTYLE">'+
+   '<label class="dv-foto"><input type="file" accept="image/*" capture="environment" id="dv-f" onchange="dvLerFoto(this)"><span id="dv-fl">'+(it.temFoto?"📷 Trocar a foto da nota":"📷 Tirar foto da nota")+'</span><img id="dv-fi" alt=""></label>'+
+   '<div id="dv-prev" class="dv-prev"></div>'+(id?'<button type="button" onclick="dvExcluir(\''+id+'\')" style="margin-top:10px;background:none;border:none;color:#dc2626;font-weight:700;font-family:inherit;cursor:pointer">Excluir esta despesa</button>':''),"dvSalvar()");
+  window._dvTipo=it.tipo;dvPrevia();
+}
+function dvTipo(k){window._dvTipo=k;document.querySelectorAll(".dv-tp").forEach(b=>b.classList.toggle("on",b.dataset.t===k));const cb=document.getElementById("dv-comb");if(cb)cb.style.display=k==="combustivel"?"block":"none";dvPrevia()}
+function dvLerFoto(inp){const f=inp.files&&inp.files[0];if(!f)return;const r=new FileReader();r.onload=()=>{const img=new Image();img.onload=()=>{const M=1200;let w=img.width,h=img.height;if(w>M||h>M){const k=M/Math.max(w,h);w=Math.round(w*k);h=Math.round(h*k)}const cv=document.createElement("canvas");cv.width=w;cv.height=h;cv.getContext("2d").drawImage(img,0,0,w,h);window._dvFoto=cv.toDataURL("image/jpeg",0.6);const im=document.getElementById("dv-fi");im.src=window._dvFoto;im.style.display="block";document.getElementById("dv-fl").textContent="📷 Trocar a foto";dvPrevia()};img.src=r.result};r.readAsDataURL(f)}
+function dvPrevia(){
+  const el=document.getElementById("dv-prev");if(!el)return;const v=parseFloat(document.getElementById("dv-v").value)||0;const d=document.getElementById("dv-d").value;const t=window._dvTipo;
+  const outros=dvLista(DVV.itens).filter(x=>x.id!==window._dvId&&(x.data||"").slice(0,7)===(d||"").slice(0,7));const tmp={id:"__novo",tipo:t,data:d,valor:v,ts:Date.now()+1e9};
+  const r=dvCalcular(outros.concat([tmp]),DVV.cfg).__novo;let msg="";
+  if(!v)msg="Digite o valor da nota.";else if(dvTravado((d||"").slice(0,7)))msg='<span style="color:#dc2626">O mês de '+dvNomeMes(d.slice(0,7)).toLowerCase()+' já foi enviado ao financeiro.</span>';
+  else msg='Reembolso: <b>'+dvBrl(r.reemb)+'</b>'+(r.excesso>0?' <span style="color:#b45309">('+dvBrl(r.excesso)+' acima do limite '+(t==="hospedagem"?"da diária":"do dia")+')</span>':' ✓');
+  if(!window._dvFoto&&!(window._dvId&&DVV.itens[window._dvId]&&DVV.itens[window._dvId].temFoto))msg+='<br><span style="color:#b45309">Sem foto da nota o financeiro pode não aprovar.</span>';
+  el.innerHTML=msg;
+}
+function dvSalvar(){
+  const v=parseFloat(document.getElementById("dv-v").value);const d=document.getElementById("dv-d").value;const t=window._dvTipo;
+  if(!v||v<=0){showToast("Informe o valor da nota",true);return}if(!d||d>dvHoje()){showToast("Data inválida",true);return}if(dvTravado(d.slice(0,7))){showToast("Esse mês já foi enviado ao financeiro",true);return}
+  if(v>2000&&!confirm("Valor de "+dvBrl(v)+". Está certo?"))return;
+  const id=window._dvId||db.ref("despesas_viagem/"+DVV.uid).push().key;const ant=DVV.itens[id]||{};const foto=window._dvFoto;
+  const reg={tipo:t,data:d,valor:Math.round(v*100)/100,cidade:document.getElementById("dv-c").value.trim(),descricao:document.getElementById("dv-o").value.trim(),temFoto:!!(foto||ant.temFoto),status:"lancada",ts:ant.ts||Date.now(),atualizadoEm:Date.now(),nome:(typeof nomeVendedor!=="undefined"&&nomeVendedor)||"",email:(usuarioAtual.email||"").toLowerCase()};
+  if(t==="combustivel"){reg.motivo=document.getElementById("dv-mot").value;const km=parseInt(document.getElementById("dv-km").value,10),l=parseFloat(document.getElementById("dv-l").value);if(km)reg.km=km;if(l)reg.litros=l}
+  const up={};up["despesas_viagem/"+DVV.uid+"/"+id]=reg;if(foto)up["despesas_fotos/"+DVV.uid+"/"+id]={img:foto,ts:Date.now()};
+  if(t==="combustivel"&&reg.km&&reg.litros&&typeof KMV!=="undefined"&&KMV.vk&&!ant.abastId){const aid=db.ref().push().key;reg.abastId=aid;up["km_lancamentos/"+KMV.vk+"/"+aid]={tipo:"abast",data:d,km:reg.km,litros:reg.litros,valor:reg.valor,cheio:document.getElementById("dv-ch").checked,ts:Date.now(),por:reg.email,despesaId:id}}
+  db.ref().update(up).then(()=>{document.getElementById("kmv-ov").remove();showToast("Despesa salva · reembolso "+dvBrl(dvCalcular(dvDoMes(dvLista(Object.assign({},DVV.itens,{[id]:reg})),d.slice(0,7)),DVV.cfg)[id].reemb))}).catch(e=>showToast("Não salvou: "+e.message,true));
+}
+function dvExcluir(id){if(!confirm("Excluir esta despesa?"))return;const up={};up["despesas_viagem/"+DVV.uid+"/"+id]=null;up["despesas_fotos/"+DVV.uid+"/"+id]=null;db.ref().update(up).then(()=>{document.getElementById("kmv-ov").remove();showToast("Despesa excluída")})}
+function dvDetalhe(id){const it=DVV.itens[id];if(!it)return;if(it.status==="lancada"&&!dvTravado(it.data.slice(0,7))){dvForm(id);return}
+  db.ref("despesas_fotos/"+DVV.uid+"/"+id).once("value").then(s=>{const f=s.val();const r=dvCalcular(dvDoMes(dvLista(DVV.itens),it.data.slice(0,7)),DVV.cfg)[id];
+    kmOverlay((DV_TIPOS[it.tipo]||{l:""}).l+" · "+dvFData(it.data),(DV_ST[it.status]||DV_ST.lancada).l+(it.motivoGlosa?" — "+dvEsc(it.motivoGlosa):""),'<div style="font-size:14px;margin:8px 0">Valor da nota: <b>'+dvBrl(it.valor)+'</b><br>Reembolso: <b>'+dvBrl(r.reemb)+'</b>'+(r.obs?'<br><span style="color:#b45309">'+dvEsc(r.obs)+'</span>':'')+'</div>'+(f&&f.img?'<img src="'+f.img+'" style="width:100%;border-radius:10px">':'<div class="cempty">Sem foto.</div>'),"document.getElementById('kmv-ov').remove()")})}
+function dvEnviar(){const m=DVV.mes;const s=dvResumo(dvDoMes(dvLista(DVV.itens),m),DVV.cfg);
+  if(!confirm("Enviar "+dvNomeMes(m).toLowerCase()+" para o financeiro?\n\n"+s.n+" notas · reembolso de "+dvBrl(s.reemb)+(s.semFoto?"\n\nAtenção: "+s.semFoto+" nota(s) sem foto.":"")+"\n\nDepois de enviado, as notas do mês ficam travadas."))return;
+  db.ref("despesas_meses/"+DVV.uid+"/"+m).set({status:"enviado",enviadoEm:Date.now(),nome:(typeof nomeVendedor!=="undefined"&&nomeVendedor)||"",email:(usuarioAtual.email||"").toLowerCase()}).then(()=>showToast("Enviado ao financeiro")).catch(e=>showToast("Não enviou: "+e.message,true))}
+function dvMeuPdf(){const m=DVV.mes;const itens=dvDoMes(dvLista(DVV.itens),m);db.ref("despesas_fotos/"+DVV.uid).once("value").then(s=>{const F={};const v=s.val()||{};itens.forEach(it=>{if(v[it.id])F[it.id]=v[it.id].img});dvPdf((typeof nomeVendedor!=="undefined"&&nomeVendedor)||"",usuarioAtual.email,m,itens,F,DVV.cfg,dvMesInfo(m))})}
+(function(){const go=()=>dvIniciar();if(typeof usuarioAtual!=="undefined"&&usuarioAtual)go();else{const _ia=iniciarApp;iniciarApp=function(){_ia.apply(this,arguments);go()}}})();
 </script>
 </body>
 </html>
