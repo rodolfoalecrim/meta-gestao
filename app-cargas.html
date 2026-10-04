@@ -2035,41 +2035,45 @@ function dvfLimites(){const c=Object.assign({},DV_PADRAO,DVF.cfg);abrirSheet('<d
 function crmNorm(s){return String(s||"").normalize("NFD").replace(/[\u0300-\u036f]/g,"").toUpperCase().replace(/\s+/g," ").trim()}
 function crmNum(s){s=String(s||"").trim();if(!s)return 0;return parseFloat(s.replace(/\./g,"").replace(",","."))||0}
 function crmIso(d){const m=String(d||"").match(/(\d{2})\/(\d{2})\/(\d{4})/);return m?m[3]+"-"+m[2]+"-"+m[1]:""}
+function crmTiraAcento(s){return String(s||"").normalize("NFD").replace(/[\u0300-\u036f]/g,"").normalize("NFC")}
 function crmParse(linhas){
-  const L=linhas.map(l=>l.replace(/ fi /g,"fi").replace(/\s+/g," ").trim()).filter(Boolean);const T=L.join("\n");const r={itens:[],vencimentos:[],avisos:[]};
-  const g=(re,i)=>{const m=T.match(re);return m?m[i||1].trim():""};
+  /* sem acento antes de procurar: algumas versões do leitor devolvem "ó" como "o" + acento separado */
+  const L=linhas.map(l=>crmTiraAcento(l).replace(/\uFB01/g,"fi").replace(/ fi /g,"fi").replace(/\s+/g," ").trim()).filter(Boolean);const T=L.join("\n");const S=L.join(" ");const r={itens:[],vencimentos:[],avisos:[]};
+  const g=(re,i,txt)=>{const m=(txt||S).match(re);return m?m[i||1].trim():""};
   r.controle=g(/Controle:\s*(\d+)/);
-  const iCli=L.findIndex(l=>/DADOS DO CLIENTE/i.test(l)),iPed=L.findIndex(l=>/DADOS DO PEDIDO/i.test(l));const cli=L.slice(iCli+1,iPed>0?iPed:iCli+8).join("\n");
-  const mn=cli.match(/Nome:\s*(?:(\d+)\s*-\s*)?(.+?)\s+CPF\/CNPJ/);if(mn){r.codigo=mn[1]||"";r.cliente=crmNorm(mn[2])}
+  /* cliente: entre "DADOS DO CLIENTE" e "DADOS DO PEDIDO", lido como texto corrido */
+  const cli=(S.match(/DADOS DO CLIENTE(.*?)DADOS DO PEDIDO/i)||[,S])[1];
+  const mn=cli.match(/Nome:\s*(?:(\d+)\s*-\s*)?(.+?)\s+(?:CPF\/CNPJ|Endere)/i);if(mn){r.codigo=mn[1]||"";r.cliente=crmNorm(mn[2])}
   r.cpf=(cli.match(/CPF\/CNPJ:\s*([\d.\/-]+)/)||[])[1]||"";
   const mc=cli.match(/Cidade:\s*(.+?)\s*-\s*([A-Z]{2})\b/);if(mc){r.cidade=crmNorm(mc[1]);r.uf=mc[2]}
-  r.tabela=(T.match(/Tabela de pre[çc]o:\s*\d+\s*-\s*([A-Z0-9.,]+)/i)||[])[1]||"";
-  r.emissao=crmIso(g(/Emiss[ãa]o em:\s*(\d{2}\/\d{2}\/\d{4})/));
-  let prev=g(/Previs[ãa]o\s*(?:de\s*)?Entrega:\s*(\d{2}\/\d{2}\/\d{4})/i);
-  if(!prev){const i=L.findIndex(l=>/Previs[ãa]o de/i.test(l));if(i>=0){const ds=(L[i+1]||"").match(/\d{2}\/\d{2}\/\d{4}/g);if(ds)prev=ds[ds.length-1]}}
+  r.tabela=g(/Tabela de preco:\s*\d+\s*-\s*([A-Z0-9.,]+)/i);
+  r.emissao=crmIso(g(/Emissao em:\s*(\d{2}\/\d{2}\/\d{4})/));
+  let prev=g(/Previsao\s*(?:de\s*)?Entrega:\s*(\d{2}\/\d{2}\/\d{4})/i);
+  if(!prev)prev=g(/Previsao de\s+(?:\d{2}\/\d{2}\/\d{4}\s+)?(\d{2}\/\d{2}\/\d{4})/i);
   r.previsao=crmIso(prev);
   r.prazo=crmIso(g(/Prazo\s*(?:de\s*)?Pagamento:\s*(\d{2}\/\d{2}\/\d{4})/i));
-  r.parcelamento=g(/Parcelamento:\s*(.+)/);
-  /* itens: a descrição pode vir quebrada em várias linhas (antes e/ou depois da linha com código e números) */
-  const iIt=L.findIndex(l=>/^C[óo]digo\s+Descri/i.test(l));
-  if(iIt>=0){let buf=[],ab=null;const aberto=s=>(s.match(/\(/g)||[]).length>(s.match(/\)/g)||[]).length;
-    for(let i=iIt+1;i<L.length&&!/^Itens\b/i.test(L[i]);i++){const m=L[i].match(/^(\d+)\s*(.*?)\s*([\d.]+,\d+)\s+(KG|TON|TN|T|SC|UN)\s+([\d.,]+)\s+([\d.,]+)\s+([\d.]+,\d{2})$/i);
-      if(m){const un=m[4].toUpperCase();const q=crmNum(m[3]);const kg=un==="KG"?q:(un==="TON"||un==="TN"||un==="T")?q*1000:q;const d=((m[2]||"").trim()||buf.join(" ")).trim();buf=[];
-        const it={codigo:m[1],descricao:d,kg:Math.round(kg),un,vlUn:crmNum(m[5]),desc:crmNum(m[6]),total:crmNum(m[7])};r.itens.push(it);ab=aberto(d)?it:null}
-      else if(ab){ab.descricao=(ab.descricao+" "+L[i]).trim();if(!aberto(ab.descricao))ab=null}
-      else buf.push(L[i])}}
-  r.total=crmNum(g(/Total:\s*([\d.]+,\d{2})/));
-  const iV=L.findIndex(l=>/^Vencimento\b/i.test(l));
-  if(iV>=0)for(let i=iV+1;i<L.length;i++){const m=L[i].match(/^(\d{2}\/\d{2}\/\d{4})\s+R\$\s+([\d.]+,\d{2})/);if(!m)break;r.vencimentos.push({data:crmIso(m[1]),valor:crmNum(m[2])})}
+  r.parcelamento=g(/Parcelamento:\s*(.+?)(?:\s+Previs|\s+E-mail|\s+DADOS|$)/i);
+  /* itens: o bloco entre o cabeçalho da tabela e "Itens", lido como texto corrido — não depende de como as linhas foram quebradas */
+  const bloco=(S.match(/Codigo\s*Descricao.*?Vl\.?\s*tot\.?\s*(.*?)\s+Itens:?\s*\d/i)||S.match(/DADOS DOS ITENS\s*(.*?)\s+Itens:?\s*\d/i)||[])[1]||"";
+  const re=/(?:^|\s)(\d{3,7})\s+(.*?)\s*(\d{1,3}(?:\.\d{3})*,\d+)\s*(KG|TON|TN|T|SC|UN)\s+(\d[\d.]*,\d+)\s+(\d[\d.]*,\d+)\s+(\d{1,3}(?:\.\d{3})*,\d{2})(?=\s|$)/gi;
+  let m,ult=0,prevIt=null;const aberto=s=>(s.match(/\(/g)||[]).length>(s.match(/\)/g)||[]).length;
+  while((m=re.exec(bloco))){let gap=bloco.slice(ult,m.index).trim();
+    if(prevIt&&aberto(prevIt.descricao)&&gap){const k=gap.indexOf(")");const suf=k>=0?gap.slice(0,k+1):gap;prevIt.descricao=(prevIt.descricao+" "+suf).trim();gap=k>=0?gap.slice(k+1).trim():""}
+    const un=m[4].toUpperCase();const q=crmNum(m[3]);const kg=un==="KG"?q:(un==="TON"||un==="TN"||un==="T")?q*1000:q;
+    const d=((m[2]||"").trim()||gap).trim();const it={codigo:m[1],descricao:d,kg:Math.round(kg),un,vlUn:crmNum(m[5]),desc:crmNum(m[6]),total:crmNum(m[7])};r.itens.push(it);prevIt=it;ult=re.lastIndex}
+  if(prevIt&&aberto(prevIt.descricao)){const resto=bloco.slice(ult).trim();const k=resto.indexOf(")");if(k>=0)prevIt.descricao=(prevIt.descricao+" "+resto.slice(0,k+1)).trim()}
+  r.total=crmNum(g(/Total:\s*(\d{1,3}(?:\.\d{3})*,\d{2})/));
+  const vb=(S.match(/Vencimento\s+Moeda\s+Valor\s+Forma de pagamento(.*?)(?:Mensagem|Declaro|$)/i)||[])[1]||"";
+  let mv;const rv=/(\d{2}\/\d{2}\/\d{4})\s+R\$\s+(\d{1,3}(?:\.\d{3})*,\d{2})/g;while((mv=rv.exec(vb)))r.vencimentos.push({data:crmIso(mv[1]),valor:crmNum(mv[2])});
   if(!r.prazo&&r.vencimentos.length)r.prazo=r.vencimentos[r.vencimentos.length-1].data;
-  const iM=L.findIndex(l=>/Mensagem\s+(de\s+)?transbordo/i.test(l));
-  if(iM>=0){const out=[];for(let i=iM+1;i<L.length&&!/^Declaro/i.test(L[i]);i++)out.push(L[i]);r.mensagem=out.join(" · ")}
+  const mm=S.match(/Mensagem\s+(?:de\s+)?transbordo:?\s*(.*?)\s*Declaro/i);if(mm&&mm[1].trim())r.mensagem=mm[1].trim();
   if(!r.controle)r.avisos.push("Número do pedido (controle) não encontrado");
   if(!r.cliente)r.avisos.push("Cliente não encontrado no PDF");
   if(!r.itens.length)r.avisos.push("Nenhum item de ração encontrado");
   const soma=r.itens.reduce((a,x)=>a+x.total,0);if(r.total&&r.itens.length&&Math.abs(soma-r.total)>1)r.avisos.push("A soma dos itens lidos ("+soma.toLocaleString("pt-BR",{minimumFractionDigits:2})+") não bate com o total do pedido ("+r.total.toLocaleString("pt-BR",{minimumFractionDigits:2})+"). Confira as rações.");
-  const nIt=parseInt((T.match(/Itens:?\s*(\d+)/i)||[])[1]||"0",10);if(nIt&&nIt!==r.itens.length)r.avisos.push("O pedido diz "+nIt+" ite"+(nIt>1?"ns":"m")+", mas foram lidos "+r.itens.length+".");
-  r.contratoSugerido=/CONTRATO/i.test((r.mensagem||"")+" "+T.slice(0,400))||r.itens.reduce((a,x)=>a+x.kg,0)>=30000;
+  const nIt=parseInt((S.match(/Itens:?\s*(\d+)/i)||[])[1]||"0",10);if(nIt&&nIt!==r.itens.length)r.avisos.push("O pedido diz "+nIt+" ite"+(nIt>1?"ns":"m")+", mas foram lidos "+r.itens.length+".");
+  r.contratoSugerido=/CONTRATO/i.test((r.mensagem||"")+" "+S.slice(0,400))||r.itens.reduce((a,x)=>a+x.kg,0)>=30000;
+  r.textoLido=L.slice(0,80).join("\n");
   r.ok=!!(r.controle&&r.cliente&&r.itens.length);
   return r;
 }
@@ -2078,10 +2082,14 @@ function crmProduto(it){let d=crmNorm(it.descricao).replace(/^RACAO\s+(ULTRAMAX\
 const CRM_PDFJS=[["https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js","https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js"],["https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.min.js","https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.worker.min.js"]];
 function crmCarregarPdfJs(i){i=i||0;if(window.pdfjsLib)return Promise.resolve(window.pdfjsLib);if(i>=CRM_PDFJS.length)return Promise.reject(new Error("não consegui abrir o leitor de PDF (verifique a internet)"));
   return new Promise((ok,err)=>{const s=document.createElement("script");s.src=CRM_PDFJS[i][0];s.onload=()=>{if(!window.pdfjsLib){err(new Error("leitor indisponível"));return}window.pdfjsLib.GlobalWorkerOptions.workerSrc=CRM_PDFJS[i][1];ok(window.pdfjsLib)};s.onerror=()=>{s.remove();crmCarregarPdfJs(i+1).then(ok,err)};document.head.appendChild(s)})}
+function crmLinhas(items){const P=items.filter(it=>it.str&&it.str.trim()).map(it=>({x:it.transform[4],y:it.transform[5],s:it.str})).sort((a,b)=>b.y-a.y||a.x-b.x);const G=[];
+  P.forEach(p=>{const g=G.find(g=>Math.abs(g.y-p.y)<=2.5);if(g){g.i.push(p)}else G.push({y:p.y,i:[p]})});
+  return G.sort((a,b)=>b.y-a.y).map(g=>g.i.sort((a,b)=>a.x-b.x).map(o=>o.s).join(" "))}
+/* quando a leitura falha, guarda o que o aparelho leu para análise (só o admin vê) */
+function crmDiagnostico(r){const d={ts:Date.now(),arquivo:r.arquivo||"",pdfjs:(window.pdfjsLib&&window.pdfjsLib.version)||"",nav:navigator.userAgent.slice(0,160),avisos:(r.avisos||[]).join(" | "),texto:String(r.textoLido||"").slice(0,6000),controle:r.controle||"",cliente:r.cliente||"",por:(firebase.auth().currentUser||{}).email||""};if(r.pdfB64&&r.pdfB64.length<400000)d.pdfB64=r.pdfB64;return firebase.database().ref("crm_diagnostico").push(d)}
 async function crmLerArquivo(file){
   const buf=await file.arrayBuffer();const lib=await crmCarregarPdfJs();const doc=await lib.getDocument({data:new Uint8Array(buf.slice(0))}).promise;let linhas=[];
-  for(let p=1;p<=Math.min(doc.numPages,3);p++){const pg=await doc.getPage(p);const tc=await pg.getTextContent();const Y={};tc.items.forEach(it=>{if(!it.str||!it.str.trim())return;const y=Math.round(it.transform[5]/3)*3;(Y[y]=Y[y]||[]).push({x:it.transform[4],s:it.str})});
-    linhas=linhas.concat(Object.keys(Y).map(Number).sort((a,b)=>b-a).map(y=>Y[y].sort((a,b)=>a.x-b.x).map(o=>o.s).join(" ")))}
+  for(let p=1;p<=Math.min(doc.numPages,3);p++){const pg=await doc.getPage(p);const tc=await pg.getTextContent();linhas=linhas.concat(crmLinhas(tc.items))}
   const r=crmParse(linhas);r.arquivo=file.name;
   let bin="";const u8=new Uint8Array(buf);for(let i=0;i<u8.length;i+=8192)bin+=String.fromCharCode.apply(null,u8.subarray(i,i+8192));r.pdfB64=btoa(bin);
   return r;
@@ -2108,7 +2116,7 @@ function importarCrm(files){
 function renderCrm(){
   const n=_crm.filter(x=>x.incluir).length;const nc=_crm.filter(x=>x.incluir&&x.contrato).length;
   abrirSheet('<div class="sh-h"><h3>Pedidos do CRM</h3><button class="x" onclick="fecharSheet()">×</button></div><div class="small muted">Confira antes de lançar. Os pedidos entram na fila "A montar" com o número do CRM, para não duplicar.</div>'+
-  _crm.map((x,i)=>{const r=x.r,it=x.it;if(!it)return'<div class="card crm-c erro"><b>'+esc(r.arquivo)+'</b><div class="warn red">'+esc((r.avisos||[]).join(" · "))+'</div></div>';
+  _crm.map((x,i)=>{const r=x.r,it=x.it;if(!it)return'<div class="card crm-c erro"><b>'+esc(r.arquivo)+'</b><div class="warn red">'+esc((r.avisos||[]).join(" · "))+'</div><button class="btn btn-o btn-sm" style="margin-top:6px" onclick="crmDiagnostico(_crm['+i+'].r).then(()=>toast(\'Enviado para análise\'))">Enviar para análise</button></div>';
     return'<div class="card crm-c'+(x.incluir?"":" off")+'"><label class="crm-h"><input type="checkbox" '+(x.incluir?"checked":"")+(x.dup?" disabled":"")+' onchange="_crm['+i+'].incluir=this.checked;renderCrm()"><b>'+esc(r.cliente)+'</b><span class="pill p-aberto">CRM '+esc(r.controle)+'</span>'+(x.dup?'<span class="pill p-atraso">já importado</span>':"")+'</label>'+
     '<div class="small muted">'+esc(r.cidade||"")+(x.cl?' · cliente encontrado por '+x.cl.como:' · <b style="color:#b45309">cliente novo nas cargas</b>')+'</div>'+
     '<div class="crm-g"><div><span>Ração</span><b>'+esc(crmProduto(it))+'</b></div><div><span>Quantidade</span><input class="inp num" type="number" step="0.1" value="'+(x.kg/1000)+'" onchange="_crm['+i+'].kg=Math.round(parseFloat(this.value)*1000)||0"> t</div><div><span>Entrega</span><input class="inp" type="date" value="'+x.data+'" onchange="_crm['+i+'].data=this.value"></div><div><span>Vendedor</span><input class="inp" list="dl-vend" value="'+esc(x.vendedor)+'" placeholder="quem vendeu" onchange="_crm['+i+'].vendedor=this.value"></div></div>'+
