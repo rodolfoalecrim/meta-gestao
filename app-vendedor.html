@@ -209,6 +209,17 @@ body{background:var(--bg)}
 .dv-chip{border:1px solid var(--border);background:#fff;border-radius:999px;padding:6px 11px;font-size:12.5px;font-family:inherit;cursor:pointer}
 .dv-foto{display:block;margin-top:14px;border:1.5px dashed #cbd5e1;border-radius:12px;padding:14px;text-align:center;font-weight:800;color:var(--GD);cursor:pointer}.dv-foto input{display:none}.dv-foto img{display:none;max-width:100%;max-height:200px;margin:8px auto 0;border-radius:8px}
 .dv-prev{margin-top:12px;font-size:13.5px;background:#f8faf9;border-radius:10px;padding:10px 12px;line-height:1.5}
+
+/* ===== Início: lançar ===== */
+#inicio-lancar{margin-top:12px}
+.lanc{display:grid;gap:8px}.lanc-2{grid-template-columns:repeat(2,minmax(0,1fr))}.lanc-4{grid-template-columns:repeat(4,minmax(0,1fr))}.lanc-b{min-width:0}
+.lanc-b{background:#fff;border:1px solid #e3e9e4;border-radius:16px;padding:12px 6px 10px;display:flex;flex-direction:column;align-items:center;gap:3px;font-family:inherit;cursor:pointer;text-align:center;min-height:96px}
+.lanc-b:active{transform:scale(.97)}
+.lanc-i{width:42px;height:42px;border-radius:13px;background:var(--GL);color:var(--GD);display:flex;align-items:center;justify-content:center;margin-bottom:2px}
+.lanc-b b{font-size:13px;color:var(--text)}.lanc-b small{font-size:10.5px;color:var(--muted);line-height:1.25;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
+.lanc-b.hot{border-color:#fcd34d;background:#fffbeb}.lanc-b.hot .lanc-i{background:#fbbf24;color:#422006}.lanc-b.hot small{color:#92400e;font-weight:700}
+#rs-lista-atrasadas:not(.all) .rs-atraso-item:nth-of-type(n+5){display:none}
+.ver-todas{width:100%;margin-top:4px;border:1px dashed #cbd5e1;background:none;border-radius:12px;padding:10px;font-family:inherit;font-weight:700;font-size:12.5px;color:var(--GD);cursor:pointer}
 </style>
 </head>
 <body>
@@ -276,6 +287,7 @@ body{background:var(--bg)}
         <div class="resumo-data" id="resumo-data"></div>
       </div>
       <div id="inicio-hero"></div>
+      <div id="inicio-lancar"></div>
       <div id="inicio-alertas"></div>
       <div id="inicio-agenda"></div>
       <div class="hub-tit">Mais ferramentas</div>
@@ -1767,7 +1779,6 @@ function renderInicio(){
   hub.innerHTML=tiles.map(x=>'<button class="tile" onclick="'+x.acao+'"><span class="ti">'+x.ico+'</span><b>'+x.t+'</b><small'+(x.cor?' style="color:'+x.cor+'"':'')+'>'+kmEsc(x.sub)+'</small>'+(x.badge?'<em>'+kmEsc(x.badge)+'</em>':'')+'</button>').join("");
   const qk=document.getElementById("inicio-quick");if(qk)qk.style.display=c?"":"none";
   const al=document.getElementById("inicio-alertas");let h="";
-  if(c&&c.pend)h+='<button class="banner amb" onclick="abrirLancKm()"><span>📍</span><span><b>Lance o km do carro desta semana</b><small>'+(c.r.ult?"última leitura "+c.r.ult.data.slice(8)+"/"+c.r.ult.data.slice(5,7):"primeiro lançamento")+'</small></span><i>›</i></button>';
   if(c)c.al.filter(a=>a.k==="venc").forEach(a=>{h+='<button class="banner red" onclick="abrirCarro()"><span>🔧</span><span><b>'+kmEsc(a.txt)+'</b><small>toque para ver o carro</small></span><i>›</i></button>'});
   if(e&&e.atr)h+='<button class="banner red" onclick="navTo(\'cargas\',\'Entregas de ração\');renderCargasVendedor()"><span>🚚</span><span><b>'+e.atr+' entrega(s) de ração atrasada(s)</b><small>ver status e observações</small></span><i>›</i></button>';
   al.innerHTML=h;
@@ -1851,6 +1862,7 @@ function abrirAgenda(view){
 <script>
 /* ===== Visual moderno: ícones de traço, avatar, cartão "Hoje" ===== */
 const ICO={
+ visita:'<rect x="5" y="4" width="14" height="17" rx="2"/><path d="M9 4h6v3H9z"/><path d="M9 13l2 2 4-4"/>',
  recibo:'<path d="M6 3h12v18l-3-2-3 2-3-2-3 2z"/><path d="M9 8h6M9 12h6M9 16h3"/>',
  home:'<path d="M3 11l9-8 9 8"/><path d="M5 10v10h14V10"/><path d="M10 20v-6h4v6"/>',
  clientes:'<path d="M3 21V9l7-5 7 5v12"/><path d="M8 21v-6h4v6"/><path d="M17 11h4v10h-4"/>',
@@ -2290,6 +2302,10 @@ h1,h2,h3,.font-display{font-family:var(--font-display)}
 
     <div class="status-pick" id="ci-status-pick"></div>
 
+    <div class="f-field" id="ci-res-box"><label>Resultado da visita <span style="font-weight:500;opacity:.7">· um toque, opcional</span></label>
+      <div class="status-pick" id="ci-res-pick"></div>
+    </div>
+
     <div class="f-field"><label>Produto confirmado</label>
       <input id="ci-produto-input" placeholder="Digite ou toque numa sugestão" oninput="filtrarChips('ci-produto')">
       <div id="ci-produto-chips" class="chips-wrap"></div>
@@ -2380,7 +2396,11 @@ let viewAtual="semana";
 let produtosCustomCache={};
 let objetivosCustomCache={};
 let ciFotoBase64=null;
-let ciStatusSelecionado="realizado";
+let ciStatusSelecionado="realizado";let ciResultado=null;
+const CI_RES=[["negocio","💰 Fechou negócio"],["avancou","📈 Avançou"],["tecnico","🔧 Acompanhamento técnico"],["prospeccao","🔍 Prospecção"],["sem_avanco","➖ Sem avanço"]];
+const CI_RES_L={negocio:"💰 Fechou negócio",avancou:"📈 Avançou (proposta / amostra)",tecnico:"🔧 Acompanhamento técnico",prospeccao:"🔍 Prospecção",sem_avanco:"➖ Sem avanço"};
+function ciRenderRes(){const el=AGR.getElementById("ci-res-pick");if(!el)return;el.innerHTML=CI_RES.map(([k,l])=>'<div class="status-opt'+(ciResultado===k?" on":"")+'" onclick="ciSelRes(\''+k+'\')">'+l+'</div>').join("");const bx=AGR.getElementById("ci-res-box");if(bx)bx.style.display=ciStatusSelecionado==="realizado"?"":"none"}
+window.ciSelRes=function(k){ciResultado=ciResultado===k?null:k;ciRenderRes()};
 let ciGeo=null;
 let itemEditandoId=null;
 let agendaRefAtual=null;
@@ -3242,6 +3262,7 @@ function montarCardItem(item){
   const acomp=item.acompanhante&&item.acompanhante.nome?("<br>👥 <b>Acompanhado por:</b> "+item.acompanhante.nome):"";
   const podeCheckin=!somenteLeitura&&item.status==="planejado"&&item.data<=hojeISO;
   const checkinInfo=item.checkin?(
+    (item.checkin.resultado&&CI_RES_L[item.checkin.resultado]?'<div class="item-meta" style="margin-top:6px;font-weight:700;color:var(--G)">'+CI_RES_L[item.checkin.resultado]+'</div>':'')+
     (item.checkin.resumo?'<div style="margin-top:8px;padding:8px 10px;background:var(--surface2);border-left:2.5px solid var(--G);border-radius:6px;font-size:12px;color:var(--muted);font-style:italic">💬 '+item.checkin.resumo+'</div>':'')+
     (item.checkin.localizacaoValidada===false?'<div class="item-meta" style="color:var(--clay)">⚠️ sem validação de localização</div>':'')
   ):"";
@@ -3785,7 +3806,7 @@ function abrirModalCheckin(itemId){
   ciFotoBase64=null;
   AGR.getElementById("ci-foto-preview").innerHTML="";
   AGR.getElementById("ci-obs").value="";
-  ciStatusSelecionado="realizado";
+  ciStatusSelecionado="realizado";ciResultado=null;setTimeout(ciRenderRes,0);
   AGR.getElementById("ci-status-pick").innerHTML=[
     {k:"realizado",l:"✅ Realizada"},{k:"nao_realizado",l:"❌ Não realizada"},
     {k:"remarcado",l:"🔁 Remarcada"},{k:"produtor_ausente",l:"🚫 Produtor ausente"}
@@ -3807,7 +3828,7 @@ function abrirModalCheckin(itemId){
   AGR.getElementById("modal-checkin").classList.add("on");
   obterGeolocalizacaoCheckin(item);
 }
-function selecionarStatusCheckin(k){
+function selecionarStatusCheckin(k){setTimeout(ciRenderRes,0);
   ciStatusSelecionado=k;
   AGR.querySelectorAll("#ci-status-pick .status-opt").forEach(el=>el.classList.toggle("on",el.dataset.st===k));
 }
@@ -3878,7 +3899,8 @@ async function salvarCheckin(){
     lat:ciGeo?ciGeo.lat:null,lng:ciGeo?ciGeo.lng:null,
     localizacaoValidada,distanciaKm,motivo,
     resumo:(ciStatusSelecionado==="produtor_ausente"?"Produtor ausente. ":"")+obs,
-    produtoConfirmado:produtoValor||produtoLivreVal
+    produtoConfirmado:produtoValor||produtoLivreVal,
+    resultado:(ciStatusSelecionado==="realizado"&&ciResultado)||null
   };
 
   const wk=weekKeyOf(getMonday(new Date(item.data+"T00:00:00")));
@@ -4166,6 +4188,26 @@ function dvEnviar(){const m=DVV.mes;const s=dvResumo(dvDoMes(dvLista(DVV.itens),
   db.ref("despesas_meses/"+DVV.uid+"/"+m).set({status:"enviado",enviadoEm:Date.now(),nome:(typeof nomeVendedor!=="undefined"&&nomeVendedor)||"",email:(usuarioAtual.email||"").toLowerCase()}).then(()=>showToast("Enviado ao financeiro")).catch(e=>showToast("Não enviou: "+e.message,true))}
 function dvMeuPdf(){const m=DVV.mes;const itens=dvDoMes(dvLista(DVV.itens),m);db.ref("despesas_fotos/"+DVV.uid).once("value").then(s=>{const F={};const v=s.val()||{};itens.forEach(it=>{if(v[it.id])F[it.id]=v[it.id].img});dvPdf((typeof nomeVendedor!=="undefined"&&nomeVendedor)||"",usuarioAtual.email,m,itens,F,DVV.cfg,dvMesInfo(m))})}
 (function(){const go=()=>dvIniciar();if(typeof usuarioAtual!=="undefined"&&usuarioAtual)go();else{const _ia=iniciarApp;iniciarApp=function(){_ia.apply(this,arguments);go()}}})();
+</script>
+<script>
+/* ===== Início: "Lançar" no topo (visita, despesa, abastecimento, km) e lista de visitas mais curta ===== */
+function proxVisitaHoje(){if(typeof AGV==="undefined"||!AGV.dados)return null;return AGV.hojeItens().filter(i=>i.status==="planejado").sort((a,b)=>(a.criado_em||"").localeCompare(b.criado_em||""))[0]||null}
+function lancarVisita(){const p=proxVisitaHoje();abrirAgenda("hoje");setTimeout(()=>{try{if(p&&typeof abrirModalCheckin==="function")abrirModalCheckin(p.id);else if(typeof abrirModalItem==="function")abrirModalItem(null,true)}catch(e){console.warn(e)}},400)}
+function lancarDespesa(){if(typeof DVV==="undefined"||!DVV.ok){showToast("Carregando…");return}dvForm()}
+function renderLancar(){
+  const el=document.getElementById("inicio-lancar");if(!el)return;const c=typeof infoCarro==="function"?infoCarro():null;const p=proxVisitaHoje();
+  const bts=[["visita","Visita",p?"check-in "+String(p.farmNome||"").split(" ")[0]:"registrar visita","lancarVisita()",!!p],
+             ["recibo","Despesa",(typeof DVV!=="undefined"&&DVV.ok)?dvBrl(dvAReceber(DVV.mes)).replace(",00","")+" a receber":"nota de viagem","lancarDespesa()",false]];
+  if(c){bts.push(["abast","Abasteci","litros e km","abrirAbastCarro()",false]);bts.push(["km","Km",c.pend?"pendente":"em dia","abrirLancKm()",c.pend])}
+  el.innerHTML='<div class="lanc lanc-'+bts.length+'">'+bts.map(([ic,t,sub,ac,hot])=>'<button class="lanc-b'+(hot?" hot":"")+'" onclick="'+ac+'"><span class="lanc-i">'+svg(ic,22)+'</span><b>'+t+'</b><small>'+kmEsc(sub)+'</small></button>').join("")+'</div>';
+}
+/* "Precisam de visita": mostra 3 e um botão para ver todas */
+function encurtarPrecisamVisita(){const w=document.getElementById("rs-lista-atrasadas");if(!w||w.dataset.ok===w.innerHTML.length+"")return;const its=[...w.querySelectorAll(".rs-atraso-item")];const mais=[...w.children].find(x=>/outra\(s\)/.test(x.textContent));const extra=its.length-3;
+  if(extra>0&&!w.classList.contains("all")){const tot=extra+(mais?parseInt(mais.textContent.replace(/\D/g,""),10)||0:0);let bt=w.querySelector(".ver-todas");if(!bt){bt=document.createElement("button");bt.className="ver-todas";w.appendChild(bt)}bt.textContent="Ver mais "+tot+" cliente"+(tot>1?"s":"")+" sem visita";bt.onclick=()=>{w.classList.add("all");navTo("lista","Propriedades")};if(mais)mais.style.display="none"}
+  w.dataset.ok=w.innerHTML.length+""}
+(function(){const w=document.getElementById("rs-lista-atrasadas");if(w)new MutationObserver(()=>encurtarPrecisamVisita()).observe(w,{childList:true,subtree:true});
+  const _ri=renderInicio;renderInicio=function(){_ri();try{renderLancar()}catch(e){console.warn(e)}const q=document.getElementById("inicio-quick");if(q)q.style.display="none";encurtarPrecisamVisita()}})();
+(function(){if(typeof usuarioAtual!=="undefined"&&usuarioAtual)setTimeout(()=>{try{renderInicio()}catch(e){}},500)})();
 </script>
 </body>
 </html>
