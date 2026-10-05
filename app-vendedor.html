@@ -224,6 +224,11 @@ body{background:var(--bg)}
 .crm-v b{display:block;font-size:16px}.crm-v span{font-size:12.5px;color:var(--muted)}
 .crm-vi{display:flex;justify-content:space-between;gap:10px;padding:10px 0;border-bottom:1px solid #f1f5f9;font-size:13.5px}.crm-vi b{white-space:nowrap}
 .crm-vd{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:10px}.crm-vd span{display:block;font-size:11px;color:var(--muted)}.crm-vd b{font-size:13px}
+
+/* ===== comissão ===== */
+.com-c{all:unset;box-sizing:border-box;cursor:pointer;display:grid;grid-template-columns:1fr auto;gap:2px 10px;width:100%;background:#fff;border:1px solid #e3e9e4;border-radius:18px;padding:14px 16px;margin-bottom:14px}
+.com-l{grid-column:1/3;font-size:12.5px;color:var(--muted)}.com-c>b{font-size:26px;font-weight:700;color:var(--GD)}.com-s{grid-column:1/2;font-size:11.5px;color:var(--muted)}.com-go{grid-column:2;grid-row:2/4;align-self:center;font-size:12.5px;font-weight:800;color:var(--G)}
+.com-g{display:grid;grid-template-columns:repeat(3,1fr);gap:10px 8px;margin-top:4px}.com-g span{display:block;font-size:11px;color:var(--muted)}.com-g b{font-size:14.5px}
 </style>
 </head>
 <body>
@@ -672,7 +677,7 @@ body{background:var(--bg)}
     <button class="nav-btn" id="nav-agenda" onclick="abrirAgenda()">
       <span class="ico">📅</span>Agenda<span class="nav-dot" id="nd-agenda"></span>
     </button>
-    <button class="nav-btn" id="nav-dash" onclick="navTo('dash','Meu Resultado');renderDash()">
+    <button class="nav-btn" id="nav-dash" onclick="navTo('dash','Meu Resultado');renderDash();setTimeout(()=>{if(typeof comvCard==='function')comvCard()},50)">
       <span class="ico">📊</span>Resultado
     </button>
     <button class="nav-btn" id="nav-mais" onclick="abrirMais()">
@@ -1751,7 +1756,7 @@ function salvarLancKm(){
 </script>
 <script>
 /* ===== Navegação: Início como central de ferramentas + menu "Mais" ===== */
-const GRUPO_MAIS=["bench","equipe","analise","carro","cargas","pipeline","volume","despesas"];
+const GRUPO_MAIS=["bench","equipe","analise","carro","cargas","pipeline","volume","despesas","comissao"];
 (function(){const _nt=navTo;navTo=function(sc,ti){_nt(sc,ti);if(GRUPO_MAIS.includes(sc)){const b=document.getElementById("nav-mais");if(b)b.classList.add("active")}fecharMais()}})();
 function fecharMais(){const o=document.getElementById("mais-ov");if(o)o.classList.remove("on")}
 function infoCarro(){if(!KMV.vk)return null;const mes=KMC.hoje().slice(0,7);const r=kmCarroMes(KMV.lanc,mes);const meta=metaCarro(KMV.v,KMV.metas,mes,KMV.vk);const pend=!r.ult||r.ult.data<KMC.segunda();const al=alertasCarro(KMV.lanc,KMV.serv,KMV.plano||PLANO_CARRO_PADRAO);return{r,meta,pend,al,st:statusKm(r.km,r.proj,meta)}}
@@ -1762,6 +1767,7 @@ function itensMais(){const c=infoCarro(),e=infoEntregas();const n0=x=>Math.round
    {ico:"🚗",t:"Meu carro",sub:c?(n0(c.r.km)+" km no mês"+(c.meta?" de "+n0(c.meta):"")+(c.pend?" · lançar km da semana":"")):"sem carro vinculado",badge:c?(c.pend?1:0)+c.al.length:0,acao:"abrirCarro()"},
    {ico:"🚚",t:"Entregas de ração",sub:e?(e.cam+" a caminho · "+e.ag+" aguardando"+(e.atr?" · "+e.atr+" atrasado(s)":"")):"status das cargas dos seus clientes",badge:e?e.atr:0,acao:"navTo('cargas','Entregas de ração');renderCargasVendedor()"},
    {ico:"🧾",t:"Despesas de viagem",sub:(typeof DVV!=="undefined"&&DVV.ok)?dvBrl(dvAReceber(DVV.mes))+" a receber no mês":"alimentação, hotel e combustível",acao:"dvAbrir()"},
+   {ico:"💰",t:"Minha comissão",sub:"previsão pelos vencimentos",acao:"comvAbrir()"},
    {ico:"📦",t:"Meu volume",sub:"ração carregada no mês",acao:"volAbrir()"},
    {ico:"🗂️",t:"Pipeline",sub:"prospectos e funil de vendas",acao:"navTo('pipeline','Pipeline');renderPipelineVendedor()"},
    {ico:"🎯",t:"Benchmarks",sub:"comparar fazendas da carteira",acao:"navTo('bench','Benchmarks');renderBench()"},
@@ -1866,6 +1872,7 @@ function abrirAgenda(view){
 <script>
 /* ===== Visual moderno: ícones de traço, avatar, cartão "Hoje" ===== */
 const ICO={
+ moeda:'<circle cx="12" cy="12" r="9"/><path d="M15 9.5c-.5-1-1.6-1.5-3-1.5-1.7 0-3 .8-3 2s1.3 1.7 3 2 3 .8 3 2-1.3 2-3 2c-1.4 0-2.5-.5-3-1.5M12 6v2M12 16v2"/>',
  pedido:'<path d="M7 3h7l5 5v13H7z"/><path d="M14 3v5h5"/><path d="M10 13h6M10 17h4"/>',
  visita:'<rect x="5" y="4" width="14" height="17" rx="2"/><path d="M9 4h6v3H9z"/><path d="M9 13l2 2 4-4"/>',
  recibo:'<path d="M6 3h12v18l-3-2-3 2-3-2-3 2z"/><path d="M9 8h6M9 12h6M9 16h3"/>',
@@ -1898,7 +1905,7 @@ function svg(n,sz){return'<svg viewBox="0 0 24 24" width="'+(sz||22)+'" height="
   ["rs-ativos","rs-atrasadas"].forEach(id=>{const e=document.getElementById(id);if(e)new MutationObserver(()=>{if(typeof renderHero==="function")renderHero()}).observe(e,{childList:true,characterData:true,subtree:true})});
 })();
 /* ícones também no menu Mais e nos atalhos do Início */
-const ICO_EMO={"🧾":"recibo","📦":"resultado","🚗":"carro","🚚":"entregas","🗂️":"pipeline","🎯":"bench","🏅":"equipe","📈":"analise","⏻":"sair"};
+const ICO_EMO={"💰":"moeda","🧾":"recibo","📦":"resultado","🚗":"carro","🚚":"entregas","🗂️":"pipeline","🎯":"bench","🏅":"equipe","📈":"analise","⏻":"sair"};
 (function(){const _am=abrirMais;abrirMais=function(){_am();document.querySelectorAll("#mais-sh .mi").forEach(x=>{const k=ICO_EMO[x.textContent.trim()];if(k)x.innerHTML=svg(k,20)})}})();
 (function(){const _ri=renderInicio;renderInicio=function(){_ri();document.querySelectorAll("#inicio-hub .ti").forEach(x=>{const k=ICO_EMO[x.textContent.trim()];if(k)x.innerHTML=svg(k,22)});document.querySelectorAll("#inicio-quick .quick button span").forEach((x,i)=>{x.innerHTML=svg(["abast","km","servico"][i],20)});document.querySelectorAll("#inicio-alertas .banner>span:first-child").forEach(x=>{const k={"📍":"km","🔧":"servico","🚚":"entregas"}[x.textContent.trim()];if(k)x.innerHTML=svg(k,22)})}})();
 function renderHero(){
@@ -4263,6 +4270,8 @@ function crmParse(linhas){
   return r;
 }
 /* nome do produto no padrão das cargas: "CÓDIGO - DESCRIÇÃO", sem o prefixo "RAÇÃO ULTRAMAX" e com o tipo (pelet/farelada) */
+/* parcelas de um item: os vencimentos do PDF repartidos pelo valor de cada ração do pedido */
+function crmParcelasItem(r,it){const tot=r.total||r.itens.reduce((a,x)=>a+x.total,0)||it.total;const f=tot?it.total/tot:1;const V=(r.vencimentos||[]).length?r.vencimentos:(r.prazo?[{data:r.prazo,valor:tot}]:[]);return V.map(v=>({data:v.data,valor:Math.round(v.valor*f*100)/100}))}
 function crmProduto(it){let d=crmNorm(it.descricao).replace(/^RACAO\s+(ULTRAMAX\s+)?/,"").replace(/\s*\(\s*(PELETIZADA|FARELADA)\s+A\s+GRANEL\s*\)/," $1").replace(/PELETIZADA/,"PELET").replace(/FARELADA/,"FAREL").trim();return it.codigo+" - "+d}
 const CRM_PDFJS=[["https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js","https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js"],["https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.min.js","https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.worker.min.js"]];
 function crmCarregarPdfJs(i){i=i||0;if(window.pdfjsLib)return Promise.resolve(window.pdfjsLib);if(i>=CRM_PDFJS.length)return Promise.reject(new Error("não consegui abrir o leitor de PDF (verifique a internet)"));
@@ -4311,14 +4320,71 @@ function crmVendEnviar(){
   const pz=r.vencimentos.length>1?r.vencimentos.map(x=>dvFData(x.data)).join(" e ")+(r.parcelamento?" ("+r.parcelamento.replace(/\s*Mobille CRM/i,"")+")":""):(r.prazo?dvFData(r.prazo)+"/"+r.prazo.slice(2,4):"");
   const cid=cl?cl.id:crmNorm(r.cliente).replace(/[^A-Z0-9]+/g,"-").replace(/^-+|-+$/g,"").toLowerCase().slice(0,60);const up={};
   r.itens.forEach(it=>{
-    if(_crmV.contrato){const kid=db.ref("cargas_contratos").push().key;up["cargas_contratos/"+kid]={clienteId:cid,cliente:cl?cl.c.nome:r.cliente,numero:"CRM "+r.controle,totalKg:it.kg,retiradoAnteriorKg:0,produto:crmProduto(it),cidade:r.cidade||"",vendedor:v,tabela:r.tabela||"",obs:[r.mensagem,pz?"prazo "+pz:""].filter(Boolean).join(" · "),crmControle:r.controle,crmValorTon:Math.round(it.vlUn*100000)/100,crmTotal:it.total,ativo:true,origem:"crm-vendedor",enviadoPorUid:usuarioAtual.uid,criadoEm:Date.now(),criadoPor:(usuarioAtual.email||"").toLowerCase()};
+    if(_crmV.contrato){const kid=db.ref("cargas_contratos").push().key;up["cargas_contratos/"+kid]={clienteId:cid,cliente:cl?cl.c.nome:r.cliente,numero:"CRM "+r.controle,totalKg:it.kg,retiradoAnteriorKg:0,produto:crmProduto(it),cidade:r.cidade||"",vendedor:v,tabela:r.tabela||"",obs:[r.mensagem,pz?"prazo "+pz:""].filter(Boolean).join(" · "),crmControle:r.controle,crmValorTon:Math.round(it.vlUn*100000)/100,crmTotal:it.total,crmEmissao:r.emissao||"",crmVencimentos:crmParcelasItem(r,it),comissaoPct:(typeof comPct==="function"?comPct({produto:crmProduto(it),tabela:r.tabela},COMV.cfg):null),ativo:true,origem:"crm-vendedor",enviadoPorUid:usuarioAtual.uid,criadoEm:Date.now(),criadoPor:(usuarioAtual.email||"").toLowerCase()};
       if(r.pdfB64)up["cargas_pedidos_pdf/"+kid]={nome:r.arquivo||"pedido.pdf",b64:r.pdfB64,enviadoPorUid:usuarioAtual.uid};return}
     const id=db.ref("cargas_pedidos").push().key;
-    up["cargas_pedidos/"+id]={clienteId:cid,cliente:cl?cl.c.nome:r.cliente,cidade:r.cidade||"",vendedor:v,produto:crmProduto(it),kg:it.kg,dataEntrega:_crmV.data,dataTexto:"",prazo:pz,tabela:r.tabela||"",contratoId:"",obs:r.mensagem||"",crmControle:r.controle,crmValorTon:Math.round(it.vlUn*100000)/100,crmTotal:it.total,crmEmissao:r.emissao||"",origem:"crm-vendedor",enviadoPorUid:usuarioAtual.uid,criadoEm:Date.now(),criadoPor:(usuarioAtual.email||"").toLowerCase()};
+    up["cargas_pedidos/"+id]={clienteId:cid,cliente:cl?cl.c.nome:r.cliente,cidade:r.cidade||"",vendedor:v,produto:crmProduto(it),kg:it.kg,dataEntrega:_crmV.data,dataTexto:"",prazo:pz,tabela:r.tabela||"",contratoId:"",obs:r.mensagem||"",crmControle:r.controle,crmValorTon:Math.round(it.vlUn*100000)/100,crmTotal:it.total,crmEmissao:r.emissao||"",crmVencimentos:crmParcelasItem(r,it),comissaoPct:(typeof comPct==="function"?comPct({produto:crmProduto(it),tabela:r.tabela},COMV.cfg):null),origem:"crm-vendedor",enviadoPorUid:usuarioAtual.uid,criadoEm:Date.now(),criadoPor:(usuarioAtual.email||"").toLowerCase()};
     if(r.pdfB64)up["cargas_pedidos_pdf/"+id]={nome:r.arquivo||"pedido.pdf",b64:r.pdfB64,enviadoPorUid:usuarioAtual.uid}});
   if(!cl){up["cargas_clientes/"+cid]={nome:r.cliente,cidade:r.cidade||"",vendedor:v,nCargas:0,criadoEm:Date.now(),codigos:r.codigo?{[r.codigo]:true}:null}}
-  db.ref().update(up).then(()=>{document.getElementById("kmv-ov").remove();showToast((_crmV.contrato?"Contrato ":"Pedido ")+r.controle+" enviado para a logística");if(_crmCli&&!cl)_crmCli[cid]={nome:r.cliente}}).catch(e=>showToast("Não enviou: "+e.message,true));
+  db.ref().update(up).then(()=>{document.getElementById("kmv-ov").remove();showToast((_crmV.contrato?"Contrato ":"Pedido ")+r.controle+" enviado para a logística");if(typeof comvCarregar==="function")comvCarregar(true);if(_crmCli&&!cl)_crmCli[cid]={nome:r.cliente}}).catch(e=>showToast("Não enviou: "+e.message,true));
 }
+</script>
+<script>
+/* ===== Comissões: regra única (app de cargas e app dos vendedores) =====
+   Taxa: milho moído 1%; demais rações pela tabela A 1,5% · B 2,5% · C 3,5% (editável em comissao_config).
+   A comissão de cada parcela é prevista no mês do vencimento daquela parcela. */
+const COM_PADRAO={A:1.5,B:2.5,C:3.5,milho:1};
+function comPct(p,cfg){cfg=Object.assign({},COM_PADRAO,cfg||{});if(p.comissaoPct!=null&&p.comissaoPct!=="")return +p.comissaoPct;if(/MILHO/i.test(p.produto||""))return +cfg.milho;const t=String(p.tabela||"").toUpperCase().trim().charAt(0);return cfg[t]!=null?+cfg[t]:null}
+function comIso(d,ref){const m=String(d||"").match(/(\d{1,2})\/(\d{1,2})(?:\/(\d{2,4}))?/);if(!m)return"";let y=m[3]?(m[3].length===2?"20"+m[3]:m[3]):"";if(!y){const r=ref||new Date().toISOString().slice(0,10);y=r.slice(0,4);const iso=y+"-"+m[2].padStart(2,"0")+"-"+m[1].padStart(2,"0");if(iso<r)y=String(+y+1)}return y+"-"+m[2].padStart(2,"0")+"-"+m[1].padStart(2,"0")}
+/* parcelas do pedido: as gravadas do PDF; para pedidos antigos, divide o valor igualmente pelas datas do campo "prazo" */
+function comParcelas(p){if(Array.isArray(p.crmVencimentos)&&p.crmVencimentos.length)return p.crmVencimentos.filter(v=>v&&v.data);const tot=+p.crmTotal||0;if(!tot)return[];const ref=p.crmEmissao||(p.criadoEm?new Date(p.criadoEm).toISOString().slice(0,10):"");
+  const ds=(String(p.prazo||"").replace(/\([^)]*\)/g,"").match(/\d{1,2}\/\d{1,2}(?:\/\d{2,4})?/g)||[]).map(d=>comIso(d,ref)).filter(Boolean);if(!ds.length)return[];return ds.map(d=>({data:d,valor:Math.round(tot/ds.length*100)/100}))}
+function comNormV(v){return(typeof volNormV==="function"?volNormV(v):String(v||"").toUpperCase().trim())||"SEM VENDEDOR"}
+function comLista(pedidos,contratos,cfg){const out=[];
+  const add=(tipo,id,p)=>{if(!p||p.cancelado||!(+p.crmTotal>0))return;const pct=comPct(p,cfg);const kg=tipo==="contrato"?(+p.totalKg||0):(+p.kg||0);
+    const emis=p.crmEmissao||(p.criadoEm?new Date(p.criadoEm).toISOString().slice(0,10):"");
+    out.push({tipo,id,vendedor:comNormV(p.vendedor),cliente:p.cliente||"",cidade:p.cidade||"",produto:p.produto||"",crm:p.crmControle||"",emissao:emis,tabela:p.tabela||"",total:+p.crmTotal,kg,pct,parcelas:comParcelas(p).map(v=>({data:v.data,valor:+v.valor,comissao:pct!=null?Math.round(+v.valor*pct)/100:0}))})};
+  Object.entries(pedidos||{}).forEach(([id,p])=>add("pedido",id,p));Object.entries(contratos||{}).forEach(([id,p])=>add("contrato",id,p));return out}
+function comResumo(lista,mes,vend){const L=vend?lista.filter(x=>x.vendedor===vend):lista;const vend_m=L.filter(x=>(x.emissao||"").slice(0,7)===mes);
+  const r={nPed:new Set(vend_m.map(x=>x.tipo+(x.crm||x.id))).size,kg:vend_m.reduce((a,x)=>a+x.kg,0),valor:vend_m.reduce((a,x)=>a+x.total,0),comVendida:vend_m.reduce((a,x)=>a+(x.pct!=null?x.total*x.pct/100:0),0),parcelas:[],receb:0,comMes:0,semPct:L.filter(x=>x.pct==null).length};
+  L.forEach(x=>x.parcelas.forEach(v=>{if(v.data.slice(0,7)===mes){r.parcelas.push(Object.assign({},v,{cliente:x.cliente,crm:x.crm,produto:x.produto,pct:x.pct,vendedor:x.vendedor,tipo:x.tipo}));r.receb+=v.valor;r.comMes+=v.comissao}}));
+  r.parcelas.sort((a,b)=>a.data.localeCompare(b.data));r.ticket=r.nPed?r.valor/r.nPed:0;r.precoT=r.kg?r.valor/(r.kg/1000):0;return r}
+function comBrl(v){return"R$ "+(+v||0).toLocaleString("pt-BR",{minimumFractionDigits:2,maximumFractionDigits:2})}
+function comNomeMes(m){const d=new Date(m+"-15T12:00:00");const s=d.toLocaleDateString("pt-BR",{month:"long",year:"numeric"});return s.charAt(0).toUpperCase()+s.slice(1)}
+function comAddMes(m,n){const d=new Date(m+"-15T12:00:00");d.setMonth(d.getMonth()+n);return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")}
+function comNome(v){return String(v||"").toLowerCase().replace(/(^|\s)\S/g,c=>c.toUpperCase())}
+function comEsc(s){return String(s==null?"":s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]))}
+/* PDF da previsão de recebimento do mês (uma pessoa ou a equipe toda) */
+function comPdf(lista,mes,vends,cfg){const w=window.open("","_blank");if(!w){alert("Libere as janelas pop-up para gerar o PDF");return}cfg=Object.assign({},COM_PADRAO,cfg||{});
+  const blocos=vends.map(v=>{const r=comResumo(lista,mes,v);return{v,r}}).filter(b=>b.r.parcelas.length||b.r.nPed);const tot=blocos.reduce((a,b)=>a+b.r.comMes,0);
+  const fd=d=>d.slice(8,10)+"/"+d.slice(5,7)+"/"+d.slice(0,4);
+  const resumo='<table><thead><tr><th>Vendedor</th><th class="r">Parcelas</th><th class="r">A receber dos clientes</th><th class="r">Comissão prevista</th><th class="r">Vendido no mês</th><th class="r">Ticket médio</th></tr></thead><tbody>'+blocos.map(b=>'<tr><td>'+comEsc(comNome(b.v))+'</td><td class="r">'+b.r.parcelas.length+'</td><td class="r">'+comBrl(b.r.receb)+'</td><td class="r"><b>'+comBrl(b.r.comMes)+'</b></td><td class="r">'+comBrl(b.r.valor)+' · '+(b.r.kg/1000).toLocaleString("pt-BR",{maximumFractionDigits:1})+' t</td><td class="r">'+comBrl(b.r.ticket)+'</td></tr>').join("")+'<tr><td colspan="3"><b>Total</b></td><td class="r"><b>'+comBrl(tot)+'</b></td><td colspan="2"></td></tr></tbody></table>';
+  const det=blocos.map(b=>'<section><h2>'+comEsc(comNome(b.v))+' — comissão prevista '+comBrl(b.r.comMes)+'</h2>'+(b.r.parcelas.length?'<table><thead><tr><th>Vencimento</th><th>Cliente</th><th>Pedido</th><th>Ração</th><th class="r">Parcela</th><th class="r">%</th><th class="r">Comissão</th></tr></thead><tbody>'+b.r.parcelas.map(p=>'<tr><td>'+fd(p.data)+'</td><td>'+comEsc(p.cliente)+'</td><td>'+comEsc((p.tipo==="contrato"?"contrato ":"")+(p.crm||""))+'</td><td>'+comEsc(String(p.produto).replace(/^\d+\s*-\s*/,""))+'</td><td class="r">'+comBrl(p.valor)+'</td><td class="r">'+(p.pct!=null?p.pct.toLocaleString("pt-BR")+"%":"—")+'</td><td class="r"><b>'+comBrl(p.comissao)+'</b></td></tr>').join("")+'</tbody></table>':'<p>Sem parcelas vencendo neste mês.</p>')+'</section>').join("");
+  w.document.write('<!DOCTYPE html><html lang="pt-BR"><head><meta charset="utf-8"><title>Previsão de comissões '+mes+'</title><style>@page{size:A4;margin:14mm 12mm}body{font-family:Arial,sans-serif;color:#0f172a;font-size:11px}h1{font-size:18px;margin:0}h2{font-size:13px;margin:18px 0 6px;color:#052e16}.s{color:#475569;font-size:11px;margin:2px 0 12px}table{width:100%;border-collapse:collapse}td,th{border-bottom:1px solid #e2e8f0;padding:4px 6px;text-align:left;vertical-align:top}th{background:#f0fdf4;font-size:10px}.r{text-align:right}section{page-break-inside:avoid}.k{font-size:10.5px;color:#475569;margin-top:14px}</style></head><body><img src="meta_logo.jpg" style="height:30px" onerror="this.remove()"><h1>Previsão de recebimento de comissões — '+comNomeMes(mes)+'</h1><div class="s">Pelos vencimentos das parcelas dos pedidos do CRM · gerado em '+new Date().toLocaleString("pt-BR")+'</div>'+resumo+det+'<div class="k">Taxas: tabela A '+cfg.A+'% · B '+cfg.B+'% · C '+cfg.C+'% · milho moído '+cfg.milho+'%. Previsão: a comissão de cada parcela entra no mês do vencimento; depende do pagamento do cliente em dia.</div><script>setTimeout(function(){print()},500)<\/script></body></html>');w.document.close()}
+/* ===== Minha comissão (app dos vendedores) ===== */
+const COMV={mes:new Date().toISOString().slice(0,7),ped:null,ctr:null,cfg:{},sel:null,carregando:false};
+function comvCarregar(force){if(COMV.carregando||(COMV.ped&&!force))return Promise.resolve();COMV.carregando=true;
+  return Promise.all([db.ref("cargas_pedidos").once("value"),db.ref("cargas_contratos").once("value"),db.ref("comissao_config").once("value").catch(()=>null)]).then(([a,b,c])=>{COMV.ped=a.val()||{};COMV.ctr=b.val()||{};COMV.cfg=(c&&c.val())||{};COMV.carregando=false;comvCard();const sc=document.getElementById("screen-comissao");if(sc&&sc.classList.contains("active"))comvRender()}).catch(e=>{COMV.carregando=false;console.warn("comissão",e.message)})}
+function comvQuem(){const adm=typeof CG!=="undefined"&&CG.isAdmin&&CG.isAdmin();if(adm&&!COMV.sel)return null;return COMV.sel||(typeof volMeuNome==="function"?comNormV(volMeuNome()):"")}
+function comvCard(){const sd=document.getElementById("screen-dash");if(!sd||!COMV.ped)return;let el=document.getElementById("com-card");if(!el){el=document.createElement("div");el.id="com-card";const vc=document.getElementById("vol-card");sd.insertBefore(el,vc?vc.nextSibling:sd.children[1]||null)}
+  const L=comLista(COMV.ped,COMV.ctr,COMV.cfg);const m=new Date().toISOString().slice(0,7);const r=comResumo(L,m,comvQuem());const n=comResumo(L,comAddMes(m,1),comvQuem());
+  el.innerHTML='<button class="com-c" onclick="comvAbrir()"><span class="com-l">'+(comvQuem()?"Sua comissão prevista":"Comissão prevista da equipe")+' em '+new Date().toLocaleDateString("pt-BR",{month:"long"})+'</span><b class="num">'+comBrl(r.comMes)+'</b><span class="com-s">'+r.parcelas.length+' parcela'+(r.parcelas.length!==1?"s":"")+' vencendo · próximo mês '+comBrl(n.comMes)+'</span><span class="com-go">Ver detalhes ›</span></button>'}
+function comvAbrir(){let sc=document.getElementById("screen-comissao");if(!sc){sc=document.createElement("div");sc.className="screen";sc.id="screen-comissao";document.getElementById("screen-dash").parentNode.appendChild(sc)}navTo("comissao","Minha comissão");if(!COMV.ped)sc.innerHTML='<div style="text-align:center;padding:40px;color:var(--muted)">Carregando pedidos…</div>';comvCarregar(true).then(comvRender)}
+function comvRender(){
+  const sc=document.getElementById("screen-comissao");if(!sc||!COMV.ped)return;const m=COMV.mes;const L=comLista(COMV.ped,COMV.ctr,COMV.cfg);const v=comvQuem();const r=comResumo(L,m,v);const prox=[1,2].map(i=>({m:comAddMes(m,i),v:comResumo(L,comAddMes(m,i),v).comMes}));const cfg=Object.assign({},COM_PADRAO,COMV.cfg);
+  const adm=typeof CG!=="undefined"&&CG.isAdmin&&CG.isAdmin();const vends=[...new Set(L.map(x=>x.vendedor))].filter(x=>x!=="SEM VENDEDOR").sort();
+  const vendidos=L.filter(x=>(!v||x.vendedor===v)&&(x.emissao||"").slice(0,7)===m).sort((a,b)=>b.emissao.localeCompare(a.emissao));
+  let h='<div class="vol-top"><button class="vol-nav" onclick="COMV.mes=comAddMes(COMV.mes,-1);comvRender()" aria-label="Mês anterior">‹</button><b>'+comNomeMes(m)+'</b><button class="vol-nav" onclick="COMV.mes=comAddMes(COMV.mes,1);comvRender()" aria-label="Próximo mês">›</button></div>';
+  if(adm)h+='<select class="vol-sel" onchange="COMV.sel=this.value||null;comvRender();comvCard()"><option value="">Equipe toda</option>'+vends.map(n=>'<option value="'+n+'"'+(n===COMV.sel?" selected":"")+'>'+comNome(n)+'</option>').join("")+'</select>';
+  h+='<div class="vol-hero"><span>'+(v?(adm?comNome(v)+" — comissão prevista":"Sua comissão prevista"):"Comissão prevista da equipe")+'</span><b class="num">'+comBrl(r.comMes)+'</b><small>'+r.parcelas.length+' parcela'+(r.parcelas.length!==1?"s":"")+' de clientes vencendo no mês ('+comBrl(r.receb)+')</small><div class="vol-st">'+prox.map(p=>'<div><b class="num" style="font-size:16px">'+comBrl(p.v).replace(",00","")+'</b><span>previsto em '+comNomeMes(p.m).split(" ")[0].toLowerCase()+'</span></div>').join("")+'<div><b class="num" style="font-size:16px">'+comBrl(r.comVendida).replace(",00","")+'</b><span>gerada pelas vendas do mês</span></div></div></div>';
+  h+='<div class="cbox"><div class="cbox-t">Vendas de '+comNomeMes(m).split(" ")[0].toLowerCase()+'</div><div class="com-g"><div><span>Vendido</span><b class="num">'+comBrl(r.valor)+'</b></div><div><span>Toneladas</span><b class="num">'+(r.kg/1000).toLocaleString("pt-BR",{maximumFractionDigits:1})+' t</b></div><div><span>Pedidos</span><b class="num">'+r.nPed+'</b></div><div><span>Ticket médio</span><b class="num">'+(r.nPed?comBrl(r.ticket):"—")+'</b></div><div><span>Preço médio</span><b class="num">'+(r.kg?comBrl(r.precoT)+"/t":"—")+'</b></div></div></div>';
+  h+='<div class="cbox"><div class="cbox-t">Parcelas que vencem no mês</div>'+(r.parcelas.length?r.parcelas.map(p=>'<div class="crow"><span>'+kmEsc(p.cliente)+'<small>vence '+p.data.slice(8)+"/"+p.data.slice(5,7)+' · '+(p.tipo==="contrato"?"contrato ":"pedido ")+kmEsc(p.crm)+(v?"":" · "+comNome(p.vendedor))+' · '+comBrl(p.valor)+' × '+(p.pct!=null?String(p.pct).replace(".",",")+"%":"?")+'</small></span><b>'+comBrl(p.comissao)+'</b></div>').join(""):'<div class="cempty">Nenhuma parcela vence neste mês.</div>')+'</div>';
+  h+='<div class="cbox"><div class="cbox-t">Pedidos lançados no mês</div>'+(vendidos.length?vendidos.map(x=>'<div class="crow"><span>'+kmEsc(x.cliente)+'<small>'+x.emissao.slice(8)+"/"+x.emissao.slice(5,7)+' · '+kmEsc(String(x.produto).replace(/^\d+\s*-\s*/,""))+' · tabela '+kmEsc(x.tabela||"?")+' ('+(x.pct!=null?String(x.pct).replace(".",",")+"%":"?")+')</small></span><b>'+comBrl(x.total)+'</b></div>').join(""):'<div class="cempty">Nenhum pedido do CRM lançado neste mês.</div>')+'</div>';
+  h+='<button class="vol-bt" onclick="comPdf(comLista(COMV.ped,COMV.ctr,COMV.cfg),COMV.mes,'+(v?"['"+v+"']":"[...new Set(comLista(COMV.ped,COMV.ctr,COMV.cfg).map(x=>x.vendedor))].sort()")+',COMV.cfg)">Previsão do mês em PDF</button>';
+  h+='<div style="font-size:11.5px;color:var(--muted);margin:10px 2px 20px;line-height:1.5">Estimativa pelos pedidos enviados pelo PDF do CRM. Taxas: tabela A '+String(cfg.A).replace(".",",")+'% · B '+String(cfg.B).replace(".",",")+'% · C '+String(cfg.C).replace(".",",")+'% · milho moído '+String(cfg.milho).replace(".",",")+'%. A comissão de cada parcela entra no mês do vencimento e depende do pagamento do cliente.</div>';
+  sc.innerHTML=h;
+}
+(function(){const go=()=>setTimeout(()=>comvCarregar(),2500);if(typeof usuarioAtual!=="undefined"&&usuarioAtual)go();else{const _ia=iniciarApp;iniciarApp=function(){_ia.apply(this,arguments);go()}}})();
 </script>
 </body>
 </html>
