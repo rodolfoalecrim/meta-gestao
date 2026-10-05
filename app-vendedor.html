@@ -229,6 +229,10 @@ body{background:var(--bg)}
 .com-c{all:unset;box-sizing:border-box;cursor:pointer;display:grid;grid-template-columns:1fr auto;gap:2px 10px;width:100%;background:#fff;border:1px solid #e3e9e4;border-radius:18px;padding:14px 16px;margin-bottom:14px}
 .com-l{grid-column:1/3;font-size:12.5px;color:var(--muted)}.com-c>b{font-size:26px;font-weight:700;color:var(--GD)}.com-s{grid-column:1/2;font-size:11.5px;color:var(--muted)}.com-go{grid-column:2;grid-row:2/4;align-self:center;font-size:12.5px;font-weight:800;color:var(--G)}
 .com-g{display:grid;grid-template-columns:repeat(3,1fr);gap:10px 8px;margin-top:4px}.com-g span{display:block;font-size:11px;color:var(--muted)}.com-g b{font-size:14.5px}
+
+.pv-op{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px}.pv-op button{border:1.5px solid var(--border);background:#fff;border-radius:16px;padding:18px 10px;font-family:inherit;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:4px}.pv-op span{font-size:28px}.pv-op b{font-size:14px}.pv-op small{font-size:11.5px;color:var(--muted)}
+.pv-prev{margin-top:12px;font-size:13px;background:#f6fef9;border:1px solid #d1fae5;border-radius:10px;padding:10px 12px;line-height:1.5}
+.pv-ed{cursor:pointer}.pv-ed:active{background:#f8faf9}
 </style>
 </head>
 <body>
@@ -4209,7 +4213,7 @@ function lancarDespesa(){if(typeof DVV==="undefined"||!DVV.ok){showToast("Carreg
 function renderLancar(){
   const el=document.getElementById("inicio-lancar");if(!el)return;const c=typeof infoCarro==="function"?infoCarro():null;const p=proxVisitaHoje();
   const bts=[["visita","Visita",p?"check-in "+String(p.farmNome||"").split(" ")[0]:"registrar visita","lancarVisita()",!!p],
-             ["pedido","Pedido","PDF do CRM","crmVendEscolher()",false],
+             ["pedido","Pedido","PDF ou digitado","pvEscolher()",false],
              ["recibo","Despesa",(typeof DVV!=="undefined"&&DVV.ok)?dvBrl(dvAReceber(DVV.mes)).replace(",00","")+" a receber":"nota de viagem","lancarDespesa()",false]];
   if(c){bts.push(["abast","Abasteci","litros e km","abrirAbastCarro()",false]);bts.push(["km","Km",c.pend?"pendente":"em dia","abrirLancKm()",c.pend])}
   el.innerHTML='<div class="lanc lanc-'+bts.length+'">'+bts.map(([ic,t,sub,ac,hot])=>'<button class="lanc-b'+(hot?" hot":"")+'" onclick="'+ac+'"><span class="lanc-i">'+svg(ic,22)+'</span><b>'+t+'</b><small>'+kmEsc(sub)+'</small></button>').join("")+'</div>';
@@ -4299,7 +4303,7 @@ async function crmVendLer(f){
     if(!cl){const h=C.find(([,c])=>crmNorm(c.nome)===r.cliente);if(h)cl={id:h[0],c:h[1]}}
     const dup=Object.values(CG.pedidos||{}).some(p=>p.crmControle===r.controle&&!p.cancelado);
     let d=r.previsao||"";const hj=dvHoje();if(!d||d<hj){const x=new Date();x.setDate(x.getDate()+1);d=x.toISOString().slice(0,10)}
-    _crmV={r,cl,dup,data:d,contrato:!!r.contratoSugerido};crmVendConfirmar();
+    _crmV={r,cl,dup,data:d,contrato:!!r.contratoSugerido,vend:pvRespPadrao(cl&&cl.c.vendedor),tab:String(r.tabela||"A").toUpperCase().charAt(0)};crmVendConfirmar();
   }catch(e){showToast("Não consegui ler o PDF: "+e.message,true)}
 }
 function crmVendDiag(){crmDiagnostico(window._crmFalha||{}).then(()=>{document.getElementById("kmv-ov").remove();showToast("Enviado para análise. Obrigado!")}).catch(e=>showToast("Não enviou: "+e.message,true))}
@@ -4308,15 +4312,17 @@ function crmVendConfirmar(){
   kmOverlay("Pedido CRM "+kmEsc(r.controle),dup?'<span style="color:#dc2626;font-weight:700">Este pedido já foi enviado para a logística.</span>':"Confira e envie. A logística recebe na fila de montagem de cargas.",
    '<div class="crm-v"><b>'+kmEsc(r.cliente)+'</b><span>'+kmEsc(r.cidade||"")+(cl?' · cliente das cargas':' · cliente novo nas cargas')+'</span></div>'+
    r.itens.map(it=>'<div class="crm-vi"><span>'+kmEsc(crmProduto(it))+'</span><b>'+(it.kg/1000).toLocaleString("pt-BR",{maximumFractionDigits:2})+' t</b></div>').join("")+
-   '<div class="crm-vd"><div><span>Valor</span><b>'+dvBrl(r.total)+'</b></div><div><span>Tabela</span><b>'+kmEsc(r.tabela||"—")+'</b></div><div><span>Vencimento</span><b>'+kmEsc(pz)+'</b></div></div>'+
+   '<div class="crm-vd"><div><span>Valor</span><b>'+dvBrl(r.total)+'</b></div><div><span>Vencimento</span><b>'+kmEsc(pz)+'</b></div><div><span>Tabela</span><select id="crm-tab" style="width:100%;border:1px solid var(--border);border-radius:8px;padding:4px;font-family:inherit" onchange="_crmV.tab=this.value;crmVendComPrev()">'+["A","B","C"].map(x=>'<option'+(_crmV.tab===x?" selected":"")+'>'+x+'</option>').join("")+'</select></div></div>'+
+   '<label '+LBL+'>Vendedor responsável <small style="font-weight:500">(recebe a comissão)</small></label>'+pvVendSelect("crm-vend",_crmV.vend).replace('<select ','<select onchange="_crmV.vend=this.value;crmVendComPrev()" ')+'<div class="pv-prev" id="crm-com"></div>'+
    (r.mensagem?'<div style="font-size:12.5px;color:var(--muted);margin-top:8px"><i>'+kmEsc(r.mensagem)+'</i></div>':"")+
    ((r.avisos||[]).length?'<div style="margin-top:8px;background:#fffbeb;color:#92400e;border-radius:9px;padding:8px 10px;font-size:12.5px">'+kmEsc(r.avisos.join(" · "))+'</div>':'')+
    '<label style="display:flex;gap:8px;align-items:flex-start;margin-top:12px;font-size:14px;font-weight:700"><input type="checkbox" id="crm-ct" '+(_crmV.contrato?"checked":"")+' onchange="_crmV.contrato=this.checked;document.getElementById(\'crm-dw\').style.display=this.checked?\'none\':\'\'" style="width:20px;height:20px;margin-top:1px"><span>É contrato<br><small style="font-weight:400;color:var(--muted)">o saldo fica guardado e as entregas são programadas depois, sem novo pedido no CRM</small></span></label>'+
    '<div id="crm-dw" style="'+(_crmV.contrato?"display:none":"")+'"><label '+LBL+'>Entrega desejada</label><input id="crm-d" type="date" value="'+data+'" style="INSTYLE" onchange="_crmV.data=this.value"></div>',dup?"document.getElementById('kmv-ov').remove()":"crmVendEnviar()");
-  if(dup){const b=[...document.querySelectorAll("#kmv-ov button")].pop();if(b)b.textContent="Fechar"}else{const b=[...document.querySelectorAll("#kmv-ov button")].pop();if(b)b.textContent="Enviar para a logística"}
+  crmVendComPrev();if(dup){const b=[...document.querySelectorAll("#kmv-ov button")].pop();if(b)b.textContent="Fechar"}else{const b=[...document.querySelectorAll("#kmv-ov button")].pop();if(b)b.textContent="Enviar para a logística"}
 }
+function crmVendComPrev(){const el=document.getElementById("crm-com");if(!el||!_crmV)return;const r=_crmV.r;let c=0,ok=true;r.itens.forEach(it=>{const pct=comPct({produto:crmProduto(it),tabela:_crmV.tab},COMV.cfg);if(pct==null)ok=false;else c+=it.total*pct/100});el.innerHTML=ok?"Comissão estimada <b>"+comBrl(c)+"</b>"+(_crmV.vend?" para "+comNome(_crmV.vend):' · <span style="color:#b45309">escolha o vendedor</span>'):"Tabela não reconhecida"}
 function crmVendEnviar(){
-  const {r,cl}=_crmV;const v=(typeof volMeuNome==="function"&&volMeuNome())||((typeof nomeVendedor!=="undefined"&&nomeVendedor)||"").toUpperCase();
+  const {r,cl}=_crmV;if(!_crmV.vend&&!confirm("Sem vendedor responsável ninguém recebe a comissão. Enviar assim mesmo?"))return;const v=_crmV.vend;r.tabela=_crmV.tab;
   const pz=r.vencimentos.length>1?r.vencimentos.map(x=>dvFData(x.data)).join(" e ")+(r.parcelamento?" ("+r.parcelamento.replace(/\s*Mobille CRM/i,"")+")":""):(r.prazo?dvFData(r.prazo)+"/"+r.prazo.slice(2,4):"");
   const cid=cl?cl.id:crmNorm(r.cliente).replace(/[^A-Z0-9]+/g,"-").replace(/^-+|-+$/g,"").toLowerCase().slice(0,60);const up={};
   r.itens.forEach(it=>{
@@ -4337,8 +4343,19 @@ const COM_PADRAO={A:1.5,B:2.5,C:3.5,milho:1};
 function comPct(p,cfg){cfg=Object.assign({},COM_PADRAO,cfg||{});if(p.comissaoPct!=null&&p.comissaoPct!=="")return +p.comissaoPct;if(/MILHO/i.test(p.produto||""))return +cfg.milho;const t=String(p.tabela||"").toUpperCase().trim().charAt(0);return cfg[t]!=null?+cfg[t]:null}
 function comIso(d,ref){const m=String(d||"").match(/(\d{1,2})\/(\d{1,2})(?:\/(\d{2,4}))?/);if(!m)return"";let y=m[3]?(m[3].length===2?"20"+m[3]:m[3]):"";if(!y){const r=ref||new Date().toISOString().slice(0,10);y=r.slice(0,4);const iso=y+"-"+m[2].padStart(2,"0")+"-"+m[1].padStart(2,"0");if(iso<r)y=String(+y+1)}return y+"-"+m[2].padStart(2,"0")+"-"+m[1].padStart(2,"0")}
 /* parcelas do pedido: as gravadas do PDF; para pedidos antigos, divide o valor igualmente pelas datas do campo "prazo" */
-function comParcelas(p){if(Array.isArray(p.crmVencimentos)&&p.crmVencimentos.length)return p.crmVencimentos.filter(v=>v&&v.data);const tot=+p.crmTotal||0;if(!tot)return[];const ref=p.crmEmissao||(p.criadoEm?new Date(p.criadoEm).toISOString().slice(0,10):"");
+function comArr(v){return Array.isArray(v)?v:(v&&typeof v==="object"?Object.keys(v).sort((a,b)=>a-b).map(k=>v[k]):[])}
+function comParcelas(p){const pv=comArr(p.crmVencimentos);if(pv.length)return pv.filter(v=>v&&v.data);const tot=+p.crmTotal||0;if(!tot)return[];const ref=p.crmEmissao||(p.criadoEm?new Date(p.criadoEm).toISOString().slice(0,10):"");
   const ds=(String(p.prazo||"").replace(/\([^)]*\)/g,"").match(/\d{1,2}\/\d{1,2}(?:\/\d{2,4})?/g)||[]).map(d=>comIso(d,ref)).filter(Boolean);if(!ds.length)return[];return ds.map(d=>({data:d,valor:Math.round(tot/ds.length*100)/100}))}
+/* vencimentos digitados → parcelas. Aceita datas ("20/11", "20/11 e 20/12", "20/11/2026") ou prazos em dias ("30", "30/60", "30/60/90") contados da data da venda */
+function comParcelasTexto(txt,total,ref){txt=String(txt||"").trim();total=+total||0;if(!txt||!total)return[];ref=ref||new Date().toISOString().slice(0,10);
+  const datas=[];const re=/(\d{1,2})\/(\d{1,2})(?:\/(\d{2,4}))?/g;let m;while((m=re.exec(txt))){const d=+m[1],mm=+m[2];if(mm>=1&&mm<=12&&d>=1&&d<=31)datas.push(comIso(m[0],ref));else{datas.length=0;break}}
+  let ds=datas.filter(Boolean);
+  if(!ds.length){const dias=(txt.match(/\d{1,3}/g)||[]).map(Number).filter(n=>n>0&&n<=365);ds=dias.map(n=>{const x=new Date(ref+"T12:00:00");x.setDate(x.getDate()+n);return x.toISOString().slice(0,10)})}
+  if(!ds.length)return[];const v=Math.round(total/ds.length*100)/100;const out=ds.map(d=>({data:d,valor:v}));out[out.length-1].valor=Math.round((total-v*(ds.length-1))*100)/100;return out}
+/* bloco "Valores" usado nos formulários de pedido e contrato */
+function valoresResumo(kg,precoT,venc,emissao,tabela,produto,vendedor,cfg){const tot=Math.round((kg/1000)*(+precoT||0)*100)/100;if(!tot)return'<span class="muted">Informe o preço por tonelada para calcular o valor e a comissão.</span>';
+  const ps=comParcelasTexto(venc,tot,emissao);const pct=comPct({produto,tabela},cfg);const com=pct!=null?tot*pct/100:null;
+  return'Total <b>'+comBrl(tot)+'</b>'+(ps.length?' · '+ps.length+' parcela'+(ps.length>1?"s":"")+' ('+ps.map(p=>p.data.slice(8)+"/"+p.data.slice(5,7)).join(", ")+')':' · <span style="color:#b45309">informe os vencimentos</span>')+' · comissão '+(com!=null?'<b>'+comBrl(com)+'</b> ('+String(pct).replace(".",",")+'%'+(vendedor?' para '+comNome(vendedor):'')+')':'<span style="color:#b45309">tabela não reconhecida</span>')}
 function comNormV(v){return(typeof volNormV==="function"?volNormV(v):String(v||"").toUpperCase().trim())||"SEM VENDEDOR"}
 function comLista(pedidos,contratos,cfg){const out=[];
   const add=(tipo,id,p)=>{if(!p||p.cancelado||!(+p.crmTotal>0))return;const pct=comPct(p,cfg);const kg=tipo==="contrato"?(+p.totalKg||0):(+p.kg||0);
@@ -4347,7 +4364,7 @@ function comLista(pedidos,contratos,cfg){const out=[];
   Object.entries(pedidos||{}).forEach(([id,p])=>add("pedido",id,p));Object.entries(contratos||{}).forEach(([id,p])=>add("contrato",id,p));return out}
 function comResumo(lista,mes,vend){const L=vend?lista.filter(x=>x.vendedor===vend):lista;const vend_m=L.filter(x=>(x.emissao||"").slice(0,7)===mes);
   const r={nPed:new Set(vend_m.map(x=>x.tipo+(x.crm||x.id))).size,kg:vend_m.reduce((a,x)=>a+x.kg,0),valor:vend_m.reduce((a,x)=>a+x.total,0),comVendida:vend_m.reduce((a,x)=>a+(x.pct!=null?x.total*x.pct/100:0),0),parcelas:[],receb:0,comMes:0,semPct:L.filter(x=>x.pct==null).length};
-  L.forEach(x=>x.parcelas.forEach(v=>{if(v.data.slice(0,7)===mes){r.parcelas.push(Object.assign({},v,{cliente:x.cliente,crm:x.crm,produto:x.produto,pct:x.pct,vendedor:x.vendedor,tipo:x.tipo}));r.receb+=v.valor;r.comMes+=v.comissao}}));
+  L.forEach(x=>x.parcelas.forEach(v=>{if(v.data.slice(0,7)===mes){r.parcelas.push(Object.assign({},v,{id:x.id,cliente:x.cliente,crm:x.crm,produto:x.produto,pct:x.pct,vendedor:x.vendedor,tipo:x.tipo}));r.receb+=v.valor;r.comMes+=v.comissao}}));
   r.parcelas.sort((a,b)=>a.data.localeCompare(b.data));r.ticket=r.nPed?r.valor/r.nPed:0;r.precoT=r.kg?r.valor/(r.kg/1000):0;return r}
 function comBrl(v){return"R$ "+(+v||0).toLocaleString("pt-BR",{minimumFractionDigits:2,maximumFractionDigits:2})}
 function comNomeMes(m){const d=new Date(m+"-15T12:00:00");const s=d.toLocaleDateString("pt-BR",{month:"long",year:"numeric"});return s.charAt(0).toUpperCase()+s.slice(1)}
@@ -4379,12 +4396,63 @@ function comvRender(){
   h+='<div class="vol-hero"><span>'+(v?(adm?comNome(v)+" — comissão prevista":"Sua comissão prevista"):"Comissão prevista da equipe")+'</span><b class="num">'+comBrl(r.comMes)+'</b><small>'+r.parcelas.length+' parcela'+(r.parcelas.length!==1?"s":"")+' de clientes vencendo no mês ('+comBrl(r.receb)+')</small><div class="vol-st">'+prox.map(p=>'<div><b class="num" style="font-size:16px">'+comBrl(p.v).replace(",00","")+'</b><span>previsto em '+comNomeMes(p.m).split(" ")[0].toLowerCase()+'</span></div>').join("")+'<div><b class="num" style="font-size:16px">'+comBrl(r.comVendida).replace(",00","")+'</b><span>gerada pelas vendas do mês</span></div></div></div>';
   h+='<div class="cbox"><div class="cbox-t">Vendas de '+comNomeMes(m).split(" ")[0].toLowerCase()+'</div><div class="com-g"><div><span>Vendido</span><b class="num">'+comBrl(r.valor)+'</b></div><div><span>Toneladas</span><b class="num">'+(r.kg/1000).toLocaleString("pt-BR",{maximumFractionDigits:1})+' t</b></div><div><span>Pedidos</span><b class="num">'+r.nPed+'</b></div><div><span>Ticket médio</span><b class="num">'+(r.nPed?comBrl(r.ticket):"—")+'</b></div><div><span>Preço médio</span><b class="num">'+(r.kg?comBrl(r.precoT)+"/t":"—")+'</b></div></div></div>';
   h+='<div class="cbox"><div class="cbox-t">Parcelas que vencem no mês</div>'+(r.parcelas.length?r.parcelas.map(p=>'<div class="crow"><span>'+kmEsc(p.cliente)+'<small>vence '+p.data.slice(8)+"/"+p.data.slice(5,7)+' · '+(p.tipo==="contrato"?"contrato ":"pedido ")+kmEsc(p.crm)+(v?"":" · "+comNome(p.vendedor))+' · '+comBrl(p.valor)+' × '+(p.pct!=null?String(p.pct).replace(".",",")+"%":"?")+'</small></span><b>'+comBrl(p.comissao)+'</b></div>').join(""):'<div class="cempty">Nenhuma parcela vence neste mês.</div>')+'</div>';
-  h+='<div class="cbox"><div class="cbox-t">Pedidos lançados no mês</div>'+(vendidos.length?vendidos.map(x=>'<div class="crow"><span>'+kmEsc(x.cliente)+'<small>'+x.emissao.slice(8)+"/"+x.emissao.slice(5,7)+' · '+kmEsc(String(x.produto).replace(/^\d+\s*-\s*/,""))+' · tabela '+kmEsc(x.tabela||"?")+' ('+(x.pct!=null?String(x.pct).replace(".",",")+"%":"?")+')</small></span><b>'+comBrl(x.total)+'</b></div>').join(""):'<div class="cempty">Nenhum pedido do CRM lançado neste mês.</div>')+'</div>';
-  h+='<button class="vol-bt" onclick="comPdf(comLista(COMV.ped,COMV.ctr,COMV.cfg),COMV.mes,'+(v?"['"+v+"']":"[...new Set(comLista(COMV.ped,COMV.ctr,COMV.cfg).map(x=>x.vendedor))].sort()")+',COMV.cfg)">Previsão do mês em PDF</button>';
+  h+='<div class="cbox"><div class="cbox-t">Pedidos lançados no mês</div>'+(vendidos.length?vendidos.map(x=>'<div class="crow'+(pvPodeEditar(x)?" pv-ed":"")+'"'+(pvPodeEditar(x)?' onclick="pvForm(\''+x.id+'\',\''+x.tipo+'\')"':'')+'><span>'+kmEsc(x.cliente)+'<small>'+x.emissao.slice(8)+"/"+x.emissao.slice(5,7)+' · '+kmEsc(String(x.produto).replace(/^\d+\s*-\s*/,""))+' · tabela '+kmEsc(x.tabela||"?")+' ('+(x.pct!=null?String(x.pct).replace(".",",")+"%":"?")+')'+(v?"":" · "+comNome(x.vendedor))+'</small></span><b>'+comBrl(x.total)+(pvPodeEditar(x)?' <span style="color:var(--G)">✎</span>':'')+'</b></div>').join(""):'<div class="cempty">Nenhum pedido do CRM lançado neste mês.</div>')+'</div>';
+  h+='<div style="font-size:11.5px;color:var(--muted);margin:-4px 2px 10px">Toque num pedido que você lançou para corrigir vendedor, tabela, valor ou vencimentos.</div><button class="vol-bt" onclick="comPdf(comLista(COMV.ped,COMV.ctr,COMV.cfg),COMV.mes,'+(v?"['"+v+"']":"[...new Set(comLista(COMV.ped,COMV.ctr,COMV.cfg).map(x=>x.vendedor))].sort()")+',COMV.cfg)">Previsão do mês em PDF</button>';
   h+='<div style="font-size:11.5px;color:var(--muted);margin:10px 2px 20px;line-height:1.5">Estimativa pelos pedidos enviados pelo PDF do CRM. Taxas: tabela A '+String(cfg.A).replace(".",",")+'% · B '+String(cfg.B).replace(".",",")+'% · C '+String(cfg.C).replace(".",",")+'% · milho moído '+String(cfg.milho).replace(".",",")+'%. A comissão de cada parcela entra no mês do vencimento e depende do pagamento do cliente.</div>';
   sc.innerHTML=h;
 }
 (function(){const go=()=>setTimeout(()=>comvCarregar(),2500);if(typeof usuarioAtual!=="undefined"&&usuarioAtual)go();else{const _ia=iniciarApp;iniciarApp=function(){_ia.apply(this,arguments);go()}}})();
+</script>
+<script>
+/* ===== Pedido no app dos vendedores: PDF do CRM ou digitado; vendedor responsável sempre visível e editável ===== */
+let _pv=null;
+function pvEhAdmin(){return typeof CG!=="undefined"&&CG.isAdmin&&CG.isAdmin()}
+function pvEu(){return comNormV(typeof volMeuNome==="function"?volMeuNome():"")}
+function pvVendedores(){const s=new Set();Object.values(_crmCli||{}).forEach(c=>{if(c&&c.vendedor)s.add(comNormV(c.vendedor))});Object.values((COMV&&COMV.ped)||{}).forEach(p=>{if(p&&p.vendedor)s.add(comNormV(p.vendedor))});Object.values(typeof VENDEDOR_MAP!=="undefined"?VENDEDOR_MAP:{}).forEach(a=>{if(a&&a[0])s.add(comNormV(a[0]))});["ALEXANDRE","VAGNER","VANDRIGO","ROBSON","JOZIEL","ARTHUR","PAULO","MAICON","JULIO","JOSE LUCAS"].forEach(v=>s.add(v));s.delete("SEM VENDEDOR");s.delete("");return[...s].sort()}
+function pvVendSelect(id,atual){const L=pvVendedores();if(atual&&!L.includes(atual))L.unshift(atual);return'<select id="'+id+'" style="INSTYLE"><option value="">— escolher —</option>'+L.map(v=>'<option value="'+v+'"'+(v===atual?" selected":"")+'>'+comNome(v)+(v===pvEu()?" (você)":"")+'</option>').join("")+'</select>'}
+function pvRespPadrao(cliVend){return pvEhAdmin()?(cliVend?comNormV(cliVend):""):pvEu()}
+function pvCarregarClientes(){return _crmCli?Promise.resolve(_crmCli):db.ref("cargas_clientes").once("value").then(s=>(_crmCli=s.val()||{}))}
+/* escolha: PDF ou digitar */
+function pvEscolher(){kmOverlay("Lançar pedido","Escolha como lançar. O pedido vai para a fila da logística e entra na sua comissão.",'<div class="pv-op"><button type="button" onclick="document.getElementById(\'kmv-ov\').remove();crmVendEscolher()"><span>📄</span><b>Ler PDF do CRM</b><small>preenche tudo sozinho</small></button><button type="button" onclick="document.getElementById(\'kmv-ov\').remove();pvForm()"><span>✍️</span><b>Digitar pedido</b><small>sem PDF, ou para contratos</small></button></div>',"document.getElementById('kmv-ov').remove()");const b=[...document.querySelectorAll("#kmv-ov button")].pop();if(b)b.style.display="none"}
+/* formulário manual (novo ou edição) */
+async function pvForm(id,tipo){
+  await pvCarregarClientes();if(!COMV.ped)await comvCarregar(true);tipo=tipo||"pedido";
+  const p=id?((tipo==="contrato"?COMV.ctr:COMV.ped)[id]||{}):{};_pv={id,tipo,contrato:tipo==="contrato"};const kg=tipo==="contrato"?(+p.totalKg||0):(+p.kg||0);
+  const clientes=Object.values(_crmCli).map(c=>c&&c.nome).filter(Boolean).sort();const prods=[...new Set(Object.values(COMV.ped).map(x=>x&&x.produto).filter(Boolean))].sort();
+  const hj=new Date().toISOString().slice(0,10);const amanha=(()=>{const x=new Date();x.setDate(x.getDate()+1);return x.toISOString().slice(0,10)})();
+  kmOverlay(id?"Editar "+(tipo==="contrato"?"contrato":"pedido"):"Digitar pedido",id?"As mudanças valem para a logística e para a comissão.":"Valor, tabela e vencimentos calculam a comissão.",
+   '<label '+LBL+'>Vendedor responsável <small style="font-weight:500">(recebe a comissão)</small></label>'+pvVendSelect("pv-vend",p.vendedor?comNormV(p.vendedor):pvRespPadrao(""))+
+   '<label '+LBL+'>Cliente</label><input id="pv-cli" list="pv-dl-cli" value="'+kmEsc(p.cliente||"")+'" style="INSTYLE" onchange="pvClienteEscolhido()" placeholder="nome do produtor"><datalist id="pv-dl-cli">'+clientes.map(n=>'<option value="'+kmEsc(n)+'">').join("")+'</datalist>'+
+   '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px"><div><label '+LBL+'>Cidade</label><input id="pv-cid" value="'+kmEsc(p.cidade||"")+'" style="INSTYLE"></div><div><label '+LBL+'>Nº pedido CRM</label><input id="pv-crm" value="'+kmEsc(p.crmControle||"")+'" style="INSTYLE" placeholder="opcional"></div></div>'+
+   '<label '+LBL+'>Ração</label><input id="pv-prod" list="pv-dl-prod" value="'+kmEsc(p.produto||"")+'" style="INSTYLE" oninput="pvPrev()" placeholder="ex: 3843 - LEITE 20 PELET"><datalist id="pv-dl-prod">'+prods.map(n=>'<option value="'+kmEsc(n)+'">').join("")+'</datalist>'+
+   '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px"><div><label '+LBL+'>Toneladas</label><input id="pv-t" type="number" inputmode="decimal" step="0.1" value="'+(kg?kg/1000:"")+'" style="INSTYLE" oninput="pvPrev()"></div><div><label '+LBL+'>R$/t</label><input id="pv-pr" type="number" inputmode="decimal" step="0.01" value="'+(p.crmValorTon||"")+'" style="INSTYLE" oninput="pvPrev()"></div><div><label '+LBL+'>Tabela</label><select id="pv-tab" style="INSTYLE" onchange="pvPrev()">'+["A","B","C"].map(x=>'<option'+(String(p.tabela||"A").toUpperCase().charAt(0)===x?" selected":"")+'>'+x+'</option>').join("")+'</select></div></div>'+
+   '<div style="display:grid;grid-template-columns:1.4fr 1fr;gap:8px"><div><label '+LBL+'>Vencimentos</label><input id="pv-venc" value="'+kmEsc(p.prazo||"")+'" style="INSTYLE" oninput="pvPrev()" placeholder="20/11 ou 30/60"></div><div><label '+LBL+'>Data da venda</label><input id="pv-em" type="date" value="'+(p.crmEmissao||hj)+'" style="INSTYLE" onchange="pvPrev()"></div></div>'+
+   (id?'':'<label style="display:flex;gap:8px;align-items:center;margin-top:12px;font-size:14px;font-weight:700"><input type="checkbox" id="pv-ct" style="width:20px;height:20px" onchange="_pv.contrato=this.checked;document.getElementById(\'pv-dw\').style.display=this.checked?\'none\':\'\'"> É contrato <small style="font-weight:400;color:var(--muted)">(entregas programadas depois)</small></label>')+
+   '<div id="pv-dw" style="'+(tipo==="contrato"?"display:none":"")+'"><label '+LBL+'>Entrega desejada</label><input id="pv-ent" type="date" value="'+(p.dataEntrega||amanha)+'" style="INSTYLE"></div>'+
+   '<label '+LBL+'>Observação</label><input id="pv-obs" value="'+kmEsc(p.obs||"")+'" style="INSTYLE" placeholder="ex: entregar de manhã">'+
+   '<div class="pv-prev" id="pv-prev"></div>'+(id&&tipo==="pedido"?'<button type="button" onclick="pvCancelar()" style="margin-top:10px;background:none;border:none;color:#dc2626;font-weight:700;font-family:inherit;cursor:pointer">Cancelar este pedido</button>':''),"pvSalvar()");
+  const b=[...document.querySelectorAll("#kmv-ov button")].pop();if(b)b.textContent=id?"Salvar alterações":"Enviar para a logística";pvPrev();
+}
+function pvClienteEscolhido(){const n=crmNorm(document.getElementById("pv-cli").value);const c=Object.values(_crmCli||{}).find(x=>x&&crmNorm(x.nome)===n);if(!c)return;const cid=document.getElementById("pv-cid");if(cid&&!cid.value)cid.value=c.cidade||"";const sv=document.getElementById("pv-vend");if(sv&&!sv.value&&c.vendedor){const v=comNormV(c.vendedor);if(![...sv.options].some(o=>o.value===v))sv.add(new Option(comNome(v),v));sv.value=v}pvPrev()}
+function pvPrev(){const el=document.getElementById("pv-prev");if(!el)return;const kg=Math.round((parseFloat(document.getElementById("pv-t").value)||0)*1000);el.innerHTML=valoresResumo(kg,parseFloat(document.getElementById("pv-pr").value),document.getElementById("pv-venc").value,document.getElementById("pv-em").value,document.getElementById("pv-tab").value,document.getElementById("pv-prod").value,document.getElementById("pv-vend").value,COMV.cfg)}
+function pvSalvar(){
+  const g=id=>document.getElementById(id);const vend=g("pv-vend").value;const cli=crmNorm(g("pv-cli").value);const prod=crmNorm(g("pv-prod").value);const kg=Math.round((parseFloat(g("pv-t").value)||0)*1000);const preco=parseFloat(g("pv-pr").value)||0;
+  if(!cli||!prod||!kg){showToast("Preencha cliente, ração e toneladas",true);return}if(!vend&&!confirm("Sem vendedor responsável ninguém recebe a comissão. Enviar assim mesmo?"))return;
+  const tab=g("pv-tab").value,venc=g("pv-venc").value.trim(),emis=g("pv-em").value||new Date().toISOString().slice(0,10);const tot=Math.round(kg/1000*preco*100)/100;
+  const ach=Object.entries(_crmCli||{}).find(([,c])=>c&&crmNorm(c.nome)===cli);const cid=ach?ach[0]:cli.replace(/[^A-Z0-9]+/g,"-").replace(/^-+|-+$/g,"").toLowerCase().slice(0,60);
+  const contrato=_pv.contrato;const id=_pv.id||db.ref(contrato?"cargas_contratos":"cargas_pedidos").push().key;const ant=_pv.id?((contrato?COMV.ctr:COMV.ped)[_pv.id]||{}):{};
+  const igual=comArr(ant.crmVencimentos).length&&ant.prazo===venc&&Math.abs((+ant.crmTotal||0)-tot)<1&&(ant.crmEmissao||"")===emis;
+  const base={clienteId:cid,cliente:ach?ach[1].nome:cli,cidade:crmNorm(g("pv-cid").value),vendedor:vend,produto:prod,tabela:tab,prazo:venc,crmEmissao:emis,crmControle:g("pv-crm").value.trim()||null,obs:g("pv-obs").value.trim(),
+    crmValorTon:preco||null,crmTotal:tot||null,crmVencimentos:tot?(igual?comArr(ant.crmVencimentos):comParcelasTexto(venc,tot,emis)):null,comissaoPct:tot?comPct({produto:prod,tabela:tab},COMV.cfg):null,
+    enviadoPorUid:ant.enviadoPorUid||usuarioAtual.uid,atualizadoEm:Date.now()};
+  const up={};
+  if(contrato){Object.assign(base,{numero:ant.numero||(base.crmControle?"CRM "+base.crmControle:""),totalKg:kg,retiradoAnteriorKg:ant.retiradoAnteriorKg||0,ativo:ant.ativo!==false});if(!_pv.id)Object.assign(base,{criadoEm:Date.now(),criadoPor:(usuarioAtual.email||"").toLowerCase(),origem:"manual-vendedor"});Object.entries(base).forEach(([k,v])=>up["cargas_contratos/"+id+"/"+k]=v)}
+  else{Object.assign(base,{kg,dataEntrega:g("pv-ent").value,dataTexto:ant.dataTexto||"",contratoId:ant.contratoId||""});if(!_pv.id)Object.assign(base,{criadoEm:Date.now(),criadoPor:(usuarioAtual.email||"").toLowerCase(),origem:"manual-vendedor"});Object.entries(base).forEach(([k,v])=>up["cargas_pedidos/"+id+"/"+k]=v)}
+  if(!ach)up["cargas_clientes/"+cid]={nome:cli,cidade:base.cidade,vendedor:vend||"",nCargas:0,criadoEm:Date.now()};
+  db.ref().update(up).then(()=>{document.getElementById("kmv-ov").remove();showToast(_pv.id?"Alterações salvas":(contrato?"Contrato":"Pedido")+" enviado para a logística");comvCarregar(true)}).catch(e=>showToast("Não salvou: "+e.message,true));
+}
+function pvCancelar(){if(!confirm("Cancelar este pedido? A logística deixa de ver na fila."))return;db.ref("cargas_pedidos/"+_pv.id).update({cancelado:true,canceladoEm:Date.now(),canceladoPor:(usuarioAtual.email||"").toLowerCase()}).then(()=>{document.getElementById("kmv-ov").remove();showToast("Pedido cancelado");comvCarregar(true)}).catch(e=>showToast("Não cancelou: "+e.message,true))}
+function pvPodeEditar(x){const src=(x.tipo==="contrato"?COMV.ctr:COMV.ped)[x.id]||{};return pvEhAdmin()||src.enviadoPorUid===usuarioAtual.uid}
 </script>
 </body>
 </html>
