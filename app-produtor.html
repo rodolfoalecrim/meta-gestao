@@ -119,6 +119,8 @@ button:active{transform:scale(.96)}
   <div style="font-size:44px;margin-bottom:10px">🔒</div>
   <div style="font-size:17px;font-weight:800;color:var(--text);margin-bottom:6px">Link inválido</div>
   <div style="font-size:13px;color:var(--muted);max-width:320px">Esse link de acesso não é válido ou expirou. Fale com seu técnico da Meta pra receber o link certo.</div>
+  <div id="erro-detalhe" style="font-size:11px;color:var(--muted);opacity:.7;margin-top:14px;font-family:monospace;max-width:320px;word-break:break-word"></div>
+  <button onclick="location.reload()" style="margin-top:14px;padding:8px 18px;border-radius:8px;border:1px solid #cbd5e1;background:#fff;font-weight:600;cursor:pointer">Tentar de novo</button>
 </div>
 
 <div id="pin-screen">
@@ -260,18 +262,19 @@ function getTokenFromUrl(){
 }
 
 async function iniciar(){
+  await new Promise(r=>{const u=auth.onAuthStateChanged(()=>{u();r()})});
   try{
     if(!auth.currentUser){
       await auth.signInAnonymously();
     }
   }catch(e){
     console.error("Erro ao autenticar anonimamente:",e);
-    mostrarErro();
+    mostrarErro("auth: "+(e.code||e.message));
     return;
   }
   let token=getTokenFromUrl();
   if(!token)token=localStorage.getItem("meta_produtor_token")||"";
-  if(!token){mostrarErro();return}
+  if(!token){mostrarErro("sem token na URL nem salvo");return}
   try{
     const trocarClaim=fns.httpsCallable("trocarTokenPorClaim");
     const claimRes=await trocarClaim({token});
@@ -279,7 +282,7 @@ async function iniciar(){
     await auth.currentUser.getIdToken(true);
     const snap=await db.ref("propriedades/"+farmId).once("value");
     const val=snap.val();
-    if(!val){mostrarErro();return}
+    if(!val){mostrarErro("fazenda "+farmId+" vazia ou sem permissão");return}
     farmData=val;
     localStorage.setItem("meta_produtor_token",token);
     document.getElementById("loading-screen").style.display="none";
@@ -293,12 +296,13 @@ async function iniciar(){
     }
   }catch(e){
     console.error("Erro ao validar acesso:",e);
-    mostrarErro();
+    mostrarErro((e.code||"erro")+": "+(e.message||"")+(e.details?" | "+JSON.stringify(e.details):""));
   }
 }
 
-function mostrarErro(){
+function mostrarErro(detalhe){
   document.getElementById("loading-screen").style.display="none";
+  const el=document.getElementById("erro-detalhe");if(el)el.textContent=detalhe?"Código: "+detalhe:"";
   document.getElementById("erro-screen").style.display="flex";
 }
 
