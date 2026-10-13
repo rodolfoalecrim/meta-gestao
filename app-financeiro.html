@@ -1,0 +1,533 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Meta Financeiro</title>
+<meta name="theme-color" content="#052e16">
+<link rel="icon" href="meta_logo.jpg">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;600;700&display=swap" rel="stylesheet">
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+<style>
+:root{--bg:#f3f6f3;--card:#fff;--border:#e2e8f0;--line:#f1f5f9;--text:#0f172a;--muted:#64748b;--faint:#94a3b8;
+--G:#15803d;--GD:#052e16;--GL:#f0fdf4;--amber:#b45309;--amberL:#fffbeb;--red:#dc2626;--redL:#fef2f2;
+--s-rec:#1baf7a;--s-cus:#eb6834;--s-res:#2a78d6;--d-acima:#e34948;--d-abaixo:#2a78d6;--mono:'JetBrains Mono',ui-monospace,monospace}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{min-height:100%}
+body{font-family:Inter,system-ui,sans-serif;background:var(--bg);color:var(--text);font-size:14px;-webkit-font-smoothing:antialiased}
+button,select,input{font-family:inherit;font-size:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:2px solid var(--G);outline-offset:2px}
+.num{font-family:var(--mono);font-variant-numeric:tabular-nums}
+.muted{color:var(--muted)}.small{font-size:12.5px}
+.inp,.sel{border:1px solid var(--border);border-radius:9px;padding:8px 10px;background:#fff;min-width:0}
+.inp:focus,.sel:focus{border-color:var(--G);outline:none}
+.btn{border:1px solid transparent;border-radius:9px;padding:8px 13px;font-weight:700;display:inline-flex;align-items:center;gap:6px;white-space:nowrap}
+.btn-g{background:var(--G);color:#fff}.btn-o{background:#fff;border-color:var(--border)}.btn-r{background:#fff;color:var(--red);border-color:#fecaca}
+.btn-sm{padding:5px 9px;font-size:12.5px;border-radius:8px}
+.btn:disabled{opacity:.5;cursor:default}
+/* login */
+#login{display:none;min-height:100vh;align-items:center;justify-content:center;padding:24px;background:var(--GD)}
+.lb{background:#fff;border-radius:16px;padding:26px;width:100%;max-width:360px}
+.lb h1{font-size:20px;margin-bottom:4px}.lb p{color:var(--muted);font-size:13px;margin-bottom:14px}
+.lb .inp{width:100%;padding:12px;margin-bottom:8px;font-size:15px}.lb .btn{width:100%;justify-content:center;padding:12px;font-size:15px}
+/* topo */
+#app{display:none}
+.top{background:var(--GD);color:#fff;position:sticky;top:0;z-index:10}
+.top-in{max-width:1320px;margin:0 auto;padding:10px 16px;display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.brand{display:flex;flex-direction:column;margin-right:auto;min-width:0}
+.brand b{font-size:16px}.brand span{font-size:11.5px;opacity:.7;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.per{display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+.per .sel{background:rgba(255,255,255,.1);border-color:rgba(255,255,255,.2);color:#fff;padding:6px 8px}
+.per .sel option{color:var(--text)}
+.seg{display:inline-flex;background:rgba(255,255,255,.1);border-radius:9px;padding:3px}
+.seg button{background:none;border:none;color:#fff;opacity:.75;padding:5px 10px;border-radius:7px;font-weight:600;font-size:13px}
+.seg button.on{background:#fff;color:var(--GD);opacity:1}
+.top .btn-o{background:rgba(255,255,255,.1);border-color:rgba(255,255,255,.2);color:#fff}
+.tabs{max-width:1320px;margin:0 auto;padding:0 16px;display:flex;gap:2px;overflow-x:auto;scrollbar-width:none}
+.tabs button{background:none;border:none;color:#fff;opacity:.7;padding:10px 12px;font-weight:600;border-bottom:3px solid transparent;white-space:nowrap}
+.tabs button.on{opacity:1;border-bottom-color:#4ade80}
+.tabs .cnt{display:inline-block;background:#fbbf24;color:#451a03;border-radius:999px;font-size:11px;padding:0 6px;margin-left:5px;font-weight:800}
+main{max-width:1320px;margin:0 auto;padding:16px 16px 60px}
+.card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:16px;min-width:0}
+.card h3{font-size:14px;font-weight:700}
+.card .sub{font-size:12.5px;color:var(--muted);margin-top:2px}
+.ch-h{display:flex;align-items:flex-start;gap:10px;margin-bottom:10px;flex-wrap:wrap}.ch-h>div:first-child{flex:1;min-width:180px}
+.alert{display:flex;gap:10px;align-items:center;border-radius:12px;padding:10px 14px;margin-bottom:14px;font-size:13.5px;background:var(--amberL);border:1px solid #fde68a;color:#78350f;flex-wrap:wrap}
+.alert b{font-weight:700}.alert .btn{margin-left:auto}
+/* KPIs */
+.kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin-bottom:14px}
+.kpi{background:#fff;border:1px solid var(--border);border-radius:14px;padding:14px 15px;min-width:0}
+.kpi .l{font-size:12.5px;color:var(--muted);font-weight:600}
+.kpi .v{font-family:var(--mono);font-size:24px;font-weight:700;margin:6px 0 4px;letter-spacing:-.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.kpi .v.neg{color:var(--red)}
+.kpi .d{font-size:12.5px;color:var(--muted);line-height:1.45}
+.bdg{display:inline-flex;align-items:center;gap:3px;font-weight:700;border-radius:6px;padding:1px 6px;font-size:12px}
+.bdg.good{background:var(--GL);color:var(--G)}.bdg.bad{background:var(--redL);color:var(--red)}.bdg.neu{background:#f1f5f9;color:#475569}
+.grid2{display:grid;grid-template-columns:minmax(0,1.6fr) minmax(0,1fr);gap:12px;margin-bottom:12px}
+.grid2b{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:12px;margin-bottom:12px}
+/* gráficos */
+.chart{position:relative;width:100%}
+.chart svg{display:block;width:100%;overflow:visible}
+.chart text{font-family:Inter,sans-serif;font-size:11px;fill:var(--muted)}
+.chart .tv{font-family:var(--mono);font-size:11px;fill:var(--text)}
+.chart .gl{stroke:#eef2f6;stroke-width:1}.chart .zl{stroke:#cbd5e1;stroke-width:1}
+.chart .hit{fill:transparent;cursor:pointer}.chart .hit:hover{fill:rgba(15,23,42,.04)}
+.chart .sel-m{fill:rgba(21,128,61,.07)}
+.leg{display:flex;gap:14px;flex-wrap:wrap;font-size:12.5px;color:var(--muted)}
+.leg i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:5px;vertical-align:-1px}
+.leg i.ln{height:3px;border-radius:2px;width:14px;vertical-align:3px}
+#tip{position:fixed;z-index:50;pointer-events:none;background:#0f172a;color:#fff;border-radius:9px;padding:8px 10px;font-size:12.5px;line-height:1.5;box-shadow:0 6px 20px rgba(0,0,0,.18);display:none;max-width:280px}
+#tip b{font-weight:700}#tip .r{display:flex;justify-content:space-between;gap:14px}#tip .r span:last-child{font-family:var(--mono)}
+#tip i{display:inline-block;width:8px;height:8px;border-radius:2px;margin-right:5px}
+/* tabelas */
+.tw{overflow-x:auto;margin:0 -16px;padding:0 16px}
+table.t{width:100%;border-collapse:collapse;font-size:13px}
+.t th{font-size:11.5px;text-transform:uppercase;letter-spacing:.3px;color:var(--muted);font-weight:700;text-align:right;padding:8px 8px;border-bottom:1px solid var(--border);white-space:nowrap;background:#fff;position:sticky;top:0}
+.t th:first-child,.t td:first-child{text-align:left}
+.t td{padding:7px 8px;border-bottom:1px solid var(--line);text-align:right;white-space:nowrap}
+.t td.num{font-size:12.5px}
+.t tr.ln{cursor:pointer}.t tr.ln:hover td{background:#f8fafc}
+.t tr.grp td{background:#f8fafc;font-weight:800;font-size:12px;text-transform:uppercase;letter-spacing:.4px;color:#334155;padding-top:12px}
+.t tr.tot td{font-weight:700;border-top:1px solid var(--border);background:#fcfdfc}
+.t tr.big td{font-size:14px;background:var(--GL)}
+.t td.nm{white-space:normal;min-width:220px}
+.t .pos{color:var(--G)}.t .neg{color:var(--red)}
+.t .tag{font-size:11px;font-weight:700;border-radius:5px;padding:1px 5px;background:var(--amberL);color:var(--amber);margin-left:6px}
+.bar-in{display:inline-block;height:6px;border-radius:3px;vertical-align:middle;margin-right:6px}
+.tools{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:12px}
+.chips{display:inline-flex;gap:4px;flex-wrap:wrap}
+.chip{border:1px solid var(--border);background:#fff;border-radius:999px;padding:5px 11px;font-weight:600;font-size:12.5px}
+.chip.on{background:var(--GD);border-color:var(--GD);color:#fff}
+.empty{text-align:center;padding:60px 20px;color:var(--muted)}.empty b{display:block;color:var(--text);font-size:17px;margin-bottom:6px}
+.empty .btns{display:flex;gap:8px;justify-content:center;margin-top:16px;flex-wrap:wrap}
+/* painel lateral e modal */
+#drawer{position:fixed;inset:0;z-index:30;display:none;background:rgba(15,23,42,.35)}
+#drawer.on{display:block}
+.dw{position:absolute;right:0;top:0;bottom:0;width:min(560px,100%);background:#fff;overflow:auto;padding:18px 18px 40px;box-shadow:-10px 0 30px rgba(0,0,0,.12)}
+.dw-h{display:flex;align-items:flex-start;gap:10px;margin-bottom:12px}.dw-h h2{font-size:17px;flex:1}
+.x{background:#f1f5f9;border:none;border-radius:8px;width:32px;height:32px;font-size:18px;line-height:1}
+.sec{font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:.4px;color:var(--muted);margin:18px 0 8px}
+.row{display:flex;gap:8px;align-items:center;padding:8px 0;border-bottom:1px solid var(--line);font-size:13px}
+.row .f{flex:1;min-width:0}.row .f .small{margin-top:1px}
+.frm{display:grid;grid-template-columns:1fr 1fr;gap:8px;background:#f8fafc;border:1px solid var(--border);border-radius:12px;padding:12px;margin-top:8px}
+.frm label{font-size:12px;font-weight:700;color:var(--muted);display:block;margin-bottom:3px}
+.frm .full{grid-column:1/-1}.frm .inp,.frm .sel{width:100%}
+#modal{position:fixed;inset:0;z-index:40;display:none;background:rgba(15,23,42,.45);align-items:flex-start;justify-content:center;padding:40px 16px;overflow:auto}
+#modal.on{display:flex}
+.md{background:#fff;border-radius:16px;width:100%;max-width:720px;padding:20px}
+.md h2{font-size:18px;margin-bottom:4px}
+.drop{display:block;border:2px dashed #cbd5e1;border-radius:14px;padding:30px 16px;text-align:center;cursor:pointer;margin-top:14px;color:var(--muted);font-weight:600}
+.drop:hover,.drop.ov{border-color:var(--G);background:var(--GL);color:var(--G)}
+.drop input{display:none}
+.chk{display:flex;gap:16px;flex-wrap:wrap;margin:14px 0;padding:12px;background:#f8fafc;border-radius:12px}
+.chk>div{min-width:130px}.chk .l{font-size:12px;color:var(--muted);font-weight:600}.chk .v{font-family:var(--mono);font-weight:700;font-size:15px;margin-top:2px}
+.ok{color:var(--G);font-weight:700}.err{color:var(--red);font-weight:700}
+.md-f{display:flex;gap:8px;justify-content:flex-end;margin-top:16px;flex-wrap:wrap}
+#toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%) translateY(100px);background:var(--G);color:#fff;padding:11px 18px;border-radius:12px;font-weight:700;z-index:99;transition:transform .25s;max-width:90vw;text-align:center}
+#toast.on{transform:translateX(-50%) translateY(0)}
+@media(max-width:1000px){.kpis{grid-template-columns:repeat(2,minmax(0,1fr))}.grid2,.grid2b{grid-template-columns:minmax(0,1fr)}}
+@media(max-width:560px){.kpi .v{font-size:19px}.top-in{gap:8px}.brand span{display:none}.frm{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div id="login"><div class="lb"><h1>Meta Financeiro</h1><p>Acesso restrito à diretoria e ao financeiro.</p><input class="inp" id="l-e" type="email" placeholder="E-mail" autocomplete="username"><input class="inp" id="l-s" type="password" placeholder="Senha" autocomplete="current-password" onkeydown="if(event.key==='Enter')login()"><button class="btn btn-g" onclick="login()">Entrar</button><p id="l-m" style="margin:12px 0 0;color:var(--red)"></p></div></div>
+<div id="app">
+  <header class="top">
+    <div class="top-in">
+      <div class="brand"><b>Meta Financeiro</b><span id="emp">Estrutura gerencial de resultados</span></div>
+      <div class="per">
+        <select class="sel" id="s-ano" onchange="setAno(this.value)" aria-label="Ano"></select>
+        <select class="sel" id="s-mes" onchange="setMes(this.value)" aria-label="Mês"></select>
+        <div class="seg" role="group" aria-label="Período"><button id="m-mes" onclick="setModo('mes')">Mês</button><button id="m-acum" onclick="setModo('acum')">Acumulado</button></div>
+      </div>
+      <button class="btn btn-g" onclick="abrirImport()">⬆ Importar FI-025</button>
+      <button class="btn btn-o btn-sm" onclick="logout()" title="Sair">Sair</button>
+    </div>
+    <nav class="tabs" id="tabs"></nav>
+  </header>
+  <main id="m"></main>
+</div>
+<div id="drawer" onclick="if(event.target===this)fecharDrawer()"><div class="dw" id="dw"></div></div>
+<div id="modal"><div class="md" id="md"></div></div>
+<div id="tip"></div>
+<div id="toast"></div>
+<script>
+/* ---------- leitura do FI-025 (DRE Fluxo Ajustado) ---------- */
+function brNum(s){return parseFloat(String(s).replace(/\./g,"").replace(",","."))}
+function linhasPdf(pages){/* agrupa itens de texto por linha (y com tolerância) */
+  const out=[];pages.forEach(items=>{const rows=[];items.filter(i=>i.s&&i.s.trim()).sort((a,b)=>b.y-a.y||a.x-b.x).forEach(i=>{let r=rows.find(r=>Math.abs(r.y-i.y)<=3);if(!r){r={y:i.y,it:[]};rows.push(r)}r.it.push(i)});rows.sort((a,b)=>b.y-a.y).forEach(r=>out.push(r.it.sort((a,b)=>a.x-b.x).map(i=>i.s.trim())))});return out}
+function parseFI025(pages){
+  const L=linhasPdf(pages);const res={empresa:"",ini:"",fim:"",contas:[],totR:null,totD:null,saldo:null,ccs:{}};let cc="";
+  const MONEY=/^-?[\d.]+,\d{2}$/;
+  L.forEach((t,ix)=>{const j=t.join(" ");
+    if(!res.empresa&&ix===0){res.empresa=t.filter(x=>!/^(Data:|Hora:|Pag:)/.test(x))[0]||""}
+    let m=j.match(/Per[ií]odo:\s*(\d\d)\/(\d\d)\/(\d{4})\s*a\s*(\d\d)\/(\d\d)\/(\d{4})/);if(m&&!res.ini){res.ini=m[3]+"-"+m[2]+"-"+m[1];res.fim=m[6]+"-"+m[5]+"-"+m[4];return}
+    m=j.match(/^Centro de Custo:\s*(\d+)\s*-\s*(.*)$/);if(m){cc=m[1];res.ccs[cc]=m[2].trim();return}
+    m=j.match(/Total geral de Receitas:\s*(-?[\d.]+,\d{2})/);if(m){res.totR=brNum(m[1]);return}
+    m=j.match(/Total geral de Despesas:\s*(-?[\d.]+,\d{2})/);if(m){res.totD=brNum(m[1]);return}
+    m=j.match(/Saldo geral do Per[ií]odo:\s*(-?[\d.]+,\d{2})/);if(m){res.saldo=brNum(m[1]);return}
+    const ac=t.findIndex(x=>/^\d+\s+-\s+\S/.test(x));if(ac<0)return;
+    const val=t.find(x=>MONEY.test(x));const tp=t.find(x=>/^[RD]$/.test(x));if(!val||!tp)return;
+    const am=t[ac].match(/^(\d+)\s+-\s+(.+)$/);const nums=t.filter((x,i)=>i!==ac&&/^\d+$/.test(x));
+    res.contas.push({cod:am[1],desc:am[2].trim(),v:brNum(val),t:tp,cc,grp:nums.length?nums[nums.length-1]:""});
+  });
+  const sR=res.contas.filter(c=>c.t==="R").reduce((s,c)=>s+c.v,0),sD=res.contas.filter(c=>c.t==="D").reduce((s,c)=>s+c.v,0);
+  res.somaR=Math.round(sR*100)/100;res.somaD=Math.round(sD*100)/100;
+  res.confere=res.totR!=null&&res.totD!=null&&Math.abs(res.somaR-res.totR)<0.05&&Math.abs(res.somaD-res.totD)<0.05;
+  return res;
+}
+
+/* ---------- estrutura gerencial (mesma da planilha "Estudo mensal") ---------- */
+const GRUPOS=[["rec","Receitas"],["cv","Custos variáveis"],["cf","Custos fixos"],["ext","Extra-operacional"]];
+const LINHAS=[
+["r4","rec","Recebimentos financeiros de operação","R"],["r5","rec","Transferência entre unidades (receita)","R"],["r6","rec","(−) Devolução de vendas","D"],["r7","rec","Adiantamentos a fornec./funcion. (receita)","R"],["r8","rec","Outras receitas, descontos obtidos e fundo calamidade","R"],
+["r11","cv","Tributos (PIS, Cofins, IRPJ, taxas)"],["r12","cv","Comissões sobre vendas"],["r13","cv","Combustíveis e lubrificantes"],["r14","cv","Adiantamentos a fornec./funcion. (despesa)"],["r15","cv","Despesas com veículos"],["r16","cv","Exames médicos — Med. Seg. Trab."],["r17","cv","IPVA e licenciamento"],["r18","cv","Material de consumo, limpeza, expediente, embalagens"],["r19","cv","Prêmios e seguros"],["r20","cv","Manutenção patrimonial (predial e infraestrutura)"],["r21","cv","Taxas e despesas bancárias / IOF"],["r22","cv","Despesas de viagens e pedágio"],["r23","cv","Despesas com multas"],["r24","cv","Despesas com frete"],["r25","cv","Despesas com saúde"],["r26","cv","Rescisões contratuais"],["r27","cv","Inadimplência (> 1 dia, até 1 ano)"],["r28","cv","Insolvência (> 1 ano)"],["r29","cv","Bens de pequeno valor"],["r30","cv","CMV (compras − devoluções a fornecedor)"],["r31","cv","Ações trabalhistas"],["r32","cv","Despesas de informática"],["r33","cv","Doações e patrocínios"],["r34","cv","Cartório e correios"],["r35","cv","Manutenção de máquinas e equipamentos"],["r36","cv","Propaganda e publicidade"],["r37","cv","Serviços de terceiros"],["r38","cv","Uniformes"],["r39","cv","Perda ou roubo"],["r40","cv","Alimentação"],["r41","cv","Retirada dos sócios"],["r42","cv","Manutenção / serviço de empilhadeira"],["r43","cv","Cursos e treinamentos"],["r44","cv","Descontos concedidos"],["r45","cv","Anuidades e mensalidades (Serasa, Adapar…)"],["r46","cv","Máquinas e equipamentos (aquisição)"],["r47","cv","Serviços médico-veterinário (RT)"],["r48","cv","Taxas de cartão"],["r49","cv","Taxas CREA / CRMV"],["r50","cv","Coleta de lixo / resíduos"],["r51","cv","Transferência entre unidades (despesa)"],["r52","cv","JCP — sócios"],["r53","cv","Aparelhos eletrônicos"],["r54","cv","Móveis e utensílios"],["r55","cv","Outras (variáveis)"],
+["r61","cf","Água"],["r62","cf","Energia elétrica"],["r63","cf","Ordenados, salários, 13º, férias"],["r64","cf","Encargos (FGTS, INSS)"],["r65","cf","Honorários contábeis"],["r66","cf","Mensalidade do software"],["r67","cf","Pró-labore"],["r68","cf","Segurança"],["r69","cf","Telefone e internet"],["r70","cf","Aluguel de máquina de cartão"],["r71","cf","Honorários advocatícios"],["r72","cf","Aluguel de impressora"],["r73","cf","Reserva de provimento — pessoal"],["r74","cf","Aluguel"],["r75","cf","Reserva de provimento — depreciação"],["r76","cf","Consórcios"],["r81","cf","Outras (fixas)"],
+["r84","ext","Juros / rendimentos recebidos / estornos","R"],["r85","ext","IR sobre aplicações"],["r86","ext","Pgto empréstimo Evolua (amort. + juros)"],["r87","ext","Pgto empréstimo Cresol + BNDES (amort. + juros)"],["r88","ext","Pgto empréstimo Sicoob (amort. + juros)"],["r89","ext","Juros pagos (financeiro)"],["r90","ext","Quota capital (Cresol, Evolua, Sicoob)"],["r91","ext","Descontos concedidos (financeiro)"],["r93","ext","Seguro prestamista"]
+].map(([id,g,nome,nat])=>({id,g,nome,nat:nat||"D"}));
+const LIN={};LINHAS.forEach(l=>LIN[l.id]=l);
+/* de-para padrão: conta do FI-025 → linha. s: "+" soma sempre, "-" subtrai sempre, omitido = pelo tipo R/D */
+const DEPARA_RAW={
+ "79":"r4","80":"r4","170":"r4","244":"r5","84":"r6","296":"r6","174":"r7","176":"r7","187":["r7","+"],"320":"r8","322":"r8","142":"r8",
+ "92":"r11","127":"r11","301":"r11","95":"r12","99":"r13","173":"r14","175":"r14","270":["r14","-"],"104":"r15","108":"r16","115":"r17",
+ "224":"r18","225":"r18","226":"r18","227":"r18","230":"r18","121":"r19","134":"r20","180":"r21","234":"r21","215":"r21","183":"r22","184":"r22",
+ "185":"r23","190":"r24","192":"r25","223":"r29","145":"r30","201":"r30","289":"r30","188":"r30","103":"r32","101":"r34","123":"r36","126":"r37",
+ "269":"r39","189":"r40","288":"r40","242":"r42","260":"r43","141":"r44","97":"r45","303":"r47","235":"r48","245":"r51","274":"r52","275":"r52","31":"r54",
+ "96":"r61","106":"r62","120":"r63","110":"r64","112":"r64","111":"r65","119":"r66","122":"r67","125":"r68","130":"r69","171":"r70","251":"r71","231":"r72",
+ "178":"r74","325":"r76","326":"r76","327":"r76","139":"r84","302":"r84","258":"r86","204":"r87","256":"r87","194":"r88","140":"r89","203":"r90","238":"r93",
+ "149":"ign","148":"ign","151":"ign","152":"ign","156":"ign","5":"ign","205":"ign","335":"ign","263":"ign"
+};
+const DEPARA_PADRAO={};Object.entries(DEPARA_RAW).forEach(([k,v])=>DEPARA_PADRAO["c"+k]=v);
+function dpNorm(v){if(!v)return null;if(Array.isArray(v))return{l:v[0],s:v[1]||""};if(typeof v==="string")return{l:v,s:""};return{l:v.l,s:v.s||""}}
+/* valor de cada linha num mês */
+function valoresMes(mes,depara){
+  const v={};LINHAS.forEach(l=>v[l.id]=0);const pend={};
+  if(!mes)return{v,pend};
+  if(mes.linhas)Object.entries(mes.linhas).forEach(([k,x])=>{if(k in v)v[k]+=+x||0});
+  if(mes.contas)Object.entries(mes.contas).forEach(([cod,c])=>{const d=dpNorm(depara[cod]);
+    if(!d||!d.l||(d.l!=="ign"&&!LIN[d.l])){pend[cod]=c;return}if(d.l==="ign")return;
+    const nat=LIN[d.l].nat;let sg=d.s==="+"?1:d.s==="-"?-1:(c.t===nat?1:-1);v[d.l]+=sg*(+c.v||0)});
+  Object.values(mes.ajustes||{}).forEach(a=>{const x=+a.v||0;if(a.para&&a.para in v)v[a.para]+=x;if(a.de&&a.de in v)v[a.de]-=x});
+  Object.keys(v).forEach(k=>v[k]=Math.round(v[k]*100)/100);
+  return{v,pend};
+}
+/* indicadores derivados — mesmas fórmulas da planilha; margem sobre o total recebido */
+function derivar(v){
+  const s=g=>LINHAS.filter(l=>l.g===g).reduce((a,l)=>a+(v[l.id]||0),0);
+  const rec=v.r4||0;const tot=rec+(v.r5||0)+(v.r7||0)+(v.r8||0)-(v.r6||0);
+  const cv=s("cv"),cf=s("cf");const extD=LINHAS.filter(l=>l.g==="ext"&&l.id!=="r84").reduce((a,l)=>a+(v[l.id]||0),0);const ext=(v.r84||0)-extD;
+  const base=MC_SOBRE_TOTAL?tot:rec;const mc=base-cv;const mcp=base?mc/base:0;const ro=mc-cf;const rl=ro+ext;
+  return{rec,tot,cv,cf,ext,extD,mc,mcp,ro,rl,base,peOp:mcp>0?cf/mcp:null,peFin:mcp>0?(cf-ext)/mcp:null,cmv:v.r30||0,com:v.r12||0,juros:v.r89||0,divida:(v.r86||0)+(v.r87||0)+(v.r88||0)+(v.r89||0)+(v.r90||0)+(v.r76||0)};
+}
+const MC_SOBRE_TOTAL=true;
+/* metas: {receita: meta mensal de recebimentos, linhas:{id:{m:"pct"|"fixo",v}}} — previsto do mês = % × recebimentos realizados (orçamento flexível) */
+function metaLinha(metas,id,rec){const x=metas&&metas.linhas&&metas.linhas[id];if(!x)return null;return x.m==="pct"?(+x.v||0)*rec:(+x.v||0)}
+function previstoMes(metas,real){const rec=real.r4||0;const v={};LINHAS.forEach(l=>{v[l.id]=l.g==="rec"?(real[l.id]||0):(metaLinha(metas,l.id,rec)||0)});return v}
+function metaMensal(metas){const r=+(metas&&metas.receita)||0;const v={};LINHAS.forEach(l=>{v[l.id]=l.id==="r4"?r:(metaLinha(metas,l.id,r)||0)});return v}
+
+/* ================= APP ================= */
+const firebaseConfig={apiKey:"AIzaSyClpsHjO8OLThD--hDOfg7Fg3t6hhuM-To",authDomain:"meta-gestao-608d7.firebaseapp.com",databaseURL:"https://meta-gestao-608d7-default-rtdb.firebaseio.com",projectId:"meta-gestao-608d7",storageBucket:"meta-gestao-608d7.firebasestorage.app",messagingSenderId:"318618053627",appId:"1:318618053627:web:ae289200bd1e87be29395e"};
+firebase.initializeApp(firebaseConfig);
+const auth=firebase.auth(),db=firebase.database();
+const PDFJS_URL="https://cdn.jsdelivr.net/npm/pdfjs-dist@4.10.38/build/pdf.min.mjs",PDFJS_WORKER="https://cdn.jsdelivr.net/npm/pdfjs-dist@4.10.38/build/pdf.worker.min.mjs";
+const ROLES_OK=["admin","financeiro"];
+const MESES=["Jan","Fev","Mar","Abr","Mai","Jun","Jul","Ago","Set","Out","Nov","Dez"],MESES_L=["janeiro","fevereiro","março","abril","maio","junho","julho","agosto","setembro","outubro","novembro","dezembro"];
+let USER=null,NOME="",S={meses:{},metas:{},hist:{},depara:{},config:{}},ANO=null,MES=null,MODO="mes",TAB="geral",CACHE={},LINHA_ABERTA=null,FILTRO_CONTAS="pend",BUSCA="",ZERADAS=false,IMP=null;
+
+/* ---------- util ---------- */
+function esc(s){return String(s==null?"":s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]))}
+function fR(x,d){if(x==null||!isFinite(x))return"—";return(x<0?"−":"")+"R$ "+Math.abs(x).toLocaleString("pt-BR",{minimumFractionDigits:d||0,maximumFractionDigits:d||0})}
+function fK(x){if(x==null||!isFinite(x))return"—";const a=Math.abs(x),s=x<0?"−":"";if(a>=1e6)return s+"R$ "+(a/1e6).toLocaleString("pt-BR",{maximumFractionDigits:2,minimumFractionDigits:2})+" mi";if(a>=1e3)return s+"R$ "+Math.round(a/1e3).toLocaleString("pt-BR")+" mil";return s+"R$ "+Math.round(a).toLocaleString("pt-BR")}
+function fP(x,d){if(x==null||!isFinite(x))return"—";return(x*100).toLocaleString("pt-BR",{minimumFractionDigits:d==null?1:d,maximumFractionDigits:d==null?1:d})+"%"}
+function fAx(x){const a=Math.abs(x),s=x<0?"−":"";if(a>=1e6)return s+(a/1e6).toLocaleString("pt-BR",{maximumFractionDigits:1})+" mi";if(a>=1e3)return s+Math.round(a/1e3)+" mil";return s+Math.round(a)}
+function toast(m,err){const e=document.getElementById("toast");e.textContent=m;e.style.background=err?"var(--red)":"var(--G)";e.classList.add("on");clearTimeout(e._t);e._t=setTimeout(()=>e.classList.remove("on"),3200)}
+function mkLabel(mk){const[a,m]=mk.split("-");return MESES[+m-1]+"/"+a}
+function mkLong(mk){const[a,m]=mk.split("-");return MESES_L[+m-1]+" de "+a}
+function deparaEf(){const d=Object.assign({},DEPARA_PADRAO);Object.entries(S.depara||{}).forEach(([k,v])=>{if(v)d[k]=v});return d}
+function metasAno(a){return(S.metas||{})[a]||null}
+function histAno(a){return(S.hist||{})[a]||null}
+
+/* ---------- cálculo com cache ---------- */
+function calcMes(mk){if(CACHE[mk])return CACHE[mk];const mes=S.meses[mk];const{v,pend}=valoresMes(mes,deparaEf());const metas=metasAno(mk.slice(0,4));const p=previstoMes(metas,v);
+  return CACHE[mk]={mk,v,pend,d:derivar(v),p,dp:derivar(p),fonte:mes&&mes.fonte}}
+function mesesAno(a){return Object.keys(S.meses||{}).filter(k=>k.startsWith(a+"-")).sort()}
+function anos(){const s=new Set(Object.keys(S.meses||{}).map(k=>k.slice(0,4)));Object.keys(S.metas||{}).forEach(a=>s.add(a));if(!s.size)s.add(String(new Date().getFullYear()));return[...s].sort()}
+function somaV(lista,campo){const o={};LINHAS.forEach(l=>o[l.id]=lista.reduce((s,c)=>s+(c[campo][l.id]||0),0));return o}
+/* período em análise: mês ou acumulado do ano até o mês */
+function periodo(){const ms=MODO==="acum"?mesesAno(ANO).filter(k=>k<=MES):(S.meses[MES]?[MES]:[]);const cs=ms.map(calcMes);
+  const v=somaV(cs,"v"),p=somaV(cs,"p");const metas=metasAno(ANO);const mm=metaMensal(metas);const n=ms.length;const meta={};LINHAS.forEach(l=>meta[l.id]=(mm[l.id]||0)*n);
+  const h=histAno(String(+ANO-1));const hm={};LINHAS.forEach(l=>hm[l.id]=h&&h.linhas&&h.linhas[l.id]!=null?h.linhas[l.id]/12*n:null);
+  const pend={};cs.forEach(c=>Object.entries(c.pend).forEach(([k,x])=>{pend[k]=pend[k]||{d:x.d,t:x.t,v:0,meses:[]};pend[k].v+=x.v;pend[k].meses.push(c.mk)}));
+  return{ms,n,v,p,meta,hm,d:derivar(v),dp:derivar(p),dm:derivar(meta),dh:h?derivar(Object.fromEntries(LINHAS.map(l=>[l.id,hm[l.id]||0]))):null,pend,metas}}
+function perLabel(){if(!MES)return"";return MODO==="acum"?"Acumulado jan–"+MESES[+MES.slice(5)-1].toLowerCase()+"/"+ANO:mkLong(MES)}
+
+/* ---------- auth ---------- */
+function login(){const e=document.getElementById("l-e").value.trim(),s=document.getElementById("l-s").value;if(e&&s)auth.signInWithEmailAndPassword(e,s).catch(()=>document.getElementById("l-m").textContent="E-mail ou senha incorretos.")}
+function logout(){if(confirm("Sair do Meta Financeiro?"))auth.signOut()}
+function mostrar(id){document.getElementById("login").style.display=id==="login"?"flex":"none";document.getElementById("app").style.display=id==="app"?"block":"none"}
+auth.onAuthStateChanged(async u=>{
+  if(!u){mostrar("login");return}
+  USER=u;let role=null;try{role=(await db.ref("usuarios/"+u.uid+"/role").once("value")).val()}catch(e){}
+  if(!ROLES_OK.includes(role)){mostrar("login");document.getElementById("l-m").textContent="O usuário "+(u.email||"")+" não tem acesso ao financeiro.";auth.signOut();return}
+  NOME=(u.email||"").split("@")[0];mostrar("app");iniciar();
+});
+function iniciar(){
+  document.getElementById("m").innerHTML='<div class="empty"><b>Carregando…</b></div>';
+  db.ref("fin").on("value",s=>{const v=s.val()||{};S={meses:v.meses||{},metas:v.metas||{},hist:v.hist||{},depara:v.depara||{},config:v.config||{}};CACHE={};
+    const as=anos();if(!ANO||!as.includes(ANO))ANO=as[as.length-1];const ms=mesesAno(ANO);if(!MES||!S.meses[MES]||!MES.startsWith(ANO))MES=ms[ms.length-1]||null;render()},
+    e=>{document.getElementById("m").innerHTML='<div class="empty"><b>Sem permissão para ler os dados financeiros</b>Confira as regras do nó <code>fin</code> no Firebase.</div>'});
+  let t;window.addEventListener("resize",()=>{clearTimeout(t);t=setTimeout(()=>{if(TAB==="geral")desenharGraficos()},150)});
+}
+function setAno(a){ANO=a;const ms=mesesAno(a);MES=ms[ms.length-1]||null;render()}
+function setMes(m){MES=m;render()}
+function setModo(m){MODO=m;render()}
+function setTab(t){TAB=t;render();scrollTo(0,0)}
+
+/* ---------- render geral ---------- */
+function render(){
+  document.getElementById("emp").textContent=(S.config.empresa||"Estrutura gerencial de resultados");
+  const sa=document.getElementById("s-ano");sa.innerHTML=anos().map(a=>'<option'+(a===ANO?" selected":"")+'>'+a+'</option>').join("");
+  const ms=mesesAno(ANO);const sm=document.getElementById("s-mes");sm.innerHTML=ms.length?ms.slice().reverse().map(k=>'<option value="'+k+'"'+(k===MES?" selected":"")+'>'+MESES_L[+k.slice(5)-1].replace(/^./,c=>c.toUpperCase())+'</option>').join(""):'<option>sem dados</option>';sm.disabled=!ms.length;
+  document.getElementById("m-mes").classList.toggle("on",MODO==="mes");document.getElementById("m-acum").classList.toggle("on",MODO==="acum");
+  const nPend=Object.keys(contasVistas().filter(c=>!c.dp||!c.dp.l).reduce((o,c)=>(o[c.cod]=1,o),{})).length;
+  const T=[["geral","Visão geral"],["dre","DRE gerencial"],["metas","Metas"],["contas","Contas do relatório"+(nPend?'<span class="cnt">'+nPend+'</span>':"")],["imp","Importações"]];
+  document.getElementById("tabs").innerHTML=T.map(([k,l])=>'<button class="'+(TAB===k?"on":"")+'" onclick="setTab(\''+k+'\')">'+l+'</button>').join("");
+  const m=document.getElementById("m");
+  if(!Object.keys(S.meses).length&&TAB!=="imp"&&TAB!=="metas"){m.innerHTML=vazio();return}
+  if(TAB==="geral")renderGeral(m);else if(TAB==="dre")renderDRE(m);else if(TAB==="metas")renderMetas(m);else if(TAB==="contas")renderContas(m);else renderImp(m);
+}
+function vazio(){return'<div class="card empty"><b>Nenhum mês carregado ainda</b>Carregue o histórico que veio da planilha ou importe o primeiro relatório FI-025.<div class="btns"><button class="btn btn-o" onclick="document.getElementById(\'f-hist\').click()">Carregar histórico (.json)</button><button class="btn btn-g" onclick="abrirImport()">⬆ Importar FI-025 (PDF)</button></div><input type="file" id="f-hist" accept=".json,application/json" style="display:none" onchange="carregarHistorico(this)"></div>'}
+
+/* ---------- VISÃO GERAL ---------- */
+function bdg(delta,bomSeMaior,txt){if(delta==null||!isFinite(delta)||Math.abs(delta)<0.5)return'<span class="bdg neu">'+(txt||"no previsto")+'</span>';const good=bomSeMaior?delta>0:delta<0;return'<span class="bdg '+(good?"good":"bad")+'">'+(delta>0?"▲ ":"▼ ")+fK(Math.abs(delta))+'</span>'}
+function kpi(l,v,d,neg){return'<div class="kpi"><div class="l">'+l+'</div><div class="v'+(neg?" neg":"")+'">'+v+'</div><div class="d">'+d+'</div></div>'}
+function renderGeral(m){
+  if(!MES){m.innerHTML=vazio();return}
+  const P=periodo();const d=P.d,dp=P.dp,dm=P.dm;let h="";
+  const pk=Object.keys(P.pend);
+  if(pk.length)h+='<div class="alert"><span>⚠</span><span><b>'+pk.length+' conta'+(pk.length>1?"s":"")+' do relatório sem linha definida</b> ('+fK(pk.reduce((s,k)=>s+P.pend[k].v,0))+') — '+(pk.length>1?"não entram":"não entra")+' no resultado até você classificar.</span><button class="btn btn-o btn-sm" onclick="FILTRO_CONTAS=\'pend\';setTab(\'contas\')">Classificar</button></div>';
+  const metaRec=dm.rec;const pctMeta=metaRec?d.rec/metaRec:null;
+  const peFolga=d.peOp?d.base/d.peOp-1:null;
+  h+='<div class="kpis">'+
+   kpi("Recebimentos de operação",fK(d.rec),(metaRec?'<span class="bdg '+(pctMeta>=1?"good":"bad")+'">'+fP(pctMeta,0)+' da meta</span> meta '+fK(metaRec):"sem meta definida")+'<br>Total recebido '+fK(d.tot)+(P.dh?' · média 2025: '+fK(P.dh.rec):""))+
+   kpi("Margem de contribuição",fK(d.mc),fP(d.mcp)+' do recebido · '+bdg(d.mc-dp.mc,true)+'<br>previsto '+fK(dp.mc),d.mc<0)+
+   kpi("Custos fixos",fK(d.cf),bdg(d.cf-dp.cf,false)+' vs previsto '+fK(dp.cf)+'<br>'+fP(d.base?d.cf/d.base:null)+' do recebido')+
+   kpi("Resultado líquido",fK(d.rl),bdg(d.rl-dp.rl,true)+' vs previsto '+fK(dp.rl)+'<br>'+fP(d.base?d.rl/d.base:null)+' do recebido',d.rl<0)+
+   kpi("Resultado operacional",fK(d.ro),bdg(d.ro-dp.ro,true)+' vs previsto '+fK(dp.ro)+'<br>extra-operacional '+fK(d.ext),d.ro<0)+
+   kpi("Ponto de equilíbrio operacional",d.peOp?fK(d.peOp):"—",d.peOp?(peFolga>=0?'<span class="bdg good">'+fP(peFolga,0)+' acima</span> recebido supera o PE':'<span class="bdg bad">faltam '+fK(d.peOp-d.base)+'</span> para cobrir os fixos')+'<br>PE financeiro '+fK(d.peFin):'<span class="bdg bad">margem negativa</span> custos variáveis maiores que o recebido')+
+   kpi("CMV sobre o recebido",fP(d.base?d.cmv/d.base:null),fK(d.cmv)+(P.metas&&P.metas.linhas&&P.metas.linhas.r30&&P.metas.linhas.r30.m==="pct"?' · meta '+fP(P.metas.linhas.r30.v):"")+'<br>comissões '+fP(d.rec?d.com/d.rec:null)+' das vendas')+
+   kpi("Serviço da dívida",fK(d.divida),fP(d.base?d.divida/d.base:null)+' do recebido<br>empréstimos, juros, cotas e consórcios')+
+  '</div>';
+  h+='<div class="grid2"><div class="card"><div class="ch-h"><div><h3>Evolução mensal — '+ANO+'</h3><div class="sub">Clique num mês para analisar. Custos = variáveis + fixos + saídas extra-operacionais.</div></div><div class="leg"><span><i style="background:var(--s-rec)"></i>Total recebido</span><span><i style="background:var(--s-cus)"></i>Custos totais</span><span><i class="ln" style="background:var(--s-res)"></i>Resultado líquido</span></div></div><div class="chart" id="g-evo"></div></div>'+
+     '<div class="card"><div class="ch-h"><div><h3>Margem de contribuição</h3><div class="sub">% do total recebido em cada mês</div></div><div class="leg"><span><i class="ln" style="background:var(--s-res)"></i>Realizado</span><span><i class="ln" style="background:var(--faint)"></i>Meta</span></div></div><div class="chart" id="g-mc"></div></div></div>';
+  h+='<div class="grid2b"><div class="card"><div class="ch-h"><div><h3>Maiores custos — '+perLabel()+'</h3><div class="sub">CMV fora do gráfico: '+fK(d.cmv)+' ('+fP(d.base?d.cmv/d.base:null)+' do recebido). Clique para detalhar.</div></div></div><div class="chart" id="g-top"></div></div>'+
+     '<div class="card"><div class="ch-h"><div><h3>Desvios contra o previsto</h3><div class="sub">Realizado − previsto (meta ajustada ao recebido). Clique para detalhar.</div></div><div class="leg"><span><i style="background:var(--d-acima)"></i>Gastou mais</span><span><i style="background:var(--d-abaixo)"></i>Gastou menos</span></div></div><div class="chart" id="g-dev"></div></div></div>';
+  m.innerHTML=h;desenharGraficos();
+}
+function desenharGraficos(){if(TAB!=="geral"||!MES)return;const P=periodo();
+  const ms=[];for(let i=1;i<=12;i++){const k=ANO+"-"+String(i).padStart(2,"0");ms.push({k,c:S.meses[k]?calcMes(k):null})}
+  gEvolucao(document.getElementById("g-evo"),ms);gMargem(document.getElementById("g-mc"),ms);
+  const desp=LINHAS.filter(l=>l.g!=="rec"&&l.id!=="r84");
+  gBarrasH(document.getElementById("g-top"),desp.filter(l=>l.id!=="r30").map(l=>({id:l.id,n:l.nome,v:P.v[l.id]})).filter(x=>x.v>0).sort((a,b)=>b.v-a.v).slice(0,10),P.d.base);
+  gDesvios(document.getElementById("g-dev"),desp.map(l=>({id:l.id,n:l.nome,v:P.v[l.id]-P.p[l.id],r:P.v[l.id],p:P.p[l.id]})).filter(x=>Math.abs(x.v)>=1).sort((a,b)=>Math.abs(b.v)-Math.abs(a.v)).slice(0,8));
+}
+
+/* ---------- gráficos SVG ---------- */
+function tipShow(ev,html){const t=document.getElementById("tip");t.innerHTML=html;t.style.display="block";const r=t.getBoundingClientRect();let x=ev.clientX+14,y=ev.clientY+14;if(x+r.width>innerWidth-8)x=ev.clientX-r.width-14;if(y+r.height>innerHeight-8)y=ev.clientY-r.height-14;t.style.left=Math.max(8,x)+"px";t.style.top=Math.max(8,y)+"px"}
+function tipHide(){document.getElementById("tip").style.display="none"}
+function tipRow(cor,l,v,ln){return'<div class="r"><span>'+(cor?'<i style="background:'+cor+(ln?';height:3px;vertical-align:3px':'')+'"></i>':"")+l+'</span><span>'+v+'</span></div>'}
+function escala(min,max,n){if(min===max){max=min+1}const span=max-min;const step0=span/n;const mag=Math.pow(10,Math.floor(Math.log10(step0)));const st=[1,2,2.5,5,10].map(x=>x*mag).find(x=>x>=step0);const lo=Math.floor(min/st)*st,hi=Math.ceil(max/st)*st;const t=[];for(let v=lo;v<=hi+st/2;v+=st)t.push(Math.round(v*1e6)/1e6);return{lo,hi,t}}
+function ligar(el,cb){el.querySelectorAll("[data-i]").forEach(n=>{n.addEventListener("mousemove",e=>tipShow(e,cb.tip(+n.dataset.i)));n.addEventListener("mouseleave",tipHide);if(cb.click)n.addEventListener("click",()=>{tipHide();cb.click(+n.dataset.i)})})}
+function gEvolucao(el,ms){if(!el)return;const W=el.clientWidth||600,H=280,L=58,R=8,T=12,B=26;
+  const dados=ms.map(x=>x.c?{rec:x.c.d.tot,cus:x.c.d.cv+x.c.d.cf+x.c.d.extD,rl:x.c.d.rl}:null);
+  const vals=dados.filter(Boolean).flatMap(x=>[x.rec,x.cus,x.rl,0]);const sc=escala(Math.min(...vals),Math.max(...vals),5);
+  const y=v=>T+(H-T-B)*(1-(v-sc.lo)/(sc.hi-sc.lo));const cw=(W-L-R)/12;const bw=Math.max(4,Math.min(22,cw*.3));
+  let s='<svg viewBox="0 0 '+W+' '+H+'" height="'+H+'" role="img" aria-label="Evolução mensal de recebimentos, custos e resultado">';
+  sc.t.forEach(v=>{s+='<line class="'+(v===0?"zl":"gl")+'" x1="'+L+'" x2="'+(W-R)+'" y1="'+y(v)+'" y2="'+y(v)+'"/><text x="'+(L-8)+'" y="'+(y(v)+4)+'" text-anchor="end">'+fAx(v)+'</text>'});
+  ms.forEach((x,i)=>{const cx=L+cw*i+cw/2;if(x.k===MES)s+='<rect class="sel-m" x="'+(L+cw*i+1)+'" y="'+T+'" width="'+(cw-2)+'" height="'+(H-T-B)+'" rx="6"/>';
+    s+='<text x="'+cx+'" y="'+(H-8)+'" text-anchor="middle" style="'+(x.k===MES?"fill:var(--text);font-weight:700":"")+'">'+(cw<34?MESES[i].charAt(0):MESES[i])+'</text>';
+    const d=dados[i];if(!d)return;const y0=y(0);
+    [[d.rec,"var(--s-rec)",-1],[d.cus,"var(--s-cus)",1]].forEach(([v,c,o])=>{const yy=y(Math.max(v,0)),hh=Math.abs(y(v)-y0);const bx=cx+(o<0?-bw-1:1);s+='<path d="'+barPath(bx,yy,bw,hh,v>=0)+'" fill="'+c+'"/>'})});
+  const pts=dados.map((d,i)=>d?[L+cw*i+cw/2,y(d.rl)]:null);let seg=[];const segs=[];pts.forEach(p=>{if(p)seg.push(p);else{if(seg.length)segs.push(seg);seg=[]}});if(seg.length)segs.push(seg);
+  segs.forEach(sg=>{s+='<polyline points="'+sg.map(p=>p.join(",")).join(" ")+'" fill="none" stroke="var(--s-res)" stroke-width="2" stroke-linejoin="round"/>'});
+  pts.forEach(p=>{if(p)s+='<circle cx="'+p[0]+'" cy="'+p[1]+'" r="4" fill="var(--s-res)" stroke="#fff" stroke-width="2"/>'});
+  ms.forEach((x,i)=>{if(dados[i])s+='<rect class="hit" data-i="'+i+'" x="'+(L+cw*i)+'" y="'+T+'" width="'+cw+'" height="'+(H-T-B)+'"/>'});
+  el.innerHTML=s+'</svg>';
+  ligar(el,{tip:i=>{const d=dados[i];return'<b>'+MESES_L[i].replace(/^./,c=>c.toUpperCase())+'/'+ANO+'</b>'+tipRow("var(--s-rec)","Total recebido",fK(d.rec))+tipRow("var(--s-cus)","Custos totais",fK(d.cus))+tipRow("var(--s-res)","Resultado líquido",fK(d.rl),1)+'<div class="small" style="opacity:.7;margin-top:3px">'+(ms[i].c.fonte==="pdf"?"Relatório FI-025":"Planilha")+'</div>'},click:i=>{MES=ms[i].k;render()}});
+}
+function barPath(x,y,w,h,up){const r=Math.min(4,w/2,h);if(h<=0)return"";if(up)return"M"+x+","+(y+h)+"V"+(y+r)+"Q"+x+","+y+" "+(x+r)+","+y+"H"+(x+w-r)+"Q"+(x+w)+","+y+" "+(x+w)+","+(y+r)+"V"+(y+h)+"Z";return"M"+x+","+y+"V"+(y+h-r)+"Q"+x+","+(y+h)+" "+(x+r)+","+(y+h)+"H"+(x+w-r)+"Q"+(x+w)+","+(y+h)+" "+(x+w)+","+(y+h-r)+"V"+y+"Z"}
+function gMargem(el,ms){if(!el)return;const W=el.clientWidth||400,H=280,L=44,R=10,T=12,B=26;
+  const metas=metasAno(ANO);const dm=derivar(metaMensal(metas));const meta=metas&&dm.base?dm.mcp:null;
+  const vals=ms.map(x=>x.c?x.c.d.mcp:null);const all=vals.filter(v=>v!=null).concat(meta!=null?[meta]:[],[0]);const sc=escala(Math.min(...all),Math.max(...all),5);
+  const y=v=>T+(H-T-B)*(1-(v-sc.lo)/(sc.hi-sc.lo));const cw=(W-L-R)/12;
+  let s='<svg viewBox="0 0 '+W+' '+H+'" height="'+H+'" role="img" aria-label="Margem de contribuição por mês">';
+  sc.t.forEach(v=>{s+='<line class="'+(v===0?"zl":"gl")+'" x1="'+L+'" x2="'+(W-R)+'" y1="'+y(v)+'" y2="'+y(v)+'"/><text x="'+(L-6)+'" y="'+(y(v)+4)+'" text-anchor="end">'+Math.round(v*100)+'%</text>'});
+  if(meta!=null)s+='<line x1="'+L+'" x2="'+(W-R)+'" y1="'+y(meta)+'" y2="'+y(meta)+'" stroke="var(--faint)" stroke-width="2" stroke-dasharray="5 4"/><text x="'+(W-R)+'" y="'+(y(meta)-6)+'" text-anchor="end">meta '+fP(meta,0)+'</text>';
+  ms.forEach((x,i)=>{s+='<text x="'+(L+cw*i+cw/2)+'" y="'+(H-8)+'" text-anchor="middle" style="'+(x.k===MES?"fill:var(--text);font-weight:700":"")+'">'+MESES[i].charAt(0)+'</text>'});
+  let seg=[];const segs=[];vals.forEach((v,i)=>{if(v!=null)seg.push([L+cw*i+cw/2,y(v)]);else{if(seg.length)segs.push(seg);seg=[]}});if(seg.length)segs.push(seg);
+  segs.forEach(sg=>{s+='<polyline points="'+sg.map(p=>p.join(",")).join(" ")+'" fill="none" stroke="var(--s-res)" stroke-width="2" stroke-linejoin="round"/>'});
+  vals.forEach((v,i)=>{if(v!=null)s+='<circle cx="'+(L+cw*i+cw/2)+'" cy="'+y(v)+'" r="'+(ms[i].k===MES?5.5:4)+'" fill="'+(v<0?"var(--red)":"var(--s-res)")+'" stroke="#fff" stroke-width="2"/><rect class="hit" data-i="'+i+'" x="'+(L+cw*i)+'" y="'+T+'" width="'+cw+'" height="'+(H-T-B)+'"/>'});
+  el.innerHTML=s+'</svg>';
+  ligar(el,{tip:i=>{const c=ms[i].c;return'<b>'+mkLabel(ms[i].k)+'</b>'+tipRow("var(--s-res)","Margem",fP(c.d.mcp),1)+tipRow("","Valor",fK(c.d.mc))+(meta!=null?tipRow("","Meta",fP(meta)):"")},click:i=>{MES=ms[i].k;render()}});
+}
+function gBarrasH(el,itens,base){if(!el)return;if(!itens.length){el.innerHTML='<div class="muted small" style="padding:20px 0">Sem custos no período.</div>';return}
+  const W=el.clientWidth||400,rh=30,H=itens.length*rh+4,LW=Math.min(210,W*.45),VW=70;const max=Math.max(...itens.map(x=>x.v));const bw=W-LW-VW-8;
+  let s='<svg viewBox="0 0 '+W+' '+H+'" height="'+H+'" role="img" aria-label="Maiores custos do período">';
+  itens.forEach((x,i)=>{const y=i*rh+4;const w=Math.max(2,bw*x.v/max);const mc=Math.floor((LW-8)/6.2);const nm=x.n.length>mc?x.n.slice(0,mc-1)+"…":x.n;
+    s+='<text x="0" y="'+(y+15)+'" style="fill:var(--text)">'+esc(nm)+'</text><path d="'+barH(LW,y+5,w,14)+'" fill="var(--s-cus)"/><text class="tv" x="'+(LW+w+6)+'" y="'+(y+16)+'">'+fAx(x.v)+'</text><rect class="hit" data-i="'+i+'" x="0" y="'+y+'" width="'+W+'" height="'+rh+'"/>'});
+  el.innerHTML=s+'</svg>';
+  ligar(el,{tip:i=>'<b>'+esc(itens[i].n)+'</b>'+tipRow("var(--s-cus)","Realizado",fR(itens[i].v))+tipRow("","% do recebido",fP(base?itens[i].v/base:null)),click:i=>abrirLinha(itens[i].id)});
+}
+function barH(x,y,w,h){const r=Math.min(4,w/2,h/2);return"M"+x+","+y+"H"+(x+w-r)+"Q"+(x+w)+","+y+" "+(x+w)+","+(y+r)+"V"+(y+h-r)+"Q"+(x+w)+","+(y+h)+" "+(x+w-r)+","+(y+h)+"H"+x+"Z"}
+function barHn(x,y,w,h){const r=Math.min(4,w/2,h/2);return"M"+x+","+y+"H"+(x-w+r)+"Q"+(x-w)+","+y+" "+(x-w)+","+(y+r)+"V"+(y+h-r)+"Q"+(x-w)+","+(y+h)+" "+(x-w+r)+","+(y+h)+"H"+x+"Z"}
+function gDesvios(el,itens){if(!el)return;if(!itens.length){el.innerHTML='<div class="muted small" style="padding:20px 0">Sem desvios no período.</div>';return}
+  const W=el.clientWidth||400,rh=34,H=itens.length*rh+4,LW=Math.min(200,W*.42);const max=Math.max(...itens.map(x=>Math.abs(x.v)));const half=(W-LW)/2-48;const cx=LW+(W-LW)/2;
+  let s='<svg viewBox="0 0 '+W+' '+H+'" height="'+H+'" role="img" aria-label="Desvios contra o previsto"><line class="zl" x1="'+cx+'" x2="'+cx+'" y1="0" y2="'+H+'"/>';
+  itens.forEach((x,i)=>{const y=i*rh+4;const w=Math.max(2,half*Math.abs(x.v)/max);const mc=Math.floor((LW-8)/6.2);const nm=x.n.length>mc?x.n.slice(0,mc-1)+"…":x.n;
+    s+='<text x="0" y="'+(y+17)+'" style="fill:var(--text)">'+esc(nm)+'</text>';
+    if(x.v>0)s+='<path d="'+barH(cx,y+7,w,14)+'" fill="var(--d-acima)"/><text class="tv" x="'+(cx+w+5)+'" y="'+(y+18)+'">+'+fAx(x.v)+'</text>';
+    else s+='<path d="'+barHn(cx,y+7,w,14)+'" fill="var(--d-abaixo)"/><text class="tv" x="'+(cx-w-5)+'" y="'+(y+18)+'" text-anchor="end">'+fAx(x.v)+'</text>';
+    s+='<rect class="hit" data-i="'+i+'" x="0" y="'+y+'" width="'+W+'" height="'+rh+'"/>'});
+  el.innerHTML=s+'</svg>';
+  ligar(el,{tip:i=>{const x=itens[i];return'<b>'+esc(x.n)+'</b>'+tipRow("","Realizado",fR(x.r))+tipRow("","Previsto",fR(x.p))+tipRow(x.v>0?"var(--d-acima)":"var(--d-abaixo)","Diferença",(x.v>0?"+":"")+fR(x.v))},click:i=>abrirLinha(itens[i].id)});
+}
+
+/* ---------- DRE GERENCIAL ---------- */
+function renderDRE(m){
+  if(!MES){m.innerHTML=vazio();return}
+  const P=periodo();const base=P.d.base;
+  const cel=(x,cls)=>'<td class="num '+(cls||"")+'">'+(x==null||!isFinite(x)?"—":fR(x))+'</td>';
+  const pct=x=>x==null||!isFinite(x)?"—":fP(x,0);
+  function linha(l){const r=P.v[l.id],p=P.p[l.id],mt=P.meta[l.id],hm=P.hm[l.id];if(ZERADAS===false&&!r&&!p&&!mt)return"";
+    const bom=l.nat==="R";const dif=r-p;const cls=Math.abs(dif)<0.5?"":(bom?dif>0:dif<0)?"pos":"neg";
+    const temAj=P.ms.some(k=>Object.values((S.meses[k]||{}).ajustes||{}).some(a=>a.para===l.id||a.de===l.id));
+    return'<tr class="ln" onclick="abrirLinha(\''+l.id+'\')"><td class="nm">'+esc(l.nome)+(temAj?'<span class="tag" title="Tem lançamento manual">ajuste</span>':"")+'</td>'+cel(mt)+cel(p)+cel(r)+'<td class="num '+cls+'">'+(Math.abs(dif)<0.5?"—":(dif>0?"+":"")+fR(dif))+'</td><td class="num">'+(p?pct(r/p):"—")+'</td><td class="num">'+(base?pct(r/base):"—")+'</td>'+cel(hm)+'</tr>'}
+  function tot(nome,r,p,mt,hm,bom,cls){const dif=(r==null||p==null)?NaN:r-p;const c=Math.abs(dif)<0.5?"":(bom?dif>0:dif<0)?"pos":"neg";return'<tr class="tot '+(cls||"")+'"><td>'+nome+'</td>'+cel(mt)+cel(p)+cel(r,r<0?"neg":"")+'<td class="num '+c+'">'+(!isFinite(dif)||Math.abs(dif)<0.5?"—":(dif>0?"+":"")+fR(dif))+'</td><td class="num">'+(p&&r!=null?pct(r/p):"—")+'</td><td class="num">'+(base&&r!=null?pct(r/base):"—")+'</td>'+cel(hm)+'</tr>'}
+  const d=P.d,dp=P.dp,dm=P.dm,dh=P.dh||{};
+  let rows='';
+  rows+='<tr class="grp"><td colspan="8">Receitas</td></tr>'+LINHAS.filter(l=>l.g==="rec").map(linha).join("")+tot("Total recebido",d.tot,dp.tot,dm.tot,dh.tot,true);
+  rows+='<tr class="grp"><td colspan="8">Custos variáveis</td></tr>'+LINHAS.filter(l=>l.g==="cv").map(linha).join("")+tot("Custos variáveis",d.cv,dp.cv,dm.cv,dh.cv,false)+tot("Margem de contribuição <span class='muted small'>("+fP(d.mcp)+")</span>",d.mc,dp.mc,dm.mc,dh.mc,true,"big");
+  rows+='<tr class="grp"><td colspan="8">Custos fixos</td></tr>'+LINHAS.filter(l=>l.g==="cf").map(linha).join("")+tot("Custos fixos",d.cf,dp.cf,dm.cf,dh.cf,false)+tot("Resultado operacional",d.ro,dp.ro,dm.ro,dh.ro,true,"big");
+  rows+='<tr class="grp"><td colspan="8">Extra-operacional</td></tr>'+LINHAS.filter(l=>l.g==="ext").map(linha).join("")+tot("Resultado extra-operacional",d.ext,dp.ext,dm.ext,dh.ext,true)+tot("Resultado líquido",d.rl,dp.rl,dm.rl,dh.rl,true,"big");
+  rows+='<tr class="grp"><td colspan="8">Pontos de equilíbrio</td></tr>'+tot("Ponto de equilíbrio operacional",d.peOp,dp.peOp,dm.peOp,dh.peOp,false)+tot("Ponto de equilíbrio financeiro",d.peFin,dp.peFin,dm.peFin,dh.peFin,false);
+  m.innerHTML='<div class="card"><div class="ch-h"><div><h3>DRE gerencial — '+perLabel()+'</h3><div class="sub">Previsto = meta de cada linha ajustada ao recebido do mês (custos variáveis em % do recebimento, fixos em R$). Clique numa linha para ver as contas do relatório, a evolução e lançar ajustes.</div></div><label class="small" style="display:flex;gap:6px;align-items:center"><input type="checkbox" '+(ZERADAS?"checked":"")+' onchange="ZERADAS=this.checked;render()"> Mostrar linhas zeradas</label></div>'+
+   '<div class="tw"><table class="t"><thead><tr><th>Linha</th><th>Meta</th><th>Previsto</th><th>Realizado</th><th>Diferença</th><th>% prev.</th><th>% receb.</th><th>Média '+(+ANO-1)+'</th></tr></thead><tbody>'+rows+'</tbody></table></div></div>';
+}
+
+/* ---------- painel da linha ---------- */
+function abrirLinha(id){LINHA_ABERTA=id;renderLinha();document.getElementById("drawer").classList.add("on")}
+function fecharDrawer(){document.getElementById("drawer").classList.remove("on");LINHA_ABERTA=null}
+function optsLinhas(sel,extra){return(extra||"")+GRUPOS.map(([g,gn])=>'<optgroup label="'+gn+'">'+LINHAS.filter(l=>l.g===g).map(l=>'<option value="'+l.id+'"'+(l.id===sel?" selected":"")+'>'+esc(l.nome)+'</option>').join("")+'</optgroup>').join("")}
+function renderLinha(){const id=LINHA_ABERTA;if(!id)return;const l=LIN[id];const dw=document.getElementById("dw");
+  const ms=[];for(let i=1;i<=12;i++){const k=ANO+"-"+String(i).padStart(2,"0");ms.push({k,c:S.meses[k]?calcMes(k):null})}
+  const vals=ms.map(x=>x.c?x.c.v[id]:null),prev=ms.map(x=>x.c?x.c.p[id]:null);
+  let h='<div class="dw-h"><div style="flex:1"><div class="small muted">'+GRUPOS.find(g=>g[0]===l.g)[1]+'</div><h2>'+esc(l.nome)+'</h2></div><button class="x" onclick="fecharDrawer()" aria-label="Fechar">×</button></div>';
+  h+='<div class="chart" id="g-lin"></div><div class="leg" style="margin-top:6px"><span><i style="background:var(--s-cus)"></i>Realizado</span><span><i class="ln" style="background:var(--muted)"></i>Previsto</span></div>';
+  const c=S.meses[MES]?calcMes(MES):null;const mes=S.meses[MES]||{};
+  h+='<div class="sec">'+mkLong(MES).replace(/^./,x=>x.toUpperCase())+' — realizado '+fR(c?c.v[id]:0,2)+' · previsto '+fR(c?c.p[id]:0,2)+'</div>';
+  if(mes.fonte==="pdf"){const dp=deparaEf();const cs=Object.entries(mes.contas||{}).filter(([k])=>{const x=dpNorm(dp[k]);return x&&x.l===id});
+    h+=cs.length?cs.sort((a,b)=>b[1].v-a[1].v).map(([k,x])=>{const d=dpNorm(dp[k]);const sg=d.s==="+"?1:d.s==="-"?-1:(x.t===l.nat?1:-1);return'<div class="row"><div class="f"><b>'+k.slice(1)+'</b> · '+esc(x.d)+'<div class="small muted">tipo '+x.t+(sg<0?" · subtrai desta linha":"")+'</div></div><span class="num">'+(sg<0?"−":"")+fR(x.v,2)+'</span><select class="sel btn-sm" style="max-width:150px" title="Mover esta conta para outra linha" onchange="salvarDepara(\''+k+'\',this.value,\''+(d.s||"")+'\')">'+optsLinhas(id,'<option value="ign">Não entra no resultado</option>')+'</select></div>'}).join(""):'<div class="small muted">Nenhuma conta do relatório cai nesta linha neste mês.</div>'}
+  else if(mes.fonte==="planilha")h+='<div class="small muted">Mês carregado da planilha: valor por linha, sem o detalhe das contas. Importe o FI-025 deste mês para ver as contas.</div>';
+  const aj=Object.entries(mes.ajustes||{}).filter(([,a])=>a.para===id||a.de===id);
+  h+='<div class="sec">Lançamentos manuais e reclassificações</div>';
+  h+=aj.length?aj.map(([k,a])=>{const sai=a.de===id;return'<div class="row"><div class="f">'+(a.de?(sai?"Reclassificado para <b>"+esc(LIN[a.para]?.nome||a.para)+"</b>":"Reclassificado de <b>"+esc(LIN[a.de]?.nome||a.de)+"</b>"):"Lançamento manual")+'<div class="small muted">'+esc(a.obs||"")+(a.por?" · "+esc(a.por):"")+'</div></div><span class="num">'+(sai?"−":"+")+fR(+a.v,2)+'</span><button class="btn btn-r btn-sm" onclick="excluirAjuste(\''+k+'\')">Excluir</button></div>'}).join(""):'<div class="small muted">Nenhum neste mês.</div>';
+  if(S.meses[MES])h+='<div class="frm"><div><label>Tipo</label><select class="sel" id="aj-t" onchange="document.getElementById(\'aj-de-w\').style.display=this.value===\'rec\'?\'\':\'none\'"><option value="man">Lançamento manual (valor fora do relatório)</option><option value="rec">Trazer valor de outra linha</option></select></div><div><label>Valor (R$)</label><input class="inp num" id="aj-v" type="number" step="0.01" inputmode="decimal" placeholder="use negativo para reduzir"></div><div class="full" id="aj-de-w" style="display:none"><label>Tirar de</label><select class="sel" id="aj-de">'+optsLinhas(null)+'</select></div><div class="full"><label>Observação</label><input class="inp" id="aj-o" placeholder="ex: inadimplência do relatório de contas a receber"></div><div class="full"><button class="btn btn-g" onclick="salvarAjuste()">Lançar em '+mkLabel(MES)+'</button></div></div>';
+  dw.innerHTML=h;
+  /* mini gráfico: barras realizado + traço previsto */
+  const el=document.getElementById("g-lin");const W=el.clientWidth||500,H=170,L=50,R=6,T=10,B=22;const all=vals.concat(prev).filter(v=>v!=null).concat([0]);const sc=escala(Math.min(...all),Math.max(...all),4);const y=v=>T+(H-T-B)*(1-(v-sc.lo)/(sc.hi-sc.lo));const cw=(W-L-R)/12,bw=Math.min(20,cw*.55);
+  let s='<svg viewBox="0 0 '+W+' '+H+'" height="'+H+'">';sc.t.forEach(v=>{s+='<line class="'+(v===0?"zl":"gl")+'" x1="'+L+'" x2="'+(W-R)+'" y1="'+y(v)+'" y2="'+y(v)+'"/><text x="'+(L-6)+'" y="'+(y(v)+4)+'" text-anchor="end">'+fAx(v)+'</text>'});
+  ms.forEach((x,i)=>{const cx=L+cw*i+cw/2;s+='<text x="'+cx+'" y="'+(H-6)+'" text-anchor="middle" style="'+(x.k===MES?"fill:var(--text);font-weight:700":"")+'">'+MESES[i].charAt(0)+'</text>';if(vals[i]==null)return;const v=vals[i];s+='<path d="'+barPath(cx-bw/2,y(Math.max(v,0)),bw,Math.abs(y(v)-y(0)),v>=0)+'" fill="var(--s-cus)" opacity="'+(x.k===MES?1:.55)+'"/>';if(prev[i])s+='<line x1="'+(cx-bw/2-3)+'" x2="'+(cx+bw/2+3)+'" y1="'+y(prev[i])+'" y2="'+y(prev[i])+'" stroke="var(--text)" stroke-width="2"/>';s+='<rect class="hit" data-i="'+i+'" x="'+(L+cw*i)+'" y="'+T+'" width="'+cw+'" height="'+(H-T-B)+'"/>'});
+  el.innerHTML=s+'</svg>';ligar(el,{tip:i=>'<b>'+mkLabel(ms[i].k)+'</b>'+tipRow("var(--s-cus)","Realizado",fR(vals[i]))+tipRow("","Previsto",fR(prev[i])),click:i=>{MES=ms[i].k;render();renderLinha()}});
+}
+function salvarAjuste(){const t=document.getElementById("aj-t").value,v=parseFloat(document.getElementById("aj-v").value),o=document.getElementById("aj-o").value.trim();
+  if(!v){toast("Informe o valor",true);return}if(!o){toast("Escreva uma observação — é o que explica o ajuste depois",true);return}
+  const a={para:LINHA_ABERTA,v,obs:o,por:NOME,ts:Date.now()};if(t==="rec"){a.de=document.getElementById("aj-de").value;if(a.de===a.para){toast("Escolha outra linha de origem",true);return}}
+  db.ref("fin/meses/"+MES+"/ajustes").push(a).then(()=>{toast("Ajuste lançado");setTimeout(renderLinha,50)}).catch(e=>toast("Não salvou: "+e.message,true))}
+function excluirAjuste(k){if(!confirm("Excluir este ajuste?"))return;db.ref("fin/meses/"+MES+"/ajustes/"+k).remove().then(()=>{toast("Ajuste excluído");setTimeout(renderLinha,50)})}
+function salvarDepara(cod,l,s){const pad=dpNorm(DEPARA_PADRAO[cod]);const novo={l,s:s||""};const igual=pad&&pad.l===novo.l&&(pad.s||"")===novo.s;
+  db.ref("fin/depara/"+cod).set(igual?null:novo).then(()=>{toast("Conta "+cod.slice(1)+" → "+(l==="ign"?"não entra no resultado":LIN[l]?LIN[l].nome:l)+" (vale para todos os meses)");if(LINHA_ABERTA)setTimeout(renderLinha,50)}).catch(e=>toast("Não salvou: "+e.message,true))}
+
+/* ---------- METAS ---------- */
+function renderMetas(m){const mt=metasAno(ANO);
+  if(!mt){const ant=anos().filter(a=>a<ANO&&metasAno(a)).pop();m.innerHTML='<div class="card empty"><b>Sem metas para '+ANO+'</b>'+(ant?'Comece copiando as metas de '+ant+' e ajuste o que mudou.<div class="btns"><button class="btn btn-g" onclick="copiarMetas(\''+ant+'\')">Copiar metas de '+ant+'</button></div>':'Carregue o histórico da planilha, que já traz as metas.')+'</div>';return}
+  const ms=mesesAno(ANO);const med=id=>ms.length?ms.reduce((s,k)=>s+calcMes(k).v[id],0)/ms.length:null;const h=histAno(String(+ANO-1));
+  let rows='';GRUPOS.forEach(([g,gn])=>{if(g==="rec"){return}rows+='<tr class="grp"><td colspan="6">'+gn+'</td></tr>';LINHAS.filter(l=>l.g===g).forEach(l=>{const x=(mt.linhas||{})[l.id]||{m:g==="cf"?"fixo":"pct",v:0};const rs=metaLinha({linhas:{[l.id]:x}},l.id,+mt.receita||0);
+    rows+='<tr><td class="nm">'+esc(l.nome)+'</td><td><select class="sel btn-sm" data-l="'+l.id+'" data-k="m" onchange="metaEdit(this)"><option value="pct"'+(x.m==="pct"?" selected":"")+'>% do recebimento</option><option value="fixo"'+(x.m==="fixo"?" selected":"")+'>R$ fixo por mês</option></select></td><td><input class="inp num" style="width:120px;text-align:right" type="number" step="0.01" data-l="'+l.id+'" data-k="v" value="'+(x.m==="pct"?+((+x.v||0)*100).toFixed(4):(+x.v||0))+'" onchange="metaEdit(this)"></td><td class="num">'+fR(rs)+'</td><td class="num">'+fR(med(l.id))+'</td><td class="num">'+(h&&h.linhas&&h.linhas[l.id]!=null?fR(h.linhas[l.id]/12):"—")+'</td></tr>'})});
+  m.innerHTML='<div class="card"><div class="ch-h"><div><h3>Metas de '+ANO+'</h3><div class="sub">O previsto de cada mês usa estas metas: linhas em % são aplicadas sobre o recebimento realizado do mês; linhas em R$ entram fixas. Alterações valem na hora para todos os meses do ano.</div></div></div>'+
+   '<div class="tools"><label class="small" style="font-weight:700">Meta mensal de recebimentos de operação</label><input class="inp num" id="mt-rec" type="number" step="1" style="width:160px;text-align:right" value="'+(+mt.receita||0)+'" onchange="db.ref(\'fin/metas/'+ANO+'/receita\').set(+this.value||0).then(()=>toast(\'Meta de recebimento salva\'))"><span class="small muted">= '+fR((+mt.receita||0)*12)+' no ano</span></div>'+
+   '<div class="tw"><table class="t"><thead><tr><th>Linha</th><th>Tipo</th><th>Valor (% ou R$)</th><th>Meta mensal</th><th>Média '+ANO+'</th><th>Média '+(+ANO-1)+'</th></tr></thead><tbody>'+rows+'</tbody></table></div></div>';
+}
+function metaEdit(el){const l=el.dataset.l;const mt=metasAno(ANO);const x=Object.assign({m:LIN[l].g==="cf"?"fixo":"pct",v:0},(mt.linhas||{})[l]);
+  if(el.dataset.k==="m"){const rec=+mt.receita||0;const rs=metaLinha({linhas:{[l]:x}},l,rec);x.m=el.value;x.v=x.m==="pct"?(rec?rs/rec:0):rs}else{const n=parseFloat(el.value)||0;x.v=x.m==="pct"?n/100:n}
+  db.ref("fin/metas/"+ANO+"/linhas/"+l).set(x).then(()=>toast("Meta salva")).catch(e=>toast("Não salvou: "+e.message,true))}
+function copiarMetas(a){db.ref("fin/metas/"+ANO).set(JSON.parse(JSON.stringify(metasAno(a)))).then(()=>toast("Metas copiadas de "+a))}
+
+/* ---------- CONTAS (de-para) ---------- */
+function contasVistas(){const o={};Object.keys(S.meses||{}).sort().forEach(mk=>{const c=S.meses[mk].contas||{};Object.entries(c).forEach(([k,x])=>{o[k]={cod:k,d:x.d,t:x.t,v:x.v,mk}})});const dp=deparaEf();return Object.values(o).map(c=>Object.assign(c,{dp:dpNorm(dp[c.cod]),alt:!!(S.depara||{})[c.cod]}))}
+function renderContas(m){let cs=contasVistas();const nP=cs.filter(c=>!c.dp||!c.dp.l).length,nA=cs.filter(c=>c.alt).length;
+  if(FILTRO_CONTAS==="pend"&&!nP)FILTRO_CONTAS="todas";
+  if(FILTRO_CONTAS==="pend")cs=cs.filter(c=>!c.dp||!c.dp.l);else if(FILTRO_CONTAS==="alt")cs=cs.filter(c=>c.alt);else if(FILTRO_CONTAS==="ign")cs=cs.filter(c=>c.dp&&c.dp.l==="ign");
+  const q=BUSCA.trim().toUpperCase();if(q)cs=cs.filter(c=>c.cod.slice(1)===q||c.d.toUpperCase().includes(q)||(c.dp&&LIN[c.dp.l]&&LIN[c.dp.l].nome.toUpperCase().includes(q)));
+  cs.sort((a,b)=>(+a.cod.slice(1))-(+b.cod.slice(1)));
+  const rows=cs.map(c=>'<tr><td class="num">'+c.cod.slice(1)+'</td><td class="nm">'+esc(c.d)+(c.alt?'<span class="tag" style="background:#eff6ff;color:#1d4ed8">alterada</span>':"")+'</td><td>'+c.t+'</td><td class="num">'+fR(c.v,2)+' <span class="muted small">'+mkLabel(c.mk)+'</span></td><td style="text-align:left"><select class="sel btn-sm" style="max-width:280px'+(!c.dp||!c.dp.l?";border-color:#f59e0b;background:var(--amberL)":"")+'" onchange="salvarDepara(\''+c.cod+'\',this.value,\''+((c.dp&&c.dp.s)||"")+'\')">'+(!c.dp||!c.dp.l?'<option value="" selected>— escolha a linha —</option>':"")+optsLinhas(c.dp&&c.dp.l,'<option value="ign"'+(c.dp&&c.dp.l==="ign"?" selected":"")+'>Não entra no resultado (transferência, empréstimo recebido…)</option>')+'</select></td><td style="text-align:left">'+(c.dp&&c.dp.l&&c.dp.l!=="ign"?'<select class="sel btn-sm" onchange="salvarDepara(\''+c.cod+'\',\''+c.dp.l+'\',this.value)"><option value=""'+(!c.dp.s?" selected":"")+'>Pelo tipo (R/D)</option><option value="+"'+(c.dp.s==="+"?" selected":"")+'>Sempre soma</option><option value="-"'+(c.dp.s==="-"?" selected":"")+'>Sempre subtrai</option></select>':"")+'</td></tr>').join("");
+  m.innerHTML='<div class="card"><div class="ch-h"><div><h3>Contas do relatório FI-025 → linhas da DRE gerencial</h3><div class="sub">Cada conta do relatório cai numa linha da estrutura. Mudar aqui recalcula todos os meses importados. "Pelo tipo": conta R soma em linha de receita e subtrai em linha de custo; conta D faz o contrário.</div></div></div>'+
+   '<div class="tools"><div class="chips">'+[["pend","Sem linha ("+nP+")"],["todas","Todas"],["alt","Alteradas ("+nA+")"],["ign","Fora do resultado"]].map(([k,l])=>'<button class="chip'+(FILTRO_CONTAS===k?" on":"")+'" onclick="FILTRO_CONTAS=\''+k+'\';render()">'+l+'</button>').join("")+'</div><input class="inp" placeholder="Buscar código, conta ou linha" value="'+esc(BUSCA)+'" oninput="BUSCA=this.value;clearTimeout(window._bt);window._bt=setTimeout(()=>{render();const i=document.querySelector(\'.tools .inp\');i.focus();i.setSelectionRange(i.value.length,i.value.length)},250)" style="flex:1;min-width:180px;max-width:320px"></div>'+
+   (cs.length?'<div class="tw"><table class="t"><thead><tr><th style="width:60px">Cód.</th><th>Conta no relatório</th><th>T</th><th>Último valor</th><th style="text-align:left">Linha da DRE</th><th style="text-align:left">Sinal</th></tr></thead><tbody>'+rows+'</tbody></table></div>':'<div class="empty" style="padding:30px"><b>Nada aqui</b>'+(FILTRO_CONTAS==="pend"?"Todas as contas importadas já têm linha.":"")+'</div>')+'</div>';
+}
+
+/* ---------- IMPORTAÇÕES ---------- */
+function renderImp(m){const ks=Object.keys(S.meses).sort().reverse();
+  const rows=ks.map(k=>{const x=S.meses[k];const c=calcMes(k);const inf=x.info||{};return'<tr><td><b>'+mkLabel(k)+'</b></td><td style="text-align:left">'+(x.fonte==="pdf"?"Relatório FI-025":"Planilha")+'</td><td style="text-align:left" class="small">'+esc(inf.arquivo||"")+'</td><td class="small">'+(inf.importadoEm?new Date(inf.importadoEm).toLocaleString("pt-BR",{day:"2-digit",month:"2-digit",year:"2-digit",hour:"2-digit",minute:"2-digit"})+(inf.por?" · "+esc(inf.por):""):"—")+'</td><td class="num">'+fK(c.d.tot)+'</td><td class="num '+(c.d.rl<0?"neg":"pos")+'">'+fK(c.d.rl)+'</td><td class="num">'+(Object.keys(c.pend).length?'<span class="tag">'+Object.keys(c.pend).length+' sem linha</span>':"")+(Object.keys(x.ajustes||{}).length?'<span class="tag" style="background:#f1f5f9;color:#475569">'+Object.keys(x.ajustes).length+' ajuste(s)</span>':"")+'</td><td><button class="btn btn-r btn-sm" onclick="excluirMes(\''+k+'\')">Excluir</button></td></tr>'}).join("");
+  m.innerHTML='<div class="card"><div class="ch-h"><div><h3>Meses carregados</h3><div class="sub">Importe o FI-025 (DRE Fluxo Ajustado) de cada mês. Reimportar um mês substitui as contas e mantém os ajustes manuais.</div></div><button class="btn btn-o" onclick="document.getElementById(\'f-hist2\').click()">Carregar histórico (.json)</button><button class="btn btn-g" onclick="abrirImport()">⬆ Importar FI-025</button><input type="file" id="f-hist2" accept=".json,application/json" style="display:none" onchange="carregarHistorico(this)"></div>'+
+   (ks.length?'<div class="tw"><table class="t"><thead><tr><th>Mês</th><th style="text-align:left">Fonte</th><th style="text-align:left">Arquivo</th><th>Importado</th><th>Total recebido</th><th>Resultado líquido</th><th></th><th></th></tr></thead><tbody>'+rows+'</tbody></table></div>':'<div class="empty" style="padding:30px"><b>Nenhum mês ainda</b></div>')+'</div>';
+}
+function excluirMes(k){if(!confirm("Excluir "+mkLong(k)+"? As contas e os ajustes deste mês serão apagados."))return;db.ref("fin/meses/"+k).remove().then(()=>toast("Mês excluído"))}
+function carregarHistorico(inp){const f=inp.files&&inp.files[0];if(!f)return;const r=new FileReader();r.onload=()=>{let j;try{j=JSON.parse(r.result)}catch(e){toast("Arquivo inválido",true);return}
+  if(j.tipo!=="meta-financeiro-historico"){toast("Esse arquivo não é o histórico do Meta Financeiro",true);return}
+  const up={};let n=0,pul=0;Object.entries(j.meses||{}).forEach(([k,x])=>{const ex=S.meses[k];if(ex&&ex.fonte==="pdf"&&x.fonte!=="pdf"){pul++;return}if(ex&&!confirm("Já existe "+mkLong(k)+". Substituir pelo do arquivo?")){pul++;return}x.info=Object.assign({},x.info,{importadoEm:Date.now(),por:NOME});up["fin/meses/"+k]=x;n++});
+  Object.entries(j.metas||{}).forEach(([a,x])=>{if(!S.metas[a]||confirm("Substituir as metas de "+a+" pelas do arquivo?"))up["fin/metas/"+a]=x});
+  Object.entries(j.hist||{}).forEach(([a,x])=>{up["fin/hist/"+a]=x});
+  if(j.empresa&&!S.config.empresa)up["fin/config/empresa"]=j.empresa;
+  db.ref().update(up).then(()=>toast(n+" mês(es) carregado(s)"+(pul?", "+pul+" mantido(s)":""))).catch(e=>toast("Não salvou: "+e.message,true))};r.readAsText(f);inp.value=""}
+
+/* ---------- IMPORTAR FI-025 ---------- */
+function abrirImport(){IMP=null;document.getElementById("md").innerHTML='<h2>Importar relatório FI-025</h2><div class="muted small">DRE Fluxo Ajustado do mês, em PDF, como sai do sistema. O sistema lê as contas, confere com os totais do relatório e classifica cada conta na linha da DRE gerencial.</div><label class="drop" id="drop"><input type="file" accept="application/pdf,.pdf" onchange="lerPdf(this.files[0])"><div style="font-size:26px">📄</div>Toque para escolher o PDF ou arraste aqui</label><div id="imp-r"></div><div class="md-f"><button class="btn btn-o" onclick="fecharModal()">Cancelar</button></div>';
+  document.getElementById("modal").classList.add("on");const d=document.getElementById("drop");["dragover","dragenter"].forEach(e=>d.addEventListener(e,ev=>{ev.preventDefault();d.classList.add("ov")}));["dragleave","drop"].forEach(e=>d.addEventListener(e,ev=>{ev.preventDefault();d.classList.remove("ov")}));d.addEventListener("drop",ev=>{const f=ev.dataTransfer.files[0];if(f)lerPdf(f)})}
+function fecharModal(){document.getElementById("modal").classList.remove("on");IMP=null}
+let _pdfjs=null;async function pdfjs(){if(_pdfjs)return _pdfjs;_pdfjs=await import(PDFJS_URL);_pdfjs.GlobalWorkerOptions.workerSrc=PDFJS_WORKER;return _pdfjs}
+async function lerPdf(f){if(!f)return;const out=document.getElementById("imp-r");out.innerHTML='<p class="muted" style="margin-top:14px">Lendo '+esc(f.name)+'…</p>';
+  try{const lib=await pdfjs();const doc=await lib.getDocument({data:new Uint8Array(await f.arrayBuffer())}).promise;const pages=[];
+    for(let p=1;p<=doc.numPages;p++){const pg=await doc.getPage(p);const tc=await pg.getTextContent();pages.push(tc.items.filter(i=>i.str!=null).map(i=>({s:i.str,x:i.transform[4],y:i.transform[5]})))}
+    const r=parseFI025(pages);r.arquivo=f.name;prepararImport(r)}
+  catch(e){console.error(e);out.innerHTML='<p class="err" style="margin-top:14px">Não consegui ler esse PDF ('+esc(e.message||e)+').</p>'}}
+function prepararImport(r){const out=document.getElementById("imp-r");
+  if(!r.contas.length||!r.ini){out.innerHTML='<p class="err" style="margin-top:14px">Não encontrei as contas do FI-025 neste arquivo. Confira se é o relatório "DRE FLUXO AJUSTADO".</p>';return}
+  if(r.ini.slice(0,7)!==r.fim.slice(0,7)){out.innerHTML='<p class="err" style="margin-top:14px">O relatório cobre '+r.ini.split("-").reverse().join("/")+' a '+r.fim.split("-").reverse().join("/")+'. Gere o FI-025 de um mês só (dia 1 ao último dia).</p>';return}
+  const mk=r.ini.slice(0,7);const contas={};r.contas.forEach(c=>{const k="c"+c.cod;const x=contas[k]=contas[k]||{d:c.desc,v:0,t:c.t};x.v=Math.round((x.v+(c.t===x.t?c.v:-c.v))*100)/100});
+  IMP={r,mk,contas,escolhas:{}};desenharImport()}
+function desenharImport(){const{r,mk,contas}=IMP;const out=document.getElementById("imp-r");const ex=S.meses[mk];
+  const dp=Object.assign(deparaEf());Object.entries(IMP.escolhas).forEach(([k,v])=>{if(v)dp[k]={l:v,s:""}});
+  const pend=Object.entries(contas).filter(([k])=>{const d=dpNorm(dp[k]);return!d||!d.l});
+  const{v}=valoresMes({contas},dp);const d=derivar(v);
+  let h='<div class="chk"><div><div class="l">Empresa</div><div style="font-weight:700;margin-top:2px">'+esc(r.empresa||"—")+'</div></div><div><div class="l">Mês</div><div class="v">'+mkLabel(mk)+'</div></div><div><div class="l">Contas lidas</div><div class="v">'+r.contas.length+'</div></div><div><div class="l">Receitas</div><div class="v">'+fR(r.somaR,2)+'</div></div><div><div class="l">Despesas</div><div class="v">'+fR(r.somaD,2)+'</div></div></div>';
+  h+=r.confere?'<p class="ok">✓ A soma das contas confere com os totais gerais do relatório.</p>':'<p class="err">✗ A soma das contas não bate com os totais do relatório (receitas '+fR(r.totR,2)+', despesas '+fR(r.totD,2)+'). Algumas linhas podem não ter sido lidas — confira antes de salvar.</p>';
+  if(S.config.empresa&&r.empresa&&S.config.empresa!==r.empresa)h+='<p class="err" style="margin-top:6px">Atenção: este relatório é de '+esc(r.empresa)+', e os meses já carregados são de '+esc(S.config.empresa)+'.</p>';
+  if(ex)h+='<p style="margin-top:8px;color:var(--amber);font-weight:600">'+mkLong(mk).replace(/^./,c=>c.toUpperCase())+' já está carregado ('+(ex.fonte==="pdf"?"relatório":"planilha")+'). Ao salvar, as contas são substituídas'+(Object.keys(ex.ajustes||{}).length?" e os "+Object.keys(ex.ajustes).length+" ajuste(s) manuais são mantidos":"")+(ex.fonte==="planilha"?"; linhas que vinham só da planilha (ex: inadimplência) viram ajustes manuais para não se perderem":"")+'.</p>';
+  if(pend.length)h+='<div class="sec">'+pend.length+' conta'+(pend.length>1?"s":"")+' nova'+(pend.length>1?"s":"")+' — escolha a linha</div>'+pend.map(([k,x])=>'<div class="row"><div class="f"><b>'+k.slice(1)+'</b> · '+esc(x.d)+'<div class="small muted">tipo '+x.t+'</div></div><span class="num">'+fR(x.v,2)+'</span><select class="sel btn-sm" style="max-width:220px" onchange="IMP.escolhas[\''+k+'\']=this.value;desenharImport()"><option value="">— decidir depois —</option>'+optsLinhas(IMP.escolhas[k],'<option value="ign"'+(IMP.escolhas[k]==="ign"?" selected":"")+'>Não entra no resultado</option>')+'</select></div>').join("")+'<div class="small muted" style="margin-top:6px">Contas sem linha ficam fora do resultado e aparecem em "Contas do relatório" para classificar depois.</div>';
+  h+='<div class="sec">Prévia do mês</div><div class="chk" style="margin-top:0"><div><div class="l">Total recebido</div><div class="v">'+fK(d.tot)+'</div></div><div><div class="l">Custos variáveis</div><div class="v">'+fK(d.cv)+'</div></div><div><div class="l">Custos fixos</div><div class="v">'+fK(d.cf)+'</div></div><div><div class="l">Resultado líquido</div><div class="v" style="color:'+(d.rl<0?"var(--red)":"var(--G)")+'">'+fK(d.rl)+'</div></div></div><div class="small muted">Prévia sem os ajustes manuais do mês.</div>';
+  out.innerHTML=h;document.querySelector("#md .md-f").innerHTML='<button class="btn btn-o" onclick="fecharModal()">Cancelar</button><button class="btn btn-g" onclick="salvarImport()">Salvar '+mkLabel(mk)+'</button>'}
+function salvarImport(){const{r,mk,contas}=IMP;const ex=S.meses[mk];const up={};const b="fin/meses/"+mk+"/";
+  up[b+"fonte"]="pdf";up[b+"contas"]=contas;up[b+"linhas"]=null;up[b+"info"]={empresa:r.empresa,ini:r.ini,fim:r.fim,totR:r.totR,totD:r.totD,saldo:r.saldo,confere:r.confere,arquivo:r.arquivo||"",importadoEm:Date.now(),por:NOME};
+  Object.entries(IMP.escolhas).forEach(([k,l])=>{if(l)up["fin/depara/"+k]={l,s:""}});
+  if(ex&&ex.fonte==="planilha"&&ex.linhas){const dp=deparaEf();Object.entries(IMP.escolhas).forEach(([k,l])=>{if(l)dp[k]={l,s:""}});const{v}=valoresMes({contas},dp);
+    Object.entries(ex.linhas).forEach(([l,x])=>{if(LIN[l]&&Math.abs(+x)>0.005&&Math.abs(v[l])<0.005)up[b+"ajustes/"+db.ref().push().key]={para:l,v:+x,obs:"Trazido da planilha (linha sem conta no relatório)",por:NOME,ts:Date.now()}})}
+  if(!S.config.empresa&&r.empresa)up["fin/config/empresa"]=r.empresa;
+  db.ref().update(up).then(()=>{fecharModal();ANO=mk.slice(0,4);MES=mk;MODO="mes";TAB="geral";toast(mkLabel(mk)+" importado");render()}).catch(e=>toast("Não salvou: "+e.message,true))}
+document.addEventListener("keydown",e=>{if(e.key==="Escape"){if(document.getElementById("modal").classList.contains("on"))fecharModal();else fecharDrawer()}});
+
+</script>
+</body>
+</html>
