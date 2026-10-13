@@ -6,17 +6,17 @@
 <title>Meta Financeiro</title>
 <meta name="theme-color" content="#052e16">
 <link rel="icon" href="meta_logo.jpg">
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,500..900&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
 <style>
 :root{--bg:#f3f6f3;--card:#fff;--border:#e2e8f0;--line:#f1f5f9;--text:#0f172a;--muted:#64748b;--faint:#94a3b8;
 --G:#15803d;--GD:#052e16;--GL:#f0fdf4;--amber:#b45309;--amberL:#fffbeb;--red:#dc2626;--redL:#fef2f2;
---s-rec:#1baf7a;--s-cus:#eb6834;--s-res:#2a78d6;--d-acima:#e34948;--d-abaixo:#2a78d6;--mono:'JetBrains Mono',ui-monospace,monospace}
+--s-rec:#1baf7a;--s-cus:#eb6834;--s-res:#2a78d6;--d-acima:#e34948;--d-abaixo:#2a78d6;--mono:Inter,system-ui,sans-serif;--disp:Archivo,Inter,system-ui,sans-serif;--bg2:#eef2ef}
 *{box-sizing:border-box;margin:0;padding:0}
 html,body{min-height:100%}
-body{font-family:Inter,system-ui,sans-serif;background:var(--bg);color:var(--text);font-size:14px;-webkit-font-smoothing:antialiased}
+body{font-variant-numeric:tabular-nums;font-family:Inter,system-ui,sans-serif;background:var(--bg);color:var(--text);font-size:14px;-webkit-font-smoothing:antialiased}
 button,select,input{font-family:inherit;font-size:inherit;color:inherit}
 button{cursor:pointer}
 :focus-visible{outline:2px solid var(--G);outline-offset:2px}
@@ -133,13 +133,51 @@ table.t{width:100%;border-collapse:collapse;font-size:13px}
 .cmp{font-size:11.5px;color:var(--muted);white-space:nowrap;text-align:right}
 .vs{font-weight:700;font-family:var(--mono);font-size:11.5px}.vs.good{color:var(--G)}.vs.bad{color:var(--red)}
 .sec-t{font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:.4px;color:var(--muted);margin:2px 2px 8px}
-.kpis.ef .v{font-size:21px}
 .leg.tog span{cursor:pointer;user-select:none}.leg.tog span.off{opacity:.35;text-decoration:line-through}
 .leg i.ln.dot{background:none!important;border-top:2px dotted;height:0;border-radius:0}
 .leg i.ln.dash{background:repeating-linear-gradient(90deg,var(--faint) 0 5px,transparent 5px 8px)!important}
 .leg i.hatch{background:repeating-linear-gradient(45deg,#f8fafc 0 2px,#cbd5e1 2px 4px);border:1px solid #e2e8f0}
+
+/* ---- hierarquia visual ---- */
+.kpi .v{font-family:var(--disp);font-stretch:88%;font-weight:750;font-size:30px;letter-spacing:-.4px;line-height:1.05}
+.kpi .l{color:#475569}
+.hero{display:grid;grid-template-columns:minmax(0,1.5fr) minmax(0,1fr);gap:0;background:#052e16;color:#fff;border-radius:18px;overflow:hidden;margin-bottom:14px}
+.hero-main{padding:22px 26px 14px;position:relative}
+.hero-per{font-size:13px;color:rgba(255,255,255,.65);font-weight:500}
+.hero-lbl{font-size:15px;font-weight:600;margin-top:14px;color:rgba(255,255,255,.9)}
+.hero-num{font-family:var(--disp);font-stretch:80%;font-weight:850;font-size:clamp(46px,7vw,84px);line-height:.95;letter-spacing:-1.5px;margin:4px 0 10px}
+.hero-num.pos{color:#86efac}.hero-num.neg{color:#fca5a5}
+.hero-txt{font-size:15px;line-height:1.5;color:rgba(255,255,255,.85);max-width:62ch}
+.hero-txt b{color:#fff;font-weight:700}
+.hero-bars{margin-top:12px;max-width:520px}
+.hero-bars svg{display:block;width:100%;overflow:visible}
+.hero-side{background:rgba(255,255,255,.06);border-left:1px solid rgba(255,255,255,.1);display:flex;flex-direction:column}
+.hs{padding:16px 22px;border-bottom:1px solid rgba(255,255,255,.1);flex:1}
+.hs:last-child{border-bottom:none}
+.hs-l{font-size:13px;color:rgba(255,255,255,.7);font-weight:500}
+.hs-v{font-family:var(--disp);font-stretch:85%;font-weight:800;font-size:32px;letter-spacing:-.5px;line-height:1.1;margin:2px 0 6px}
+.hs-v.neg{color:#fca5a5}
+.hs-s{font-size:12.5px;color:rgba(255,255,255,.65);line-height:1.5}
+.hs-s b{color:#fff}.hs-s b.up{color:#86efac}.hs-s b.dn{color:#fca5a5}
+.hs-bar{height:6px;background:rgba(255,255,255,.14);border-radius:3px;overflow:hidden;margin:2px 0 6px}
+.hs-bar i{display:block;height:100%;background:#fbbf24;border-radius:3px}.hs-bar i.ok{background:#86efac}
+.cem{margin-bottom:12px}.cem h3{font-size:16px;font-weight:600}.cem h3 b{font-family:var(--disp);font-stretch:85%;font-size:20px;font-weight:800}
+.cem-wrap{position:relative;margin:6px 0 14px}
+.cem-bar{display:flex;height:34px;border-radius:8px;overflow:hidden;gap:2px;background:#fff}
+.cem-bar i{display:flex;align-items:center;justify-content:center;min-width:2px}
+.cem-bar i span{font-size:12px;font-weight:700;color:#fff;text-shadow:0 1px 1px rgba(0,0,0,.25)}
+.cem-bar i.res{background:var(--G)}
+.cem-m{position:absolute;top:-6px;bottom:-6px;border-left:2px dashed var(--red)}
+.cem-m span{position:absolute;top:-16px;left:4px;font-size:11px;font-weight:700;color:var(--red);white-space:nowrap}
+.cem-leg{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:4px 18px}
+.cem-leg>div{display:grid;grid-template-columns:10px 1fr auto;column-gap:8px;align-items:baseline;padding:5px 0;border-bottom:1px solid var(--line);font-size:13px}
+.cem-leg i{width:10px;height:10px;border-radius:3px;align-self:center}
+.cem-leg b{font-weight:700}
+.cem-leg .m{grid-column:2/4;font-size:11.5px;color:var(--muted)}.cem-leg .m.ok{color:var(--G)}.cem-leg .m.bad{color:var(--red)}
+.cem-leg .tot{font-weight:700}.cem-leg .tot i.res{background:var(--G)}.cem-leg .tot i.neg{background:var(--red)}
+@media(max-width:1000px){.hero{grid-template-columns:minmax(0,1fr)}.hero-side{border-left:none;border-top:1px solid rgba(255,255,255,.1)}}
 @media(max-width:1000px){.kpis{grid-template-columns:repeat(2,minmax(0,1fr))}.grid2,.grid2b{grid-template-columns:minmax(0,1fr)}}
-@media(max-width:560px){.kpi .v{font-size:19px}.top-in{gap:8px}.brand span{display:none}.frm{grid-template-columns:1fr}}
+@media(max-width:560px){.kf{flex-direction:column;align-items:stretch}.cmp{text-align:left}.kpi .v{font-size:24px}.hero-main{padding:18px 18px 10px}.hs{padding:12px 18px}.top-in{gap:8px}.brand span{display:none}.frm{grid-template-columns:1fr}}
 </style>
 </head>
 <body>
@@ -427,6 +465,7 @@ function alertasGestao(){const al=[];const ks=mesesAno(ANO).filter(k=>k<=MES);
     if(v>3*md&&v-md>10000)fora.push({l,v,md,s:v-md,t:"acima"});else if(ESSENCIAIS.includes(l.id)&&md>20000&&v<md/4)fora.push({l,v,md,s:md-v,t:"abaixo"})});
     fora.sort((a,b)=>b.s-a.s).slice(0,3).forEach(x=>al.push({n:"warn",t:"<b>"+esc(x.l.nome)+"</b> em "+nomeMes(MES)+": "+fK(x.v)+", contra ~"+fK(x.md)+" nos outros meses. "+(x.t==="acima"?"Conferir se é lançamento de outro mês, compra de bem ou conta errada.":"Faltou algum lançamento?"),go:"abrirLinha('"+x.l.id+"')"}))}
   /* pendências */
+  {const P=periodo();const pk=Object.keys(P.pend);if(pk.length)al.unshift({n:"bad",t:"<b>"+pk.length+" conta"+(pk.length>1?"s":"")+" do relatório sem linha na DRE</b> ("+fK(pk.reduce((s,k)=>s+P.pend[k].v,0))+") — fora do resultado até você classificar.",go:"FILTRO_CONTAS='pend';setTab('contas')"})}
   const cs=correcoes().filter(c=>!c.feito&&c.tipo==="acao");if(cs.length)al.push({n:"warn",t:"<b>"+cs.length+" correção(ões) sugerida(s)</b> nos dados vindos da planilha.",go:"setTab('imp')"});
   if(VISAO==="G"&&!temRecebiveis(posicao(MES))){const pl=S.meses[MES]?calcMes(MES).d.perdasLanc||0:0;al.push({n:pl>0?"warn":"info",t:"Posição de recebíveis de "+nomeMes(MES)+" não lançada"+(pl>0?": as perdas usam o valor lançado na planilha (<b>"+fK(pl)+"</b>, inadimplência + insolvência)":"")+". Com as faixas deste mês e do anterior, a perda passa a ser a variação da provisão.",go:"setTab('posicao')"})}
   const dv=Object.values(S.dividas||{});const semInfo=dv.filter(d=>!(+d.saldo)||(d.tipo!=="consorcio"&&!(+d.taxa))).length;if(semInfo)al.push({n:"info",t:semInfo+" contrato(s) de dívida sem saldo ou taxa: juros e cronograma ficam incompletos.",go:"setTab('dividas')"});
@@ -575,39 +614,36 @@ function renderGeral(m){
   if(!MES){m.innerHTML=vazio();return}
   const P=periodo();const d=P.d,dp=P.dp,dm=P.dm;let h="";const G=VISAO==="G";const rb=G?"da receita":"do recebido";
   const pk=Object.keys(P.pend);
-  if(pk.length)h+='<div class="alert"><span>⚠</span><span><b>'+pk.length+' conta'+(pk.length>1?"s":"")+' do relatório sem linha definida</b> ('+fK(pk.reduce((s,k)=>s+P.pend[k].v,0))+') — '+(pk.length>1?"não entram":"não entra")+' no resultado até você classificar.</span><button class="btn btn-o btn-sm" onclick="FILTRO_CONTAS=\'pend\';setTab(\'contas\')">Classificar</button></div>';
-  h+=cardAlertas();
   const K={};kpisAtivos().forEach(k=>K[k.id]=k);
   const ml=P.metas&&P.metas.linhas||{};const metaPct=id=>ml[id]&&ml[id].m==="pct"?ml[id].v:null;const metaGrp=ids=>{if(!P.metas)return null;const r=+P.metas.receita||0;const s=ids.reduce((a,id)=>a+(metaLinha(P.metas,id,r)||0),0);const b=D(metaMensal(P.metas)).base;return b?s/b:null};
   const vsMeta=(x,mt,bom)=>mt==null?"":'<span class="bdg '+((bom?x>=mt:x<=mt)?"good":"bad")+'">meta '+fP(mt)+'</span> ';
   const peFolga=d.peOp?d.base/d.peOp-1:null;const peTxt=d.peOp?(peFolga>=0?'<span class="bdg good">'+fP(peFolga,0)+' acima</span> '+(G?"receita":"recebido")+' supera o PE':'<span class="bdg bad">faltam '+fK(d.peOp-d.base)+'</span> para cobrir os fixos'):'<span class="bdg bad">margem negativa</span> sem ponto de equilíbrio';
-  h+='<div class="kpis">';
-  if(G){const metaRL=dm.tot,pm=metaRL?d.tot/metaRL:null;const cx=caixaMes(MES);const I=indicadoresPos(P.ms.slice(-1)[0]);
-    h+=kpiCard(K.rec,P,(metaRL?'<span class="bdg '+(pm>=1?"good":"bad")+'">'+fP(pm,0)+' da meta</span> meta '+fK(metaRL):"sem meta definida")+'<br>vendas '+fK(d.rec)+' · devoluções '+fK(d.dev))+
-     kpiCard(K.mb,P,fK(d.mb)+' · '+vsMeta(d.base?d.mb/d.base:0,metaPct("r30")!=null?1-metaPct("r30"):null,true)+'<br>receita líquida − CMV')+
-     kpiCard(K.mc,P,fP(d.mcp)+' da receita · '+bdg(d.mc-dp.mc,true)+' vs previsto<br>perdas com recebíveis '+fK(d.perdas)+(d.perdasEst?" (lançado)":""))+
-     kpiCard(K.ebitda,P,fP(d.base?d.ebitda/d.base:null)+' da receita · '+bdg(d.ebitda-dp.ebitda,true)+' vs previsto<br>antes de depreciação e juros')+
-     kpiCard(K.rl,P,bdg(d.rl-dp.rl,true)+' vs previsto '+fK(dp.rl)+'<br>depreciação '+fK(d.depr)+' · financeiro '+fK(d.resFin))+
-     kpiCard(K.pe,P,peTxt)+
-     kpiCard(K.cx,P,MODO==="mes"?(cx?(cx.confere?'<span class="bdg good">✓ confere com o FI-025</span>':'<span class="bdg bad">difere do FI-025</span>')+'<br>operação '+fK(cx.b.ope.tot)+' · investimentos e dívidas '+fK(cx.b.inv.tot+cx.b.fin.tot):'mês da planilha: sem detalhe das contas'):'meses com FI-025 no período')+
-     kpiCard(K.dl,P,I?'dívida líquida '+fK(I.divL)+'<br>EBITDA anualizado '+fK(I.eb12):'informe a <a href="#" onclick="setTab(\'posicao\');return false">posição do mês</a>')}
-  else{const metaRec=dm.rec;const pctMeta=metaRec?d.rec/metaRec:null;
-    h+=kpiCard(K.rec,P,(metaRec?'<span class="bdg '+(pctMeta>=1?"good":"bad")+'">'+fP(pctMeta,0)+' da meta</span> meta '+fK(metaRec):"sem meta definida")+'<br>Total recebido '+fK(d.tot))+
-     kpiCard(K.mc,P,fP(d.mcp)+' do recebido · '+bdg(d.mc-dp.mc,true)+' vs previsto')+
-     kpiCard(K.cf,P,bdg(d.cf-dp.cf,false)+' vs previsto '+fK(dp.cf)+'<br>'+fP(d.base?d.cf/d.base:null)+' do recebido')+
-     kpiCard(K.rl,P,bdg(d.rl-dp.rl,true)+' vs previsto '+fK(dp.rl)+'<br>'+fP(d.base?d.rl/d.base:null)+' do recebido')+
-     kpiCard(K.ro,P,bdg(d.ro-dp.ro,true)+' vs previsto '+fK(dp.ro)+'<br>extra-operacional '+fK(d.ext))+
-     kpiCard(K.pe,P,peTxt)+
-     kpiCard(K.cmv,P,vsMeta(d.base?d.cmv/d.base:0,metaPct("r30"),false)+fK(d.cmv))+
-     kpiCard(K.div,P,fP(d.base?d.divida/d.base:null)+' do recebido<br>empréstimos, juros, cotas e consórcios')}
-  const efs=G?["pes","log","fin","fix"]:["mbp","pes","log","fin"];
-  h+='</div><div class="sec-t">Eficiência — quanto de cada R$ 100 '+(G?"de receita":"recebidos")+' vai para</div><div class="kpis ef">'+
-   efs.map(id=>{const x=K[id].f(P.v,d,P.ms);const mt=id==="mbp"?(metaPct("r30")!=null?1-metaPct("r30"):null):id==="fix"?(dm.base?dm.cf/dm.base:null):metaGrp(GRUPOS_EF[id]);return kpiCard(K[id],P,(x!=null?'<b class="num">R$ '+(x*100).toLocaleString("pt-BR",{maximumFractionDigits:1})+'</b> de cada R$ 100 · ':"")+vsMeta(x||0,mt,K[id].bom)+'<br>'+KPI_SUB[id])}).join("")+'</div>';
+  /* ---- placar do mês: o número que importa em destaque ---- */
+  const G2=G;const metaRL=dm.tot,metaRec=dm.rec;const cx=MODO==="mes"?caixaMes(MES):null;const cxTot=K.cx?K.cx.f(P.v,d,P.ms):null;
+  h+='<section class="hero"><div class="hero-main"><div class="hero-per">'+perLabel().replace(/^./,c=>c.toUpperCase())+' · visão '+(G?"gerencial":"da planilha")+'</div>'+
+    '<div class="hero-lbl">Resultado líquido</div><div class="hero-num '+(d.rl<0?"neg":"pos")+'"><span class="cnt-up" data-n="'+d.rl+'" data-f="k">'+fK(d.rl)+'</span></div>'+
+    '<p class="hero-txt">'+veredito(P)+'</p><div class="hero-bars" id="hero-bars"></div></div>'+
+    '<div class="hero-side">'+
+      heroStat(G?"Receita líquida":"Recebimentos de operação",G?d.tot:d.rec,G?metaRL:metaRec,(G?"vendas "+fK(d.rec)+" − devoluções "+fK(d.dev):"total recebido "+fK(d.tot)))+
+      heroStat(G?"EBITDA":"Resultado operacional",d.ro,null,fP(d.base?d.ro/d.base:null)+(G?" da receita · antes de depreciação e juros":" do recebido"),dp.ro)+
+      (G?heroStat("Geração de caixa",cxTot,null,cx?(cx.confere?"confere com o FI-025":"difere do FI-025"):"só meses com FI-025"):heroStat("CMV sobre o recebido",null,null,fK(d.cmv),null,fP(d.base?d.cmv/d.base:null)))+
+    '</div></section>';
+  h+=cardAlertas();
+  /* ---- indicadores de apoio ---- */
+  const apoio=G?["mb","mc","pe","dl"]:["mc","cf","pe","div"];
+  const ext={mb:fK(d.mb)+' · '+vsMeta(d.base?d.mb/d.base:0,metaPct("r30")!=null?1-metaPct("r30"):null,true)+'<br>receita líquida − CMV',
+    mc:fP(d.mcp)+' '+rb+' · '+bdg(d.mc-dp.mc,true)+' vs previsto'+(G?'<br>perdas com recebíveis '+fK(d.perdas)+(d.perdasEst?" (lançado)":""):""),
+    pe:peTxt,cf:bdg(d.cf-dp.cf,false)+' vs previsto '+fK(dp.cf)+'<br>'+fP(d.base?d.cf/d.base:null)+' do recebido',
+    div:fP(d.base?d.divida/d.base:null)+' do recebido<br>empréstimos, juros, cotas e consórcios',
+    dl:(()=>{const I=indicadoresPos(P.ms.slice(-1)[0]);return I?'dívida líquida '+fK(I.divL)+'<br>EBITDA anualizado '+fK(I.eb12):'informe a <a href="#" onclick="setTab(\'posicao\');return false">posição do mês</a>'})()};
+  h+='<div class="kpis">'+apoio.map(id=>kpiCard(K[id],P,ext[id])).join("")+'</div>';
+  h+=cardCem(P);
+
   h+=cardProjecao();
   h+='<div class="grid2"><div class="card"><div class="ch-h"><div><h3 id="t-ponte">'+(G?"Da receita ao resultado":"Do recebido ao resultado")+' — '+perLabel()+'</h3><div class="sub">Clique numa etapa para ver o detalhe.</div></div><div class="leg"><span><i style="background:var(--s-rec)"></i>Entrada</span><span><i style="background:var(--d-acima)"></i>Saída</span><span><i style="background:var(--faint)"></i>Subtotal</span></div></div><div class="chart" id="g-ponte"></div></div>'+
      '<div class="card"><div class="ch-h"><div><h3 id="t-ritmo">Ritmo do ano</h3><div class="sub" id="s-ritmo">Recebimentos de operação acumulados contra a meta</div></div><div class="leg"><span><i class="ln" style="background:var(--s-rec)"></i>Realizado</span><span><i class="ln" style="background:var(--faint)"></i>Meta</span><span><i class="ln dot" style="border-color:var(--s-rec)"></i>Projeção</span></div></div><div class="chart" id="g-ritmo"></div></div></div>';
-  h+='<div class="grid2"><div class="card"><div class="ch-h"><div><h3>Evolução mensal — '+ANO+'</h3><div class="sub">Clique num mês para analisar; clique na legenda para esconder uma série.</div></div><div class="leg tog">'+[["rec","var(--s-rec)",G?"Receita líquida":"Total recebido",0],["cus","var(--s-cus)",G?"Custos e despesas":"Custos totais",0],["rl","var(--s-res)","Resultado líquido",1],["h25","var(--faint)","Média "+(+ANO-1),1]].map(([k,c,l,ln])=>'<span class="'+(SERIES_OFF[k]?"off":"")+'" onclick="SERIES_OFF.'+k+'=!SERIES_OFF.'+k+';desenharGraficos();this.classList.toggle(\'off\')"><i class="'+(ln?"ln":"")+(k==="h25"?" dash":"")+'" style="background:'+c+'"></i>'+l+'</span>').join("")+'</div></div><div class="chart" id="g-evo"></div></div>'+
-     '<div class="card"><div class="ch-h"><div><h3>Margem de contribuição</h3><div class="sub">% '+rb+' em cada mês</div></div><div class="leg"><span><i class="ln" style="background:var(--s-res)"></i>Realizado</span><span><i class="ln" style="background:var(--faint)"></i>Meta</span></div></div><div class="chart" id="g-mc"></div></div></div>';
+  h+='<div class="grid2"><div class="card"><div class="ch-h"><div><h3 id="t-evo">Evolução mensal — '+ANO+'</h3><div class="sub">Clique num mês para analisar; clique na legenda para esconder uma série.</div></div><div class="leg tog">'+[["rec","var(--s-rec)",G?"Receita líquida":"Total recebido",0],["cus","var(--s-cus)",G?"Custos e despesas":"Custos totais",0],["rl","var(--s-res)","Resultado líquido",1],["h25","var(--faint)","Média "+(+ANO-1),1]].map(([k,c,l,ln])=>'<span class="'+(SERIES_OFF[k]?"off":"")+'" onclick="SERIES_OFF.'+k+'=!SERIES_OFF.'+k+';desenharGraficos();this.classList.toggle(\'off\')"><i class="'+(ln?"ln":"")+(k==="h25"?" dash":"")+'" style="background:'+c+'"></i>'+l+'</span>').join("")+'</div></div><div class="chart" id="g-evo"></div></div>'+
+     '<div class="card"><div class="ch-h"><div><h3 id="t-mc">Margem de contribuição</h3><div class="sub">% '+rb+' em cada mês</div></div><div class="leg"><span><i class="ln" style="background:var(--s-res)"></i>Realizado</span><span><i class="ln" style="background:var(--faint)"></i>Meta</span></div></div><div class="chart" id="g-mc"></div></div></div>';
   h+='<div class="grid2b"><div class="card"><div class="ch-h"><div><h3>Maiores custos — '+perLabel()+'</h3><div class="sub">CMV fora do gráfico: '+fK(d.cmv)+' ('+fP(d.base?d.cmv/d.base:null)+' '+rb+').'+(G?" Amortizações, consórcios, transferências e bens ficam fora (não são despesa).":"")+' Clique para detalhar.</div></div></div><div class="chart" id="g-top"></div></div>'+
      '<div class="card"><div class="ch-h"><div><h3>Desvios contra o previsto</h3><div class="sub">Realizado − previsto (meta ajustada '+(G?"à receita":"ao recebido")+'). Clique para detalhar.</div></div><div class="leg"><span><i style="background:var(--d-acima)"></i>Gastou mais</span><span><i style="background:var(--d-abaixo)"></i>Gastou menos</span></div></div><div class="chart" id="g-dev"></div></div></div>';
   h+='<div class="card" style="margin-bottom:12px"><div class="ch-h"><div><h3>Mapa de desvios — '+ANO+'</h3><div class="sub">Cada célula = realizado ÷ previsto da linha no mês. Linhas que se repetem em vermelho são estouro recorrente, não acidente. Clique numa célula para abrir a linha naquele mês.</div></div><div class="leg"><span><i style="background:var(--d-abaixo)"></i>abaixo do previsto</span><span><i style="background:#eef2f6;border:1px solid #cbd5e1"></i>no previsto</span><span><i style="background:var(--d-acima)"></i>acima</span><span><i class="hatch"></i>sem meta</span></div></div><div class="chart" id="g-mapa"></div></div>';
@@ -617,7 +653,9 @@ function contar(){if(matchMedia("(prefers-reduced-motion: reduce)").matches)retu
 function despesasVisao(){return LINHAS.filter(l=>l.g!=="rec"&&l.id!=="r84"&&(VISAO!=="G"||!G_FORA_RES.includes(l.id)))}
 
 function desenharGraficos(){if(TAB!=="geral"||!MES)return;const P=periodo();const ms=mesesSerie();
-  kpisAtivos().forEach(k=>gSpark(document.getElementById("spk-"+k.id),ms,k));
+  kpisAtivos().forEach(k=>gSpark(document.getElementById("spk-"+k.id),ms,k));gHeroBars(document.getElementById("hero-bars"),ms);
+  {const c=ms.filter(x=>x.c);const neg=c.filter(x=>x.c.d.rl<0).length;const t=document.getElementById("t-evo");if(t&&c.length)t.textContent=neg?"Resultado negativo em "+neg+" de "+c.length+" meses de "+ANO:"Resultado positivo em todos os "+c.length+" meses de "+ANO;
+   const mt=D(metaMensal(metasAno(ANO)));const tm=document.getElementById("t-mc");if(tm&&c.length&&metasAno(ANO)){const ab=c.filter(x=>x.c.d.mcp<mt.mcp).length;tm.textContent=ab?"Margem abaixo da meta em "+ab+" de "+c.length+" meses":"Margem na meta em todos os meses"}}
   gPonte(document.getElementById("g-ponte"),P);gRitmo(document.getElementById("g-ritmo"),ms);
   gEvolucao(document.getElementById("g-evo"),ms);gMargem(document.getElementById("g-mc"),ms);
   const desp=despesasVisao();
@@ -710,6 +748,40 @@ function gMapa(el,ms){if(!el)return;const com=ms.filter(x=>x.c);if(!com.length){
   el.innerHTML=s+'</svg>';
   ligar(el,{tip:i=>{const c=cells[i];return'<b>'+esc(c.l.nome)+'</b><div class="small" style="opacity:.7">'+mkLabel(c.m.k)+'</div>'+tipRow("","Realizado",fR(c.r))+tipRow("","Previsto",c.p?fR(c.p):"sem meta")+(c.q!=null?tipRow(c.q>0?"var(--d-acima)":"var(--d-abaixo)",c.q>0?"Acima":"Abaixo",fP(Math.abs(c.q),0)+" · "+fK(Math.abs(c.r-c.p))):"")},click:i=>{const c=cells[i];MES=c.m.k;render();abrirLinha(c.l.id)}});
 }
+
+/* ---------- placar (hero) ---------- */
+function heroStat(l,v,meta,sub,prev,txt){let h='<div class="hs"><div class="hs-l">'+l+'</div><div class="hs-v'+(v!=null&&v<0?" neg":"")+'">'+(txt||(v==null?"—":'<span class="cnt-up" data-n="'+v+'" data-f="k">'+fK(v)+'</span>'))+'</div>';
+  if(meta&&v!=null){const p=v/meta;h+='<div class="hs-bar" role="img" aria-label="'+fP(p,0)+' da meta"><i class="'+(p>=1?"ok":"")+'" style="width:'+Math.max(0,Math.min(100,p*100))+'%"></i></div><div class="hs-s"><b>'+fP(p,0)+'</b> da meta de '+fK(meta)+'</div>'}
+  if(prev!=null&&v!=null)h+='<div class="hs-s">previsto '+fK(prev)+' · <b class="'+(v>=prev?"up":"dn")+'">'+(v>=prev?"+":"−")+fK(Math.abs(v-prev))+'</b></div>';
+  return h+'<div class="hs-s">'+sub+'</div></div>'}
+function veredito(P){const d=P.d,dp=P.dp,dm=P.dm;const G=VISAO==="G";const quem=MODO==="mes"?nomeMes(MES).replace(/^./,c=>c.toUpperCase())+" fechou com ":"O acumulado do ano soma ";
+  let t=quem+(d.rl>=0?"lucro de <b>"+fK(d.rl)+"</b>":"prejuízo de <b>"+fK(Math.abs(d.rl))+"</b>");const df=d.rl-dp.rl;
+  if(Math.abs(df)>=1000)t+=", "+fK(Math.abs(df))+(df<0?" abaixo":" acima")+" do previsto";t+=". ";
+  const cand=[];const rr=G?d.tot-dm.tot:d.rec-dm.rec;if(dm.rec&&rr<0)cand.push({s:-rr,txt:(G?"a receita":"o recebimento")+", "+fK(-rr)+" abaixo da meta"});
+  despesasVisao().filter(l=>!(G&&(l.id==='r27'||l.id==='r28'))).forEach(l=>{const x=P.v[l.id]-P.p[l.id];if(x>0)cand.push({s:x,txt:(n=>/^[A-ZÀ-Ú][a-zà-ú]/.test(n)?n.charAt(0).toLowerCase()+n.slice(1):n)(l.nome.replace(/\s*\(.*\)$/,""))+", "+fK(x)+" acima do previsto"})});
+  if(G&&d.perdas-dp.perdas>0)cand.push({s:d.perdas-dp.perdas,txt:"perdas com recebíveis, "+fK(d.perdas-dp.perdas)+" acima do previsto"});
+  cand.sort((a,b)=>b.s-a.s);if(cand.length&&df<0)t+="O que mais pesou: "+cand[0].txt+(cand[1]?"; depois, "+cand[1].txt:"")+".";
+  else if(df>=0)t+="Dentro do previsto.";return t}
+function gHeroBars(el,ms){if(!el)return;const W=el.clientWidth||400,H=58,b=4;const vals=ms.map(x=>x.c?x.c.d.rl:null);const ok=vals.filter(v=>v!=null);if(!ok.length){el.innerHTML="";return}
+  const mx=Math.max(1,...ok.map(Math.abs));const y0=H/2+4,cw=W/12,bw=Math.min(18,cw*.55);let s='<svg viewBox="0 0 '+W+' '+(H+14)+'" height="'+(H+14)+'" aria-label="Resultado líquido por mês"><line x1="0" x2="'+W+'" y1="'+y0+'" y2="'+y0+'" stroke="rgba(255,255,255,.25)"/>';
+  vals.forEach((v,i)=>{const cx=cw*i+cw/2;const cur=ms[i].k===MES;s+='<text x="'+cx+'" y="'+(H+12)+'" text-anchor="middle" fill="'+(cur?"#fff":"rgba(255,255,255,.5)")+'" font-size="10" font-weight="'+(cur?700:400)+'">'+MESES[i].charAt(0)+'</text>';if(v==null)return;const hh=Math.max(2,Math.abs(v)/mx*(H/2-2));
+    s+='<rect x="'+(cx-bw/2)+'" y="'+(v>=0?y0-hh:y0)+'" width="'+bw+'" height="'+hh+'" rx="2" fill="'+(v>=0?"#86efac":"#fca5a5")+'" opacity="'+(cur?1:.62)+'"/><rect class="hit" data-i="'+i+'" x="'+(cw*i)+'" y="0" width="'+cw+'" height="'+H+'" fill="transparent" style="cursor:pointer"/>'});
+  el.innerHTML=s+'</svg>';ligar(el,{tip:i=>'<b>'+mkLabel(ms[i].k)+'</b>'+tipRow("","Resultado líquido",fK(vals[i])),click:i=>{MES=ms[i].k;render()}})}
+
+/* ---------- para onde vai cada R$ 100 ---------- */
+const CEM_CORES={cmv:"#94a3b8",pes:"#2a78d6",log:"#eda100",fin:"#6250d6",perdas:"#e87ba4",out:"#cbd5e1"};
+function cardCem(P){const d=P.d,v=P.v,G=VISAO==="G";const base=d.base;if(!base)return"";
+  const ml=P.metas&&P.metas.linhas||{};const r=P.metas?+P.metas.receita||0:0;const bm=P.metas?D(metaMensal(P.metas)).base:0;const mg=ids=>bm?ids.reduce((a,id)=>a+(metaLinha(P.metas,id,r)||0),0)/bm*100:null;
+  const parts=[["cmv","Compras (CMV)",d.cmv,mg(["r30"])],["pes","Pessoal e comissões",somaG(v,GRUPOS_EF.pes),mg(GRUPOS_EF.pes)],["log","Logística e frota",somaG(v,GRUPOS_EF.log),mg(GRUPOS_EF.log)],["fin","Juros e taxas",somaG(v,GRUPOS_EF.fin),mg(GRUPOS_EF.fin)],["perdas","Perdas com recebíveis",G?d.perdas:(v.r27||0)+(v.r28||0),mg(["r27","r28"])]];
+  const custos=base-d.rl;const soma=parts.reduce((s,x)=>s+Math.max(0,x[2]),0);parts.push(["out","Demais despesas",Math.max(0,custos-soma),null]);
+  const scale=Math.max(base,parts.reduce((s,x)=>s+x[2],0)+(d.rl>0?d.rl:0));const pc=x=>x/base*100;const fmt=x=>"R$ "+x.toLocaleString("pt-BR",{minimumFractionDigits:1,maximumFractionDigits:1});
+  let bar=parts.filter(x=>x[2]>0).map(([k,n,x])=>'<i style="width:'+(x/scale*100)+'%;background:'+CEM_CORES[k]+'" title="'+n+': '+fmt(pc(x))+'">'+(x/scale>0.07?'<span>'+Math.round(pc(x))+'</span>':"")+'</i>').join("");
+  if(d.rl>0)bar+='<i class="res" style="width:'+(d.rl/scale*100)+'%" title="Resultado: '+fmt(pc(d.rl))+'"><span>'+Math.round(pc(d.rl))+'</span></i>';
+  const titulo=d.rl>=0?"Sobram <b>"+fmt(pc(d.rl))+"</b> de resultado em cada R$ 100 "+(G?"de receita":"recebidos"):"Os custos passam a receita: faltam <b>"+fmt(pc(-d.rl))+"</b> em cada R$ 100 "+(G?"de receita":"recebidos");
+  return'<div class="card cem"><div class="ch-h"><div><h3>'+titulo+'</h3><div class="sub">Para onde vai cada R$ 100 '+(G?"de receita líquida":"recebidos")+' — '+perLabel()+'</div></div></div>'+
+   '<div class="cem-wrap"><div class="cem-bar">'+bar+'</div>'+(d.rl<0?'<div class="cem-m" style="left:'+(base/scale*100)+'%"><span>R$ 100</span></div>':'')+'</div>'+
+   '<div class="cem-leg">'+parts.map(([k,n,x,mt])=>'<div><i style="background:'+CEM_CORES[k]+'"></i><span class="n">'+n+'</span><b>'+fmt(pc(x))+'</b>'+(mt!=null?'<span class="m '+(pc(x)<=mt+0.05?"ok":"bad")+'">meta '+fmt(mt)+'</span>':'<span class="m"></span>')+'</div>').join("")+
+   '<div class="tot"><i class="'+(d.rl>=0?"res":"neg")+'"></i><span class="n">'+(d.rl>=0?"Resultado":"Prejuízo")+'</span><b>'+fmt(pc(Math.abs(d.rl)))+'</b><span class="m"></span></div></div></div>'}
 
 
 /* ---------- gráficos SVG ---------- */
