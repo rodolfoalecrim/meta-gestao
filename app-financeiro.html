@@ -128,6 +128,16 @@ table.t{width:100%;border-collapse:collapse;font-size:13px}
 .md-f{display:flex;gap:8px;justify-content:flex-end;margin-top:16px;flex-wrap:wrap}
 #toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%) translateY(100px);background:var(--G);color:#fff;padding:11px 18px;border-radius:12px;font-weight:700;z-index:99;transition:transform .25s;max-width:90vw;text-align:center}
 #toast.on{transform:translateX(-50%) translateY(0)}
+.kf{display:flex;align-items:flex-end;gap:8px;margin-top:8px;border-top:1px solid var(--line);padding-top:6px}
+.spk{flex:1;min-width:0}.spk svg{display:block;width:100%}
+.cmp{font-size:11.5px;color:var(--muted);white-space:nowrap;text-align:right}
+.vs{font-weight:700;font-family:var(--mono);font-size:11.5px}.vs.good{color:var(--G)}.vs.bad{color:var(--red)}
+.sec-t{font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:.4px;color:var(--muted);margin:2px 2px 8px}
+.kpis.ef .v{font-size:21px}
+.leg.tog span{cursor:pointer;user-select:none}.leg.tog span.off{opacity:.35;text-decoration:line-through}
+.leg i.ln.dot{background:none!important;border-top:2px dotted;height:0;border-radius:0}
+.leg i.ln.dash{background:repeating-linear-gradient(90deg,var(--faint) 0 5px,transparent 5px 8px)!important}
+.leg i.hatch{background:repeating-linear-gradient(45deg,#f8fafc 0 2px,#cbd5e1 2px 4px);border:1px solid #e2e8f0}
 @media(max-width:1000px){.kpis{grid-template-columns:repeat(2,minmax(0,1fr))}.grid2,.grid2b{grid-template-columns:minmax(0,1fr)}}
 @media(max-width:560px){.kpi .v{font-size:19px}.top-in{gap:8px}.brand span{display:none}.frm{grid-template-columns:1fr}}
 </style>
@@ -303,37 +313,157 @@ function vazio(){return'<div class="card empty"><b>Nenhum mês carregado ainda</
 
 /* ---------- VISÃO GERAL ---------- */
 function bdg(delta,bomSeMaior,txt){if(delta==null||!isFinite(delta)||Math.abs(delta)<0.5)return'<span class="bdg neu">'+(txt||"no previsto")+'</span>';const good=bomSeMaior?delta>0:delta<0;return'<span class="bdg '+(good?"good":"bad")+'">'+(delta>0?"▲ ":"▼ ")+fK(Math.abs(delta))+'</span>'}
-function kpi(l,v,d,neg){return'<div class="kpi"><div class="l">'+l+'</div><div class="v'+(neg?" neg":"")+'">'+v+'</div><div class="d">'+d+'</div></div>'}
+/* ---------- VISÃO GERAL ---------- */
+const GRUPOS_EF={pes:["r63","r64","r67","r12","r40","r25","r16","r26","r43"],log:["r13","r15","r24","r22","r17","r23","r42"],fin:["r89","r21","r48","r70"]};
+const somaG=(v,ids)=>ids.reduce((s,id)=>s+(v[id]||0),0);
+/* definição dos KPIs: valor a partir do período (v,d) — o mesmo cálculo alimenta o card, o minigráfico e a comparação */
+const KPIS=[
+ {id:"rec",l:"Recebimentos de operação",fmt:"k",bom:1,f:(v,d)=>d.rec},
+ {id:"mc",l:"Margem de contribuição",fmt:"k",bom:1,f:(v,d)=>d.mc},
+ {id:"cf",l:"Custos fixos",fmt:"k",bom:0,f:(v,d)=>d.cf},
+ {id:"rl",l:"Resultado líquido",fmt:"k",bom:1,f:(v,d)=>d.rl},
+ {id:"ro",l:"Resultado operacional",fmt:"k",bom:1,f:(v,d)=>d.ro},
+ {id:"pe",l:"Ponto de equilíbrio operacional",fmt:"k",bom:0,f:(v,d)=>d.peOp},
+ {id:"cmv",l:"CMV sobre o recebido",fmt:"p",bom:0,f:(v,d)=>d.base?d.cmv/d.base:null},
+ {id:"div",l:"Serviço da dívida",fmt:"k",bom:0,f:(v,d)=>d.divida},
+ {id:"mb",l:"Margem bruta (após CMV)",fmt:"p",bom:1,ef:1,f:(v,d)=>d.base?(d.base-d.cmv)/d.base:null},
+ {id:"pes",l:"Pessoal e comissões",fmt:"p",bom:0,ef:1,f:(v,d)=>d.base?somaG(v,GRUPOS_EF.pes)/d.base:null},
+ {id:"log",l:"Logística e frota",fmt:"p",bom:0,ef:1,f:(v,d)=>d.base?somaG(v,GRUPOS_EF.log)/d.base:null},
+ {id:"fin",l:"Custo financeiro",fmt:"p",bom:0,ef:1,f:(v,d)=>d.base?somaG(v,GRUPOS_EF.fin)/d.base:null}];
+const KPI_SUB={pes:"salários, encargos, pró-labore, comissões, alimentação, saúde e cursos",log:"combustível, veículos, frete, viagens, IPVA, multas e empilhadeira",fin:"juros pagos, taxas bancárias, IOF e cartão",mb:"o que sobra do recebido depois das compras"};
+let SERIES_OFF={};
+function fmtK(k,x){return k.fmt==="p"?fP(x):fK(x)}
+function mesesSerie(){const ms=[];for(let i=1;i<=12;i++){const k=ANO+"-"+String(i).padStart(2,"0");ms.push({k,i,c:S.meses[k]?calcMes(k):null})}return ms}
+function mesAnterior(mk){const ks=Object.keys(S.meses).sort();const i=ks.indexOf(mk);return i>0?ks[i-1]:null}
+function kpiCard(k,P,extra){const x=k.f(P.v,P.d);let cmp="";
+  if(MODO==="mes"){const pm=mesAnterior(MES);if(pm){const c=calcMes(pm);const y=k.f(c.v,c.d);if(x!=null&&y!=null&&isFinite(x)&&isFinite(y)){const dd=x-y;const good=k.bom?dd>0:dd<0;const txt=k.fmt==="p"?Math.abs(dd*100).toLocaleString("pt-BR",{maximumFractionDigits:1})+" p.p.":(x>0&&y>0?Math.abs(dd/y*100).toLocaleString("pt-BR",{maximumFractionDigits:0})+"%":fK(Math.abs(dd)));cmp='<span class="vs '+(Math.abs(dd)<1e-9?"":good?"good":"bad")+'">'+(dd>0?"▲":dd<0?"▼":"=")+" "+txt+'</span> vs '+MESES[+pm.slice(5)-1].toLowerCase()}}}
+  else cmp='<span class="vs">'+P.n+' '+(P.n>1?"meses":"mês")+'</span>';
+  const neg=k.fmt==="k"&&x!=null&&x<0;
+  return'<div class="kpi" data-k="'+k.id+'"><div class="l">'+k.l+'</div><div class="v'+(neg?" neg":"")+'"><span class="cnt-up" data-n="'+(x==null||!isFinite(x)?"":x)+'" data-f="'+k.fmt+'">'+(x==null||!isFinite(x)?"—":fmtK(k,x))+'</span></div><div class="d">'+extra+'</div><div class="kf"><div class="spk chart" id="spk-'+k.id+'"></div><div class="cmp">'+cmp+'</div></div></div>'}
 function renderGeral(m){
   if(!MES){m.innerHTML=vazio();return}
   const P=periodo();const d=P.d,dp=P.dp,dm=P.dm;let h="";
   const pk=Object.keys(P.pend);
   if(pk.length)h+='<div class="alert"><span>⚠</span><span><b>'+pk.length+' conta'+(pk.length>1?"s":"")+' do relatório sem linha definida</b> ('+fK(pk.reduce((s,k)=>s+P.pend[k].v,0))+') — '+(pk.length>1?"não entram":"não entra")+' no resultado até você classificar.</span><button class="btn btn-o btn-sm" onclick="FILTRO_CONTAS=\'pend\';setTab(\'contas\')">Classificar</button></div>';
-  const metaRec=dm.rec;const pctMeta=metaRec?d.rec/metaRec:null;
-  const peFolga=d.peOp?d.base/d.peOp-1:null;
+  const metaRec=dm.rec;const pctMeta=metaRec?d.rec/metaRec:null;const peFolga=d.peOp?d.base/d.peOp-1:null;const K={};KPIS.forEach(k=>K[k.id]=k);
+  const ml=P.metas&&P.metas.linhas||{};const metaPct=id=>ml[id]&&ml[id].m==="pct"?ml[id].v:null;const metaGrp=ids=>{if(!P.metas)return null;const r=+P.metas.receita||0;const s=ids.reduce((a,id)=>a+(metaLinha(P.metas,id,r)||0),0);const b=derivar(metaMensal(P.metas)).base;return b?s/b:null};
+  const vsMeta=(x,mt,bom)=>mt==null?"":'<span class="bdg '+((bom?x>=mt:x<=mt)?"good":"bad")+'">meta '+fP(mt)+'</span> ';
   h+='<div class="kpis">'+
-   kpi("Recebimentos de operação",fK(d.rec),(metaRec?'<span class="bdg '+(pctMeta>=1?"good":"bad")+'">'+fP(pctMeta,0)+' da meta</span> meta '+fK(metaRec):"sem meta definida")+'<br>Total recebido '+fK(d.tot)+(P.dh?' · média 2025: '+fK(P.dh.rec):""))+
-   kpi("Margem de contribuição",fK(d.mc),fP(d.mcp)+' do recebido · '+bdg(d.mc-dp.mc,true)+'<br>previsto '+fK(dp.mc),d.mc<0)+
-   kpi("Custos fixos",fK(d.cf),bdg(d.cf-dp.cf,false)+' vs previsto '+fK(dp.cf)+'<br>'+fP(d.base?d.cf/d.base:null)+' do recebido')+
-   kpi("Resultado líquido",fK(d.rl),bdg(d.rl-dp.rl,true)+' vs previsto '+fK(dp.rl)+'<br>'+fP(d.base?d.rl/d.base:null)+' do recebido',d.rl<0)+
-   kpi("Resultado operacional",fK(d.ro),bdg(d.ro-dp.ro,true)+' vs previsto '+fK(dp.ro)+'<br>extra-operacional '+fK(d.ext),d.ro<0)+
-   kpi("Ponto de equilíbrio operacional",d.peOp?fK(d.peOp):"—",d.peOp?(peFolga>=0?'<span class="bdg good">'+fP(peFolga,0)+' acima</span> recebido supera o PE':'<span class="bdg bad">faltam '+fK(d.peOp-d.base)+'</span> para cobrir os fixos')+'<br>PE financeiro '+fK(d.peFin):'<span class="bdg bad">margem negativa</span> custos variáveis maiores que o recebido')+
-   kpi("CMV sobre o recebido",fP(d.base?d.cmv/d.base:null),fK(d.cmv)+(P.metas&&P.metas.linhas&&P.metas.linhas.r30&&P.metas.linhas.r30.m==="pct"?' · meta '+fP(P.metas.linhas.r30.v):"")+'<br>comissões '+fP(d.rec?d.com/d.rec:null)+' das vendas')+
-   kpi("Serviço da dívida",fK(d.divida),fP(d.base?d.divida/d.base:null)+' do recebido<br>empréstimos, juros, cotas e consórcios')+
-  '</div>';
-  h+='<div class="grid2"><div class="card"><div class="ch-h"><div><h3>Evolução mensal — '+ANO+'</h3><div class="sub">Clique num mês para analisar. Custos = variáveis + fixos + saídas extra-operacionais.</div></div><div class="leg"><span><i style="background:var(--s-rec)"></i>Total recebido</span><span><i style="background:var(--s-cus)"></i>Custos totais</span><span><i class="ln" style="background:var(--s-res)"></i>Resultado líquido</span></div></div><div class="chart" id="g-evo"></div></div>'+
+   kpiCard(K.rec,P,(metaRec?'<span class="bdg '+(pctMeta>=1?"good":"bad")+'">'+fP(pctMeta,0)+' da meta</span> meta '+fK(metaRec):"sem meta definida")+'<br>Total recebido '+fK(d.tot))+
+   kpiCard(K.mc,P,fP(d.mcp)+' do recebido · '+bdg(d.mc-dp.mc,true)+' vs previsto')+
+   kpiCard(K.cf,P,bdg(d.cf-dp.cf,false)+' vs previsto '+fK(dp.cf)+'<br>'+fP(d.base?d.cf/d.base:null)+' do recebido')+
+   kpiCard(K.rl,P,bdg(d.rl-dp.rl,true)+' vs previsto '+fK(dp.rl)+'<br>'+fP(d.base?d.rl/d.base:null)+' do recebido')+
+   kpiCard(K.ro,P,bdg(d.ro-dp.ro,true)+' vs previsto '+fK(dp.ro)+'<br>extra-operacional '+fK(d.ext))+
+   kpiCard(K.pe,P,d.peOp?(peFolga>=0?'<span class="bdg good">'+fP(peFolga,0)+' acima</span> recebido supera o PE':'<span class="bdg bad">faltam '+fK(d.peOp-d.base)+'</span> para cobrir os fixos'):'<span class="bdg bad">margem negativa</span> sem ponto de equilíbrio')+
+   kpiCard(K.cmv,P,vsMeta(d.base?d.cmv/d.base:0,metaPct("r30"),false)+fK(d.cmv))+
+   kpiCard(K.div,P,fP(d.base?d.divida/d.base:null)+' do recebido<br>empréstimos, juros, cotas e consórcios')+
+  '</div><div class="sec-t">Eficiência — quanto de cada R$ 100 recebidos vai para</div><div class="kpis ef">'+
+   ["mb","pes","log","fin"].map(id=>{const x=K[id].f(P.v,d);const mt=id==="mb"?(metaPct("r30")!=null?1-metaPct("r30"):null):metaGrp(GRUPOS_EF[id]);return kpiCard(K[id],P,(x!=null?'<b class="num">R$ '+(x*100).toLocaleString("pt-BR",{maximumFractionDigits:1})+'</b> de cada R$ 100 · ':"")+vsMeta(x||0,mt,K[id].bom)+'<br>'+KPI_SUB[id])}).join("")+'</div>';
+  h+='<div class="grid2"><div class="card"><div class="ch-h"><div><h3 id="t-ponte">Do recebido ao resultado — '+perLabel()+'</h3><div class="sub">Clique numa etapa para ver o detalhe.</div></div><div class="leg"><span><i style="background:var(--s-rec)"></i>Entrada</span><span><i style="background:var(--d-acima)"></i>Saída</span><span><i style="background:var(--faint)"></i>Subtotal</span></div></div><div class="chart" id="g-ponte"></div></div>'+
+     '<div class="card"><div class="ch-h"><div><h3 id="t-ritmo">Ritmo do ano</h3><div class="sub" id="s-ritmo">Recebimentos de operação acumulados contra a meta</div></div><div class="leg"><span><i class="ln" style="background:var(--s-rec)"></i>Realizado</span><span><i class="ln" style="background:var(--faint)"></i>Meta</span><span><i class="ln dot" style="border-color:var(--s-rec)"></i>Projeção</span></div></div><div class="chart" id="g-ritmo"></div></div></div>';
+  h+='<div class="grid2"><div class="card"><div class="ch-h"><div><h3>Evolução mensal — '+ANO+'</h3><div class="sub">Clique num mês para analisar; clique na legenda para esconder uma série.</div></div><div class="leg tog">'+[["rec","var(--s-rec)","Total recebido",0],["cus","var(--s-cus)","Custos totais",0],["rl","var(--s-res)","Resultado líquido",1],["h25","var(--faint)","Média recebida "+(+ANO-1),1]].map(([k,c,l,ln])=>'<span class="'+(SERIES_OFF[k]?"off":"")+'" onclick="SERIES_OFF.'+k+'=!SERIES_OFF.'+k+';desenharGraficos();this.classList.toggle(\'off\')"><i class="'+(ln?"ln":"")+(k==="h25"?" dash":"")+'" style="background:'+c+'"></i>'+l+'</span>').join("")+'</div></div><div class="chart" id="g-evo"></div></div>'+
      '<div class="card"><div class="ch-h"><div><h3>Margem de contribuição</h3><div class="sub">% do total recebido em cada mês</div></div><div class="leg"><span><i class="ln" style="background:var(--s-res)"></i>Realizado</span><span><i class="ln" style="background:var(--faint)"></i>Meta</span></div></div><div class="chart" id="g-mc"></div></div></div>';
   h+='<div class="grid2b"><div class="card"><div class="ch-h"><div><h3>Maiores custos — '+perLabel()+'</h3><div class="sub">CMV fora do gráfico: '+fK(d.cmv)+' ('+fP(d.base?d.cmv/d.base:null)+' do recebido). Clique para detalhar.</div></div></div><div class="chart" id="g-top"></div></div>'+
      '<div class="card"><div class="ch-h"><div><h3>Desvios contra o previsto</h3><div class="sub">Realizado − previsto (meta ajustada ao recebido). Clique para detalhar.</div></div><div class="leg"><span><i style="background:var(--d-acima)"></i>Gastou mais</span><span><i style="background:var(--d-abaixo)"></i>Gastou menos</span></div></div><div class="chart" id="g-dev"></div></div></div>';
-  m.innerHTML=h;desenharGraficos();
+  h+='<div class="card" style="margin-bottom:12px"><div class="ch-h"><div><h3>Mapa de desvios — '+ANO+'</h3><div class="sub">Cada célula = realizado ÷ previsto da linha no mês. Linhas que se repetem em vermelho são estouro recorrente, não acidente. Clique numa célula para abrir a linha naquele mês.</div></div><div class="leg"><span><i style="background:var(--d-abaixo)"></i>abaixo do previsto</span><span><i style="background:#eef2f6;border:1px solid #cbd5e1"></i>no previsto</span><span><i style="background:var(--d-acima)"></i>acima</span><span><i class="hatch"></i>sem meta</span></div></div><div class="chart" id="g-mapa"></div></div>';
+  m.innerHTML=h;desenharGraficos();contar();
 }
-function desenharGraficos(){if(TAB!=="geral"||!MES)return;const P=periodo();
-  const ms=[];for(let i=1;i<=12;i++){const k=ANO+"-"+String(i).padStart(2,"0");ms.push({k,c:S.meses[k]?calcMes(k):null})}
+function contar(){if(matchMedia("(prefers-reduced-motion: reduce)").matches)return;document.querySelectorAll(".cnt-up").forEach(el=>{const n=parseFloat(el.dataset.n);if(!isFinite(n))return;const f=el.dataset.f;const t0=performance.now(),D=550;const step=t=>{const p=Math.min(1,(t-t0)/D),e=1-Math.pow(1-p,3);el.textContent=f==="p"?fP(n*e):fK(n*e);if(p<1)requestAnimationFrame(step)};requestAnimationFrame(step)})}
+function desenharGraficos(){if(TAB!=="geral"||!MES)return;const P=periodo();const ms=mesesSerie();
+  KPIS.forEach(k=>gSpark(document.getElementById("spk-"+k.id),ms,k));
+  gPonte(document.getElementById("g-ponte"),P);gRitmo(document.getElementById("g-ritmo"),ms);
   gEvolucao(document.getElementById("g-evo"),ms);gMargem(document.getElementById("g-mc"),ms);
   const desp=LINHAS.filter(l=>l.g!=="rec"&&l.id!=="r84");
   gBarrasH(document.getElementById("g-top"),desp.filter(l=>l.id!=="r30").map(l=>({id:l.id,n:l.nome,v:P.v[l.id]})).filter(x=>x.v>0).sort((a,b)=>b.v-a.v).slice(0,10),P.d.base);
   gDesvios(document.getElementById("g-dev"),desp.map(l=>({id:l.id,n:l.nome,v:P.v[l.id]-P.p[l.id],r:P.v[l.id],p:P.p[l.id]})).filter(x=>Math.abs(x.v)>=1).sort((a,b)=>Math.abs(b.v)-Math.abs(a.v)).slice(0,8));
+  gMapa(document.getElementById("g-mapa"),ms);
 }
+/* minigráfico do KPI: 12 meses, mês em análise destacado */
+function gSpark(el,ms,k){if(!el)return;const W=el.clientWidth||160,H=34,p=4;const vals=ms.map(x=>x.c?k.f(x.c.v,x.c.d):null).map(v=>v!=null&&isFinite(v)?v:null);const ok=vals.filter(v=>v!=null);if(ok.length<2){el.innerHTML="";return}
+  const mn=Math.min(...ok,k.fmt==="k"?0:Infinity),mx=Math.max(...ok,k.fmt==="k"?0:-Infinity);const sp=mx-mn||1;const x=i=>p+(W-2*p)*i/11,y=v=>H-p-(H-2*p)*(v-mn)/sp;
+  let s='<svg viewBox="0 0 '+W+' '+H+'" height="'+H+'" aria-hidden="true">';if(mn<0&&mx>0)s+='<line x1="'+p+'" x2="'+(W-p)+'" y1="'+y(0)+'" y2="'+y(0)+'" stroke="#e2e8f0" stroke-dasharray="2 2"/>';
+  let seg=[];const segs=[];vals.forEach((v,i)=>{if(v!=null)seg.push(x(i)+","+y(v));else{if(seg.length)segs.push(seg);seg=[]}});if(seg.length)segs.push(seg);
+  segs.forEach(g=>{s+='<polyline points="'+g.join(" ")+'" fill="none" stroke="#94a3b8" stroke-width="1.5" stroke-linejoin="round"/>'});
+  vals.forEach((v,i)=>{if(v==null)return;const cur=ms[i].k===MES;if(cur)s+='<circle cx="'+x(i)+'" cy="'+y(v)+'" r="3.5" fill="'+(k.fmt==="k"&&v<0?"var(--red)":"var(--s-res)")+'" stroke="#fff" stroke-width="1.5"/>';s+='<rect class="hit" data-i="'+i+'" x="'+(x(i)-(W-2*p)/24)+'" y="0" width="'+((W-2*p)/12)+'" height="'+H+'"/>'});
+  el.innerHTML=s+'</svg>';ligar(el,{tip:i=>'<b>'+k.l+'</b>'+tipRow("",mkLabel(ms[i].k),fmtK(k,vals[i])),click:i=>{MES=ms[i].k;render()}});
+}
+/* ponte: do total recebido ao resultado líquido */
+function gPonte(el,P){if(!el)return;const d=P.d,v=P.v;const outrosCV=d.cv-d.cmv-d.com;
+  const st=[{n:"Total recebido",t:"tot",val:d.base,go:"dre"},{n:"CMV",t:"pas",val:-d.cmv,go:"r30"},{n:"Comissões",t:"pas",val:-d.com,go:"r12"},{n:"Outros variáveis",t:"pas",val:-outrosCV,go:"dre"},{n:"Margem de contribuição",t:"sub",go:"dre"},{n:"Custos fixos",t:"pas",val:-d.cf,go:"dre"},{n:"Resultado operacional",t:"sub",go:"dre"},{n:"Extra-operacional",t:"pas",val:d.ext,go:"dre"},{n:"Resultado líquido",t:"sub",go:"dre"}];
+  let acc=0;st.forEach(s=>{if(s.t==="tot"){s.a=0;s.b=s.val;acc=s.val}else if(s.t==="pas"){s.a=acc;s.b=acc+s.val;acc=s.b}else{s.a=0;s.b=acc;s.val=acc}});
+  const W=el.clientWidth||600,H=320,L=8,R=8,T=26,B=50;const all=st.flatMap(s=>[s.a,s.b]).concat([0]);const mn=Math.min(...all),mx=Math.max(...all);const y=x=>T+(H-T-B)*(1-(x-mn)/((mx-mn)||1));const cw=(W-L-R)/st.length,bw=Math.min(54,cw*.62);
+  let s='<svg viewBox="0 0 '+W+' '+H+'" height="'+H+'" role="img" aria-label="Ponte do recebido ao resultado líquido"><line class="zl" x1="'+L+'" x2="'+(W-R)+'" y1="'+y(0)+'" y2="'+y(0)+'"/>';
+  st.forEach((p,i)=>{const cx=L+cw*i+cw/2;const top=y(Math.max(p.a,p.b)),hh=Math.max(1.5,Math.abs(y(p.a)-y(p.b)));const cor=p.t==="pas"?(p.val>=0?"var(--s-rec)":"var(--d-acima)"):p.t==="tot"?"var(--s-rec)":(p.val<0?"var(--red)":"var(--faint)");
+    s+='<rect x="'+(cx-bw/2)+'" y="'+top+'" width="'+bw+'" height="'+hh+'" rx="3" fill="'+cor+'" opacity="'+(p.t==="pas"?.85:1)+'"/>';
+    if(i<st.length-1){const yl=y(p.b);s+='<line x1="'+(cx+bw/2)+'" x2="'+(cx+cw-bw/2)+'" y1="'+yl+'" y2="'+yl+'" stroke="#cbd5e1" stroke-dasharray="3 3"/>'}
+    const lv=p.t==="pas"?(p.val>=0?"+":"−")+fAx(Math.abs(p.val)):fAx(p.val);let vy=p.t==="pas"&&p.val<0?top+hh+13:top-5;if(vy>H-B+2)vy=top-5;if(vy<10)vy=top+hh+13;s+='<text class="tv" x="'+cx+'" y="'+vy+'" text-anchor="middle" style="'+(p.t!=="pas"?"font-weight:700":"")+'">'+lv+'</text>';
+    const pal=p.n.split(" ");const l1=pal.length>1&&p.n.length>12?pal.slice(0,Math.ceil(pal.length/2)).join(" "):p.n,l2=pal.length>1&&p.n.length>12?pal.slice(Math.ceil(pal.length/2)).join(" "):"";
+    s+='<text x="'+cx+'" y="'+(H-24)+'" text-anchor="middle" style="'+(p.t!=="pas"?"fill:var(--text);font-weight:600":"")+'">'+esc(cw<70?l1.slice(0,11):l1)+'</text>'+(l2?'<text x="'+cx+'" y="'+(H-10)+'" text-anchor="middle" style="'+(p.t!=="pas"?"fill:var(--text);font-weight:600":"")+'">'+esc(cw<70?l2.slice(0,11):l2)+'</text>':"");
+    s+='<rect class="hit" data-i="'+i+'" x="'+(L+cw*i)+'" y="'+T+'" width="'+cw+'" height="'+(H-T-B)+'"/>'});
+  el.innerHTML=s+'</svg>';
+  ligar(el,{tip:i=>{const p=st[i];return'<b>'+p.n+'</b>'+tipRow("","Valor",fR(p.val))+tipRow("","% do recebido",fP(d.base?p.val/d.base:null))},click:i=>{const g=st[i].go;if(LIN[g])abrirLinha(g);else setTab("dre")}});
+}
+/* ritmo do ano: acumulado realizado × meta, com projeção linear até dezembro */
+function gRitmo(el,ms){if(!el)return;const metas=metasAno(ANO);const mr=metas?+metas.receita||0:0;
+  let ac=0;const real=ms.map(x=>{if(!x.c)return null;ac+=x.c.d.rec;return ac});const ult=real.reduce((u,v,i)=>v!=null?i:u,-1);if(ult<0){el.innerHTML="";return}
+  const nReal=real.filter(v=>v!=null).length;const media=real[ult]/nReal;const proj=ms.map((x,i)=>i>=ult?real[ult]+media*(i-ult):null);const meta=ms.map((x,i)=>mr?mr*(i+1):null);
+  const anoProj=proj[11],metaAno=mr*12;
+  const tt=document.getElementById("t-ritmo"),sb=document.getElementById("s-ritmo");
+  if(tt)tt.textContent=mr?"Ritmo do ano: projeção de "+fK(anoProj)+" ("+fP(anoProj/metaAno,0)+" da meta)":"Ritmo do ano: projeção de "+fK(anoProj);
+  if(sb)sb.textContent="Recebimentos de operação acumulados · média de "+fK(media)+" por mês"+(mr?" · meta "+fK(mr)+"/mês":"");
+  const W=el.clientWidth||400,H=300,L=52,R=12,T=34,B=26;const all=[0].concat(real.filter(v=>v!=null),proj.filter(v=>v!=null),meta.filter(v=>v!=null));const sc=escala(0,Math.max(...all),5);
+  const x=i=>L+(W-L-R)*i/11,y=v=>T+(H-T-B)*(1-(v-sc.lo)/(sc.hi-sc.lo));
+  let s='<svg viewBox="0 0 '+W+' '+H+'" height="'+H+'" role="img" aria-label="Recebimentos acumulados contra a meta">';
+  sc.t.forEach(v=>{s+='<line class="gl" x1="'+L+'" x2="'+(W-R)+'" y1="'+y(v)+'" y2="'+y(v)+'"/><text x="'+(L-6)+'" y="'+(y(v)+4)+'" text-anchor="end">'+fAx(v)+'</text>'});
+  ms.forEach((m,i)=>{s+='<text x="'+x(i)+'" y="'+(H-8)+'" text-anchor="middle" style="'+(m.k===MES?"fill:var(--text);font-weight:700":"")+'">'+MESES[i].charAt(0)+'</text>'});
+  if(mr)s+='<polyline points="'+meta.map((v,i)=>x(i)+","+y(v)).join(" ")+'" fill="none" stroke="var(--faint)" stroke-width="2" stroke-dasharray="5 4"/>';
+  const pp=proj.map((v,i)=>v!=null?x(i)+","+y(v):null).filter(Boolean);if(pp.length>1)s+='<polyline points="'+pp.join(" ")+'" fill="none" stroke="var(--s-rec)" stroke-width="2" stroke-dasharray="2 4" stroke-linecap="round"/>';
+  const rp=real.map((v,i)=>v!=null?x(i)+","+y(v):null).filter(Boolean);s+='<polyline points="'+rp.join(" ")+'" fill="none" stroke="var(--s-rec)" stroke-width="2.5" stroke-linejoin="round"/>';
+  real.forEach((v,i)=>{if(v!=null)s+='<circle cx="'+x(i)+'" cy="'+y(v)+'" r="'+(ms[i].k===MES?5:3.5)+'" fill="var(--s-rec)" stroke="#fff" stroke-width="2"/>'});
+  {const yt=Math.min(y(anoProj),mr?y(metaAno):1e9);const pAcima=!mr||anoProj>=metaAno;s+='<text class="tv" x="'+(x(11))+'" y="'+(yt-(pAcima?22:8))+'" text-anchor="end" style="font-weight:700">proj. '+fAx(anoProj)+'</text>';if(mr)s+='<text x="'+(x(11))+'" y="'+(yt-(pAcima?8:22))+'" text-anchor="end">meta '+fAx(metaAno)+'</text>'}
+  ms.forEach((m,i)=>{s+='<rect class="hit" data-i="'+i+'" x="'+(x(i)-(W-L-R)/22)+'" y="'+T+'" width="'+((W-L-R)/11)+'" height="'+(H-T-B)+'"/>'});
+  el.innerHTML=s+'</svg>';
+  ligar(el,{tip:i=>'<b>'+MESES_L[i].replace(/^./,c=>c.toUpperCase())+'</b>'+(real[i]!=null?tipRow("var(--s-rec)","Acumulado",fK(real[i]),1):tipRow("var(--s-rec)","Projeção",fK(proj[i]),1))+(mr?tipRow("var(--faint)","Meta acumulada",fK(meta[i]),1)+tipRow("",(real[i]!=null?real[i]:proj[i])>=meta[i]?"Acima da meta":"Abaixo da meta",fK(Math.abs((real[i]!=null?real[i]:proj[i])-meta[i]))):""),click:i=>{if(ms[i].c){MES=ms[i].k;render()}}});
+}
+/* evolução mensal (recebido × custos × resultado), séries ligáveis */
+function gEvolucao(el,ms){if(!el)return;const W=el.clientWidth||600,H=280,L=58,R=8,T=12,B=26;
+  const dados=ms.map(x=>x.c?{rec:x.c.d.tot,cus:x.c.d.cv+x.c.d.cf+x.c.d.extD,rl:x.c.d.rl}:null);
+  const h=histAno(String(+ANO-1));const h25=h&&h.linhas?derivar(Object.fromEntries(LINHAS.map(l=>[l.id,(h.linhas[l.id]||0)/12]))).tot:null;
+  const vals=dados.filter(Boolean).flatMap(x=>[SERIES_OFF.rec?0:x.rec,SERIES_OFF.cus?0:x.cus,SERIES_OFF.rl?0:x.rl,0]).concat(h25&&!SERIES_OFF.h25?[h25]:[]);const sc=escala(Math.min(...vals),Math.max(...vals),5);
+  const y=v=>T+(H-T-B)*(1-(v-sc.lo)/(sc.hi-sc.lo));const cw=(W-L-R)/12;const nb=(SERIES_OFF.rec?0:1)+(SERIES_OFF.cus?0:1);const bw=Math.max(4,Math.min(22,cw*.3));
+  let s='<svg viewBox="0 0 '+W+' '+H+'" height="'+H+'" role="img" aria-label="Evolução mensal de recebimentos, custos e resultado">';
+  sc.t.forEach(v=>{s+='<line class="'+(v===0?"zl":"gl")+'" x1="'+L+'" x2="'+(W-R)+'" y1="'+y(v)+'" y2="'+y(v)+'"/><text x="'+(L-8)+'" y="'+(y(v)+4)+'" text-anchor="end">'+fAx(v)+'</text>'});
+  ms.forEach((x,i)=>{const cx=L+cw*i+cw/2;if(x.k===MES)s+='<rect class="sel-m" x="'+(L+cw*i+1)+'" y="'+T+'" width="'+(cw-2)+'" height="'+(H-T-B)+'" rx="6"/>';
+    s+='<text x="'+cx+'" y="'+(H-8)+'" text-anchor="middle" style="'+(x.k===MES?"fill:var(--text);font-weight:700":"")+'">'+(cw<34?MESES[i].charAt(0):MESES[i])+'</text>';
+    const d=dados[i];if(!d)return;const y0=y(0);let o=nb===2?-bw-1:-bw/2;
+    [["rec","var(--s-rec)"],["cus","var(--s-cus)"]].forEach(([k,c])=>{if(SERIES_OFF[k])return;const v=d[k];const yy=y(Math.max(v,0)),hh=Math.abs(y(v)-y0);s+='<path d="'+barPath(cx+o,yy,bw,hh,v>=0)+'" fill="'+c+'"/>';o+=bw+2})});
+  if(h25&&!SERIES_OFF.h25)s+='<line x1="'+L+'" x2="'+(W-R)+'" y1="'+y(h25)+'" y2="'+y(h25)+'" stroke="var(--faint)" stroke-width="1.5" stroke-dasharray="6 4"/><text x="'+(W-R)+'" y="'+(y(h25)-5)+'" text-anchor="end">média '+(+ANO-1)+' '+fAx(h25)+'</text>';
+  if(!SERIES_OFF.rl){const pts=dados.map((d,i)=>d?[L+cw*i+cw/2,y(d.rl)]:null);let seg=[];const segs=[];pts.forEach(p=>{if(p)seg.push(p);else{if(seg.length)segs.push(seg);seg=[]}});if(seg.length)segs.push(seg);
+    segs.forEach(sg=>{s+='<polyline points="'+sg.map(p=>p.join(",")).join(" ")+'" fill="none" stroke="var(--s-res)" stroke-width="2" stroke-linejoin="round"/>'});
+    pts.forEach((p,i)=>{if(p)s+='<circle cx="'+p[0]+'" cy="'+p[1]+'" r="4" fill="'+(dados[i].rl<0?"var(--red)":"var(--s-res)")+'" stroke="#fff" stroke-width="2"/>'})}
+  ms.forEach((x,i)=>{if(dados[i])s+='<rect class="hit" data-i="'+i+'" x="'+(L+cw*i)+'" y="'+T+'" width="'+cw+'" height="'+(H-T-B)+'"/>'});
+  el.innerHTML=s+'</svg>';
+  ligar(el,{tip:i=>{const d=dados[i];return'<b>'+MESES_L[i].replace(/^./,c=>c.toUpperCase())+'/'+ANO+'</b>'+tipRow("var(--s-rec)","Total recebido",fK(d.rec))+tipRow("var(--s-cus)","Custos totais",fK(d.cus))+tipRow("var(--s-res)","Resultado líquido",fK(d.rl),1)+(h25?tipRow("","vs média "+(+ANO-1),(d.rec>=h25?"+":"−")+fK(Math.abs(d.rec-h25))):"")+'<div class="small" style="opacity:.7;margin-top:3px">'+(ms[i].c.fonte==="pdf"?"Relatório FI-025":"Planilha")+'</div>'},click:i=>{MES=ms[i].k;render()}});
+}
+/* mapa de desvios: linha × mês, cor = realizado/previsto */
+function gMapa(el,ms){if(!el)return;const com=ms.filter(x=>x.c);if(!com.length){el.innerHTML="";return}
+  const desp=LINHAS.filter(l=>l.g!=="rec"&&l.id!=="r84");
+  const lin=desp.map(l=>{let dev=0,tem=false;com.forEach(x=>{const r=x.c.v[l.id],p=x.c.p[l.id];if(r||p)tem=true;dev+=Math.abs(r-p)});return{l,dev,tem}}).filter(x=>x.tem).sort((a,b)=>b.dev-a.dev).slice(0,16);
+  const W=el.clientWidth||900,LW=Math.min(250,W*.38),rh=24,T=18,H=T+lin.length*rh+4;const cw=(W-LW-4)/12;
+  const cor=q=>{const t=Math.max(-1,Math.min(1,q));const a=Math.min(1,Math.abs(t)/0.6);if(Math.abs(t)<0.05)return"#eef2f6";return t>0?"rgba(227,73,72,"+(0.18+0.72*a).toFixed(2)+")":"rgba(42,120,214,"+(0.15+0.6*a).toFixed(2)+")"};
+  let s='<svg viewBox="0 0 '+W+' '+H+'" height="'+H+'" role="img" aria-label="Mapa de desvios por linha e mês"><defs><pattern id="hch" width="6" height="6" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><rect width="6" height="6" fill="#f8fafc"/><line x1="0" y1="0" x2="0" y2="6" stroke="#cbd5e1" stroke-width="2"/></pattern></defs>';
+  ms.forEach((m,i)=>{s+='<text x="'+(LW+cw*i+cw/2)+'" y="12" text-anchor="middle" style="'+(m.k===MES?"fill:var(--text);font-weight:700":"")+'">'+(cw<34?MESES[i].charAt(0):MESES[i])+'</text>'});
+  const cells=[];
+  lin.forEach((o,j)=>{const yy=T+j*rh;const mc=Math.floor((LW-10)/6.2);s+='<text x="0" y="'+(yy+16)+'" style="fill:var(--text)">'+esc(o.l.nome.length>mc?o.l.nome.slice(0,mc-1)+"…":o.l.nome)+'</text>';
+    ms.forEach((m,i)=>{const x0=LW+cw*i+1;if(!m.c){s+='<rect x="'+x0+'" y="'+(yy+2)+'" width="'+(cw-2)+'" height="'+(rh-4)+'" rx="3" fill="#fafafa"/>';return}
+      const r=m.c.v[o.l.id],p=m.c.p[o.l.id];let f,q=null;if(!p&&!r)f="#f8fafc";else if(!p)f="url(#hch)";else{q=r/p-1;f=cor(q)}
+      const ci=cells.push({l:o.l,m,r,p,q})-1;s+='<rect x="'+x0+'" y="'+(yy+2)+'" width="'+(cw-2)+'" height="'+(rh-4)+'" rx="3" fill="'+f+'" stroke="'+(m.k===MES?"#0f172a":"none")+'" stroke-width="'+(m.k===MES?1:0)+'"/>';
+      if(q!=null&&Math.abs(q)>=0.995&&cw>=44)s+='<text x="'+(x0+cw/2-1)+'" y="'+(yy+15.5)+'" text-anchor="middle" style="fill:'+(q>0?"#fff":"var(--text)")+';font-size:10px;font-family:var(--mono)">'+(q>0?"+":"")+Math.round(q*100)+'%</text>';
+      s+='<rect class="hit" data-i="'+ci+'" x="'+x0+'" y="'+(yy+2)+'" width="'+(cw-2)+'" height="'+(rh-4)+'"/>'})});
+  el.innerHTML=s+'</svg>';
+  ligar(el,{tip:i=>{const c=cells[i];return'<b>'+esc(c.l.nome)+'</b><div class="small" style="opacity:.7">'+mkLabel(c.m.k)+'</div>'+tipRow("","Realizado",fR(c.r))+tipRow("","Previsto",c.p?fR(c.p):"sem meta")+(c.q!=null?tipRow(c.q>0?"var(--d-acima)":"var(--d-abaixo)",c.q>0?"Acima":"Abaixo",fP(Math.abs(c.q),0)+" · "+fK(Math.abs(c.r-c.p))):"")},click:i=>{const c=cells[i];MES=c.m.k;render();abrirLinha(c.l.id)}});
+}
+
 
 /* ---------- gráficos SVG ---------- */
 function tipShow(ev,html){const t=document.getElementById("tip");t.innerHTML=html;t.style.display="block";const r=t.getBoundingClientRect();let x=ev.clientX+14,y=ev.clientY+14;if(x+r.width>innerWidth-8)x=ev.clientX-r.width-14;if(y+r.height>innerHeight-8)y=ev.clientY-r.height-14;t.style.left=Math.max(8,x)+"px";t.style.top=Math.max(8,y)+"px"}
@@ -341,23 +471,6 @@ function tipHide(){document.getElementById("tip").style.display="none"}
 function tipRow(cor,l,v,ln){return'<div class="r"><span>'+(cor?'<i style="background:'+cor+(ln?';height:3px;vertical-align:3px':'')+'"></i>':"")+l+'</span><span>'+v+'</span></div>'}
 function escala(min,max,n){if(min===max){max=min+1}const span=max-min;const step0=span/n;const mag=Math.pow(10,Math.floor(Math.log10(step0)));const st=[1,2,2.5,5,10].map(x=>x*mag).find(x=>x>=step0);const lo=Math.floor(min/st)*st,hi=Math.ceil(max/st)*st;const t=[];for(let v=lo;v<=hi+st/2;v+=st)t.push(Math.round(v*1e6)/1e6);return{lo,hi,t}}
 function ligar(el,cb){el.querySelectorAll("[data-i]").forEach(n=>{n.addEventListener("mousemove",e=>tipShow(e,cb.tip(+n.dataset.i)));n.addEventListener("mouseleave",tipHide);if(cb.click)n.addEventListener("click",()=>{tipHide();cb.click(+n.dataset.i)})})}
-function gEvolucao(el,ms){if(!el)return;const W=el.clientWidth||600,H=280,L=58,R=8,T=12,B=26;
-  const dados=ms.map(x=>x.c?{rec:x.c.d.tot,cus:x.c.d.cv+x.c.d.cf+x.c.d.extD,rl:x.c.d.rl}:null);
-  const vals=dados.filter(Boolean).flatMap(x=>[x.rec,x.cus,x.rl,0]);const sc=escala(Math.min(...vals),Math.max(...vals),5);
-  const y=v=>T+(H-T-B)*(1-(v-sc.lo)/(sc.hi-sc.lo));const cw=(W-L-R)/12;const bw=Math.max(4,Math.min(22,cw*.3));
-  let s='<svg viewBox="0 0 '+W+' '+H+'" height="'+H+'" role="img" aria-label="Evolução mensal de recebimentos, custos e resultado">';
-  sc.t.forEach(v=>{s+='<line class="'+(v===0?"zl":"gl")+'" x1="'+L+'" x2="'+(W-R)+'" y1="'+y(v)+'" y2="'+y(v)+'"/><text x="'+(L-8)+'" y="'+(y(v)+4)+'" text-anchor="end">'+fAx(v)+'</text>'});
-  ms.forEach((x,i)=>{const cx=L+cw*i+cw/2;if(x.k===MES)s+='<rect class="sel-m" x="'+(L+cw*i+1)+'" y="'+T+'" width="'+(cw-2)+'" height="'+(H-T-B)+'" rx="6"/>';
-    s+='<text x="'+cx+'" y="'+(H-8)+'" text-anchor="middle" style="'+(x.k===MES?"fill:var(--text);font-weight:700":"")+'">'+(cw<34?MESES[i].charAt(0):MESES[i])+'</text>';
-    const d=dados[i];if(!d)return;const y0=y(0);
-    [[d.rec,"var(--s-rec)",-1],[d.cus,"var(--s-cus)",1]].forEach(([v,c,o])=>{const yy=y(Math.max(v,0)),hh=Math.abs(y(v)-y0);const bx=cx+(o<0?-bw-1:1);s+='<path d="'+barPath(bx,yy,bw,hh,v>=0)+'" fill="'+c+'"/>'})});
-  const pts=dados.map((d,i)=>d?[L+cw*i+cw/2,y(d.rl)]:null);let seg=[];const segs=[];pts.forEach(p=>{if(p)seg.push(p);else{if(seg.length)segs.push(seg);seg=[]}});if(seg.length)segs.push(seg);
-  segs.forEach(sg=>{s+='<polyline points="'+sg.map(p=>p.join(",")).join(" ")+'" fill="none" stroke="var(--s-res)" stroke-width="2" stroke-linejoin="round"/>'});
-  pts.forEach(p=>{if(p)s+='<circle cx="'+p[0]+'" cy="'+p[1]+'" r="4" fill="var(--s-res)" stroke="#fff" stroke-width="2"/>'});
-  ms.forEach((x,i)=>{if(dados[i])s+='<rect class="hit" data-i="'+i+'" x="'+(L+cw*i)+'" y="'+T+'" width="'+cw+'" height="'+(H-T-B)+'"/>'});
-  el.innerHTML=s+'</svg>';
-  ligar(el,{tip:i=>{const d=dados[i];return'<b>'+MESES_L[i].replace(/^./,c=>c.toUpperCase())+'/'+ANO+'</b>'+tipRow("var(--s-rec)","Total recebido",fK(d.rec))+tipRow("var(--s-cus)","Custos totais",fK(d.cus))+tipRow("var(--s-res)","Resultado líquido",fK(d.rl),1)+'<div class="small" style="opacity:.7;margin-top:3px">'+(ms[i].c.fonte==="pdf"?"Relatório FI-025":"Planilha")+'</div>'},click:i=>{MES=ms[i].k;render()}});
-}
 function barPath(x,y,w,h,up){const r=Math.min(4,w/2,h);if(h<=0)return"";if(up)return"M"+x+","+(y+h)+"V"+(y+r)+"Q"+x+","+y+" "+(x+r)+","+y+"H"+(x+w-r)+"Q"+(x+w)+","+y+" "+(x+w)+","+(y+r)+"V"+(y+h)+"Z";return"M"+x+","+y+"V"+(y+h-r)+"Q"+x+","+(y+h)+" "+(x+r)+","+(y+h)+"H"+(x+w-r)+"Q"+(x+w)+","+(y+h)+" "+(x+w)+","+(y+h-r)+"V"+y+"Z"}
 function gMargem(el,ms){if(!el)return;const W=el.clientWidth||400,H=280,L=44,R=10,T=12,B=26;
   const metas=metasAno(ANO);const dm=derivar(metaMensal(metas));const meta=metas&&dm.base?dm.mcp:null;
