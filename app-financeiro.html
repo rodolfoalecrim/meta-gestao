@@ -246,7 +246,11 @@ const DEPARA_RAW={
  "269":"r39","189":"r40","288":"r40","242":"r42","260":"r43","141":"r44","97":"r45","303":"r47","235":"r48","245":"r51","274":"r52","275":"r52","31":"r54",
  "96":"r61","106":"r62","120":"r63","110":"r64","112":"r64","111":"r65","119":"r66","122":"r67","125":"r68","130":"r69","171":"r70","251":"r71","231":"r72",
  "178":"r74","325":"r76","326":"r76","327":"r76","139":"r84","302":"r84","258":"r86","204":"r87","256":"r87","194":"r88","140":"r89","203":"r90","238":"r93",
- "149":"ign","148":"ign","151":"ign","152":"ign","156":"ign","5":"ign","205":"ign","335":"ign","263":"ign"
+ "149":"ign","148":"ign","151":"ign","152":"ign","156":"ign","5":"ign","205":"ign","335":"ign","263":"ign",
+ /* contas que apareceram nos relatórios de jan–ago/2026 */
+ "51":"r64","219":"r64","279":"r64","86":"r11","87":"r11","89":"r11","294":"r11","128":"r11","129":"r11","257":"r11","102":"r34","109":"r63","116":"r35","117":"r18",
+ "124":"r26","172":"r55","207":"r41","241":"r41","218":"r49","262":"r74","285":"r74","265":"r84","267":"r19","273":"r52","277":"r8","283":"r46","284":"r42",
+ "304":"r20","305":"r39","338":"r39","315":"r17","316":"r37","337":"r50","297":"r45","208":"ign","317":"ign","318":"ign"
 };
 const DEPARA_PADRAO={};Object.entries(DEPARA_RAW).forEach(([k,v])=>DEPARA_PADRAO["c"+k]=v);
 function dpNorm(v){if(!v)return null;if(Array.isArray(v))return{l:v[0],s:v[1]||""};if(typeof v==="string")return{l:v,s:""};return{l:v.l,s:v.s||""}}
@@ -286,7 +290,7 @@ const G_FORA_CF=["r75","r76"];/* depreciação calculada pelos bens; consórcio 
 const G_DESP_FIN=["r85","r89","r91","r93"],G_AMORT=["r86","r87","r88"],G_INVEST=["r46","r53","r54","r76","r90"],G_DISTRIB=["r41","r52"],G_UNID=["r5","r51","r7","r14"];
 const G_FORA_RES=G_AMORT.concat(G_INVEST,G_DISTRIB,["r51","r14","r75"]);/* linhas de custo que na visão gerencial não são despesa */
 /* contas que não entram na DRE: em que bloco do caixa ficam */
-const CAIXA_IGN={c205:"fin",c335:"inv",c263:"inv",c148:"int",c149:"int",c151:"int",c152:"int",c156:"out",c5:"out"};
+const CAIXA_IGN={c205:"fin",c318:"fin",c208:"inv",c317:"inv",c335:"inv",c263:"inv",c148:"int",c149:"int",c151:"int",c152:"int",c156:"out",c5:"out"};
 const BLOCOS_CX=[["ope","Operação","vendas, compras, despesas, juros e taxas"],["uni","Entre unidades e adiantamentos","transferências entre filiais e adiantamentos que vão e voltam"],["inv","Investimentos","compra de bens, consórcios, cota capital, aplicações"],["fin","Financiamentos e sócios","empréstimos recebidos e pagos, JCP, retiradas"],["int","Movimentos internos","transferências entre contas da própria empresa"],["out","Outros","contas do relatório sem bloco definido"],["pend","Sem classificação","contas ainda sem linha na DRE"]];
 function deprMensal(){return Object.values(S.deprec||{}).reduce((s,b)=>s+((+b.valor||0)/Math.max(1,(+b.anos||1)*12)),0)}
 function mesAnt(mk){const d=new Date(mk+"-15");d.setMonth(d.getMonth()-1);return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")}
