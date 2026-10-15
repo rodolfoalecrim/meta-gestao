@@ -13,7 +13,7 @@
 <style>
 :root{--bg:#f3f6f3;--card:#fff;--border:#e2e8f0;--line:#f1f5f9;--text:#0f172a;--muted:#64748b;--faint:#94a3b8;
 --G:#15803d;--GD:#052e16;--GL:#f0fdf4;--amber:#b45309;--amberL:#fffbeb;--red:#dc2626;--redL:#fef2f2;
---s-rec:#1baf7a;--s-cus:#eb6834;--s-res:#2a78d6;--d-acima:#e34948;--d-abaixo:#2a78d6;--mono:Inter,system-ui,sans-serif;--disp:Archivo,Inter,system-ui,sans-serif;--bg2:#eef2ef}
+--s-rec:#1baf7a;--s-cus:#eb6834;--s-res:#2a78d6;--s-ant:#c08a3e;--d-acima:#e34948;--d-abaixo:#2a78d6;--mono:Inter,system-ui,sans-serif;--disp:Archivo,Inter,system-ui,sans-serif;--bg2:#eef2ef}
 *{box-sizing:border-box;margin:0;padding:0}
 html,body{min-height:100%}
 body{font-variant-numeric:tabular-nums;font-family:Inter,system-ui,sans-serif;background:var(--bg);color:var(--text);font-size:14px;-webkit-font-smoothing:antialiased}
@@ -135,6 +135,7 @@ table.t{width:100%;border-collapse:collapse;font-size:13px}
 .sec-t{font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:.4px;color:var(--muted);margin:2px 2px 8px}
 .leg.tog span{cursor:pointer;user-select:none}.leg.tog span.off{opacity:.35;text-decoration:line-through}
 .leg i.ln.dot{background:none!important;border-top:2px dotted;height:0;border-radius:0}
+.leg i.ln.ant{background:repeating-linear-gradient(90deg,var(--s-ant) 0 5px,transparent 5px 8px)!important}
 .leg i.ln.dash{background:repeating-linear-gradient(90deg,var(--faint) 0 5px,transparent 5px 8px)!important}
 .leg i.hatch{background:repeating-linear-gradient(45deg,#f8fafc 0 2px,#cbd5e1 2px 4px);border:1px solid #e2e8f0}
 
@@ -146,6 +147,7 @@ table.t{width:100%;border-collapse:collapse;font-size:13px}
 .hero-per{font-size:13px;color:rgba(255,255,255,.65);font-weight:500}
 .hero-lbl{font-size:15px;font-weight:600;margin-top:14px;color:rgba(255,255,255,.9)}
 .hero-num{font-family:var(--disp);font-stretch:80%;font-weight:850;font-size:clamp(46px,7vw,84px);line-height:.95;letter-spacing:-1.5px;margin:4px 0 10px}
+.hero-ant{font-size:13px;color:#cbd5e1;margin:-2px 0 8px}.hero-ant b{color:#fff;font-weight:600}.hero-ant .up{color:#86efac;font-weight:600}.hero-ant .dn{color:#fca5a5;font-weight:600}
 .hero-num.pos{color:#86efac}.hero-num.neg{color:#fca5a5}
 .hero-txt{font-size:15px;line-height:1.5;color:rgba(255,255,255,.85);max-width:62ch}
 .hero-txt b{color:#fff;font-weight:700}
@@ -175,6 +177,16 @@ table.t{width:100%;border-collapse:collapse;font-size:13px}
 .cem-leg b{font-weight:700}
 .cem-leg .m{grid-column:2/4;font-size:11.5px;color:var(--muted)}.cem-leg .m.ok{color:var(--G)}.cem-leg .m.bad{color:var(--red)}
 .cem-leg .tot{font-weight:700}.cem-leg .tot i.res{background:var(--G)}.cem-leg .tot i.neg{background:var(--red)}
+.dre-m td,.dre-m th{padding:6px 7px}.dre-m th.cur{color:var(--text);background:#ecfdf5}
+.dre-m td.tc,.dre-m th.tc{background:#f8fafc;font-weight:600}
+.dre-m td.ta,.dre-m th.ta{background:#fbfaf8;color:#64748b}.dre-m th.ta{white-space:nowrap}.dre-m td.ta.neg{color:#b45454}.dre-m td.dl{font-weight:700;white-space:nowrap;font-size:12px}.dre-m td.dl.pos{color:var(--G)}.dre-m td.dl.neg{color:var(--red)}
+.dre-m .pc{display:block;font-size:10.5px;color:var(--muted);font-weight:500}.dre-m .pc.neg{color:var(--red)}
+.dre-m td:first-child,.dre-m th:first-child{position:sticky;left:0;background:#fff;z-index:1;min-width:210px;white-space:normal}
+.dre-m tr.tot td:first-child{background:#fcfdfc}.dre-m tr.big td:first-child{background:var(--GL)}
+.t tr.grp-h td{background:#f8fafc;font-weight:700;cursor:pointer;color:#334155}.t tr.grp-h:hover td{background:#f1f5f9}
+.car{display:inline-block;width:14px;color:var(--muted)}
+.subnav{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px}
+.leg i.dotm{width:9px;height:9px;border-radius:50%;background:#fff!important;border:2px solid #64748b;box-sizing:border-box}
 @media(max-width:1000px){.hero{grid-template-columns:minmax(0,1fr)}.hero-side{border-left:none;border-top:1px solid rgba(255,255,255,.1)}}
 @media(max-width:1000px){.kpis{grid-template-columns:repeat(2,minmax(0,1fr))}.grid2,.grid2b{grid-template-columns:minmax(0,1fr)}}
 @media(max-width:560px){.kf{flex-direction:column;align-items:stretch}.cmp{text-align:left}.kpi .v{font-size:24px}.hero-main{padding:18px 18px 10px}.hs{padding:12px 18px}.top-in{gap:8px}.brand span{display:none}.frm{grid-template-columns:1fr}}
@@ -189,7 +201,7 @@ table.t{width:100%;border-collapse:collapse;font-size:13px}
       <div class="per">
         <select class="sel" id="s-ano" onchange="setAno(this.value)" aria-label="Ano"></select>
         <select class="sel" id="s-mes" onchange="setMes(this.value)" aria-label="Mês"></select>
-        <div class="seg" role="group" aria-label="Visão" title="Gerencial: resultado da operação separado do caixa. Planilha: método da planilha original."><button id="v-G" onclick="setVisao('G')">Gerencial</button><button id="v-P" onclick="setVisao('P')">Planilha</button></div><div class="seg" role="group" aria-label="Período"><button id="m-mes" onclick="setModo('mes')">Mês</button><button id="m-acum" onclick="setModo('acum')">Acumulado</button></div>
+        <div class="seg" role="group" aria-label="Período"><button id="m-mes" onclick="setModo('mes')">Mês</button><button id="m-m3" onclick="setModo('m3')" title="Média dos últimos 3 meses: suaviza o efeito de pagamentos concentrados num mês">3 meses</button><button id="m-acum" onclick="setModo('acum')">Acumulado</button></div>
       </div>
       <button class="btn btn-g" onclick="abrirImport()">⬆ Importar FI-025</button>
       <button class="btn btn-o btn-sm" onclick="logout()" title="Sair">Sair</button>
@@ -250,7 +262,7 @@ const DEPARA_RAW={
  /* contas que apareceram nos relatórios de jan–ago/2026 */
  "51":"r64","219":"r64","279":"r64","86":"r11","87":"r11","89":"r11","294":"r11","128":"r11","129":"r11","257":"r11","102":"r34","109":"r63","116":"r35","117":"r18",
  "124":"r26","172":"r55","207":"r41","241":"r41","218":"r49","262":"r74","285":"r74","265":"r84","267":"r19","273":"r52","277":"r8","283":"r46","284":"r42",
- "304":"r20","305":"r39","338":"r39","315":"r17","316":"r37","337":"r50","297":"r45","208":"ign","317":"ign","318":"ign"
+ "304":"r20","305":"r39","338":"r39","315":"r17","316":"r37","337":"r50","297":"r45","25":"r76","30":"r46","105":"r33","131":"r38","133":"r63","135":"r18","138":"r4","206":"r90","222":"r8","248":"r90","250":"ign","276":"r55","282":"r31","286":"r38","295":"ign","208":"ign","317":"ign","318":"ign"
 };
 const DEPARA_PADRAO={};Object.entries(DEPARA_RAW).forEach(([k,v])=>DEPARA_PADRAO["c"+k]=v);
 function dpNorm(v){if(!v)return null;if(Array.isArray(v))return{l:v[0],s:v[1]||""};if(typeof v==="string")return{l:v,s:""};return{l:v.l,s:v.s||""}}
@@ -283,14 +295,14 @@ function metaMensal(metas){const r=+(metas&&metas.receita)||0;const v={};LINHAS.
 /* ================= VISÃO GERENCIAL ================= */
 /* Gerencial: separa o resultado da operação dos movimentos de caixa que não são receita nem despesa.
    Planilha: o método da planilha original (margem sobre os recebimentos de operação), com a soma de todas as linhas. */
-let VISAO="G";try{VISAO=localStorage.getItem("fin_visao")||"G"}catch(e){}
+let VISAO="G";/* a visão "planilha" saiu: os dados agora vêm só dos relatórios */
 function setVisao(v){VISAO=v;try{localStorage.setItem("fin_visao",v)}catch(e){}CACHE={};render()}
 const G_FORA_CV=["r30","r14","r51","r46","r53","r54","r52","r41","r27","r28"];/* CMV e perdas têm linha própria; o resto vai para baixo do resultado */
 const G_FORA_CF=["r75","r76"];/* depreciação calculada pelos bens; consórcio é investimento */
 const G_DESP_FIN=["r85","r89","r91","r93"],G_AMORT=["r86","r87","r88"],G_INVEST=["r46","r53","r54","r76","r90"],G_DISTRIB=["r41","r52"],G_UNID=["r5","r51","r7","r14"];
 const G_FORA_RES=G_AMORT.concat(G_INVEST,G_DISTRIB,["r51","r14","r75"]);/* linhas de custo que na visão gerencial não são despesa */
 /* contas que não entram na DRE: em que bloco do caixa ficam */
-const CAIXA_IGN={c205:"fin",c318:"fin",c208:"inv",c317:"inv",c335:"inv",c263:"inv",c148:"int",c149:"int",c151:"int",c152:"int",c156:"out",c5:"out"};
+const CAIXA_IGN={c205:"fin",c250:"fin",c295:"inv",c318:"fin",c208:"inv",c317:"inv",c335:"inv",c263:"inv",c148:"int",c149:"int",c151:"int",c152:"int",c156:"out",c5:"out"};
 const BLOCOS_CX=[["ope","Operação","vendas, compras, despesas, juros e taxas"],["uni","Entre unidades e adiantamentos","transferências entre filiais e adiantamentos que vão e voltam"],["inv","Investimentos","compra de bens, consórcios, cota capital, aplicações"],["fin","Financiamentos e sócios","empréstimos recebidos e pagos, JCP, retiradas"],["int","Movimentos internos","transferências entre contas da própria empresa"],["out","Outros","contas do relatório sem bloco definido"],["pend","Sem classificação","contas ainda sem linha na DRE"]];
 function deprMensal(){return Object.values(S.deprec||{}).reduce((s,b)=>s+((+b.valor||0)/Math.max(1,(+b.anos||1)*12)),0)}
 function mesAnt(mk){const d=new Date(mk+"-15");d.setMonth(d.getMonth()-1);return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")}
@@ -329,8 +341,8 @@ function caixaMes(mk){const mes=S.meses[mk];if(!mes||mes.fonte!=="pdf")return nu
   Object.entries(mes.contas||{}).forEach(([k,c])=>{const sg=(c.t==="R"?1:-1)*(+c.v||0);const bl=blocoConta(k,dp);b[bl].tot+=sg;b[bl].itens.push({k,d:c.d,v:sg})});
   const tot=Object.values(b).reduce((s,x)=>s+x.tot,0);const inf=mes.info||{};const rel=inf.totR!=null&&inf.totD!=null?inf.totR-inf.totD:null;return{b,tot,rel,confere:rel!=null&&Math.abs(rel-tot)<0.05}}
 function renderCaixa(m){
-  const ks=(MODO==="acum"?mesesAno(ANO).filter(k=>k<=MES):[MES]).filter(Boolean);const cs=ks.map(k=>({k,c:caixaMes(k)}));const com=cs.filter(x=>x.c),sem=cs.filter(x=>!x.c);
-  if(!com.length){m.innerHTML='<div class="card empty"><b>Sem fluxo de caixa para '+perLabel()+'</b>O fluxo de caixa sai das contas do relatório FI-025. Meses carregados da planilha só têm o valor por linha. Importe o FI-025 deste mês para ver o caixa.<div class="btns"><button class="btn btn-g" onclick="abrirImport()">⬆ Importar FI-025</button></div></div>';return}
+  const ks=mesesPeriodo(MES,MODO);const cs=ks.map(k=>({k,c:caixaMes(k)}));const rot=MODO==="m3"&&ks.length>1?"soma de "+MESES[+ks[0].slice(5)-1].toLowerCase()+" a "+MESES[+ks[ks.length-1].slice(5)-1].toLowerCase()+"/"+ANO:perLabel();const com=cs.filter(x=>x.c),sem=cs.filter(x=>!x.c);
+  if(!com.length){m.innerHTML='<div class="card empty"><b>Sem fluxo de caixa para '+rot+'</b>O fluxo de caixa sai das contas do relatório FI-025. Meses carregados da planilha só têm o valor por linha. Importe o FI-025 deste mês para ver o caixa.<div class="btns"><button class="btn btn-g" onclick="abrirImport()">⬆ Importar FI-025</button></div></div>';return}
   const agg={};BLOCOS_CX.forEach(([k])=>agg[k]={tot:0,itens:{}});let tot=0,rel=0,ok=true;
   com.forEach(({c})=>{tot+=c.tot;rel+=c.rel||0;ok=ok&&c.confere;BLOCOS_CX.forEach(([k])=>{agg[k].tot+=c.b[k].tot;c.b[k].itens.forEach(it=>{const a=agg[k].itens[it.k]=agg[k].itens[it.k]||{d:it.d,v:0};a.v+=it.v})})});
   const G=periodoG(com.map(x=>x.k));
@@ -338,13 +350,14 @@ function renderCaixa(m){
     rows+='<tr class="tot cx-h" onclick="this.parentNode.querySelectorAll(\'.cx-'+k+'\').forEach(r=>r.hidden=!r.hidden)" style="cursor:pointer"><td>▸ '+n+' <span class="muted small" style="font-weight:400">'+sub+'</span></td><td class="num '+(a.tot<0?"neg":"pos")+'">'+fR(a.tot)+'</td></tr>'+
     its.map(([c,x])=>'<tr class="cx-'+k+'" hidden><td class="nm" style="padding-left:24px">'+c.slice(1)+' · '+esc(x.d)+'</td><td class="num">'+fR(x.v,2)+'</td></tr>').join("")});
   const ebit=G.d;
-  m.innerHTML='<div class="card"><div class="ch-h"><div><h3>Fluxo de caixa — '+perLabel()+'</h3><div class="sub">Todas as contas do FI-025, separadas pelo que geram ou consomem de caixa. Clique num bloco para ver as contas.</div></div></div>'+
+  m.innerHTML='<div class="card"><div class="ch-h"><div><h3>Fluxo de caixa — '+rot+'</h3><div class="sub">Todas as contas do FI-025, separadas pelo que geram ou consomem de caixa. Clique num bloco para ver as contas.</div></div></div>'+
    (sem.length?'<div class="alert" style="margin-bottom:10px">'+sem.length+' mês(es) do período vieram da planilha e ficam fora do caixa: '+sem.map(x=>mkLabel(x.k)).join(", ")+'.</div>':'')+
    '<div class="kpis" style="grid-template-columns:repeat(3,minmax(0,1fr))">'+
      '<div class="kpi"><div class="l">Caixa gerado pela operação</div><div class="v'+(agg.ope.tot<0?" neg":"")+'">'+fK(agg.ope.tot)+'</div><div class="d">resultado gerencial do período: '+fK(ebit.rl)+'<br>diferença = depreciação, perdas e ajustes que não mexem no caixa</div></div>'+
      '<div class="kpi"><div class="l">Investimentos e financiamentos</div><div class="v'+(agg.inv.tot+agg.fin.tot<0?" neg":"")+'">'+fK(agg.inv.tot+agg.fin.tot)+'</div><div class="d">investimentos '+fK(agg.inv.tot)+' · financiamentos e sócios '+fK(agg.fin.tot)+'</div></div>'+
      '<div class="kpi"><div class="l">Variação de caixa</div><div class="v'+(tot<0?" neg":"")+'">'+fK(tot)+'</div><div class="d">'+(ok?'<span class="bdg good">✓ confere com o FI-025</span>':'<span class="bdg bad">difere do FI-025 ('+fK(rel)+')</span>')+'</div></div></div>'+
-   '<div class="tw"><table class="t"><thead><tr><th>Bloco</th><th>Valor</th></tr></thead><tbody>'+rows+'<tr class="tot big"><td>Variação de caixa do período</td><td class="num '+(tot<0?"neg":"pos")+'">'+fR(tot,2)+'</td></tr></tbody></table></div></div>';
+   '<div class="tw"><table class="t"><thead><tr><th>Bloco</th><th>Valor</th></tr></thead><tbody>'+rows+'<tr class="tot big"><td>Variação de caixa do período</td><td class="num '+(tot<0?"neg":"pos")+'">'+fR(tot,2)+'</td></tr></tbody></table></div></div>'+cardCaixaAno();
+  gCaixaAno(document.getElementById("g-cxano"));
 }
 function periodoG(ks){const cs=ks.map(k=>{const c=calcMes(k);const ex=extrasMes(k,c.v);return{v:c.v,ex:Object.assign(ex,{perdasEf:ex.perdas!=null?ex.perdas:(c.v.r27||0)+(c.v.r28||0)})}});const v={};LINHAS.forEach(l=>v[l.id]=cs.reduce((s,c)=>s+(c.v[l.id]||0),0));const ex=somaEx(cs.map(c=>c.ex));return{v,d:derivarG(v,ex)}}
 
@@ -353,10 +366,10 @@ function renderDREG(m,P){const d=P.d,dp=P.dp,dm=P.dm,dh=P.dh||{};const base=d.ba
   const cel=(x,cls)=>'<td class="num '+(cls||"")+'">'+(x==null||!isFinite(x)?"—":fR(x))+'</td>';const pct=x=>x==null||!isFinite(x)?"—":fP(x,0);
   function lin(l,neg){const r=P.v[l.id],p=P.p[l.id],mt=P.meta[l.id],hm=P.hm[l.id];if(!ZERADAS&&!r&&!p&&!mt)return"";const bom=l.nat==="R"&&!neg;const dif=r-p;const cls=Math.abs(dif)<0.5?"":(bom?dif>0:dif<0)?"pos":"neg";
     const temAj=P.ms.some(k=>Object.values((S.meses[k]||{}).ajustes||{}).some(a=>a.para===l.id||a.de===l.id));
-    return'<tr class="ln" onclick="abrirLinha(\''+l.id+'\')"><td class="nm">'+(neg&&!/^\(−\)/.test(l.nome)?"(−) ":"")+esc(l.nome)+(temAj?'<span class="tag">ajuste</span>':"")+'</td>'+cel(mt)+cel(p)+cel(r)+'<td class="num '+cls+'">'+(Math.abs(dif)<0.5?"—":(dif>0?"+":"")+fR(dif))+'</td><td class="num">'+(p?pct(r/p):"—")+'</td><td class="num">'+(base?pct(r/base):"—")+'</td>'+cel(hm)+'</tr>'}
-  function esp(nome,r,p,mt,hm,bom,tag,go){const dif=(r==null||p==null)?NaN:r-p;const c=!isFinite(dif)||Math.abs(dif)<0.5?"":(bom?dif>0:dif<0)?"pos":"neg";return'<tr class="ln"'+(go?' onclick="'+go+'"':"")+'><td class="nm">'+nome+(tag?'<span class="tag">'+tag+'</span>':"")+'</td>'+cel(mt)+cel(p)+cel(r)+'<td class="num '+c+'">'+(!isFinite(dif)||Math.abs(dif)<0.5?"—":(dif>0?"+":"")+fR(dif))+'</td><td class="num">'+(p&&r!=null?pct(r/p):"—")+'</td><td class="num">'+(base&&r!=null?pct(r/base):"—")+'</td>'+cel(hm)+'</tr>'}
-  function tot(nome,k,bom,cls){const r=d[k],p=dp[k],mt=dm[k],hm=dh[k];const dif=(r==null||p==null)?NaN:r-p;const c=!isFinite(dif)||Math.abs(dif)<0.5?"":(bom?dif>0:dif<0)?"pos":"neg";return'<tr class="tot '+(cls||"")+'"><td>'+nome+'</td>'+cel(mt)+cel(p)+cel(r,r<0?"neg":"")+'<td class="num '+c+'">'+(!isFinite(dif)||Math.abs(dif)<0.5?"—":(dif>0?"+":"")+fR(dif))+'</td><td class="num">'+(p&&r!=null?pct(r/p):"—")+'</td><td class="num">'+(base&&r!=null?pct(r/base):"—")+'</td>'+cel(hm)+'</tr>'}
-  const g=t=>'<tr class="grp"><td colspan="8">'+t+'</td></tr>';
+    return'<tr class="ln" onclick="abrirLinha(\''+l.id+'\')"><td class="nm">'+(neg&&!/^\(−\)/.test(l.nome)?"(−) ":"")+esc(l.nome)+(temAj?'<span class="tag">ajuste</span>':"")+'</td>'+cel(mt)+cel(p)+cel(r)+'<td class="num '+cls+'">'+(Math.abs(dif)<0.5?"—":(dif>0?"+":"")+fR(dif))+'</td><td class="num">'+(p?pct(r/p):"—")+'</td><td class="num">'+(base?pct(r/base):"—")+'</td>'+'</tr>'}
+  function esp(nome,r,p,mt,hm,bom,tag,go){const dif=(r==null||p==null)?NaN:r-p;const c=!isFinite(dif)||Math.abs(dif)<0.5?"":(bom?dif>0:dif<0)?"pos":"neg";return'<tr class="ln"'+(go?' onclick="'+go+'"':"")+'><td class="nm">'+nome+(tag?'<span class="tag">'+tag+'</span>':"")+'</td>'+cel(mt)+cel(p)+cel(r)+'<td class="num '+c+'">'+(!isFinite(dif)||Math.abs(dif)<0.5?"—":(dif>0?"+":"")+fR(dif))+'</td><td class="num">'+(p&&r!=null?pct(r/p):"—")+'</td><td class="num">'+(base&&r!=null?pct(r/base):"—")+'</td>'+'</tr>'}
+  function tot(nome,k,bom,cls){const r=d[k],p=dp[k],mt=dm[k];const dif=(r==null||p==null)?NaN:r-p;const c=!isFinite(dif)||Math.abs(dif)<0.5?"":(bom?dif>0:dif<0)?"pos":"neg";return'<tr class="tot '+(cls||"")+'"><td>'+nome+'</td>'+cel(mt)+cel(p)+cel(r,r<0?"neg":"")+'<td class="num '+c+'">'+(!isFinite(dif)||Math.abs(dif)<0.5?"—":(dif>0?"+":"")+fR(dif))+'</td><td class="num">'+(p&&r!=null?pct(r/p):"—")+'</td><td class="num">'+(base&&r!=null?pct(r/base):"—")+'</td>'+'</tr>'}
+  const g=t=>'<tr class="grp"><td colspan="7">'+t+'</td></tr>';
   let rows=g("Receita")+lin(LIN.r4)+lin(LIN.r6,1)+lin(LIN.r8)+tot("Receita líquida","tot",true)+
    g("Custo das mercadorias")+lin(LIN.r30,1)+tot("Margem bruta <span class='muted small'>("+fP(d.base?d.mb/d.base:null)+")</span>","mb",true,"big")+
    g("Despesas variáveis")+LINHAS.filter(l=>l.g==="cv"&&!G_FORA_CV.includes(l.id)).map(l=>lin(l)).join("")+
@@ -429,6 +442,64 @@ function gCron(el,cr){if(!el)return;const W=el.clientWidth||700,H=220,L=52,R=8,T
   cr.forEach((x,i)=>{const cx=L+cw*i+cw/2;const ya=y(x.a),yj=y(x.a+x.j);s+='<rect x="'+(cx-bw/2)+'" y="'+ya+'" width="'+bw+'" height="'+Math.max(0,y(0)-ya)+'" fill="var(--faint)"/>';if(x.j>0)s+='<rect x="'+(cx-bw/2)+'" y="'+yj+'" width="'+bw+'" height="'+Math.max(0,ya-yj-1)+'" rx="2" fill="var(--d-acima)" opacity=".85"/>';s+='<text x="'+cx+'" y="'+(H-6)+'" text-anchor="middle">'+lab(i).t+'</text><rect class="hit" data-i="'+i+'" x="'+(L+cw*i)+'" y="'+T+'" width="'+cw+'" height="'+(H-T-B)+'"/>'});
   el.innerHTML=s+'</svg>';ligar(el,{tip:i=>'<b>'+lab(i).k+'</b>'+tipRow("var(--d-acima)","Juros",fK(cr[i].j))+tipRow("var(--faint)","Amortização",fK(cr[i].a))+tipRow("","Total",fK(cr[i].j+cr[i].a))});
 }
+
+/* ---------- DRE mês a mês ---------- */
+function dreVistaNav(){return'<div class="subnav">'+[["mensal","Mês a mês"],["periodo","Período selecionado (com metas)"]].map(([k,l])=>'<button class="chip'+(DRE_VISTA===k?" on":"")+'" onclick="DRE_VISTA=\''+k+'\';render()">'+l+'</button>').join("")+'</div>'}
+function togDRE(g){DRE_ABERTOS[g]=!DRE_ABERTOS[g];render()}
+/* mesmos meses do ano anterior, quando todos existem */
+function mesesAnoAnt(ks){if(!ks.length)return null;const a=ks.map(k=>(+k.slice(0,4)-1)+k.slice(4));return a.every(k=>S.meses[k])?a:null}
+function renderDREMensal(m){const ks=mesesAno(ANO);if(!ks.length){m.innerHTML=dreVistaNav()+vazio();return}
+  const cs=ks.map(k=>calcMes(k));const n=cs.length;const kA=mesesAnoAnt(ks);const cA=kA?kA.map(k=>calcMes(k)):null;const AA=String(+ANO-1);
+  const mil=x=>{if(x==null||!isFinite(x)||Math.abs(x)<0.5)return"—";const r=Math.round(x/1000);return(r<0?"−":"")+Math.abs(r).toLocaleString("pt-BR")};
+  const sum=(l,f)=>l.reduce((s,c)=>s+(f(c)||0),0);const recT=sum(cs,c=>c.d.tot),recA=cA?sum(cA,c=>c.d.tot):0;
+  /* f = valor da linha num mês; bom = true quando subir é bom; pc = mostrar % da receita */
+  const cel=(f,bom,pc)=>{const vals=cs.map(c=>f(c)||0);const tot=vals.reduce((a,b)=>a+b,0);
+    let h=vals.map((x,i)=>{const r=cs[i].d.tot;return'<td class="num'+(x<0?" neg":"")+'">'+mil(x)+(pc&&r?'<span class="pc">'+Math.round(x/r*100)+'%</span>':"")+'</td>'}).join("");
+    h+='<td class="num tc'+(tot<0?" neg":"")+'">'+mil(tot)+(pc&&recT?'<span class="pc">'+Math.round(tot/recT*100)+'%</span>':"")+'</td><td class="num tc'+(tot<0?" neg":"")+'">'+mil(tot/n)+'</td>';
+    if(cA){const ta=sum(cA,f);const dd=tot-ta;const big=Math.abs(dd)>=500;const cls=!big?"":(bom?dd>0:dd<0)?" pos":" neg";
+      const pct=ta&&Math.sign(ta)===Math.sign(tot)&&Math.abs(ta)>=1000?Math.round((tot/ta-1)*100):null;
+      h+='<td class="num ta'+(ta<0?" neg":"")+'">'+mil(ta)+(pc&&recA?'<span class="pc">'+Math.round(ta/recA*100)+'%</span>':"")+'</td><td class="num ta dl'+cls+'">'+(big?(dd>0?"▲ ":"▼ ")+(pct!=null?Math.abs(pct)+"%":mil(Math.abs(dd))):"=")+'</td>'}
+    return h};
+  const visivel=id=>cs.some(c=>Math.abs(c.v[id]||0)>=0.5);
+  const linha=(id,neg)=>'<tr class="ln" onclick="abrirLinha(\''+id+'\')"><td class="nm">'+(neg&&!/^\(−\)/.test(LIN[id].nome)?"(−) ":"")+esc(LIN[id].nome)+'</td>'+cel(c=>c.v[id],LIN[id].nat==="R")+'</tr>';
+  const extra=(nome,f,go,bom)=>'<tr class="ln"'+(go?' onclick="'+go+'"':'')+'><td class="nm">'+nome+'</td>'+cel(f,!!bom)+'</tr>';
+  const grupo=(gk,nome,ids,neg,extras,soma,bom)=>{const ab=!!DRE_ABERTOS[gk];const vis=ids.filter(visivel);const sf=soma||(c=>vis.reduce((s,id)=>s+(c.v[id]||0),0)+(extras||[]).reduce((s,e)=>s+(e[1](c)||0),0));
+    return'<tr class="grp-h" onclick="togDRE(\''+gk+'\')"><td><span class="car">'+(ab?"▾":"▸")+'</span>'+nome+' <span class="muted small">('+(vis.length+(extras||[]).length)+')</span></td>'+cel(sf,!!bom)+'</tr>'+(ab?vis.map(id=>linha(id,neg)).join("")+(extras||[]).map(e=>extra(e[0],e[1],e[2],e[3])).join(""):"")};
+  const tot=(nome,k,big,pc)=>'<tr class="tot'+(big?" big":"")+'"><td>'+nome+'</td>'+cel(c=>c.d[k],true,pc)+'</tr>';
+  const cvIds=LINHAS.filter(l=>l.g==="cv"&&!G_FORA_CV.includes(l.id)).map(l=>l.id),cfIds=LINHAS.filter(l=>l.g==="cf"&&!G_FORA_CF.includes(l.id)).map(l=>l.id);
+  let rows=grupo("rec","Receita",["r4","r6","r8"],false,null,c=>c.d.tot,true)+tot("Receita líquida","tot")+
+    grupo("cmv","Custo das mercadorias (CMV)",["r30"],true)+tot("Margem bruta","mb",true,true)+
+    grupo("cv","Despesas variáveis",cvIds,false,[["Perdas com recebíveis",c=>c.d.perdas,"setTab('posicao')"]])+tot("Margem de contribuição","mc",true,true)+
+    grupo("cf","Despesas fixas",cfIds,false)+tot("EBITDA","ebitda",true,true)+
+    grupo("fin","Depreciação e resultado financeiro",["r84"].concat(G_DESP_FIN),false,[["(−) Depreciação dos bens",c=>c.d.depr,"setTab('dividas')"],["(−) Juros dentro das parcelas",c=>c.d.jurosEmb,"setTab('dividas')"]],c=>c.d.resFin-c.d.depr,true)+
+    tot("Resultado líquido","rl",true,true)+
+    grupo("fora","Fora do resultado (movimentos de caixa)",[],false,[["Transferências entre unidades (líquido)",c=>c.d.transf,null,true],["Adiantamentos (líquido)",c=>c.d.adiant,null,true],["(−) Amortização de empréstimos",c=>c.d.amort,"setTab('dividas')"],["(−) Investimentos: bens, consórcios, cota capital",c=>c.d.invest],["(−) Distribuição aos sócios",c=>c.d.distrib]],c=>c.d.transf+c.d.adiant-c.d.amort-c.d.invest-c.d.distrib,true);
+  const perA=cA?MESES[+ks[0].slice(5)-1].toLowerCase()+(n>1?"–"+MESES[+ks[n-1].slice(5)-1].toLowerCase():""):"";
+  m.innerHTML=dreVistaNav()+'<div class="card"><div class="ch-h"><div><h3>DRE gerencial mês a mês — '+ANO+'</h3><div class="sub">Valores em R$ mil; % = sobre a receita líquida do mês. Clique num grupo para abrir as linhas e numa linha para ver as contas do relatório. Regime de caixa: um mês isolado pode variar muito — compare pela coluna Média'+(cA?' e pelo mesmo período de '+AA+' (verde = melhorou, vermelho = piorou)':'')+'.</div></div><div class="small" style="display:flex;gap:6px"><button class="btn btn-o btn-sm" onclick="[\'rec\',\'cmv\',\'cv\',\'cf\',\'fin\',\'fora\'].forEach(g=>DRE_ABERTOS[g]=true);render()">Abrir tudo</button><button class="btn btn-o btn-sm" onclick="DRE_ABERTOS={};render()">Fechar tudo</button></div></div>'+
+   '<div class="tw"><table class="t dre-m"><thead><tr><th>Linha</th>'+ks.map(k=>'<th'+(k===MES?' class="cur"':'')+'>'+MESES[+k.slice(5)-1]+'</th>').join("")+'<th class="tc">Total</th><th class="tc">Média</th>'+(cA?'<th class="ta">'+perA+'/'+AA+'</th><th class="ta">vs '+AA+'</th>':'')+'</tr></thead><tbody>'+rows+'</tbody></table></div></div>';
+}
+
+/* ---------- caixa ao longo do ano ---------- */
+function cardCaixaAno(){const ks=mesesAno(ANO);const cs=ks.map(k=>({k,c:caixaMes(k)})).filter(x=>x.c);if(!cs.length)return"";
+  const si=((S.config||{}).saldoIni||{})[ANO];const temSI=si!=null&&si!=="";const blocos=BLOCOS_CX.filter(([k])=>cs.some(x=>Math.abs(x.c.b[k].tot)>=0.5));
+  const mil=x=>{if(x==null||!isFinite(x)||Math.abs(x)<0.5)return"—";const r=Math.round(x/1000);return(r<0?"−":"")+Math.abs(r).toLocaleString("pt-BR")};
+  let saldo=temSI?+si:0;const sald=cs.map(x=>(saldo+=x.c.tot));const tot=k=>cs.reduce((s,x)=>s+x.c.b[k].tot,0);const var_=cs.reduce((s,x)=>s+x.c.tot,0);
+  const banco=cs.map(x=>{const p=posicao(x.k);if(!p||!p.bancos)return null;return BANCOS.reduce((s,[k])=>s+(+(p.bancos||{})[k]||0),0)});
+  let rows=blocos.map(([k,n])=>'<tr><td class="nm">'+n+'</td>'+cs.map(x=>'<td class="num'+(x.c.b[k].tot<0?" neg":"")+'">'+mil(x.c.b[k].tot)+'</td>').join("")+'<td class="num tc'+(tot(k)<0?" neg":"")+'">'+mil(tot(k))+'</td></tr>').join("");
+  rows+='<tr class="tot"><td>Variação do caixa</td>'+cs.map(x=>'<td class="num'+(x.c.tot<0?" neg":"")+'">'+mil(x.c.tot)+'</td>').join("")+'<td class="num tc'+(var_<0?" neg":"")+'">'+mil(var_)+'</td></tr>';
+  rows+='<tr class="tot big"><td>'+(temSI?"Saldo de caixa no fim do mês":"Variação acumulada no ano")+'</td>'+sald.map(x=>'<td class="num'+(x<0?" neg":"")+'">'+mil(x)+'</td>').join("")+'<td class="tc"></td></tr>';
+  if(banco.some(x=>x!=null))rows+='<tr><td class="nm">Saldo nos bancos (Posição do mês)</td>'+banco.map((b,i)=>'<td class="num">'+(b==null?"—":mil(b)+(temSI&&Math.abs(b-sald[i])>1000?'<span class="pc neg">dif. '+mil(b-sald[i])+'</span>':""))+'</td>').join("")+'<td class="tc"></td></tr>';
+  return'<div class="card" style="margin-top:12px"><div class="ch-h"><div><h3>Caixa no ano — '+ANO+'</h3><div class="sub">Valores em R$ mil, direto das contas do FI-025. '+(temSI?"Partindo do saldo de 31/12/"+(+ANO-1)+".":"Informe o saldo de 31/12/"+(+ANO-1)+" (todos os bancos + caixa) para ver o saldo de cada mês.")+'</div></div>'+
+   '<label class="small" style="display:flex;gap:6px;align-items:center;font-weight:600">Saldo em 31/12/'+(+ANO-1)+' <input class="inp num" type="number" step="0.01" style="width:150px;text-align:right" value="'+(temSI?si:"")+'" placeholder="R$" onchange="db.ref(\'fin/config/saldoIni/'+ANO+'\').set(this.value===\'\'?null:+this.value).then(()=>toast(\'Saldo inicial salvo\'))"></label></div>'+
+   '<div class="chart" id="g-cxano"></div>'+
+   '<div class="tw"><table class="t dre-m"><thead><tr><th>Bloco</th>'+cs.map(x=>'<th'+(x.k===MES?' class="cur"':'')+'>'+MESES[+x.k.slice(5)-1]+'</th>').join("")+'<th class="tc">Ano</th></tr></thead><tbody>'+rows+'</tbody></table></div></div>'}
+function gCaixaAno(el){if(!el)return;const ks=mesesAno(ANO);const cs=ks.map(k=>({k,c:caixaMes(k)})).filter(x=>x.c);if(!cs.length)return;const si=((S.config||{}).saldoIni||{})[ANO];const temSI=si!=null&&si!=="";
+  let saldo=temSI?+si:0;const pts=cs.map(x=>({k:x.k,v:x.c.tot,s:(saldo+=x.c.tot)}));const W=el.clientWidth||700,H=220,L=56,R=10,T=14,B=24;const all=pts.flatMap(p=>[p.v,p.s,0]);const sc=escala(Math.min(...all),Math.max(...all),4);const y=v=>T+(H-T-B)*(1-(v-sc.lo)/(sc.hi-sc.lo));const cw=(W-L-R)/pts.length,bw=Math.min(34,cw*.5);
+  let s='<svg viewBox="0 0 '+W+' '+H+'" height="'+H+'" role="img" aria-label="Variação e saldo de caixa por mês">';sc.t.forEach(v=>{s+='<line class="'+(v===0?"zl":"gl")+'" x1="'+L+'" x2="'+(W-R)+'" y1="'+y(v)+'" y2="'+y(v)+'"/><text x="'+(L-6)+'" y="'+(y(v)+4)+'" text-anchor="end">'+fAx(v)+'</text>'});
+  pts.forEach((p,i)=>{const cx=L+cw*i+cw/2;s+='<path d="'+barPath(cx-bw/2,y(Math.max(p.v,0)),bw,Math.abs(y(p.v)-y(0)),p.v>=0)+'" fill="'+(p.v>=0?"var(--s-rec)":"var(--d-acima)")+'" opacity=".8"/><text x="'+cx+'" y="'+(H-6)+'" text-anchor="middle" style="'+(p.k===MES?"fill:var(--text);font-weight:700":"")+'">'+MESES[+p.k.slice(5)-1]+'</text>'});
+  s+='<polyline points="'+pts.map((p,i)=>(L+cw*i+cw/2)+","+y(p.s)).join(" ")+'" fill="none" stroke="var(--s-res)" stroke-width="2.5" stroke-linejoin="round"/>';pts.forEach((p,i)=>{s+='<circle cx="'+(L+cw*i+cw/2)+'" cy="'+y(p.s)+'" r="3.5" fill="var(--s-res)" stroke="#fff" stroke-width="1.5"/><rect class="hit" data-i="'+i+'" x="'+(L+cw*i)+'" y="'+T+'" width="'+cw+'" height="'+(H-T-B)+'"/>'});
+  el.innerHTML=s+'</svg><div class="leg" style="margin:4px 0 8px"><span><i style="background:var(--s-rec)"></i>Entrou mais do que saiu</span><span><i style="background:var(--d-acima)"></i>Saiu mais do que entrou</span><span><i class="ln" style="background:var(--s-res)"></i>'+(temSI?"Saldo de caixa":"Variação acumulada")+'</span></div>';
+  ligar(el,{tip:i=>'<b>'+mkLabel(pts[i].k)+'</b>'+tipRow("","Variação no mês",fK(pts[i].v))+tipRow("var(--s-res)",temSI?"Saldo no fim do mês":"Acumulado no ano",fK(pts[i].s),1),click:i=>{MES=pts[i].k;MODO="mes";render()}})}
 
 /* ================= GESTÃO: alertas, projeção, revisão de metas e correções ================= */
 function mediana(a){const x=a.slice().sort((p,q)=>p-q);if(!x.length)return null;const m=Math.floor(x.length/2);return x.length%2?x[m]:(x[m-1]+x[m])/2}
@@ -504,7 +575,7 @@ const auth=firebase.auth(),db=firebase.database();
 const PDFJS_URL="https://cdn.jsdelivr.net/npm/pdfjs-dist@4.10.38/build/pdf.min.mjs",PDFJS_WORKER="https://cdn.jsdelivr.net/npm/pdfjs-dist@4.10.38/build/pdf.worker.min.mjs";
 const ROLES_OK=["admin","financeiro"];
 const MESES=["Jan","Fev","Mar","Abr","Mai","Jun","Jul","Ago","Set","Out","Nov","Dez"],MESES_L=["janeiro","fevereiro","março","abril","maio","junho","julho","agosto","setembro","outubro","novembro","dezembro"];
-let USER=null,NOME="",S={meses:{},metas:{},hist:{},depara:{},config:{},posicao:{},dividas:{},deprec:{}},ANO=null,MES=null,MODO="mes",TAB="geral",CACHE={},LINHA_ABERTA=null,FILTRO_CONTAS="pend",BUSCA="",ZERADAS=false,IMP=null;
+let USER=null,NOME="",S={meses:{},metas:{},hist:{},depara:{},config:{},posicao:{},dividas:{},deprec:{}},ANO=null,MES=null,MODO="m3",TAB="geral",SUB={balanco:"posicao",config:"metas"},DRE_VISTA="mensal",DRE_ABERTOS={},CACHE={},LINHA_ABERTA=null,FILTRO_CONTAS="pend",BUSCA="",ZERADAS=false,IMP=null;
 
 /* ---------- util ---------- */
 function esc(s){return String(s==null?"":s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]))}
@@ -520,20 +591,25 @@ function metasAno(a){return(S.metas||{})[a]||null}
 function histAno(a){return(S.hist||{})[a]||null}
 
 /* ---------- cálculo com cache ---------- */
-function calcMes(mk){if(CACHE[mk])return CACHE[mk];const mes=S.meses[mk];const{v,pend}=valoresMes(mes,deparaEf());const metas=metasAno(mk.slice(0,4));const p=previstoMes(metas,v);
+function calcMes(mk){if(CACHE[mk])return CACHE[mk];const mes=S.meses[mk];const{v,pend}=valoresMes(mes,deparaEf());const metas=metasAno(mk.slice(0,4));const p=metas?previstoMes(metas,v):Object.assign({},v);/* sem metas no ano: previsto = realizado, nada aparece como desvio */
   const ex=VISAO==="G"?extrasMes(mk,v):null;return CACHE[mk]={mk,v,pend,d:D(v,ex),p,dp:D(p,ex?Object.assign({},ex,{perdas:null}):null),ex,fonte:mes&&mes.fonte}}
 function mesesAno(a){return Object.keys(S.meses||{}).filter(k=>k.startsWith(a+"-")).sort()}
 function anos(){const s=new Set(Object.keys(S.meses||{}).map(k=>k.slice(0,4)));Object.keys(S.metas||{}).forEach(a=>s.add(a));if(!s.size)s.add(String(new Date().getFullYear()));return[...s].sort()}
 function somaV(lista,campo){const o={};LINHAS.forEach(l=>o[l.id]=lista.reduce((s,c)=>s+(c[campo][l.id]||0),0));return o}
-/* período em análise: mês ou acumulado do ano até o mês */
-function periodo(){const ms=MODO==="acum"?mesesAno(ANO).filter(k=>k<=MES):(S.meses[MES]?[MES]:[]);const cs=ms.map(calcMes);
-  const v=somaV(cs,"v"),p=somaV(cs,"p");const metas=metasAno(ANO);const mm=metaMensal(metas);const n=ms.length;const meta={};LINHAS.forEach(l=>meta[l.id]=(mm[l.id]||0)*n);
-  const h=histAno(String(+ANO-1));const hm={};LINHAS.forEach(l=>hm[l.id]=h&&h.linhas&&h.linhas[l.id]!=null?h.linhas[l.id]/12*n:null);
+/* período em análise: mês, média dos últimos 3 meses ou acumulado do ano */
+function mesesPeriodo(fim,modo){fim=fim||MES;modo=modo||MODO;if(!fim)return[];if(modo==="acum")return mesesAno(fim.slice(0,4)).filter(k=>k<=fim);if(modo==="m3")return Object.keys(S.meses).filter(k=>k<=fim).sort().slice(-3);return S.meses[fim]?[fim]:[]}
+function periodo(fim,modo){modo=modo||MODO;const ms=mesesPeriodo(fim,modo);const cs=ms.map(calcMes);const n=ms.length;const f=modo==="m3"&&n?1/n:1;
+  const v=somaV(cs,"v"),p=somaV(cs,"p");if(f!==1)LINHAS.forEach(l=>{v[l.id]*=f;p[l.id]*=f});
+  const metas=metasAno((fim||MES||"").slice(0,4)||ANO);const mm=metaMensal(metas);const nm=modo==="m3"?1:n;const meta={};LINHAS.forEach(l=>meta[l.id]=(mm[l.id]||0)*nm);
   const pend={};cs.forEach(c=>Object.entries(c.pend).forEach(([k,x])=>{pend[k]=pend[k]||{d:x.d,t:x.t,v:0,meses:[]};pend[k].v+=x.v;pend[k].meses.push(c.mk)}));
-  let exR=null,exP=null;if(VISAO==="G"){const xs=cs.map(c=>Object.assign({},c.ex,{perdasEf:c.ex.perdas!=null?c.ex.perdas:(c.v.r27||0)+(c.v.r28||0)}));exR=somaEx(xs);exP={depr:exR.depr,jurosEmb:exR.jurosEmb,perdas:null}}
+  let exR=null,exP=null;if(VISAO==="G"){const xs=cs.map(c=>Object.assign({},c.ex,{perdasEf:c.ex.perdas!=null?c.ex.perdas:(c.v.r27||0)+(c.v.r28||0)}));exR=somaEx(xs);exR={depr:exR.depr*f,jurosEmb:exR.jurosEmb*f,perdas:exR.perdas*f};exP={depr:exR.depr,jurosEmb:exR.jurosEmb,perdas:null}}
   const d=D(v,exR);if(exR&&cs.some(c=>c.ex.perdas==null))d.perdasEst=true;
-  return{ms,n,v,p,meta,hm,d,dp:D(p,exP),dm:D(meta,exPadrao(n)),dh:h?D(Object.fromEntries(LINHAS.map(l=>[l.id,hm[l.id]||0])),exPadrao(n)):null,pend,metas}}
-function perLabel(){if(!MES)return"";return MODO==="acum"?"Acumulado jan–"+MESES[+MES.slice(5)-1].toLowerCase()+"/"+ANO:mkLong(MES)}
+  return{ms,n,media:modo==="m3",v,p,meta,hm:{},d,dp:D(p,exP),dm:D(meta,exPadrao(nm)),dh:null,pend,metas}}
+/* mesmo período um ano antes (só se todos os meses existirem) */
+function mkAnt(k){return(+k.slice(0,4)-1)+k.slice(4)}
+function periodoAnt(fim,modo){fim=fim||MES;modo=modo||MODO;if(!fim)return null;const ka=mkAnt(fim);const a=mesesPeriodo(fim,modo).map(mkAnt);const b=mesesPeriodo(ka,modo);if(!a.length||a.length!==b.length||a.some((k,i)=>k!==b[i]))return null;return periodo(ka,modo)}
+function perLabel(fim,modo){fim=fim||MES;modo=modo||MODO;if(!fim)return"";if(modo==="acum")return"Acumulado jan–"+MESES[+fim.slice(5)-1].toLowerCase()+"/"+fim.slice(0,4);
+  if(modo==="m3"){const ms=mesesPeriodo(fim,"m3");if(ms.length<2)return mkLong(fim);return"Média mensal "+MESES[+ms[0].slice(5)-1].toLowerCase()+"–"+MESES[+fim.slice(5)-1].toLowerCase()+"/"+fim.slice(0,4)}return mkLong(fim)}
 
 /* ---------- auth ---------- */
 function login(){const e=document.getElementById("l-e").value.trim(),s=document.getElementById("l-s").value;if(e&&s)auth.signInWithEmailAndPassword(e,s).catch(()=>document.getElementById("l-m").textContent="E-mail ou senha incorretos.")}
@@ -555,21 +631,23 @@ function iniciar(){
 function setAno(a){ANO=a;const ms=mesesAno(a);MES=ms[ms.length-1]||null;render()}
 function setMes(m){MES=m;render()}
 function setModo(m){MODO=m;render()}
-function setTab(t){TAB=t;render();scrollTo(0,0)}
+function setTab(t){const pai={posicao:"balanco",dividas:"balanco",metas:"config",contas:"config",imp:"config"}[t];if(pai){TAB=pai;SUB[pai]=t}else TAB=t;render();scrollTo(0,0)}
 
 /* ---------- render geral ---------- */
 function render(){
   document.getElementById("emp").textContent=(S.config.empresa||"Estrutura gerencial de resultados");
   const sa=document.getElementById("s-ano");sa.innerHTML=anos().map(a=>'<option'+(a===ANO?" selected":"")+'>'+a+'</option>').join("");
   const ms=mesesAno(ANO);const sm=document.getElementById("s-mes");sm.innerHTML=ms.length?ms.slice().reverse().map(k=>'<option value="'+k+'"'+(k===MES?" selected":"")+'>'+MESES_L[+k.slice(5)-1].replace(/^./,c=>c.toUpperCase())+'</option>').join(""):'<option>sem dados</option>';sm.disabled=!ms.length;
-  document.getElementById("m-mes").classList.toggle("on",MODO==="mes");document.getElementById("m-acum").classList.toggle("on",MODO==="acum");
+  ["mes","m3","acum"].forEach(x=>document.getElementById("m-"+x).classList.toggle("on",MODO===x));
   const nPend=Object.keys(contasVistas().filter(c=>!c.dp||!c.dp.l).reduce((o,c)=>(o[c.cod]=1,o),{})).length;
-  const T=[["geral","Visão geral"],["dre","DRE"],["caixa","Caixa"],["posicao","Posição do mês"],["dividas","Dívidas e bens"],["metas","Metas"],["contas","Contas do relatório"+(nPend?'<span class="cnt">'+nPend+'</span>':"")],["imp","Importações"]];
-  document.getElementById("v-G").classList.toggle("on",VISAO==="G");document.getElementById("v-P").classList.toggle("on",VISAO==="P");
+  const T=[["geral","Visão geral"],["dre","DRE"],["caixa","Caixa"],["balanco","Balanço"],["config","Configurações"+(nPend?'<span class="cnt">'+nPend+'</span>':"")]];
   document.getElementById("tabs").innerHTML=T.map(([k,l])=>'<button class="'+(TAB===k?"on":"")+'" onclick="setTab(\''+k+'\')">'+l+'</button>').join("");
   const m=document.getElementById("m");
-  if(!Object.keys(S.meses).length&&!["imp","metas","dividas"].includes(TAB)){m.innerHTML=vazio();return}
-  if(TAB==="geral")renderGeral(m);else if(TAB==="dre")renderDRE(m);else if(TAB==="caixa")renderCaixa(m);else if(TAB==="posicao")renderPosicao(m);else if(TAB==="dividas")renderDividas(m);else if(TAB==="metas")renderMetas(m);else if(TAB==="contas")renderContas(m);else renderImp(m);
+  const SUBS={balanco:[["posicao","Posição do mês"],["dividas","Dívidas e bens"]],config:[["metas","Metas"],["contas","Contas do relatório"+(nPend?' ('+nPend+')':"")],["imp","Importações"]]};
+  let alvo=m;if(SUBS[TAB]){m.innerHTML='<div class="subnav">'+SUBS[TAB].map(([k,l])=>'<button class="chip'+(SUB[TAB]===k?" on":"")+'" onclick="setTab(\''+k+'\')">'+l+'</button>').join("")+'</div><div id="m2"></div>';alvo=document.getElementById("m2")}
+  const t=SUBS[TAB]?SUB[TAB]:TAB;
+  if(!Object.keys(S.meses).length&&!["imp","metas","dividas"].includes(t)){alvo.innerHTML=vazio();return}
+  if(t==="geral")renderGeral(alvo);else if(t==="dre")renderDRE(alvo);else if(t==="caixa")renderCaixa(alvo);else if(t==="posicao")renderPosicao(alvo);else if(t==="dividas")renderDividas(alvo);else if(t==="metas")renderMetas(alvo);else if(t==="contas")renderContas(alvo);else renderImp(alvo);
 }
 function vazio(){return'<div class="card empty"><b>Nenhum mês carregado ainda</b>Carregue o histórico que veio da planilha ou importe o primeiro relatório FI-025.<div class="btns"><button class="btn btn-o" onclick="document.getElementById(\'f-hist\').click()">Carregar histórico (.json)</button><button class="btn btn-g" onclick="abrirImport()">⬆ Importar FI-025 (PDF)</button></div><input type="file" id="f-hist" accept=".json,application/json" style="display:none" onchange="carregarHistorico(this)"></div>'}
 
@@ -595,7 +673,7 @@ const KPI_G=[
  {id:"ebitda",l:"EBITDA",fmt:"k",bom:1,f:(v,d)=>d.ebitda},
  {id:"rl",l:"Resultado líquido",fmt:"k",bom:1,f:(v,d)=>d.rl},
  {id:"pe",l:"Ponto de equilíbrio",fmt:"k",bom:0,f:(v,d)=>d.peOp},
- {id:"cx",l:"Geração de caixa",fmt:"k",bom:1,f:(v,d,ms)=>{const cs=(ms||[]).map(caixaMes).filter(Boolean);return cs.length?cs.reduce((s,c)=>s+c.tot,0):null}},
+ {id:"cx",l:"Geração de caixa",fmt:"k",bom:1,f:(v,d,ms)=>{const cs=(ms||[]).map(caixaMes).filter(Boolean);if(!cs.length)return null;const t=cs.reduce((s,c)=>s+c.tot,0);return MODO==="m3"?t/cs.length:t}},
  {id:"dl",l:"Dívida líquida ÷ EBITDA",fmt:"x",bom:0,f:(v,d,ms)=>{const k=(ms||[]).slice(-1)[0];const I=k?indicadoresPos(k):null;return I?I.dlE:null}}];
 const KPI_EF=[
  {id:"mbp",l:"Margem bruta (após CMV)",fmt:"p",bom:1,f:(v,d)=>d.base?(d.base-d.cmv)/d.base:null},
@@ -609,9 +687,11 @@ let SERIES_OFF={};
 function fmtK(k,x){return k.fmt==="p"?fP(x):k.fmt==="x"?(x==null||!isFinite(x)?"—":x.toLocaleString("pt-BR",{maximumFractionDigits:1})+" anos"):fK(x)}
 function mesesSerie(){const ms=[];for(let i=1;i<=12;i++){const k=ANO+"-"+String(i).padStart(2,"0");ms.push({k,i,c:S.meses[k]?calcMes(k):null})}return ms}
 function mesAnterior(mk){const ks=Object.keys(S.meses).sort();const i=ks.indexOf(mk);return i>0?ks[i-1]:null}
+function cmpTxt(k,x,y){if(x==null||y==null||!isFinite(x)||!isFinite(y))return"";const dd=x-y;const good=k.bom?dd>0:dd<0;const txt=k.fmt==="p"?Math.abs(dd*100).toLocaleString("pt-BR",{maximumFractionDigits:1})+" p.p.":k.fmt==="x"?Math.abs(dd).toLocaleString("pt-BR",{maximumFractionDigits:1}):(x>0&&y>0?Math.abs(dd/y*100).toLocaleString("pt-BR",{maximumFractionDigits:0})+"%":fK(Math.abs(dd)));return'<span class="vs '+(Math.abs(dd)<1e-9?"":good?"good":"bad")+'">'+(dd>0?"▲":dd<0?"▼":"=")+" "+txt+'</span>'}
 function kpiCard(k,P,extra){const x=k.f(P.v,P.d,P.ms);let cmp="";
-  if(MODO==="mes"){const pm=mesAnterior(MES);if(pm){const c=calcMes(pm);const y=k.f(c.v,c.d,[pm]);if(x!=null&&y!=null&&isFinite(x)&&isFinite(y)){const dd=x-y;const good=k.bom?dd>0:dd<0;const txt=k.fmt==="p"?Math.abs(dd*100).toLocaleString("pt-BR",{maximumFractionDigits:1})+" p.p.":k.fmt==="x"?Math.abs(dd).toLocaleString("pt-BR",{maximumFractionDigits:1}):(x>0&&y>0?Math.abs(dd/y*100).toLocaleString("pt-BR",{maximumFractionDigits:0})+"%":fK(Math.abs(dd)));cmp='<span class="vs '+(Math.abs(dd)<1e-9?"":good?"good":"bad")+'">'+(dd>0?"▲":dd<0?"▼":"=")+" "+txt+'</span> vs '+MESES[+pm.slice(5)-1].toLowerCase()}}}
+  if(MODO!=="acum"){const pm=mesAnterior(MES);if(pm){const PP=periodo(pm);const y=k.f(PP.v,PP.d,PP.ms);if(x!=null&&y!=null&&isFinite(x)&&isFinite(y)){const dd=x-y;const good=k.bom?dd>0:dd<0;const txt=k.fmt==="p"?Math.abs(dd*100).toLocaleString("pt-BR",{maximumFractionDigits:1})+" p.p.":k.fmt==="x"?Math.abs(dd).toLocaleString("pt-BR",{maximumFractionDigits:1}):(x>0&&y>0?Math.abs(dd/y*100).toLocaleString("pt-BR",{maximumFractionDigits:0})+"%":fK(Math.abs(dd)));cmp='<span class="vs '+(Math.abs(dd)<1e-9?"":good?"good":"bad")+'">'+(dd>0?"▲":dd<0?"▼":"=")+" "+txt+'</span> vs '+(MODO==="m3"?"3 meses até ":"")+MESES[+pm.slice(5)-1].toLowerCase()}}}
   else cmp='<span class="vs">'+P.n+' '+(P.n>1?"meses":"mês")+'</span>';
+  {const A=periodoAnt();if(A){const y=k.f(A.v,A.d,A.ms);const t=cmpTxt(k,x,y);if(t)cmp+=(cmp?'<br>':'')+t+' vs '+(+MES.slice(0,4)-1)}}
   const neg=k.fmt==="k"&&x!=null&&x<0;
   return'<div class="kpi" data-k="'+k.id+'"><div class="l">'+k.l+'</div><div class="v'+(neg?" neg":"")+'"><span class="cnt-up" data-n="'+(x==null||!isFinite(x)?"":x)+'" data-f="'+k.fmt+'">'+(x==null||!isFinite(x)?"—":fmtK(k,x))+'</span></div><div class="d">'+extra+'</div><div class="kf"><div class="spk chart" id="spk-'+k.id+'"></div><div class="cmp">'+cmp+'</div></div></div>'}
 function renderGeral(m){
@@ -623,14 +703,14 @@ function renderGeral(m){
   const vsMeta=(x,mt,bom)=>mt==null?"":'<span class="bdg '+((bom?x>=mt:x<=mt)?"good":"bad")+'">meta '+fP(mt)+'</span> ';
   const peFolga=d.peOp?d.base/d.peOp-1:null;const peTxt=d.peOp?(peFolga>=0?'<span class="bdg good">'+fP(peFolga,0)+' acima</span> '+(G?"receita":"recebido")+' supera o PE':'<span class="bdg bad">faltam '+fK(d.peOp-d.base)+'</span> para cobrir os fixos'):'<span class="bdg bad">margem negativa</span> sem ponto de equilíbrio';
   /* ---- placar do mês: o número que importa em destaque ---- */
-  const G2=G;const metaRL=dm.tot,metaRec=dm.rec;const cx=MODO==="mes"?caixaMes(MES):null;const cxTot=K.cx?K.cx.f(P.v,d,P.ms):null;
-  h+='<section class="hero"><div class="hero-main"><div class="hero-per">'+perLabel().replace(/^./,c=>c.toUpperCase())+' · visão '+(G?"gerencial":"da planilha")+'</div>'+
-    '<div class="hero-lbl">Resultado líquido</div><div class="hero-num '+(d.rl<0?"neg":"pos")+'"><span class="cnt-up" data-n="'+d.rl+'" data-f="k">'+fK(d.rl)+'</span></div>'+
-    '<p class="hero-txt">'+veredito(P)+'</p><div class="hero-bars" id="hero-bars"></div></div>'+
+  const G2=G;const metaRL=dm.tot,metaRec=dm.rec;const cx=MODO!=="acum"?caixaMes(MES):null;const cxTot=K.cx?K.cx.f(P.v,d,P.ms):null;
+  h+='<section class="hero"><div class="hero-main"><div class="hero-per">'+perLabel().replace(/^./,c=>c.toUpperCase())+'</div>'+
+    '<div class="hero-lbl">Resultado líquido'+(P.media&&P.n>1?" — média por mês":"")+'</div><div class="hero-num '+(d.rl<0?"neg":"pos")+'"><span class="cnt-up" data-n="'+d.rl+'" data-f="k">'+fK(d.rl)+'</span></div>'+
+    (()=>{const A=periodoAnt();if(!A)return"";const dd=d.rl-A.d.rl;return'<div class="hero-ant">'+(MODO==="acum"?"Mesmo período de ":MODO==="m3"?"Mesma média em ":"Em "+nomeMes(mkAnt(MES))+" de ")+(+MES.slice(0,4)-1)+': <b>'+fK(A.d.rl)+'</b> <span class="'+(dd>=0?"up":"dn")+'">'+(dd>=0?"▲ ":"▼ ")+fK(Math.abs(dd))+'</span></div>'})()+'<p class="hero-txt">'+veredito(P)+'</p><div class="hero-bars" id="hero-bars"></div></div>'+
     '<div class="hero-side">'+
       heroStat(G?"Receita líquida":"Recebimentos de operação",G?d.tot:d.rec,G?metaRL:metaRec,(G?"vendas "+fK(d.rec)+" − devoluções "+fK(d.dev):"total recebido "+fK(d.tot)))+
       heroStat(G?"EBITDA":"Resultado operacional",d.ro,null,fP(d.base?d.ro/d.base:null)+(G?" da receita · antes de depreciação e juros":" do recebido"),dp.ro)+
-      (G?heroStat("Geração de caixa",cxTot,null,cx?(cx.confere?"confere com o FI-025":"difere do FI-025"):"só meses com FI-025"):heroStat("CMV sobre o recebido",null,null,fK(d.cmv),null,fP(d.base?d.cmv/d.base:null)))+
+      (G?heroStat(MODO==="m3"?"Geração de caixa (média)":"Geração de caixa",cxTot,null,MODO==="m3"?"média dos meses com FI-025 · em "+nomeMes(MES)+": "+(cx?fK(cx.tot):"—"):cx?(cx.confere?"confere com o FI-025":"difere do FI-025"):"só meses com FI-025"):heroStat("CMV sobre o recebido",null,null,fK(d.cmv),null,fP(d.base?d.cmv/d.base:null)))+
     '</div></section>';
   h+=cardAlertas();
   /* ---- indicadores de apoio ---- */
@@ -646,8 +726,8 @@ function renderGeral(m){
   h+=cardProjecao();
   h+='<div class="grid2"><div class="card"><div class="ch-h"><div><h3 id="t-ponte">'+(G?"Da receita ao resultado":"Do recebido ao resultado")+' — '+perLabel()+'</h3><div class="sub">Clique numa etapa para ver o detalhe.</div></div><div class="leg"><span><i style="background:var(--s-rec)"></i>Entrada</span><span><i style="background:var(--d-acima)"></i>Saída</span><span><i style="background:var(--faint)"></i>Subtotal</span></div></div><div class="chart" id="g-ponte"></div></div>'+
      '<div class="card"><div class="ch-h"><div><h3 id="t-ritmo">Ritmo do ano</h3><div class="sub" id="s-ritmo">Recebimentos de operação acumulados contra a meta</div></div><div class="leg"><span><i class="ln" style="background:var(--s-rec)"></i>Realizado</span><span><i class="ln" style="background:var(--faint)"></i>Meta</span><span><i class="ln dot" style="border-color:var(--s-rec)"></i>Projeção</span></div></div><div class="chart" id="g-ritmo"></div></div></div>';
-  h+='<div class="grid2"><div class="card"><div class="ch-h"><div><h3 id="t-evo">Evolução mensal — '+ANO+'</h3><div class="sub">Clique num mês para analisar; clique na legenda para esconder uma série.</div></div><div class="leg tog">'+[["rec","var(--s-rec)",G?"Receita líquida":"Total recebido",0],["cus","var(--s-cus)",G?"Custos e despesas":"Custos totais",0],["rl","var(--s-res)","Resultado líquido",1],["h25","var(--faint)","Média "+(+ANO-1),1]].map(([k,c,l,ln])=>'<span class="'+(SERIES_OFF[k]?"off":"")+'" onclick="SERIES_OFF.'+k+'=!SERIES_OFF.'+k+';desenharGraficos();this.classList.toggle(\'off\')"><i class="'+(ln?"ln":"")+(k==="h25"?" dash":"")+'" style="background:'+c+'"></i>'+l+'</span>').join("")+'</div></div><div class="chart" id="g-evo"></div></div>'+
-     '<div class="card"><div class="ch-h"><div><h3 id="t-mc">Margem de contribuição</h3><div class="sub">% '+rb+' em cada mês</div></div><div class="leg"><span><i class="ln" style="background:var(--s-res)"></i>Realizado</span><span><i class="ln" style="background:var(--faint)"></i>Meta</span></div></div><div class="chart" id="g-mc"></div></div></div>';
+  h+='<div class="grid2"><div class="card"><div class="ch-h"><div><h3 id="t-evo">Evolução mensal — '+ANO+'</h3><div class="sub">Clique num mês para analisar; clique na legenda para esconder uma série.</div></div><div class="leg tog">'+[["rec","var(--s-rec)",G?"Receita líquida":"Total recebido",0],["cus","var(--s-cus)",G?"Custos e despesas":"Custos totais",0],["rl","var(--s-res)","Resultado do mês",2],["mm","var(--s-res)","Resultado (média 3 meses)",1]].concat(mesesAno(String(+ANO-1)).length?[["ant","var(--s-ant)","Mesma média em "+(+ANO-1),3]]:[]).map(([k,c,l,ln])=>'<span class="'+(SERIES_OFF[k]?"off":"")+'" onclick="SERIES_OFF.'+k+'=!SERIES_OFF.'+k+';desenharGraficos();this.classList.toggle(\'off\')"><i class="'+(ln===1?"ln":ln===2?"dotm":ln===3?"ln ant":"")+'" style="background:'+c+'"></i>'+l+'</span>').join("")+'</div></div><div class="chart" id="g-evo"></div></div>'+
+     '<div class="card"><div class="ch-h"><div><h3 id="t-mc">Margem de contribuição</h3><div class="sub">% '+rb+' em cada mês</div></div><div class="leg"><span><i class="dotm" style="background:#64748b"></i>Mês</span><span><i class="ln" style="background:var(--s-res)"></i>Média 3 meses</span><span><i class="ln" style="background:var(--faint)"></i>Meta</span>'+(mesesAno(String(+ANO-1)).length?'<span><i class="ln ant"></i>'+(+ANO-1)+'</span>':'')+'</div></div><div class="chart" id="g-mc"></div></div></div>';
   h+='<div class="grid2b"><div class="card"><div class="ch-h"><div><h3>Maiores custos — '+perLabel()+'</h3><div class="sub">CMV fora do gráfico: '+fK(d.cmv)+' ('+fP(d.base?d.cmv/d.base:null)+' '+rb+').'+(G?" Amortizações, consórcios, transferências e bens ficam fora (não são despesa).":"")+' Clique para detalhar.</div></div></div><div class="chart" id="g-top"></div></div>'+
      '<div class="card"><div class="ch-h"><div><h3>Desvios contra o previsto</h3><div class="sub">Realizado − previsto (meta ajustada '+(G?"à receita":"ao recebido")+'). Clique para detalhar.</div></div><div class="leg"><span><i style="background:var(--d-acima)"></i>Gastou mais</span><span><i style="background:var(--d-abaixo)"></i>Gastou menos</span></div></div><div class="chart" id="g-dev"></div></div></div>';
   h+='<div class="card" style="margin-bottom:12px"><div class="ch-h"><div><h3>Mapa de desvios — '+ANO+'</h3><div class="sub">Cada célula = realizado ÷ previsto da linha no mês. Linhas que se repetem em vermelho são estouro recorrente, não acidente. Clique numa célula para abrir a linha naquele mês.</div></div><div class="leg"><span><i style="background:var(--d-abaixo)"></i>abaixo do previsto</span><span><i style="background:#eef2f6;border:1px solid #cbd5e1"></i>no previsto</span><span><i style="background:var(--d-acima)"></i>acima</span><span><i class="hatch"></i>sem meta</span></div></div><div class="chart" id="g-mapa"></div></div>';
@@ -715,26 +795,26 @@ function gRitmo(el,ms){if(!el)return;const metas=metasAno(ANO);const mr=metas?+m
   ligar(el,{tip:i=>'<b>'+MESES_L[i].replace(/^./,c=>c.toUpperCase())+'</b>'+(real[i]!=null?tipRow("var(--s-rec)","Acumulado",fK(real[i]),1):tipRow("var(--s-rec)","Projeção",fK(proj[i]),1))+(mr?tipRow("var(--faint)","Meta acumulada",fK(meta[i]),1)+tipRow("",(real[i]!=null?real[i]:proj[i])>=meta[i]?"Acima da meta":"Abaixo da meta",fK(Math.abs((real[i]!=null?real[i]:proj[i])-meta[i]))):""),click:i=>{if(ms[i].c){MES=ms[i].k;render()}}});
 }
 /* evolução mensal (recebido × custos × resultado), séries ligáveis */
+function mm3(k,f){const ks=mesesPeriodo(k,"m3");if(!ks.length)return null;return ks.reduce((s,x)=>s+f(calcMes(x).d),0)/ks.length}
 function gEvolucao(el,ms){if(!el)return;const W=el.clientWidth||600,H=280,L=58,R=8,T=12,B=26;
-  const dados=ms.map(x=>x.c?{rec:x.c.d.tot,cus:x.c.d.custos,rl:x.c.d.rl}:null);
-  const h=histAno(String(+ANO-1));const h25=h&&h.linhas?D(Object.fromEntries(LINHAS.map(l=>[l.id,(h.linhas[l.id]||0)/12]))).tot:null;
-  const vals=dados.filter(Boolean).flatMap(x=>[SERIES_OFF.rec?0:x.rec,SERIES_OFF.cus?0:x.cus,SERIES_OFF.rl?0:x.rl,0]).concat(h25&&!SERIES_OFF.h25?[h25]:[]);const sc=escala(Math.min(...vals),Math.max(...vals),5);
+  const dados=ms.map(x=>x.c?{rec:x.c.d.tot,cus:x.c.d.custos,rl:x.c.d.rl,mm:mm3(x.k,d=>d.rl)}:null);
+  const ant=ms.map(x=>{const k=(+x.k.slice(0,4)-1)+x.k.slice(4);return S.meses[k]?mm3(k,d=>d.rl):null});const temAnt=ant.some(v=>v!=null);
+  const vals=dados.filter(Boolean).flatMap(x=>[SERIES_OFF.rec?0:x.rec,SERIES_OFF.cus?0:x.cus,SERIES_OFF.rl?0:x.rl,SERIES_OFF.mm?0:x.mm,0]).concat(SERIES_OFF.ant?[]:ant.filter(v=>v!=null));const sc=escala(Math.min(...vals),Math.max(...vals),5);
   const y=v=>T+(H-T-B)*(1-(v-sc.lo)/(sc.hi-sc.lo));const cw=(W-L-R)/12;const nb=(SERIES_OFF.rec?0:1)+(SERIES_OFF.cus?0:1);const bw=Math.max(4,Math.min(22,cw*.3));
-  let s='<svg viewBox="0 0 '+W+' '+H+'" height="'+H+'" role="img" aria-label="Evolução mensal de recebimentos, custos e resultado">';
+  let s='<svg viewBox="0 0 '+W+' '+H+'" height="'+H+'" role="img" aria-label="Evolução mensal de receita, custos e resultado">';
   sc.t.forEach(v=>{s+='<line class="'+(v===0?"zl":"gl")+'" x1="'+L+'" x2="'+(W-R)+'" y1="'+y(v)+'" y2="'+y(v)+'"/><text x="'+(L-8)+'" y="'+(y(v)+4)+'" text-anchor="end">'+fAx(v)+'</text>'});
   ms.forEach((x,i)=>{const cx=L+cw*i+cw/2;if(x.k===MES)s+='<rect class="sel-m" x="'+(L+cw*i+1)+'" y="'+T+'" width="'+(cw-2)+'" height="'+(H-T-B)+'" rx="6"/>';
     s+='<text x="'+cx+'" y="'+(H-8)+'" text-anchor="middle" style="'+(x.k===MES?"fill:var(--text);font-weight:700":"")+'">'+(cw<34?MESES[i].charAt(0):MESES[i])+'</text>';
     const d=dados[i];if(!d)return;const y0=y(0);let o=nb===2?-bw-1:-bw/2;
-    [["rec","var(--s-rec)"],["cus","var(--s-cus)"]].forEach(([k,c])=>{if(SERIES_OFF[k])return;const v=d[k];const yy=y(Math.max(v,0)),hh=Math.abs(y(v)-y0);s+='<path d="'+barPath(cx+o,yy,bw,hh,v>=0)+'" fill="'+c+'"/>';o+=bw+2})});
-  if(h25&&!SERIES_OFF.h25)s+='<line x1="'+L+'" x2="'+(W-R)+'" y1="'+y(h25)+'" y2="'+y(h25)+'" stroke="var(--faint)" stroke-width="1.5" stroke-dasharray="6 4"/><text x="'+(W-R)+'" y="'+(y(h25)-5)+'" text-anchor="end">média '+(+ANO-1)+' '+fAx(h25)+'</text>';
-  if(!SERIES_OFF.rl){const pts=dados.map((d,i)=>d?[L+cw*i+cw/2,y(d.rl)]:null);let seg=[];const segs=[];pts.forEach(p=>{if(p)seg.push(p);else{if(seg.length)segs.push(seg);seg=[]}});if(seg.length)segs.push(seg);
-    segs.forEach(sg=>{s+='<polyline points="'+sg.map(p=>p.join(",")).join(" ")+'" fill="none" stroke="var(--s-res)" stroke-width="2" stroke-linejoin="round"/>'});
-    pts.forEach((p,i)=>{if(p)s+='<circle cx="'+p[0]+'" cy="'+p[1]+'" r="4" fill="'+(dados[i].rl<0?"var(--red)":"var(--s-res)")+'" stroke="#fff" stroke-width="2"/>'})}
+    [["rec","var(--s-rec)"],["cus","var(--s-cus)"]].forEach(([k,c])=>{if(SERIES_OFF[k])return;const v=d[k];const yy=y(Math.max(v,0)),hh=Math.abs(y(v)-y0);s+='<path d="'+barPath(cx+o,yy,bw,hh,v>=0)+'" fill="'+c+'" opacity=".85"/>';o+=bw+2})});
+  if(temAnt&&!SERIES_OFF.ant){let sg=[];const sgs=[];ant.forEach((v,i)=>{if(v!=null)sg.push([L+cw*i+cw/2,y(v)]);else{if(sg.length)sgs.push(sg);sg=[]}});if(sg.length)sgs.push(sg);sgs.forEach(g=>{s+='<polyline points="'+g.map(p=>p.join(",")).join(" ")+'" fill="none" stroke="var(--s-ant)" stroke-width="2.2" stroke-dasharray="6 4" stroke-linecap="round"/>'})}
+  if(!SERIES_OFF.mm){const pts=dados.map((d,i)=>d?[L+cw*i+cw/2,y(d.mm)]:null);let seg=[];const segs=[];pts.forEach(p=>{if(p)seg.push(p);else{if(seg.length)segs.push(seg);seg=[]}});if(seg.length)segs.push(seg);
+    segs.forEach(sg=>{s+='<polyline points="'+sg.map(p=>p.join(",")).join(" ")+'" fill="none" stroke="var(--s-res)" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"/>'})}
+  if(!SERIES_OFF.rl)dados.forEach((d,i)=>{if(d)s+='<circle cx="'+(L+cw*i+cw/2)+'" cy="'+y(d.rl)+'" r="4.5" fill="#fff" stroke="'+(d.rl<0?"var(--red)":"var(--s-res)")+'" stroke-width="2"/>'});
   ms.forEach((x,i)=>{if(dados[i])s+='<rect class="hit" data-i="'+i+'" x="'+(L+cw*i)+'" y="'+T+'" width="'+cw+'" height="'+(H-T-B)+'"/>'});
   el.innerHTML=s+'</svg>';
-  ligar(el,{tip:i=>{const d=dados[i];return'<b>'+MESES_L[i].replace(/^./,c=>c.toUpperCase())+'/'+ANO+'</b>'+tipRow("var(--s-rec)","Total recebido",fK(d.rec))+tipRow("var(--s-cus)","Custos totais",fK(d.cus))+tipRow("var(--s-res)","Resultado líquido",fK(d.rl),1)+(h25?tipRow("","vs média "+(+ANO-1),(d.rec>=h25?"+":"−")+fK(Math.abs(d.rec-h25))):"")+'<div class="small" style="opacity:.7;margin-top:3px">'+(ms[i].c.fonte==="pdf"?"Relatório FI-025":"Planilha")+'</div>'},click:i=>{MES=ms[i].k;render()}});
+  ligar(el,{tip:i=>{const d=dados[i];return'<b>'+MESES_L[i].replace(/^./,c=>c.toUpperCase())+'/'+ANO+'</b>'+tipRow("var(--s-rec)","Receita líquida",fK(d.rec))+tipRow("var(--s-cus)","Custos e despesas",fK(d.cus))+tipRow("","Resultado do mês",fK(d.rl))+tipRow("var(--s-res)","Média 3 meses",fK(d.mm),1)+(ant[i]!=null?tipRow("var(--s-ant)","Média 3 meses "+(+ANO-1),fK(ant[i]),1):"")},click:i=>{MES=ms[i].k;render()}});
 }
-/* mapa de desvios: linha × mês, cor = realizado/previsto */
 function gMapa(el,ms){if(!el)return;const com=ms.filter(x=>x.c);if(!com.length){el.innerHTML="";return}
   const desp=despesasVisao();
   const lin=desp.map(l=>{let dev=0,tem=false;com.forEach(x=>{const r=x.c.v[l.id],p=x.c.p[l.id];if(r||p)tem=true;dev+=Math.abs(r-p)});return{l,dev,tem}}).filter(x=>x.tem).sort((a,b)=>b.dev-a.dev).slice(0,16);
@@ -758,8 +838,9 @@ function heroStat(l,v,meta,sub,prev,txt){let h='<div class="hs"><div class="hs-l
   if(meta&&v!=null){const p=v/meta;h+='<div class="hs-bar" role="img" aria-label="'+fP(p,0)+' da meta"><i class="'+(p>=1?"ok":"")+'" style="width:'+Math.max(0,Math.min(100,p*100))+'%"></i></div><div class="hs-s"><b>'+fP(p,0)+'</b> da meta de '+fK(meta)+'</div>'}
   if(prev!=null&&v!=null)h+='<div class="hs-s">previsto '+fK(prev)+' · <b class="'+(v>=prev?"up":"dn")+'">'+(v>=prev?"+":"−")+fK(Math.abs(v-prev))+'</b></div>';
   return h+'<div class="hs-s">'+sub+'</div></div>'}
-function veredito(P){const d=P.d,dp=P.dp,dm=P.dm;const G=VISAO==="G";const quem=MODO==="mes"?nomeMes(MES).replace(/^./,c=>c.toUpperCase())+" fechou com ":"O acumulado do ano soma ";
-  let t=quem+(d.rl>=0?"lucro de <b>"+fK(d.rl)+"</b>":"prejuízo de <b>"+fK(Math.abs(d.rl))+"</b>");const df=d.rl-dp.rl;
+function veredito(P){const d=P.d,dp=P.dp,dm=P.dm;const G=VISAO==="G";const quem=MODO==="mes"?nomeMes(MES).replace(/^./,c=>c.toUpperCase())+" fechou com ":MODO==="m3"&&P.n>1?"Nos últimos "+P.n+" meses, a média foi de ":"O acumulado do ano soma ";
+  let t=quem+(d.rl>=0?"lucro de <b>"+fK(d.rl)+"</b>":"prejuízo de <b>"+fK(Math.abs(d.rl))+"</b>")+(MODO==="m3"&&P.n>1?" por mês":"");const df=d.rl-dp.rl;
+  if(!P.metas)return t+". Não há metas cadastradas para "+(MES||"").slice(0,4)+", então a comparação aqui é só entre meses.";
   if(Math.abs(df)>=1000)t+=", "+fK(Math.abs(df))+(df<0?" abaixo":" acima")+" do previsto";t+=". ";
   const cand=[];const rr=G?d.tot-dm.tot:d.rec-dm.rec;if(dm.rec&&rr<0)cand.push({s:-rr,txt:(G?"a receita":"o recebimento")+", "+fK(-rr)+" abaixo da meta"});
   despesasVisao().filter(l=>!(G&&(l.id==='r27'||l.id==='r28'))).forEach(l=>{const x=P.v[l.id]-P.p[l.id];if(x>0)cand.push({s:x,txt:(n=>/^[A-ZÀ-Ú][a-zà-ú]/.test(n)?n.charAt(0).toLowerCase()+n.slice(1):n)(l.nome.replace(/\s*\(.*\)$/,""))+", "+fK(x)+" acima do previsto"})});
@@ -797,17 +878,19 @@ function ligar(el,cb){el.querySelectorAll("[data-i]").forEach(n=>{n.addEventList
 function barPath(x,y,w,h,up){const r=Math.min(4,w/2,h);if(h<=0)return"";if(up)return"M"+x+","+(y+h)+"V"+(y+r)+"Q"+x+","+y+" "+(x+r)+","+y+"H"+(x+w-r)+"Q"+(x+w)+","+y+" "+(x+w)+","+(y+r)+"V"+(y+h)+"Z";return"M"+x+","+y+"V"+(y+h-r)+"Q"+x+","+(y+h)+" "+(x+r)+","+(y+h)+"H"+(x+w-r)+"Q"+(x+w)+","+(y+h)+" "+(x+w)+","+(y+h-r)+"V"+y+"Z"}
 function gMargem(el,ms){if(!el)return;const W=el.clientWidth||400,H=280,L=44,R=10,T=12,B=26;
   const metas=metasAno(ANO);const dm=D(metaMensal(metas));const meta=metas&&dm.base?dm.mcp:null;
-  const vals=ms.map(x=>x.c?x.c.d.mcp:null);const all=vals.filter(v=>v!=null).concat(meta!=null?[meta]:[],[0]);const sc=escala(Math.min(...all),Math.max(...all),5);
+  const vals=ms.map(x=>x.c?x.c.d.mcp:null);const mmv=ms.map(x=>x.c?periodo(x.k,"m3").d.mcp:null);const mva=ms.map(x=>{const k=(+x.k.slice(0,4)-1)+x.k.slice(4);return S.meses[k]?periodo(k,"m3").d.mcp:null});const all=vals.concat(mmv,mva).filter(v=>v!=null).concat(meta!=null?[meta]:[],[0]);const sc=escala(Math.min(...all),Math.max(...all),5);
   const y=v=>T+(H-T-B)*(1-(v-sc.lo)/(sc.hi-sc.lo));const cw=(W-L-R)/12;
   let s='<svg viewBox="0 0 '+W+' '+H+'" height="'+H+'" role="img" aria-label="Margem de contribuição por mês">';
   sc.t.forEach(v=>{s+='<line class="'+(v===0?"zl":"gl")+'" x1="'+L+'" x2="'+(W-R)+'" y1="'+y(v)+'" y2="'+y(v)+'"/><text x="'+(L-6)+'" y="'+(y(v)+4)+'" text-anchor="end">'+Math.round(v*100)+'%</text>'});
   if(meta!=null)s+='<line x1="'+L+'" x2="'+(W-R)+'" y1="'+y(meta)+'" y2="'+y(meta)+'" stroke="var(--faint)" stroke-width="2" stroke-dasharray="5 4"/><text x="'+(W-R)+'" y="'+(y(meta)-6)+'" text-anchor="end">meta '+fP(meta,0)+'</text>';
   ms.forEach((x,i)=>{s+='<text x="'+(L+cw*i+cw/2)+'" y="'+(H-8)+'" text-anchor="middle" style="'+(x.k===MES?"fill:var(--text);font-weight:700":"")+'">'+MESES[i].charAt(0)+'</text>'});
   let seg=[];const segs=[];vals.forEach((v,i)=>{if(v!=null)seg.push([L+cw*i+cw/2,y(v)]);else{if(seg.length)segs.push(seg);seg=[]}});if(seg.length)segs.push(seg);
-  segs.forEach(sg=>{s+='<polyline points="'+sg.map(p=>p.join(",")).join(" ")+'" fill="none" stroke="var(--s-res)" stroke-width="2" stroke-linejoin="round"/>'});
-  vals.forEach((v,i)=>{if(v!=null)s+='<circle cx="'+(L+cw*i+cw/2)+'" cy="'+y(v)+'" r="'+(ms[i].k===MES?5.5:4)+'" fill="'+(v<0?"var(--red)":"var(--s-res)")+'" stroke="#fff" stroke-width="2"/><rect class="hit" data-i="'+i+'" x="'+(L+cw*i)+'" y="'+T+'" width="'+cw+'" height="'+(H-T-B)+'"/>'});
+  segs.forEach(sg=>{s+='<polyline points="'+sg.map(p=>p.join(",")).join(" ")+'" fill="none" stroke="#94a3b8" stroke-width="1.5" stroke-dasharray="3 3"/>'});
+  {const pa=mva.map((v,i)=>v!=null?(L+cw*i+cw/2)+","+y(v):null).filter(Boolean);if(pa.length>1)s+='<polyline points="'+pa.join(" ")+'" fill="none" stroke="var(--s-ant)" stroke-width="2.2" stroke-dasharray="6 4" stroke-linecap="round"/>'}
+  {const pm=mmv.map((v,i)=>v!=null?(L+cw*i+cw/2)+","+y(v):null).filter(Boolean);if(pm.length>1)s+='<polyline points="'+pm.join(" ")+'" fill="none" stroke="var(--s-res)" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"/>'}
+  vals.forEach((v,i)=>{if(v!=null)s+='<circle cx="'+(L+cw*i+cw/2)+'" cy="'+y(v)+'" r="'+(ms[i].k===MES?5:3.5)+'" fill="#fff" stroke="'+(v<0?"var(--red)":"#64748b")+'" stroke-width="2"/><rect class="hit" data-i="'+i+'" x="'+(L+cw*i)+'" y="'+T+'" width="'+cw+'" height="'+(H-T-B)+'"/>'});
   el.innerHTML=s+'</svg>';
-  ligar(el,{tip:i=>{const c=ms[i].c;return'<b>'+mkLabel(ms[i].k)+'</b>'+tipRow("var(--s-res)","Margem",fP(c.d.mcp),1)+tipRow("","Valor",fK(c.d.mc))+(meta!=null?tipRow("","Meta",fP(meta)):"")},click:i=>{MES=ms[i].k;render()}});
+  ligar(el,{tip:i=>{const c=ms[i].c;return'<b>'+mkLabel(ms[i].k)+'</b>'+tipRow("","Margem do mês",fP(c.d.mcp))+tipRow("var(--s-res)","Média 3 meses",fP(mmv[i]),1)+(mva[i]!=null?tipRow("var(--s-ant)","Média 3 meses "+(+ANO-1),fP(mva[i]),1):"")+tipRow("","Valor",fK(c.d.mc))+(meta!=null?tipRow("","Meta",fP(meta)):"")},click:i=>{MES=ms[i].k;render()}});
 }
 function gBarrasH(el,itens,base){if(!el)return;if(!itens.length){el.innerHTML='<div class="muted small" style="padding:20px 0">Sem custos no período.</div>';return}
   const W=el.clientWidth||400,rh=30,H=itens.length*rh+4,LW=Math.min(210,W*.45),VW=70;const max=Math.max(...itens.map(x=>x.v));const bw=W-LW-VW-8;
@@ -834,6 +917,7 @@ function gDesvios(el,itens){if(!el)return;if(!itens.length){el.innerHTML='<div c
 /* ---------- DRE GERENCIAL ---------- */
 function renderDRE(m){
   if(!MES){m.innerHTML=vazio();return}
+  if(DRE_VISTA==="mensal"){renderDREMensal(m);return}
   const P=periodo();const base=P.d.base;
   const cel=(x,cls)=>'<td class="num '+(cls||"")+'">'+(x==null||!isFinite(x)?"—":fR(x))+'</td>';
   const pct=x=>x==null||!isFinite(x)?"—":fP(x,0);
@@ -851,8 +935,8 @@ function renderDRE(m){
   rows+='<tr class="grp"><td colspan="8">Extra-operacional</td></tr>'+LINHAS.filter(l=>l.g==="ext").map(linha).join("")+tot("Resultado extra-operacional",d.ext,dp.ext,dm.ext,dh.ext,true)+tot("Resultado líquido",d.rl,dp.rl,dm.rl,dh.rl,true,"big");
   rows+='<tr class="grp"><td colspan="8">Pontos de equilíbrio</td></tr>'+tot("Ponto de equilíbrio operacional",d.peOp,dp.peOp,dm.peOp,dh.peOp,false)+tot("Ponto de equilíbrio financeiro",d.peFin,dp.peFin,dm.peFin,dh.peFin,false);}
   const subG=VISAO==="G"?'Visão gerencial: só o que a operação gera. Transferências, adiantamentos, amortização de empréstimos, consórcios e compra de bens ficam no fim, fora do resultado. Previsto = metas ajustadas à receita do mês. Clique numa linha para ver as contas do relatório.':null;
-  m.innerHTML='<div class="card"><div class="ch-h"><div><h3>'+(VISAO==="G"?"DRE gerencial":"DRE — método da planilha")+' — '+perLabel()+'</h3><div class="sub">'+(subG?subG+'</div><div class="sub" style="display:none">':"")+'Previsto = meta de cada linha ajustada ao recebido do mês (custos variáveis em % do recebimento, fixos em R$). Clique numa linha para ver as contas do relatório, a evolução e lançar ajustes.</div></div><label class="small" style="display:flex;gap:6px;align-items:center"><input type="checkbox" '+(ZERADAS?"checked":"")+' onchange="ZERADAS=this.checked;render()"> Mostrar linhas zeradas</label></div>'+
-   '<div class="tw"><table class="t"><thead><tr><th>Linha</th><th>Meta</th><th>Previsto</th><th>Realizado</th><th>Diferença</th><th>% prev.</th><th>'+(VISAO==="G"?"% receita":"% receb.")+'</th><th>Média '+(+ANO-1)+'</th></tr></thead><tbody>'+rows+'</tbody></table></div></div>';
+  m.innerHTML=dreVistaNav()+'<div class="card"><div class="ch-h"><div><h3>'+(VISAO==="G"?"DRE gerencial":"DRE — método da planilha")+' — '+perLabel()+'</h3><div class="sub">'+(subG?subG+'</div><div class="sub" style="display:none">':"")+'Previsto = meta de cada linha ajustada ao recebido do mês (custos variáveis em % do recebimento, fixos em R$). Clique numa linha para ver as contas do relatório, a evolução e lançar ajustes.</div></div><label class="small" style="display:flex;gap:6px;align-items:center"><input type="checkbox" '+(ZERADAS?"checked":"")+' onchange="ZERADAS=this.checked;render()"> Mostrar linhas zeradas</label></div>'+
+   '<div class="tw"><table class="t"><thead><tr><th>Linha</th><th>Meta</th><th>Previsto</th><th>Realizado</th><th>Diferença</th><th>% prev.</th><th>'+(VISAO==="G"?"% receita":"% receb.")+'</th></tr></thead><tbody>'+rows+'</tbody></table></div></div>';
 }
 
 /* ---------- painel da linha ---------- */
@@ -892,11 +976,11 @@ function salvarDepara(cod,l,s){const pad=dpNorm(DEPARA_PADRAO[cod]);const novo={
 function renderMetas(m){const mt=metasAno(ANO);
   if(!mt){const ant=anos().filter(a=>a<ANO&&metasAno(a)).pop();m.innerHTML='<div class="card empty"><b>Sem metas para '+ANO+'</b>'+(ant?'Comece copiando as metas de '+ant+' e ajuste o que mudou.<div class="btns"><button class="btn btn-g" onclick="copiarMetas(\''+ant+'\')">Copiar metas de '+ant+'</button></div>':'Carregue o histórico da planilha, que já traz as metas.')+'</div>';return}
   const ms=mesesAno(ANO);const med=id=>ms.length?ms.reduce((s,k)=>s+calcMes(k).v[id],0)/ms.length:null;const h=histAno(String(+ANO-1));
-  let rows='';GRUPOS.forEach(([g,gn])=>{if(g==="rec"){return}rows+='<tr class="grp"><td colspan="7">'+gn+'</td></tr>';LINHAS.filter(l=>l.g===g).forEach(l=>{const x=(mt.linhas||{})[l.id]||{m:g==="cf"?"fixo":"pct",v:0};const rs=metaLinha({linhas:{[l.id]:x}},l.id,+mt.receita||0);
-    rows+='<tr><td class="nm">'+esc(l.nome)+'</td><td><select class="sel btn-sm" data-l="'+l.id+'" data-k="m" onchange="metaEdit(this)"><option value="pct"'+(x.m==="pct"?" selected":"")+'>% do recebimento</option><option value="fixo"'+(x.m==="fixo"?" selected":"")+'>R$ fixo por mês</option></select></td><td><input class="inp num" style="width:120px;text-align:right" type="number" step="0.01" data-l="'+l.id+'" data-k="v" value="'+(x.m==="pct"?+((+x.v||0)*100).toFixed(4):(+x.v||0))+'" onchange="metaEdit(this)"></td><td class="num">'+fR(rs)+'</td><td class="num">'+fR(med(l.id))+'</td><td class="num">'+(h&&h.linhas&&h.linhas[l.id]!=null?fR(h.linhas[l.id]/12):"—")+'</td>'+(()=>{const sg=sugestaoMeta(l.id);if(!sg||!difereMeta((mt.linhas||{})[l.id],sg,+mt.receita||0,l.id))return'<td></td>';return'<td style="text-align:left;white-space:nowrap"><span class="small">'+(sg.m==="pct"?fP(sg.v,2)+" = ":"")+fR(metaLinha({linhas:{[l.id]:sg}},l.id,+mt.receita||0))+'</span> <button class="btn btn-o btn-sm" onclick="db.ref(\'fin/metas/'+ANO+'/linhas/'+l.id+'\').set('+JSON.stringify(sg).replace(/"/g,"&quot;")+').then(()=>toast(\'Meta atualizada\'))">usar</button></td>'})()+'</tr>'})});
+  let rows='';GRUPOS.forEach(([g,gn])=>{if(g==="rec"){return}rows+='<tr class="grp"><td colspan="6">'+gn+'</td></tr>';LINHAS.filter(l=>l.g===g).forEach(l=>{const x=(mt.linhas||{})[l.id]||{m:g==="cf"?"fixo":"pct",v:0};const rs=metaLinha({linhas:{[l.id]:x}},l.id,+mt.receita||0);
+    rows+='<tr><td class="nm">'+esc(l.nome)+'</td><td><select class="sel btn-sm" data-l="'+l.id+'" data-k="m" onchange="metaEdit(this)"><option value="pct"'+(x.m==="pct"?" selected":"")+'>% do recebimento</option><option value="fixo"'+(x.m==="fixo"?" selected":"")+'>R$ fixo por mês</option></select></td><td><input class="inp num" style="width:120px;text-align:right" type="number" step="0.01" data-l="'+l.id+'" data-k="v" value="'+(x.m==="pct"?+((+x.v||0)*100).toFixed(4):(+x.v||0))+'" onchange="metaEdit(this)"></td><td class="num">'+fR(rs)+'</td><td class="num">'+fR(med(l.id))+'</td>'+(()=>{const sg=sugestaoMeta(l.id);if(!sg||!difereMeta((mt.linhas||{})[l.id],sg,+mt.receita||0,l.id))return'<td></td>';return'<td style="text-align:left;white-space:nowrap"><span class="small">'+(sg.m==="pct"?fP(sg.v,2)+" = ":"")+fR(metaLinha({linhas:{[l.id]:sg}},l.id,+mt.receita||0))+'</span> <button class="btn btn-o btn-sm" onclick="db.ref(\'fin/metas/'+ANO+'/linhas/'+l.id+'\').set('+JSON.stringify(sg).replace(/"/g,"&quot;")+').then(()=>toast(\'Meta atualizada\'))">usar</button></td>'})()+'</tr>'})});
   m.innerHTML='<div class="card"><div class="ch-h"><div><h3>Metas de '+ANO+'</h3><div class="sub">O previsto de cada mês usa estas metas: linhas em % são aplicadas sobre o recebimento realizado do mês; linhas em R$ entram fixas. Alterações valem na hora para todos os meses do ano. A sugestão é a mediana do realizado em '+ANO+' — aparece só onde a meta está mais de 25% longe da realidade.</div></div><button class="btn btn-o btn-sm" onclick="aplicarSugestoes()">Aplicar todas as sugestões</button></div>'+
    '<div class="tools"><label class="small" style="font-weight:700">Meta mensal de recebimentos de operação</label><input class="inp num" id="mt-rec" type="number" step="1" style="width:160px;text-align:right" value="'+(+mt.receita||0)+'" onchange="db.ref(\'fin/metas/'+ANO+'/receita\').set(+this.value||0).then(()=>toast(\'Meta de recebimento salva\'))"><span class="small muted">= '+fR((+mt.receita||0)*12)+' no ano</span></div>'+
-   '<div class="tw"><table class="t"><thead><tr><th>Linha</th><th>Tipo</th><th>Valor (% ou R$)</th><th>Meta mensal</th><th>Média '+ANO+'</th><th>Média '+(+ANO-1)+'</th><th style="text-align:left">Sugestão pelo realizado</th></tr></thead><tbody>'+rows+'</tbody></table></div></div>';
+   '<div class="tw"><table class="t"><thead><tr><th>Linha</th><th>Tipo</th><th>Valor (% ou R$)</th><th>Meta mensal</th><th>Média '+ANO+'</th><th style="text-align:left">Sugestão pelo realizado</th></tr></thead><tbody>'+rows+'</tbody></table></div></div>';
 }
 function metaEdit(el){const l=el.dataset.l;const mt=metasAno(ANO);const x=Object.assign({m:LIN[l].g==="cf"?"fixo":"pct",v:0},(mt.linhas||{})[l]);
   if(el.dataset.k==="m"){const rec=+mt.receita||0;const rs=metaLinha({linhas:{[l]:x}},l,rec);x.m=el.value;x.v=x.m==="pct"?(rec?rs/rec:0):rs}else{const n=parseFloat(el.value)||0;x.v=x.m==="pct"?n/100:n}
