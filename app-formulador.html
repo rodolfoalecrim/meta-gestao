@@ -31,6 +31,7 @@ button{cursor:pointer}
 .btn-sm{padding:5px 9px;font-size:12.5px;border-radius:8px}
 .btn:disabled{opacity:.5;cursor:default}
 .ico{background:none;border:none;color:var(--faint);padding:4px 6px;border-radius:6px;font-size:15px;line-height:1}.ico:hover{background:var(--line);color:var(--red)}
+.ico svg{width:15px;height:15px;vertical-align:-2px}.ico.ed:hover{color:var(--G)}
 /* login */
 #login{display:none;min-height:100vh;align-items:center;justify-content:center;padding:24px;background:var(--GD)}
 .lb{background:#fff;border-radius:16px;padding:26px;width:100%;max-width:360px}
@@ -46,7 +47,60 @@ button{cursor:pointer}
 .tabs{max-width:1440px;margin:0 auto;padding:0 16px;display:flex;gap:2px;overflow-x:auto;scrollbar-width:none}
 .tabs button{background:none;border:none;color:#fff;opacity:.7;padding:10px 12px;font-weight:600;border-bottom:3px solid transparent;white-space:nowrap}
 .tabs button.on{opacity:1;border-bottom-color:#4ade80}
-main{max-width:1440px;margin:0 auto;padding:16px 16px 80px}
+.wrap{display:flex;align-items:flex-start;max-width:1600px;margin:0 auto}
+main{flex:1;min-width:0;padding:16px 16px 80px}
+#side{width:208px;flex-shrink:0;position:sticky;top:58px;height:calc(100vh - 58px);overflow:auto;background:#fff;border-right:1px solid var(--border);padding:12px 8px}
+#side .farm{font-size:11.5px;color:var(--muted);padding:4px 10px 10px;border-bottom:1px solid var(--line);margin-bottom:8px}
+#side .farm b{display:block;color:var(--text);font-size:13px;margin-top:2px}
+#side button{display:flex;align-items:center;gap:10px;width:100%;background:none;border:none;border-radius:9px;padding:9px 10px;font-weight:600;color:#334155;text-align:left;font-size:14px}
+#side button svg{width:20px;height:20px;flex-shrink:0;color:var(--G)}
+#side button:hover{background:var(--line)}
+#side button.on{background:var(--GL);color:var(--GD);box-shadow:inset 3px 0 0 var(--G)}
+#side .grp{font-size:10.5px;font-weight:800;color:var(--faint);text-transform:uppercase;letter-spacing:.05em;padding:12px 10px 4px}
+@media(min-width:901px){.tabs{display:none}}
+@media(max-width:900px){#side{display:none}}
+/* barra de ferramentas (estilo AMTS) */
+.ribbon{display:flex;gap:2px;flex-wrap:wrap;align-items:stretch;background:#fff;border:1px solid var(--border);border-radius:14px;padding:6px;margin-bottom:12px}
+.ribbon .rb{display:flex;flex-direction:column;align-items:center;gap:3px;background:none;border:none;border-radius:9px;padding:7px 10px;min-width:76px;font-size:11.5px;font-weight:600;color:#334155;line-height:1.15;text-align:center}
+.ribbon .rb svg{width:24px;height:24px;color:var(--G)}
+.ribbon .rb:hover{background:var(--GL)}
+.ribbon .rb.pri{background:var(--G);color:#fff}.ribbon .rb.pri svg{color:#fff}
+.ribbon .rb:disabled{opacity:.4}
+.ribbon .sep{width:1px;background:var(--border);margin:4px 4px}
+.ribbon .grow{flex:1}
+/* painel de dados (abas) */
+.dtabs{display:flex;gap:0;overflow-x:auto;border-bottom:1px solid var(--border);margin:0 -16px 12px;padding:0 10px;scrollbar-width:none}
+.dtabs button{background:none;border:none;border-bottom:3px solid transparent;padding:9px 11px;font-weight:600;font-size:13px;color:var(--muted);white-space:nowrap}
+.dtabs button.on{color:var(--GD);border-bottom-color:var(--G)}
+.kslim{display:grid;grid-template-columns:repeat(auto-fill,minmax(118px,1fr));gap:6px;margin-bottom:12px}
+.kslim>div{background:#f8faf9;border:1px solid var(--line);border-radius:10px;padding:7px 9px}
+.kslim .l{font-size:10.5px;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:.02em}
+.kslim .v{font-family:var(--mono);font-weight:700;font-size:16px;white-space:nowrap}
+.kslim .v.good{color:var(--G)}.kslim .v.bad{color:var(--red)}.kslim .v.warn{color:var(--amber)}
+.cmsfoot{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:4px 18px;font-size:12.5px;margin-top:12px;padding-top:10px;border-top:1px solid var(--border)}
+.cmsfoot div{display:flex;justify-content:space-between;gap:8px}.cmsfoot b{font-variant-numeric:tabular-nums}
+.antag{font-size:12.5px;color:var(--muted);font-weight:500;margin-left:6px}
+/* editor de alimento (estilo AMTS) */
+#md.xl{max-width:1180px}
+.edg{display:grid;grid-template-columns:minmax(0,1fr) 280px;gap:16px}
+@media(max-width:900px){.edg{grid-template-columns:1fr}}
+.edt{max-height:62vh;overflow:auto;border:1px solid var(--border);border-radius:10px}
+.edt table{width:100%;border-collapse:collapse;font-size:13px}
+.edt th{position:sticky;top:0;background:#f8fafc;font-size:11px;color:var(--muted);text-transform:uppercase;text-align:right;padding:7px 8px;border-bottom:1px solid var(--border);z-index:1}
+.edt th:first-child,.edt td:first-child{text-align:left}
+.edt td{padding:4px 8px;border-bottom:1px solid var(--line);text-align:right}
+.edt tr.gh td{background:#dbeafe33;background:#eef6f1;font-weight:700;cursor:pointer;color:var(--GD)}
+.edt tr.gh td:first-child:before{content:"▾ ";color:var(--faint)}.edt tr.gh.fech td:first-child:before{content:"▸ "}
+.edt td.nm{padding-left:22px}
+.edt .inp{width:120px;padding:4px 6px;text-align:right;font-size:13px}
+.edt .inp.txt{width:100%;max-width:260px;text-align:left}
+.edt tr.mud td{background:#fffbeb}
+.edt .df{font-size:12px;color:var(--faint);white-space:nowrap}.edt .df.up{color:var(--blue)}.edt .df.dn{color:var(--amber)}
+.edside{display:flex;flex-direction:column;gap:10px}
+.edside .bx{border:1px solid var(--border);border-radius:10px;padding:10px}
+.edside .bx h4{font-size:12px;text-transform:uppercase;color:var(--muted);letter-spacing:.04em;margin-bottom:6px}
+.edside .btn{width:100%}
+main{max-width:1600px}
 .card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:16px;min-width:0;margin-bottom:14px}
 .card h3{font-size:14.5px;font-weight:700}
 .card .sub{font-size:12.5px;color:var(--muted);margin-top:2px}
@@ -56,7 +110,7 @@ main{max-width:1440px;margin:0 auto;padding:16px 16px 80px}
 .alert.ok{background:var(--GL);border-color:#bbf7d0;color:#14532d}.alert.bad{background:var(--redL);border-color:#fecaca;color:#7f1d1d}
 .alert ul{margin:4px 0 0 16px}
 /* layout de formulação */
-.fgrid{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,1fr);gap:14px;align-items:start}
+.fgrid{display:grid;grid-template-columns:minmax(0,1.3fr) minmax(0,1fr);gap:14px;align-items:start}
 .fgrid>div{min-width:0}
 .sticky{position:sticky;top:104px}
 @media(max-width:1100px){.fgrid{grid-template-columns:1fr}.sticky{position:static}}
@@ -72,9 +126,11 @@ table.t th{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spa
 table.t th:first-child,table.t td:first-child{text-align:left}
 table.t td{padding:5px 6px;border-bottom:1px solid var(--line);text-align:right;vertical-align:middle}
 table.t tr.tot td{font-weight:800;border-top:2px solid var(--border);border-bottom:none}
-table.ing .inp{padding:5px 6px;width:70px;text-align:right;border-radius:7px;font-size:13px}
+table.ing .inp{padding:5px 6px;width:64px;text-align:right;border-radius:7px;font-size:13px}
 table.ing .inp.w{width:62px}
-table.ing td.nm{min-width:200px;max-width:280px}
+table.ing td.nm{min-width:170px;max-width:250px}
+table.ing th,table.ing td{padding-left:4px;padding-right:4px}
+table.ing tr.sub td{font-size:12px;color:var(--muted);padding-top:2px;padding-bottom:2px;border-bottom:none;background:#fafcfa}
 .nmw{display:flex;align-items:center;gap:6px}.nmw span.n{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .cat{display:inline-block;font-size:10px;font-weight:800;border-radius:5px;padding:1px 5px;color:#fff;flex-shrink:0;min-width:22px;text-align:center}
 .cat-F{background:var(--c-F)}.cat-SM{background:var(--c-SM)}.cat-C{background:var(--c-C)}.cat-P{background:var(--c-P)}.cat-X{background:var(--c-X)}
@@ -91,11 +147,14 @@ table.ing td.nm{min-width:200px;max-width:280px}
 .dd button:hover,.dd button.hi{background:var(--GL)}
 .dd .g{font-size:10.5px;font-weight:800;color:var(--muted);text-transform:uppercase;padding:6px 10px;background:#f8fafc;letter-spacing:.04em}
 /* restrições */
-.rs{display:grid;grid-template-columns:22px minmax(0,1fr) 74px 74px;gap:6px 8px;align-items:center;font-size:13px}
+.rs{display:grid;grid-template-columns:minmax(0,1fr) 70px 78px 70px 34px;gap:5px 8px;align-items:center;font-size:13px}
 .rs .inp{padding:5px 6px;text-align:right;width:100%;font-size:13px}
 .rs .h{font-size:11px;color:var(--muted);font-weight:700;text-transform:uppercase}
 .rs .u{color:var(--faint);font-size:11.5px}
-.rs .off{opacity:.45}
+.rs .nm.off{color:var(--muted)}
+.rs .val{text-align:right;font-weight:700;font-variant-numeric:tabular-nums;white-space:nowrap}
+.rs .val.ok{color:var(--G)}.rs .val.lo{color:var(--red)}.rs .val.hi{color:var(--amber)}
+.rs .fix{justify-self:center;width:16px;height:16px}
 /* KPIs */
 .kpis{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px;margin-bottom:12px}
 .kpi{background:#fff;border:1px solid var(--border);border-radius:12px;padding:10px 12px;min-width:0}
@@ -135,12 +194,12 @@ details.box>div{padding:0 14px 12px;overflow-x:auto}
 /* toast */
 #toast{position:fixed;left:50%;bottom:76px;transform:translateX(-50%) translateY(20px);background:var(--G);color:#fff;padding:10px 16px;border-radius:10px;font-weight:600;opacity:0;pointer-events:none;transition:.25s;z-index:60;max-width:90vw}
 #toast.on{opacity:1;transform:translateX(-50%)}
-.pill{display:inline-flex;gap:4px;background:var(--line);border-radius:9px;padding:3px}
+.pill{display:inline-flex;flex-wrap:wrap;max-width:100%;gap:4px;background:var(--line);border-radius:9px;padding:3px}
 .pill button{background:none;border:none;padding:5px 10px;border-radius:7px;font-weight:600;font-size:12.5px;color:var(--muted)}
 .pill button.on{background:#fff;color:var(--text);box-shadow:0 1px 2px rgba(0,0,0,.08)}
 .hbar{display:grid;grid-template-columns:minmax(0,1fr) 120px 64px;gap:4px 10px;align-items:center;font-size:12.5px}
 .hbar .b{height:10px;border-radius:5px;background:var(--line);overflow:hidden}.hbar .b i{display:block;height:100%}
-@media(max-width:560px){table.ing td.nm{min-width:150px;max-width:170px}.top-in{gap:8px}.brand span{display:none}.kpi .v{font-size:17px}main{padding:12px 12px 90px}.card{padding:14px}.tw{margin:0 -14px;padding:0 14px}.rs{grid-template-columns:22px minmax(0,1fr) 62px 62px}}
+@media(max-width:560px){table.ing td.nm{min-width:150px;max-width:170px}.top-in{gap:8px}.brand span{display:none}.kpi .v{font-size:17px}main{padding:12px 12px 90px}.card{padding:14px}.tw{margin:0 -14px;padding:0 14px}.rs{grid-template-columns:minmax(0,1fr) 54px 60px 54px 26px;gap:5px 5px;font-size:12.5px}}
 @media print{.top,.fab,.actions,.noprint{display:none!important}body{background:#fff}.card{border:none;padding:0}.fgrid{display:block}.sticky{position:static}}
 </style>
 </head>
@@ -152,7 +211,7 @@ details.box>div{padding:0 14px 12px;overflow-x:auto}
  <div class="top"><div class="top-in"><div class="brand"><b>Meta Formulador</b><span id="sub-top">Formulação de dietas · NASEM 2021 / UFLA</span></div>
   <button class="btn btn-o btn-sm" onclick="logout()">Sair</button></div>
   <div class="tabs" id="tabs"></div></div>
- <main id="m"></main>
+ <div class="wrap"><aside id="side"></aside><main id="m"></main></div>
 </div>
 <div class="fab" id="fab"></div>
 <div id="mdw" onclick="if(event.target===this)fecharModal()"><div id="md"></div></div>
@@ -220,7 +279,9 @@ function calcDieta(an,itens){
   const amIntN=T.amido-amRumN-amFez;
   const fdnDR=((-31.9+(0.721*D.fdn*100)-(0.247*D.amido*100)+(6.63*D.pb*100)-(0.211*Math.pow(D.pb*100,2))-(38.7*fda_fdn)-(0.121*fPct)+(1.51*cms))*(D.fdn*cms))/100; /* Y124 */
   /* proteína metabolizável (X126–Y143) */
-  const pbMic=(101+(82.6*T.pdr))/((1+(0.094/fdnDR))*(1+(0.027/amRumN)))*6.25;   /* Z127, g/d */
+  /* Z127, g/d — com consumo muito baixo as equações de FDN e amido digeridos no rúmen ficam ≤ 0 e a fórmula
+     diverge (PB microbiana negativa); nesses casos a fermentação é tratada como nula */
+  const pbMic=(fdnDR>0&&amRumN>0)?(101+(82.6*T.pdr))/((1+(0.094/fdnDR))*(1+(0.027/amRumN)))*6.25:0;
   const pmPndr=T.dpndr*1000,pmMic=pbMic*0.824*0.8,pmSup=pmMic+pmPndr;
   const plPele=0.2*Math.pow(pv,0.6)*0.85,plUrina=53*6.25*pv*0.001,plFecal=((11.62+0.134*(D.fdn*100))*cms)*0.73,plLeite=kgProtV*1000;
   const pmMant=plPele/0.69+plUrina+plFecal/0.69,pmLeite=plLeite/0.69,pmExig=pmMant+pmLeite;
@@ -263,6 +324,9 @@ function calcDieta(an,itens){
     fibraPV:{fdnf:[div(T.fdnf,pv),escDP*T.fdnf/pv],fdn8:[div(T.fdn8,pv),escDP*T.fdn8/pv],ufdn:[div(T.ufdn,pv),escDP*T.ufdn/pv]},
     min:{caP:div(D.ca,D.p),dcad1,dcad2,hipocal},vitReq,
     ag:{c16c181:div(T.c160,T.c181),p16:div(D.c160,D.c160+D.c181),c18:T.c180+T.c181+T.c182+T.c183},
+    /* indicadores no formato do AMTS */
+    amts:{metPM:div(aa[4].sup,pmSup)*100,lisPM:div(aa[3].sup,pmSup)*100,lisMet:div(aa[3].sup,aa[4].sup),metEM:aa[4].gMcal,lisEM:aa[3].gMcal,
+      fdnPV:div(T.fdn,pv)*100,fdnfPV:div(T.fdnf,pv)*100,ufdnPV:div(T.ufdn,pv)*100,amidoFerm:Math.max(0,div(amRumN,cms)*100)},
     custo:{dia:T.custo,kgMN:div(T.custo,cmn),kgMS:div(T.custo,cms),kgLeite:div(T.custo,leite),receita,rmca:receita-T.custo},
     rel:{leiteConc:div(leite,conc.ms),leiteCMS:div(leite,cms),lceCMS:div(lce,cms)}};
 }
@@ -365,6 +429,14 @@ const RESTR=[
   {id:"na",n:"Na",u:"% MS",f:R=>R.D.na*100,esc:0.02,dec:2},
   {id:"cl",n:"Cl",u:"% MS",f:R=>R.D.cl*100,esc:0.02,dec:2},
   {id:"dcad",n:"DCAD (Na+K)−(Cl+S)",u:"mEq/kg",f:R=>R.min.dcad1,esc:20,dec:0},
+  {id:"metPM",n:"Metionina",u:"% PM",f:R=>R.amts.metPM,esc:0.05,dec:2},
+  {id:"lisPM",n:"Lisina",u:"% PM",f:R=>R.amts.lisPM,esc:0.1,dec:2},
+  {id:"metEM",n:"Met : EM",u:"g/Mcal",f:R=>R.amts.metEM,esc:0.05,dec:2},
+  {id:"fdnfPVm",n:"FDN de forragem",u:"% PV",f:R=>R.amts.fdnfPV,esc:0.05,dec:2},
+  {id:"fdnPV",n:"FDN total",u:"% PV",f:R=>R.amts.fdnPV,esc:0.05,dec:2},
+  {id:"ufdnPV",n:"uFDN240",u:"% PV",f:R=>R.amts.ufdnPV,esc:0.02,dec:2},
+  {id:"amidoFerm",n:"Amido fermentado no rúmen",u:"% MS",f:R=>R.amts.amidoFerm,esc:1,dec:1},
+  {id:"rmca",n:"RMCA (RSCA)",u:"R$/vaca/d",f:R=>R.custo.rmca,esc:1,dec:2},
   {id:"custo",n:"Custo da dieta",u:"R$/vaca/d",f:R=>R.custo.dia,esc:1,dec:2}];
 const RESTR_BY={};RESTR.forEach(r=>RESTR_BY[r.id]=r);
 
@@ -379,8 +451,20 @@ function restricoesPadrao(an){return[
   {id:"msDieta",on:false,min:45,max:55},{id:"fdnf",on:false,min:15,max:19},{id:"amidoDR",on:false,min:15},
   {id:"mg",on:false,min:0.2,max:0.4},{id:"k",on:false,min:0.95,max:1.5},{id:"na",on:false,min:0.2,max:0.25},{id:"dcad",on:false,min:200}]}
 
+/* modelo AMTS: limites como no quadro "Dados da dieta" do AMTS (on = "No otim.") */
+function restricoesAMTS(an){const L=+an.leite||0;return[
+  {id:"cms",on:true,alvo:"nasem1"},
+  {id:"msDieta",on:false,min:20,max:80},
+  {id:"leiteEL",on:false,min:+(L*0.99).toFixed(2),max:+(L*1.01).toFixed(2)},{id:"leitePM",on:false,min:+(L*0.99).toFixed(2),max:+(L*1.01).toFixed(2)},
+  {id:"pb",on:false,min:10,max:30},{id:"pdr",on:false,min:null,max:null},{id:"pndr",on:false,min:null,max:null},
+  {id:"metPM",on:true,min:null,max:2.4},{id:"lisPM",on:true,min:null,max:7.6},{id:"metEM",on:false,min:1.0,max:1.2},
+  {id:"fdnf",on:false,min:null,max:null},{id:"fdn",on:false,min:null,max:null},{id:"fdn8",on:true,min:22,max:35},
+  {id:"fdnfPVm",on:false,min:null,max:1.0},{id:"fdnPV",on:false,min:null,max:10},{id:"vol",on:false,min:null,max:null},{id:"ufdn",on:false,min:null,max:null},{id:"ufdnPV",on:false,min:null,max:null},
+  {id:"cnf",on:true,min:null,max:40},{id:"amido",on:false,min:null,max:30},{id:"amidoFerm",on:false,min:20,max:70},
+  {id:"rmca",on:false,min:null,max:null},{id:"custo",on:false,min:null,max:null}]}
+
 /* alvo de CMS a partir das previsões */
-const CMS_ALVOS=[["nasem1","NASEM 2021 (1)"],["nasem2","NASEM 2021 (2)"],["ufla","NRC UFLA"],["nrc","NRC 2001"],["cncps","CNCPS"],["manual","Manual"]];
+const CMS_ALVOS=[["nasem1","NASEM (animal)"],["nasem2","NASEM (animal + fibra)"],["ufla","NRC UFLA"],["nrc","NRC 2001"],["cncps","CNCPS"],["manual","Manual"]];
 function cmsAlvo(rc,R){if(rc.alvo==="manual")return+rc.valor||null;const p=R.prev[rc.alvo||"nasem1"];return p?p[rc.mdp?1:0]:null}
 
 /* ---------- formulação ----------
@@ -439,7 +523,7 @@ function formular(an,itens,restr,opt){opt=opt||{};
   const falhas=cons.map((c,i)=>({c,e:v[i],val:c.f(R),lo:c.lo(R),hi:c.hi(R)})).filter(o=>o.e>1e-3);
   return{status:falhas.length?"parcial":"ok",x,R,falhas,iter:it,cons}}
 
-if(typeof module!=="undefined")module.exports={simplex,formular,RESTR,RESTR_BY,restricoesPadrao,CMS_ALVOS,cmsAlvo};
+if(typeof module!=="undefined")module.exports={simplex,formular,RESTR,RESTR_BY,restricoesPadrao,restricoesAMTS,CMS_ALVOS,cmsAlvo};
 
 /* ============================================================
    META FORMULADOR — app
@@ -460,7 +544,7 @@ const AN_PADRAO={pv:600,leite:35,dp:5,gord:3.8,prot:3.3,lact:4.6,preco:2.8,del:1
 
 let USER=null,NOME="",ROLE=null,ADM=false,TAB="formular";
 let PROPS={},FARM=null,DIETA=null,BROMA={},FORMS={},CUST={},PRECOS={},MAPA={};
-let CUR=null,RES=null,OPT=null,SHOWLIM=false,FILTRO_AL="",FILTRO_ORG="todos",VISTA_RES="nutr";
+let CUR=null,RES=null,OPT=null,SHOWLIM=false,FILTRO_AL="",FILTRO_ORG="todos",VISTA_RES="dados";
 let farmRefs=[];
 
 /* ---------- utilidades ---------- */
@@ -470,7 +554,7 @@ function fR(x,d){if(x==null||!isFinite(x))return"—";return"R$ "+f(x,d==null?2:
 function slug(s){return String(s||"").normalize("NFD").replace(/[̀-ͯ]/g,"").toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"")}
 function num(v){if(v==null||v==="")return null;const x=parseFloat(String(v).replace(",","."));return isFinite(x)?x:null}
 function toast(m,err){const e=document.getElementById("toast");e.textContent=m;e.style.background=err?"var(--red)":"var(--G)";e.classList.add("on");clearTimeout(e._t);e._t=setTimeout(()=>e.classList.remove("on"),3200)}
-function abrirModal(h,lg){const md=document.getElementById("md");md.className=lg?"lg":"";md.innerHTML=h;document.getElementById("mdw").style.display="flex"}
+function abrirModal(h,lg){const md=document.getElementById("md");md.className=lg==="xl"?"xl":lg?"lg":"";md.innerHTML=h;document.getElementById("mdw").style.display="flex"}
 function fecharModal(){document.getElementById("mdw").style.display="none"}
 function hoje(){return new Date().toISOString().slice(0,10)}
 function fData(s){if(!s)return"";const d=String(s).slice(0,10).split("-");return d.length===3?d[2]+"/"+d[1]+"/"+d[0]:s}
@@ -498,9 +582,29 @@ function alimentoBroma(farmId,tipo,data,b){
   return Object.assign(a,{key:"b:"+farmId+":"+tipo+":"+data,nome,org:"Análise",custo:0,baseNome:base.nome,notaBroma:nota,dAmido:dAm,dFDN48:e.dFDN,dataAnalise:data})}
 function alimentosFazenda(){const out={};Object.entries(BROMA||{}).forEach(([tipo,ds])=>{if(!ds||typeof ds!=="object")return;Object.entries(ds).forEach(([data,b])=>{if(b&&typeof b==="object"){const a=alimentoBroma(FARM,tipo,data,b);if(a)out[a.key]=a}})});return out}
 let FOODS={};
-function montarFoods(){FOODS=Object.assign({},UFLA);Object.entries(CUST||{}).forEach(([id,c])=>{if(c&&c.nome){const a={key:"c:"+id,org:"Importado",nome:c.nome,cat:c.cat||"C",custo:+c.custo||0,nasem:c.nasem||"",obs:c.obs||"",fonte:c.fonte||""};COMP_KEYS.forEach(k=>a[k]=+(c.comp||{})[k]||0);FOODS[a.key]=a}});
+function montarFoods(){FOODS=Object.assign({},UFLA);Object.entries(CUST||{}).forEach(([id,c])=>{if(c&&c.nome&&c.tipo!=="composto"&&(!c.fazenda||c.fazenda===FARM)){const a={key:"c:"+id,org:"Importado",nome:c.nome,cat:c.cat||"C",custo:+c.custo||0,nasem:c.nasem||"",obs:c.obs||"",fonte:c.fonte||"",notas:c.notas||"",dataAmostra:c.dataAmostra||"",lab:c.lab||"",fazenda:c.fazenda||"",origem:c.origem||""};COMP_KEYS.forEach(k=>a[k]=+(c.comp||{})[k]||0);FOODS[a.key]=a}});
   if(FARM)Object.assign(FOODS,alimentosFazenda());
-  Object.entries(PRECOS||{}).forEach(([k,v])=>{const key=k.replace(/~/g,":");if(FOODS[key]&&v!=null&&v!=="")FOODS[key]=Object.assign({},FOODS[key],{custo:+v})})}
+  Object.entries(PRECOS||{}).forEach(([k,v])=>{const key=k.replace(/~/g,":");if(FOODS[key]&&v!=null&&v!=="")FOODS[key]=Object.assign({},FOODS[key],{custo:+v})});
+  /* compostos (como "Gestão compostos" do AMTS): composição e preço calculados das partes, sempre com os dados atuais delas */
+  Object.entries(CUST||{}).forEach(([id,c])=>{if(!c||c.tipo!=="composto"||!c.nome||(c.fazenda&&c.fazenda!==FARM))return;const k="c:"+id;
+    const pr=(c.partes||[]).map(p=>{const a=FOODS[p.key]||Object.assign({nome:p.nome,custo:+p.custo||0},p.comp||{});return{key:p.key,nome:a.nome||p.nome,kg:+p.kg||0,custo:p.custo!=null?+p.custo:null,a,falta:!FOODS[p.key]}});
+    const r=compostoComp(pr);if(!r)return;FOODS[k]=Object.assign(r.comp,{key:k,org:"Composto",nome:c.nome,cat:c.cat||r.cat,custo:c.custoManual!=null&&c.custoManual!==""?+c.custoManual:r.custo,custoPartes:r.custo,partes:pr,fonte:c.fonte||"",notas:c.notas||""});
+    const pk=precoKey(k);if(PRECOS[pk]!=null&&PRECOS[pk]!=="")FOODS[k].custo=+PRECOS[pk]});
+  if(TROCA)setTimeout(aplicarTroca,0)}
+/* mistura: média ponderada na base certa de cada nutriente */
+function compostoComp(partes){const ps=partes.filter(p=>p.kg>0&&p.a);const W=ps.reduce((s,p)=>s+p.kg,0);if(!W)return null;
+  const d=p=>p.kg*(+p.a.ms||0);const D=ps.reduce((s,p)=>s+d(p),0);const comp={};
+  const med=(k,w)=>{const t=ps.reduce((s,p)=>s+w(p),0);comp[k]=t?ps.reduce((s,p)=>s+w(p)*(+p.a[k]||0),0)/t:0};
+  comp.ms=D/W;
+  ["pb","fdn","efdn","efdn2","fdnf","ufdn","fda","cnf","amido","mor","ed","ell","ag","cinzas","ca","p","mg","k","s","na","cl","co","cu","mn","zn","se","i","vita","vitd","vite"].forEach(k=>med(k,d));
+  ["pdr","pndr"].forEach(k=>med(k,p=>d(p)*(+p.a.pb||0)));med("dpndr",p=>d(p)*(+p.a.pb||0)*(+p.a.pndr||0));
+  /* AA entram no cálculo via PNDR digestível: peso = MS × PB × PNDR × dPNDR */
+  ["his","ile","leu","lis","met"].forEach(k=>med(k,p=>d(p)*(+p.a.pb||0)*(+p.a.pndr||0)*(+p.a.dpndr||0)));
+  ["c160","c180","c181","c182","c183","insat"].forEach(k=>med(k,p=>d(p)*(+p.a.ag||0)));["mn8","mn19"].forEach(k=>med(k,p=>p.kg));med("kd",p=>d(p)*(+p.a.amido||0));if(!comp.kd)comp.kd=0.3;
+  const custo=ps.reduce((s,p)=>s+p.kg*(p.custo!=null&&p.custo!==""?+p.custo:+p.a.custo||0),0)/W;const cat=ps.every(p=>p.a.cat==="P")?"P":"C";
+  return{comp,custo,cat,kg:W}}
+let TROCA=null;
+function aplicarTroca(){if(!TROCA||!FOODS[TROCA.para]||!CUR)return;let n=0;CUR.itens.forEach(it=>{if(it.key===TROCA.de){it.key=TROCA.para;if(CUR.snap)delete CUR.snap[TROCA.para];n++}});TROCA=null;if(n){OPT=null;toast("Nova versão do alimento aplicada na dieta");if(TAB==="formular")render()}}
 function foodDe(it){return(CUR&&CUR.snap&&CUR.snap[it.key])||FOODS[it.key]||null}
 function precoKey(k){return k.replace(/[.#$\[\]\/:]/g,"~")}
 
@@ -508,6 +612,8 @@ function precoKey(k){return k.replace(/[.#$\[\]\/:]/g,"~")}
 function login(){const e=document.getElementById("l-e").value.trim(),s=document.getElementById("l-s").value;if(e&&s)auth.signInWithEmailAndPassword(e,s).catch(()=>document.getElementById("l-m").textContent="E-mail ou senha incorretos.")}
 function logout(){if(confirm("Sair do Meta Formulador?"))auth.signOut()}
 function mostrar(id){document.getElementById("login").style.display=id==="login"?"flex":"none";document.getElementById("app").style.display=id==="app"?"block":"none"}
+const ICO={dieta:'<path d="M4 4h16v16H4z"/><path d="M8 9h8M8 13h8M8 17h5"/>',salvas:'<path d="M6 3h9l4 4v14H6z"/><path d="M9 13l2 2 4-4"/>',alim:'<path d="M12 3c4 3 6 6 6 10a6 6 0 0 1-12 0c0-4 2-7 6-10z"/><path d="M12 9v9"/>',ferr:'<path d="M14 6a4 4 0 0 0 5 5l-8 8a2 2 0 0 1-3-3z"/>',nova:'<path d="M12 5v14M5 12h14"/>',lote:'<path d="M4 7h16M4 12h16M4 17h10"/><path d="M18 15l2 2-2 2"/>',otim:'<circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/>',salvar:'<path d="M5 3h11l3 3v15H5z"/><path d="M8 3v6h8V3M8 21v-7h8v7"/>',aplicar:'<path d="M5 12l5 5 9-11"/>',limpar:'<path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13"/>',imprimir:'<path d="M7 9V3h10v6M7 17H4v-7h16v7h-3M7 14h10v7H7z"/>',lapis:'<path d="M4 20h4L19 9l-4-4L4 16z"/>'};
+function ico(n){return'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">'+ICO[n]+'</svg>'}
 auth.onAuthStateChanged(async u=>{
   if(!u){mostrar("login");return}
   USER=u;let role=null,nome="";try{const s=(await db.ref("usuarios/"+u.uid).once("value")).val()||{};role=s.role;nome=s.nome||""}catch(e){}
@@ -522,7 +628,7 @@ function iniciar(){
     if(ult&&PROPS[ult])selFarm(ult);else render()}).catch(e=>{document.getElementById("m").innerHTML='<div class="empty"><b>Sem permissão para ler as fazendas</b>'+esc(e.message)+'</div>'});
 }
 /* ---------- fazenda ---------- */
-function selFarm(id){farmRefs.forEach(r=>r.off());farmRefs=[];FARM=id||null;DIETA=null;BROMA={};FORMS={};MAPA={};try{localStorage.setItem("mf_farm",id||"")}catch(e){}
+function selFarm(id){farmRefs.forEach(r=>r.off());farmRefs=[];FARM=id||null;DIETA=null;BROMA={};FORMS={};MAPA={};try{localStorage.setItem("mf_farm",id||"")}catch(e){}montarFoods();
   if(!FARM){montarFoods();render();return}
   const on=(p,fn)=>{const r=db.ref(p);r.on("value",s=>fn(s.val()),e=>console.warn(p,e.message));farmRefs.push(r)};
   on("dietas/"+FARM,v=>{DIETA=v||{};render()});
@@ -541,11 +647,12 @@ function itensCalc(){return CUR.itens.map(it=>{const a=foodDe(it);return a?{a:Ob
 function recalc(){if(!CUR)return;RES=CUR.itens.length?calcDieta(CUR.an,itensCalc()):null;atualizarComputados();renderResultados()}
 
 /* ---------- navegação ---------- */
-const TABS=[["formular","Formular"],["salvas","Formulações salvas"],["alimentos","Alimentos"],["ferramentas","Ferramentas"]];
+const TABS=[["formular","Dietas"],["salvas","Formulações salvas"],["alimentos","Alimentos"],["ferramentas","Ferramentas"]];
 function setTab(t){TAB=t;render();scrollTo(0,0)}
 function render(){
   document.getElementById("tabs").innerHTML=TABS.map(([k,l])=>'<button class="'+(TAB===k?"on":"")+'" onclick="setTab(\''+k+'\')">'+l+(k==="salvas"&&Object.keys(FORMS).length?' <span class="muted">'+Object.keys(FORMS).length+'</span>':'')+'</button>').join("");
   document.getElementById("sub-top").textContent=FARM?nomeFarm(FARM):"Formulação de dietas · NASEM 2021 / UFLA";
+  document.getElementById("side").innerHTML='<div class="farm">Fazenda<b>'+esc(FARM?nomeFarm(FARM):"—")+'</b></div>'+[["formular","Dietas","dieta"],["salvas","Formulações salvas","salvas"],["alimentos","Alimentos","alim"],["ferramentas","Ferramentas","ferr"]].map(([k,l,i])=>'<button class="'+(TAB===k?"on":"")+'" onclick="setTab(\''+k+'\')">'+ico(i)+l+(k==="salvas"&&Object.keys(FORMS).length?' <span class="muted small" style="margin-left:auto">'+Object.keys(FORMS).length+'</span>':'')+'</button>').join("");
   const m=document.getElementById("m");const fab=document.getElementById("fab");fab.innerHTML="";
   if(TAB==="formular")renderFormular(m);else if(TAB==="salvas")renderSalvas(m);else if(TAB==="alimentos")renderAlimentos(m);else renderFerramentas(m)}
 function seletorFazenda(){const ids=Object.keys(PROPS).filter(id=>PROPS[id]&&(PROPS[id].propriedade||PROPS[id].produtor)).sort((a,b)=>nomeFarm(a).localeCompare(nomeFarm(b)));
@@ -561,54 +668,60 @@ function ddKey(e,id){const dd=document.getElementById(id);if(!dd)return;const bs
    ABA FORMULAR
    ============================================================ */
 const AN_CAMPOS=[["pv","Peso vivo","kg",0],["leite","Leite (média)","kg/d",1],["dp","Desvio-padrão do leite","kg/d",1],["gord","Gordura","%",2],["prot","Proteína bruta","%",2],["lact","Lactose","%",2],["preco","Preço do leite","R$/L",2],["del","DEL","dias",0],["ecc","ECC","1–5",2],["par","Multíparas","% do lote",0],["dfdn48","dFDN 48 h da forragem","% FDN",0],["nul","NUL","mg/dL",0],["mant","ELl de mantença","Mcal/kg PV^0,75",3],["amidoFecal","Amido fecal","% MS",1],["diasTrans","Dias de transição","pré-parto",0],["vacas","Vacas no lote","cab.",0]];
+let AN_OPEN=null;
 function renderFormular(m){
   if(!FARM){m.innerHTML='<div class="card"><div class="ch-h"><div><h3>Escolha a fazenda</h3><div class="sub">A formulação usa os lotes da Dieta & Custos, as análises de bromatologia da fazenda e salva as dietas no cadastro dela.</div></div></div>'+seletorFazenda()+'</div>';return}
-  const ls=lotes();const an=CUR.an;
-  let h='<div class="card"><div class="row2" style="margin-bottom:12px">'+seletorFazenda()+
+  const ls=lotes();const an=CUR.an;const rb=(i,l,fn,cls,dis)=>'<button class="rb '+(cls||"")+'" onclick="'+fn+'"'+(dis?" disabled":"")+'>'+ico(i)+'<span>'+l+'</span></button>';
+  let h='<div class="ribbon noprint">'+(ADM?rb("nova","Nova<br>dieta","novaFormulacao()")+rb("lote","Carregar<br>do lote","importarDietaLote()","",!CUR.loteId)+'<span class="sep"></span>'+rb("otim","Otimizar","otimizar()","pri")+rb("limpar","Remover não<br>utilizados","removerNaoUsados()")+'<span class="sep"></span>'+rb("salvar","Salvar<br>dieta","salvarFormulacao()")+rb("aplicar","Aplicar<br>no lote","aplicarNoLote()","",!CUR.loteId)+'<span class="sep"></span>':'')+rb("imprimir","Imprimir","imprimir()")+'</div>';
+  h+='<div class="card" style="padding:12px 16px"><div class="row2">'+seletorFazenda()+
     '<select class="sel" style="min-width:180px" onchange="selLote(this.value)"><option value="">Lote (opcional)…</option>'+ls.map(l=>'<option value="'+esc(l.id)+'"'+(l.id===CUR.loteId?" selected":"")+'>'+esc(l.nomeDieta||l.nome||"Lote")+(l.vacas?" · "+l.vacas+" vacas":"")+'</option>').join("")+'</select>'+
-    (CUR.loteId?'<button class="btn btn-o btn-sm" onclick="importarDietaLote()">Carregar dieta atual do lote</button>':'')+
-    '<input class="inp" style="flex:1;min-width:180px" placeholder="Nome da formulação" value="'+esc(CUR.nome)+'" onchange="CUR.nome=this.value">'+
-    '<button class="btn btn-o btn-sm" onclick="novaFormulacao()">Nova</button></div>'+
-    '<div class="agrid">'+AN_CAMPOS.map(([k,l,u,d])=>'<div class="fld"><label>'+l+' <span class="ref">'+u+'</span></label><input class="inp num" type="number" step="any" value="'+(k==="par"?Math.round((+an.par||0)*100):an[k]!=null?an[k]:"")+'" onchange="setAn(\''+k+'\',this.value)"></div>').join("")+'</div></div>';
-  h+='<div class="fgrid"><div>'+cardIngredientes()+cardRestricoes()+'</div><div class="sticky" id="res"></div></div>';
+    '<input class="inp" style="flex:1;min-width:180px" placeholder="Nome da dieta" value="'+esc(CUR.nome)+'" onchange="CUR.nome=this.value"></div>'+
+    '<details class="box" id="an-box" style="margin:10px 0 0"'+((AN_OPEN==null?!CUR.itens.length:AN_OPEN)?" open":"")+'><summary onclick="AN_OPEN=!this.parentNode.open">Animal e lote <span class="antag" id="an-res">'+resumoAnimal()+'</span></summary><div><div class="agrid">'+AN_CAMPOS.map(([k,l,u,d])=>'<div class="fld"><label>'+l+' <span class="ref">'+u+'</span></label><input class="inp num" type="number" step="any" value="'+(k==="par"?Math.round((+an.par||0)*100):an[k]!=null?an[k]:"")+'" onchange="setAn(\''+k+'\',this.value)"'+(ADM?"":" disabled")+'></div>').join("")+'</div></div></details></div>';
+  h+='<div class="fgrid"><div>'+cardIngredientes()+'</div><div class="sticky" id="res"></div></div>';
   m.innerHTML=h;
-  document.getElementById("fab").innerHTML=ADM?'<button class="btn btn-g" onclick="otimizar()">Otimizar</button><button class="btn btn-o" onclick="salvarFormulacao()">Salvar</button><button class="btn btn-o" onclick="document.getElementById(\'res\').scrollIntoView({behavior:\'smooth\'})">Resultados ↓</button>':'';
+  document.getElementById("fab").innerHTML=ADM?'<button class="btn btn-g" onclick="otimizar()">Otimizar</button><button class="btn btn-o" onclick="salvarFormulacao()">Salvar</button><button class="btn btn-o" onclick="document.getElementById(\'res\').scrollIntoView({behavior:\'smooth\'})">Dados ↓</button>':'';
   recalc()}
+function resumoAnimal(){const a=CUR.an;return f(a.pv,0)+" kg · "+f(a.leite,1)+" kg leite · G "+f(a.gord,2)+"% · PB "+f(a.prot,2)+"% · DEL "+f(a.del,0)+" · ECC "+f(a.ecc,2)+(+a.vacas?" · "+f(a.vacas,0)+" vacas":"")+" · R$ "+f(a.preco,2)+"/L"}
+function removerNaoUsados(){const n=CUR.itens.length;CUR.itens=CUR.itens.filter(it=>+it.kg>0||it.fixo);OPT=null;rerenderIng();toast((n-CUR.itens.length)+" alimento(s) removido(s)")}
 function setAn(k,v){let x=num(v);if(k==="par")x=x==null?0:Math.max(0,Math.min(100,x))/100;CUR.an[k]=x;
-  if(k==="leite"){CUR.restr.forEach(r=>{if((r.id==="leitePM"||r.id==="leiteEL")&&r.on)r.min=x})}
-  recalc();if(k==="leite")document.getElementById("rs-box").outerHTML=cardRestricoes()}
+  if(k==="leite")ajustaLeiteR(x);
+  recalc();const ar=document.getElementById("an-res");if(ar)ar.textContent=resumoAnimal()}
+function ajustaLeiteR(L){CUR.restr.forEach(r=>{if(r.id!=="leitePM"&&r.id!=="leiteEL")return;if(r.max!=null){r.min=+(L*0.99).toFixed(2);r.max=+(L*1.01).toFixed(2)}else r.min=L})}
 function selLote(id){CUR.loteId=id;const l=lotes().find(x=>x.id===id);CUR.loteNome=l?(l.nomeDieta||l.nome||""):"";
   if(l){if(+l.prod>0)CUR.an.leite=+l.prod;if(+l.del>0)CUR.an.del=+l.del;if(+l.gordura>0)CUR.an.gord=+l.gordura;if(+l.preco>0)CUR.an.preco=+l.preco;if(+l.vacas>0)CUR.an.vacas=+l.vacas;if(+l.nul>0)CUR.an.nul=+l.nul;
-    CUR.restr.forEach(r=>{if((r.id==="leitePM"||r.id==="leiteEL")&&r.on)r.min=CUR.an.leite});if(!CUR.nome)CUR.nome=CUR.loteNome}
+    ajustaLeiteR(CUR.an.leite);if(!CUR.nome)CUR.nome=CUR.loteNome}
   render()}
 
 /* ---------- ingredientes ---------- */
 function cardIngredientes(){const R=RES;
   let rows=CUR.itens.map((it,i)=>{const a=foodDe(it);const ro=!ADM?" disabled":"";
     return'<tr><td class="nm"><div class="nmw"><span class="cat cat-'+esc(a?a.cat:"X")+'" title="'+esc(a?CATS[a.cat]||"":"")+'">'+esc(a?a.cat:"?")+'</span><span class="n" title="'+esc(a?a.nome:it.key)+'">'+esc(a?a.nome:"(alimento removido)")+'</span>'+(a&&a.org!=="UFLA"?'<span class="org">'+esc(a.org)+'</span>':"")+'</div></td>'+
-      '<td><input class="inp" type="number" step="any" value="'+(+it.kg||0)+'" onchange="setIt('+i+',\'kg\',this.value)"'+ro+' style="font-weight:700"></td>'+
+      '<td><input class="inp" type="number" step="any" value="'+(+it.kg||0)+'" onchange="setIt('+i+',\'kg\',this.value)"'+ro+' style="font-weight:700;width:78px"></td>'+
       '<td><input class="inp" type="number" step="any" value="'+(it.custo!=null?it.custo:a?a.custo:0)+'" onchange="setIt('+i+',\'custo\',this.value)"'+ro+'></td>'+
       '<td class="num" id="ci-ms'+i+'">—</td><td class="num" id="ci-p'+i+'">—</td><td class="num" id="ci-c'+i+'">—</td>'+
       '<td class="lim"><input class="inp w" type="number" step="any" placeholder="0" value="'+(it.min!=null?it.min:"")+'" onchange="setIt('+i+',\'min\',this.value)"'+ro+'></td><td class="lim"><input class="inp w" type="number" step="any" placeholder="—" value="'+(it.max!=null?it.max:"")+'" onchange="setIt('+i+',\'max\',this.value)"'+ro+'></td>'+
       '<td class="lim"><input class="inp w" type="number" step="any" placeholder="—" value="'+(it.pmin!=null?it.pmin:"")+'" onchange="setIt('+i+',\'pmin\',this.value)"'+ro+'></td><td class="lim"><input class="inp w" type="number" step="any" placeholder="—" value="'+(it.pmax!=null?it.pmax:"")+'" onchange="setIt('+i+',\'pmax\',this.value)"'+ro+'></td>'+
       '<td style="text-align:center"><input type="checkbox" class="fix" title="Fixar a quantidade no otimizador" '+(it.fixo?"checked":"")+' onchange="setIt('+i+',\'fixo\',this.checked)"'+ro+'></td>'+
-      '<td>'+(ADM?'<button class="ico" title="Remover" onclick="remIt('+i+')">×</button>':'')+'</td></tr>'}).join("");
+      '<td style="white-space:nowrap">'+(a?'<button class="ico ed" title="Editar alimento" onclick="abrirEditorAlimento(\''+esc(it.key)+'\')">'+ico("lapis")+'</button>':'')+(ADM?'<button class="ico" title="Remover" onclick="remIt('+i+')">×</button>':'')+'</td></tr>'+
+      (a&&a.partes?subLinhas(a,+it.kg||0):"")}).join("");
   if(!CUR.itens.length)rows='<tr><td colspan="12" class="muted" style="text-align:center;padding:18px">Adicione os alimentos da dieta pela busca acima'+(CUR.loteId?' ou carregue a dieta atual do lote':'')+'.</td></tr>';
-  return'<div class="card'+(SHOWLIM?" showlim":"")+'" id="ing-card"><div class="ch-h"><div><h3>Ingredientes</h3><div class="sub">kg de matéria natural por vaca por dia. Mín/máx limitam o otimizador; "fixo" mantém a quantidade digitada.</div></div>'+
+  return'<div class="card'+(SHOWLIM?" showlim":"")+'" id="ing-card"><div class="ch-h"><div><h3>Dieta'+(CUR.loteNome?' — '+esc(CUR.loteNome):'')+'</h3><div class="sub">kg por vaca por dia. Mín/máx limitam o otimizador; "fixo" mantém a quantidade. ✎ edita o alimento.</div></div>'+
     '<button class="btn btn-o btn-sm" onclick="SHOWLIM=!SHOWLIM;document.getElementById(\'ing-card\').classList.toggle(\'showlim\');this.textContent=SHOWLIM?\'Ocultar limites\':\'Limites por alimento\'">'+(SHOWLIM?"Ocultar limites":"Limites por alimento")+'</button></div>'+
     (ADM?'<div class="srch" style="margin-bottom:10px"><input class="inp" id="al-q" placeholder="Adicionar alimento: digite parte do nome (ex.: soja, silagem, calcário)…" oninput="buscaAl(this.value)" onfocus="buscaAl(this.value)" onkeydown="ddKey(event,\'al-dd\')" autocomplete="off"><div class="dd" id="al-dd"></div></div>':'')+
     '<div class="tw"><table class="t ing"><thead><tr><th>Alimento</th><th>kg MN</th><th>R$/kg MN</th><th>kg MS</th><th>% MS</th><th>R$/dia</th><th class="lim">mín kg</th><th class="lim">máx kg</th><th class="lim">mín %MS</th><th class="lim">máx %MS</th><th title="Fixar">Fixo</th><th></th></tr></thead><tbody>'+rows+
-    '</tbody><tfoot><tr class="tot"><td>Total</td><td class="num" id="ct-mn">—</td><td></td><td class="num" id="ct-ms">—</td><td class="num">100%</td><td class="num" id="ct-c">—</td><td class="lim"></td><td class="lim"></td><td class="lim"></td><td class="lim"></td><td></td><td></td></tr></tfoot></table></div></div>'}
+    '</tbody><tfoot><tr class="tot"><td>Total</td><td class="num" id="ct-mn">—</td><td></td><td class="num" id="ct-ms">—</td><td class="num">100%</td><td class="num" id="ct-c">—</td><td class="lim"></td><td class="lim"></td><td class="lim"></td><td class="lim"></td><td></td><td></td></tr></tfoot></table></div><div class="cmsfoot" id="cmsfoot"></div></div>'}
+function subLinhas(a,kg){const W=a.partes.reduce((s,p)=>s+p.kg,0)||1;return a.partes.filter(p=>p.kg>0).map(p=>'<tr class="sub"><td class="nm"><div class="nmw" style="padding-left:30px"><span class="n">'+esc(p.nome)+'</span>'+(p.falta?'<span class="chip warn">composição salva</span>':'')+'</div></td><td class="num">'+f(kg*p.kg/W,3)+'</td><td class="num">'+f(p.custo!=null?p.custo:p.a.custo,2)+'</td><td class="num">'+f(kg*p.kg/W*(+p.a.ms||0),2)+'</td><td class="num">'+f(p.kg/W*100,1)+'%</td><td></td><td class="lim"></td><td class="lim"></td><td class="lim"></td><td class="lim"></td><td></td><td></td></tr>').join("")}
 function atualizarComputados(){const R=RES;CUR.itens.forEach((it,i)=>{const set=(id,t)=>{const e=document.getElementById(id);if(e)e.textContent=t};
     const o=R?R.lin.find((x,j)=>j===i):null;set("ci-ms"+i,o?f(o.ms,2):"—");set("ci-p"+i,o?f(o.pMS*100,1)+"%":"—");set("ci-c"+i,o?f(o.custo,2):"—")});
-  const set=(id,t)=>{const e=document.getElementById(id);if(e)e.textContent=t};set("ct-mn",R?f(R.cmn,2):"—");set("ct-ms",R?f(R.cms,2):"—");set("ct-c",R?f(R.custo.dia,2):"—")}
+  const set=(id,t)=>{const e=document.getElementById(id);if(e)e.textContent=t};set("ct-mn",R?f(R.cmn,2):"—");set("ct-ms",R?f(R.cms,2):"—");set("ct-c",R?f(R.custo.dia,2):"—");
+  const cf=document.getElementById("cmsfoot");if(cf)cf.innerHTML=R&&R.cms?[["CMS predito (CNCPS)",R.prev.cncps[0]],["CMS predito (NRC)",R.prev.nrc[0]],["Predicted DMI (NASEM Animal)",R.prev.nasem1[0]],["Predicted DMI (NASEM Animal/Fiber)",R.prev.nasem2[0]]].map(([l,v])=>'<div><span class="muted">'+l+':</span><b>'+f(v,2)+'</b></div>').join("")+(()=>{const rc=CUR.restr.find(r=>r.id==="cms");const al=rc?cmsAlvo(rc,R):null;return al?'<div><span class="muted">CMS do usuário / CMS predita:</span><b>'+f(R.cms/al*100,1)+'%</b></div>':""})():""}
 function setIt(i,k,v){const it=CUR.itens[i];if(k==="fixo")it.fixo=!!v;else{const x=num(v);it[k]=x;if(k==="kg"&&x==null)it.kg=0}recalc()}
 function remIt(i){CUR.itens.splice(i,1);OPT=null;rerenderIng()}
 function rerenderIng(){const c=document.getElementById("ing-card");if(c)c.outerHTML=cardIngredientes();recalc()}
 function buscaAl(q){const dd=document.getElementById("al-dd");if(!dd)return;const n=norm(q).trim();const usados=new Set(CUR.itens.map(i=>i.key));
   const lista=Object.values(FOODS).filter(a=>!usados.has(a.key)&&(!n||n.split(/\s+/).every(w=>norm(a.nome+" "+(a.nasem||"")).includes(w))));
-  const ord={"Análise":0,"Importado":1,"UFLA":2};lista.sort((a,b)=>(ord[a.org]-ord[b.org])||a.nome.localeCompare(b.nome));
-  let h="",g=null;lista.slice(0,60).forEach(a=>{if(a.org!==g){g=a.org;h+='<div class="g">'+(g==="Análise"?"Análises desta fazenda":g==="Importado"?"Alimentos importados":"Tabela UFLA / NASEM")+'</div>'}
+  const ord={"Análise":0,"Composto":1,"Importado":2,"UFLA":3};lista.sort((a,b)=>(ord[a.org]-ord[b.org])||a.nome.localeCompare(b.nome));
+  let h="",g=null;lista.slice(0,60).forEach(a=>{if(a.org!==g){g=a.org;h+='<div class="g">'+(g==="Análise"?"Análises desta fazenda":g==="Composto"?"Compostos (rações e misturas)":g==="Importado"?"Alimentos importados":"Tabela UFLA / NASEM")+'</div>'}
     h+='<button onmousedown="event.preventDefault();addAl(\''+esc(a.key)+'\')"><span class="cat cat-'+esc(a.cat)+'">'+esc(a.cat)+'</span><span style="flex:1">'+esc(a.nome)+'</span><span class="tiny muted">MS '+f(a.ms*100,0)+'% · PB '+f(a.pb*100,0)+'%</span></button>'});
   dd.innerHTML=h||'<div class="g">Nada encontrado — cadastre em Alimentos</div>';dd.classList.add("on");document.getElementById("al-q").onblur=()=>setTimeout(()=>dd.classList.remove("on"),150)}
 function addAl(key){const a=FOODS[key];if(!a)return;const fixoPadrao=a.cat==="P"&&/sal|mineral|n[uú]cleo|premix/i.test(a.nome);
@@ -618,17 +731,20 @@ function ordenarItens(){const o={F:0,SM:0,C:1,P:2,X:3};CUR.itens.sort((x,y)=>{co
 
 /* ---------- restrições ---------- */
 function cardRestricoes(){const ativos=new Set(CUR.restr.map(r=>r.id));const R=RES;
-  const linha=(r,i)=>{const d=RESTR_BY[r.id];if(!d)return"";const v=R?d.f(R):null;
-    if(r.id==="cms"){const alvo=R?cmsAlvo(r,R):null;return'<input type="checkbox" class="fix" '+(r.on?"checked":"")+' onchange="setR('+i+',\'on\',this.checked)"><div class="'+(r.on?"":"off")+'"><b>CMS</b> igual à previsão <select class="sel btn-sm" style="padding:3px 6px" onchange="setR('+i+',\'alvo\',this.value)">'+CMS_ALVOS.map(([k,l])=>'<option value="'+k+'"'+((r.alvo||"nasem1")===k?" selected":"")+'>'+l+'</option>').join("")+'</select> <label class="tiny"><input type="checkbox" '+(r.mdp?"checked":"")+' onchange="setR('+i+',\'mdp\',this.checked)"> média + DP</label><div class="u">'+(alvo!=null?"alvo "+f(alvo,2)+" kg MS · atual "+f(v,2):"")+'</div></div>'+
-      (r.alvo==="manual"?'<input class="inp" type="number" step="any" placeholder="kg" value="'+(r.valor!=null?r.valor:"")+'" onchange="setR('+i+',\'valor\',this.value)">':'<span class="u" style="text-align:right">± kg</span>')+'<input class="inp" type="number" step="any" placeholder="0" value="'+(r.tol!=null?r.tol:"")+'" onchange="setR('+i+',\'tol\',this.value)">'}
-    const st=v==null?"na":stRef(v,r.min,r.max,d.dec)==="na"?"ok":stRef(v,r.min,r.max,d.dec);
-    return'<input type="checkbox" class="fix" '+(r.on?"checked":"")+' onchange="setR('+i+',\'on\',this.checked)"><div class="'+(r.on?"":"off")+'"><span class="st '+(r.on?st:"na")+'"></span>'+esc(d.n)+' <span class="u">'+esc(d.u)+(v!=null?' · atual '+f(v,d.dec):'')+'</span></div><input class="inp" type="number" step="any" placeholder="mín" value="'+(r.min!=null?r.min:"")+'" onchange="setR('+i+',\'min\',this.value)"><input class="inp" type="number" step="any" placeholder="máx" value="'+(r.max!=null?r.max:"")+'" onchange="setR('+i+',\'max\',this.value)">'};
+  const linha=(r,i)=>{const d=RESTR_BY[r.id];if(!d)return"";const v=R?d.f(R):null;const chk='<input type="checkbox" class="fix" title="Usar no otimizador" '+(r.on?"checked":"")+' onchange="setR('+i+',\'on\',this.checked)">';
+    if(r.id==="cms"){const alvo=R?cmsAlvo(r,R):null;const ok=alvo!=null&&v!=null&&Math.abs(v-alvo)<=0.05+(+r.tol||0);
+      return'<div class="nm"><b>Consumo de MS</b> <span class="u">kg/d</span><div class="row2" style="gap:4px;margin-top:3px"><select class="sel btn-sm" style="padding:3px 6px;max-width:100%" onchange="setR('+i+',\'alvo\',this.value)">'+CMS_ALVOS.map(([k,l])=>'<option value="'+k+'"'+((r.alvo||"nasem1")===k?" selected":"")+'>'+l+'</option>').join("")+'</select><label class="tiny"><input type="checkbox" '+(r.mdp?"checked":"")+' onchange="setR('+i+',\'mdp\',this.checked)"> M+DP</label>'+(r.alvo==="manual"?'<input class="inp" style="width:70px" type="number" step="any" placeholder="kg" value="'+(r.valor!=null?r.valor:"")+'" onchange="setR('+i+',\'valor\',this.value)">':'')+'</div></div>'+
+        '<span class="u" style="text-align:right">± <input class="inp" style="width:44px;padding:3px 4px" type="number" step="any" placeholder="0" value="'+(r.tol!=null?r.tol:"")+'" onchange="setR('+i+',\'tol\',this.value)"></span><span class="val '+(v==null?"":ok?"ok":"lo")+'">'+f(v,2)+'<div class="tiny muted">prev. '+f(alvo,2)+'</div></span><span></span>'+chk}
+    const st=v==null?"na":stRef(v,r.min,r.max,d.dec);
+    return'<div class="nm'+(r.on?"":" off")+'">'+esc(d.n)+' <span class="u">'+esc(d.u)+'</span></div><input class="inp" type="number" step="any" placeholder="—" value="'+(r.min!=null?r.min:"")+'" onchange="setR('+i+',\'min\',this.value)"><span class="val '+(st==="na"?"":st)+'">'+f(v,d.dec)+'</span><input class="inp" type="number" step="any" placeholder="—" value="'+(r.max!=null?r.max:"")+'" onchange="setR('+i+',\'max\',this.value)">'+chk};
   const opts=RESTR.filter(d=>!ativos.has(d.id)).map(d=>'<option value="'+d.id+'">'+esc(d.n)+' ('+esc(d.u)+')</option>').join("");
-  return'<div class="card" id="rs-box"><div class="ch-h"><div><h3>Restrições nutricionais</h3><div class="sub">Marque o que o otimizador deve respeitar. As faixas iniciais são as de referência da planilha UFLA para vacas em lactação.</div></div></div>'+
-    '<div class="rs"><span></span><span class="h">Nutriente</span><span class="h" style="text-align:right">Mín</span><span class="h" style="text-align:right">Máx</span>'+CUR.restr.map(linha).join("")+'</div>'+
-    (opts?'<div class="row2" style="margin-top:10px"><select class="sel" id="rs-add" style="flex:1"><option value="">Adicionar restrição…</option>'+opts+'</select><button class="btn btn-o btn-sm" onclick="addR()">Adicionar</button><button class="btn btn-o btn-sm" onclick="if(confirm(\'Voltar às restrições padrão?\')){CUR.restr=restricoesPadrao(CUR.an);document.getElementById(\'rs-box\').outerHTML=cardRestricoes()}">Padrão</button></div>':'')+'</div>'}
-function setR(i,k,v){const r=CUR.restr[i];if(k==="on"||k==="mdp")r[k]=!!v;else if(k==="alvo")r.alvo=v;else r[k]=num(v);document.getElementById("rs-box").outerHTML=cardRestricoes();renderResultados()}
-function addR(){const s=document.getElementById("rs-add");if(!s.value)return;CUR.restr.push({id:s.value,on:true,min:null,max:null});document.getElementById("rs-box").outerHTML=cardRestricoes()}
+  return'<div id="rs-box"><div class="ch-h"><div><div class="sub">Valor em verde = dentro da faixa; vermelho = abaixo; laranja = acima. "Otim." = usar no otimizador.</div></div>'+
+    '<div class="pill"><button onclick="presetR(\'ufla\')">Modelo UFLA</button><button onclick="presetR(\'amts\')">Modelo AMTS</button></div></div>'+
+    '<div class="rs"><span class="h">Nutriente</span><span class="h" style="text-align:right">Mín</span><span class="h" style="text-align:right">Valor</span><span class="h" style="text-align:right">Máx</span><span class="h" title="Usar no otimizador">Otim.</span>'+CUR.restr.map(linha).join("")+'</div>'+
+    (opts?'<div class="row2" style="margin-top:10px"><select class="sel" id="rs-add" style="flex:1"><option value="">Adicionar indicador…</option>'+opts+'</select><button class="btn btn-o btn-sm" onclick="addR()">Adicionar</button></div>':'')+'</div>'}
+function presetR(m){if(!confirm("Trocar as restrições pelo modelo "+(m==="amts"?"AMTS":"UFLA")+"?"))return;CUR.restr=m==="amts"?restricoesAMTS(CUR.an):restricoesPadrao(CUR.an);renderResultados()}
+function setR(i,k,v){const r=CUR.restr[i];if(k==="on"||k==="mdp")r[k]=!!v;else if(k==="alvo")r.alvo=v;else r[k]=num(v);renderResultados()}
+function addR(){const s=document.getElementById("rs-add");if(!s.value)return;CUR.restr.push({id:s.value,on:true,min:null,max:null});renderResultados()}
 
 /* ---------- otimizar ---------- */
 function otimizar(){if(!ADM)return;if(!CUR.itens.length){toast("Adicione alimentos primeiro",true);return}
@@ -637,7 +753,6 @@ function otimizar(){if(!ADM)return;if(!CUR.itens.length){toast("Adicione aliment
   if(r.status==="vazio")return;
   r.x.forEach((v,i)=>CUR.itens[i].kg=Math.round(v*1000)/1000);
   r.ms=Math.round(performance.now()-t0);OPT=r;rerenderIng();
-  document.getElementById("rs-box").outerHTML=cardRestricoes();
   toast(r.status==="ok"?"Dieta otimizada: "+fR(RES.custo.dia)+"/vaca/dia":"Nem todas as restrições foram atendidas",r.status!=="ok");
   if(innerWidth<1100)document.getElementById("res").scrollIntoView({behavior:"smooth"})}
 function limitantes(r){const R=RES;const out=[];r.cons.forEach(c=>{const v=c.f(R),lo=c.lo(R),hi=c.hi(R);const tol=x=>Math.max(1e-3,Math.abs(x)*2e-3);
@@ -654,33 +769,28 @@ function faixa(id,ref){const r=CUR.restr.find(x=>x.id===id&&x.on);if(r&&(r.min!=
 function linhaN(nome,v,un,dec,id,ref,extra){const[lo,hi,ativo]=faixa(id,ref);const st=stRef(v,lo,hi,dec);
   return'<tr><td><span class="st '+st+'"></span>'+nome+'</td><td class="num"><b>'+f(v,dec)+'</b></td><td class="muted tiny" style="text-align:left">'+un+'</td><td class="ref" style="text-align:left">'+(refTxt(lo,hi,dec)?(ativo?'<b>'+refTxt(lo,hi,dec)+'</b>':refTxt(lo,hi,dec)):"")+'</td><td class="num tiny muted">'+(extra||"")+'</td></tr>'}
 function tabN(rows){return'<table class="t"><thead><tr><th>Item</th><th>Valor</th><th></th><th style="text-align:left">Faixa</th><th></th></tr></thead><tbody>'+rows+'</tbody></table>'}
+const DTABS=[["dados","Dados da dieta"],["prot","Proteína e AA"],["en","Energia"],["fib","Fibra e CHO"],["min","Min/Vit"],["gord","Gordura"],["custo","Custos"],["trato","Trato"],["cms","CMS"]];
 function renderResultados(){const box=document.getElementById("res");if(!box)return;const R=RES;
-  if(!R||!R.cms){box.innerHTML='<div class="card"><div class="empty"><b>Sem dieta para avaliar</b>Os resultados aparecem assim que houver alimentos com quantidade.</div></div>';return}
+  if(!R||!R.cms){box.innerHTML='<div class="card"><div class="empty"><b>Sem dieta para avaliar</b>Os dados aparecem assim que houver alimentos com quantidade.</div></div>';return}
   const an=CUR.an,leite=+an.leite||0;const rc=CUR.restr.find(r=>r.id==="cms");const alvo=rc?cmsAlvo(rc,R):null;
-  const k=(l,v,d,cls)=>'<div class="kpi '+(cls||"")+'"><div class="l">'+l+'</div><div class="v">'+v+'</div><div class="d">'+d+'</div></div>';
+  const k=(l,v,cls)=>'<div><div class="l">'+l+'</div><div class="v '+(cls||"")+'">'+v+'</div></div>';
   let h="";
   if(OPT){const lim=limitantes(OPT);
     h+=OPT.status==="ok"?'<div class="alert ok"><div><b>Dieta de menor custo encontrada</b> ('+OPT.ms+' ms). Todas as restrições marcadas foram atendidas.'+(lim.length?'<div class="small" style="margin-top:4px">Limitantes (no limite): '+lim.map(x=>esc(x.n)+" ("+x.lado+")").join(", ")+'.</div>':'')+'</div></div>':
-      '<div class="alert bad"><div><b>Não foi possível atender tudo com estes alimentos e limites.</b> A dieta abaixo é a que chega mais perto:<ul>'+OPT.falhas.map(x=>'<li>'+esc(x.c.n)+': ficou em <b>'+f(x.val,x.c.dec)+'</b>'+(x.lo!=null&&x.val<x.lo?' (mín '+f(x.lo,x.c.dec)+')':' (máx '+f(x.hi,x.c.dec)+')')+'</li>').join("")+'</ul><div class="small" style="margin-top:4px">Para resolver: inclua um alimento que corrija esse ponto, afrouxe o limite ou libere a quantidade de algum ingrediente.</div></div></div>'}
-  const cmsOk=alvo==null?"":Math.abs(R.cms-alvo)<=0.05+(+(rc&&rc.tol)||0)?"good":"warn";
-  h+='<div class="kpis">'+
-    k("Consumo de MS",f(R.cms,2)+" kg",alvo!=null?"previsto "+f(alvo,1)+" kg · "+f(R.cmsPV*100,2)+"% PV":f(R.cmsPV*100,2)+"% do PV",cmsOk)+
-    k("MS da dieta",f(R.msDieta*100,1)+"%",f(R.cmn,1)+" kg MN/vaca")+
-    k("Custo da dieta",fR(R.custo.dia),fR(R.custo.kgMS)+"/kg MS")+
-    k("Custo por kg de leite",fR(R.custo.kgLeite,3),f(R.custo.receita?R.custo.dia/R.custo.receita*100:null,0)+"% da receita do leite")+
-    k("RMCA / vaca / dia",fR(R.custo.rmca),"receita "+fR(R.custo.receita),R.custo.rmca>0?"good":"bad")+
-    k("Leite permitido pela ELl",f(R.en.leiteEL,1)+" kg",(R.en.leiteEL>=leite?"cobre":"faltam "+f(leite-R.en.leiteEL,1)+" kg p/")+" os "+f(leite,1)+" kg",R.en.leiteEL>=leite-0.05?"good":"bad")+
-    k("Leite permitido pela PM",f(R.pm.leitePM,1)+" kg","balanço PM "+f(R.pm.pmBal,0)+" g/d",R.pm.leitePM>=leite-0.05?"good":"bad")+
-    k("Volumoso",f(R.vol.pMS*100,1)+"% MS","FDNF "+f(R.D.fdnf*100,1)+"% · FDN "+f(R.D.fdn*100,1)+"%")+'</div>';
-  h+='<div class="pill noprint" style="margin-bottom:10px">'+[["nutr","Nutrientes"],["custo","Custos"],["trato","Trato e concentrado"],["cms","Previsões de CMS"]].map(([v,l])=>'<button class="'+(VISTA_RES===v?"on":"")+'" onclick="VISTA_RES=\''+v+'\';renderResultados()">'+l+'</button>').join("")+'</div>';
-  if(VISTA_RES==="nutr")h+=resNutr(R);else if(VISTA_RES==="custo")h+=resCusto(R);else if(VISTA_RES==="trato")h+=resTrato(R);else h+=resCMS(R);
-  h+=ADM?'<div class="actions noprint" style="margin-top:12px"><button class="btn btn-g" onclick="otimizar()">Otimizar menor custo</button><button class="btn btn-o" onclick="salvarFormulacao()">Salvar formulação</button>'+(CUR.loteId?'<button class="btn btn-d" onclick="aplicarNoLote()">Aplicar no lote</button>':'')+'<button class="btn btn-o" onclick="imprimir()">Imprimir</button></div>':'<div class="actions noprint" style="margin-top:12px"><button class="btn btn-o" onclick="imprimir()">Imprimir</button></div>';
+      '<div class="alert bad"><div><b>Não foi possível atender tudo com estes alimentos e limites.</b> A dieta é a que chega mais perto:<ul>'+OPT.falhas.map(x=>'<li>'+esc(x.c.n)+': ficou em <b>'+f(x.val,x.c.dec)+'</b>'+(x.lo!=null&&x.val<x.lo?' (mín '+f(x.lo,x.c.dec)+')':' (máx '+f(x.hi,x.c.dec)+')')+'</li>').join("")+'</ul><div class="small" style="margin-top:4px">Inclua um alimento que corrija esse ponto, afrouxe o limite ou libere a quantidade de algum ingrediente.</div></div></div>'}
+  const cmsCls=alvo==null?"":Math.abs(R.cms-alvo)<=0.05+(+(rc&&rc.tol)||0)?"good":"warn";
+  h+='<div class="card"><div class="kslim">'+k("CMS",f(R.cms,2)+" kg",cmsCls)+k("MS dieta",f(R.msDieta*100,1)+"%")+k("Custo/vaca",fR(R.custo.dia))+k("R$/kg leite",fR(R.custo.kgLeite,3))+k("RSCA",fR(R.custo.rmca),R.custo.rmca>0?"good":"bad")+
+    k("Leite pela EL",f(R.en.leiteEL,1)+" kg",R.en.leiteEL>=leite-0.05?"good":"bad")+k("Leite pela PM",f(R.pm.leitePM,1)+" kg",R.pm.leitePM>=leite-0.05?"good":"bad")+k("Forragem",f(R.vol.pMS*100,1)+"%")+'</div>'+
+    '<div class="dtabs noprint">'+DTABS.map(([v,l])=>'<button class="'+(VISTA_RES===v?"on":"")+'" onclick="VISTA_RES=\''+v+'\';renderResultados()">'+l+'</button>').join("")+'</div><div id="dconteudo">'+conteudoAba(VISTA_RES,R)+'</div></div>';
   box.innerHTML=h}
+function conteudoAba(v,R){if(v==="dados")return cardRestricoes();if(v==="custo")return resCusto(R);if(v==="trato")return resTrato(R);if(v==="cms")return resCMS(R);
+  const N=resNutr(R);return v==="prot"?N.prot:v==="en"?N.en:v==="fib"?N.fib:v==="min"?N.mi+'<div class="sec">Vitaminas</div>'+N.vit:v==="gord"?N.gord:""}
 function resNutr(R){const D=R.D;const an=CUR.an;
   const prot=tabN(linhaN("PB",D.pb*100,"% MS",2,"pb",[15,18])+linhaN("PDR",D.pdr*100,"% MS",2,"pdr",[10,12])+linhaN("PNDR",D.pndr*100,"% MS",2,"pndr",[5,null])+
     linhaN("PB microbiana",R.pm.pbMic,"g/d",0)+linhaN("PM microbiana",R.pm.pmMic,"g/d",0,null,null,f(R.pm.fracMic*100,0)+"% da PM")+linhaN("PM da PNDR",R.pm.pmPndr,"g/d",0)+
     linhaN("PM suprida",R.pm.pmSup,"g/d",0)+linhaN("PM exigida",R.pm.pmExig,"g/d",0,null,null,"mantença "+f(R.pm.pmMant,0))+linhaN("Balanço de PM",R.pm.pmBal,"g/d",0,"pmBal",[0,null],f(R.pm.eqLeite,1)+" kg leite")+
-    linhaN("Balanço de PDR no rúmen",R.pm.balPDR*1000,"g/d",0,"balPDR",[0,null])+linhaN("PM / EM",R.pm.pmEm,"g/Mcal",1))+
+    linhaN("Balanço de PDR no rúmen",R.pm.balPDR*1000,"g/d",0,"balPDR",[0,null])+linhaN("PM / EM",R.pm.pmEm,"g/Mcal",1)+
+    linhaN("Metionina",R.amts.metPM,"% PM",2,"metPM",[2.2,2.4])+linhaN("Lisina",R.amts.lisPM,"% PM",2,"lisPM",[6.6,7.6])+linhaN("Lisina : Metionina",R.amts.lisMet,"",2,null,[2.8,3.2])+linhaN("Met : EM",R.amts.metEM,"g/Mcal",2,"metEM",[1.0,1.2])+linhaN("Lis : EM",R.amts.lisEM,"g/Mcal",2))+
     '<div class="sec">Aminoácidos (PM)</div><table class="t"><thead><tr><th>AA</th><th>Suprido g/d</th><th>Exigido g/d</th><th>Efic. real</th><th>Alvo</th><th>Real/alvo</th><th>g/Mcal EM</th></tr></thead><tbody>'+
     R.aa.map(a=>'<tr><td>'+({his:"Histidina",ile:"Isoleucina",leu:"Leucina",lis:"Lisina",met:"Metionina"})[a.k]+'</td><td class="num">'+f(a.sup,1)+'</td><td class="num">'+f(a.exig,1)+'</td><td class="num">'+f(a.eff,2)+'</td><td class="num">'+f(a.alvo,2)+'</td><td class="num"><span class="chip '+(a.rel<=1?"ok":"warn")+'">'+f(a.rel,2)+'</span></td><td class="num">'+f(a.gMcal,2)+'</td></tr>').join("")+
     '</tbody></table><div class="tiny muted" style="margin-top:4px">Eficiência real = exigência ÷ suprimento (como na planilha). Real/alvo ≤ 1 indica suprimento suficiente para a eficiência-alvo do NASEM.</div>';
@@ -688,7 +798,7 @@ function resNutr(R){const D=R.D;const an=CUR.an;
     linhaN("Balanço de ELl",R.en.elBal,"Mcal/d",1,null,[0,null],f(R.en.eqLeite,1)+" kg leite")+linhaN("Leite permitido pela ELl",R.en.leiteEL,"kg/d",1,"leiteEL",[+an.leite,null]));
   const fib=tabN(linhaN("FDN",D.fdn*100,"% MS",1,"fdn")+linhaN("FDN de forragem",D.fdnf*100,"% MS",1,"fdnf",[15,19])+linhaN("FDN >8 mm (fisicamente efetiva)",D.fdn8*100,"% MS",1,"fdn8",[19,null])+linhaN("FDN >19 mm",D.fdn19*100,"% MS",1,"fdn19")+linhaN("eFDN2",D.efdn2*100,"% MS",1,null,[18,null])+
     linhaN("uFDN240",D.ufdn*100,"% MS",1,"ufdn")+linhaN("FDA",D.fda*100,"% MS",1)+linhaN("CNF",D.cnf*100,"% MS",1,"cnf")+linhaN("MOR",D.mor*100,"% MS",1)+linhaN("Amido",D.amido*100,"% MS",1,"amido",[22,30])+
-    linhaN("Amido degradável no rúmen (kd)",D.amidoDR*100,"% MS",1,"amidoDR",[15,null])+linhaN("FDN>8 / amido DR",R.fdn8AmDR,"",2,"fdn8am",[0.9,null])+
+    linhaN("Amido degradável no rúmen (kd)",D.amidoDR*100,"% MS",1,"amidoDR",[15,null])+linhaN("Amido fermentado no rúmen (NASEM)",R.amts.amidoFerm,"% MS",1,"amidoFerm",[20,70])+linhaN("FDN total",R.amts.fdnPV,"% PV",2,"fdnPV")+linhaN("FDN>8 / amido DR",R.fdn8AmDR,"",2,"fdn8am",[0.9,null])+
     linhaN("FDN digerida no rúmen (NASEM)",R.fdnDR,"kg/d",2)+linhaN("Amido digerido no rúmen (NASEM)",R.amido.rumN,"kg/d",2,null,null,f(R.amido.rumN/R.T.amido*100,0)+"% do amido")+linhaN("Amido digestível total",R.amido.digN,"kg/d",2,null,null,f(R.amido.digTot,1)+"% digest.")+
     linhaN("Partículas >19 mm (TMR)",R.part.p19*100,"% MN",1)+linhaN("Partículas 8–19 mm",R.part.p819*100,"% MN",1)+linhaN("Partículas <8 mm",R.part.p8*100,"% MN",1)+
     linhaN("FDNF (média / M+DP)",R.fibraPV.fdnf[0]*100,"% PV",2,"fdnfPV",null,f(R.fibraPV.fdnf[1]*100,2))+linhaN("FDN>8 (média / M+DP)",R.fibraPV.fdn8[0]*100,"% PV",2,null,null,f(R.fibraPV.fdn8[1]*100,2))+linhaN("uFDN240 (média / M+DP)",R.fibraPV.ufdn[0]*100,"% PV",2,null,null,f(R.fibraPV.ufdn[1]*100,2)));
@@ -703,8 +813,9 @@ function resNutr(R){const D=R.D;const an=CUR.an;
   const vit=tabN(linhaN("Vitamina A",R.T.vita/1000,"KUI/d",1,null,[R.vitReq.vita/1000,null])+linhaN("Vitamina D",R.T.vitd/1000,"KUI/d",1,null,[R.vitReq.vitd/1000,null])+linhaN("Vitamina E",R.T.vite,"UI/d",0,null,[R.vitReq.vite,null]));
   const ef=tabN(linhaN("Leite corrigido p/ energia",R.leite.lce,"kg/d",1)+linhaN("Leite / CMS",R.rel.leiteCMS,"",2)+linhaN("LCE / CMS",R.rel.lceCMS,"",2)+linhaN("Leite / concentrado (MS)",R.rel.leiteConc,"",2));
   const box=(t,c,open)=>'<details class="box"'+(open?" open":"")+'><summary>'+t+'</summary><div>'+c+'</div></details>';
-  return box("Proteína e aminoácidos",prot,true)+box("Energia",en,true)+box("Carboidratos e fibra",fib)+box("Gordura",gord)+box("Minerais e DCAD",mi)+box("Vitaminas",vit)+box("Eficiência",ef)}
-function resCusto(R){const tot=R.custo.dia||1;const l=R.lin.map((o,i)=>({o,i})).filter(x=>x.o.kg>0).sort((a,b)=>b.o.custo-a.o.custo);const mx=Math.max(...l.map(x=>x.o.custo),0.0001);
+  return{prot,en,fib,gord,mi,vit,ef}}
+function resCusto(R){return resCusto0(R)+'<div class="sec">Eficiência</div>'+resNutr(R).ef}
+function resCusto0(R){const tot=R.custo.dia||1;const l=R.lin.map((o,i)=>({o,i})).filter(x=>x.o.kg>0).sort((a,b)=>b.o.custo-a.o.custo);const mx=Math.max(...l.map(x=>x.o.custo),0.0001);
   const vacas=+CUR.an.vacas||0;
   return'<div class="card"><h3>Custo por ingrediente</h3><div class="sub" style="margin-bottom:10px">R$ por vaca por dia e participação no custo da dieta.</div><div class="hbar">'+
     l.map(x=>'<span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+esc(x.o.nome)+'</span><span class="b"><i style="width:'+(x.o.custo/mx*100)+'%;background:var(--c-'+esc(x.o.cat)+')"></i></span><span class="num">'+fR(x.o.custo)+'</span>').join("")+'</div>'+
@@ -718,15 +829,15 @@ function resTrato(R){const vacas=+CUR.an.vacas||0;const conc=formulaMistura(R,["
   let h='<div class="card"><h3>Trato'+(vacas?' do lote — '+vacas+' vacas':'')+'</h3><div class="sub" style="margin-bottom:8px">'+(vacas?'Quantidade total para o vagão, em kg de matéria natural por dia.':'Informe o número de vacas do lote para ver o total do vagão.')+'</div><table class="t"><thead><tr><th>Alimento</th><th>kg MN/vaca</th>'+(vacas?'<th>kg MN/lote</th>':'')+'<th>kg MS/vaca</th></tr></thead><tbody>'+
     tr.map(o=>'<tr><td>'+esc(o.nome)+'</td><td class="num">'+f(o.kg,2)+'</td>'+(vacas?'<td class="num"><b>'+f(o.kg*vacas,0)+'</b></td>':'')+'<td class="num">'+f(o.ms,2)+'</td></tr>').join("")+
     '<tr class="tot"><td>Total</td><td class="num">'+f(R.cmn,2)+'</td>'+(vacas?'<td class="num">'+f(R.cmn*vacas,0)+'</td>':'')+'<td class="num">'+f(R.cms,2)+'</td></tr></tbody></table></div>';
-  if(conc.length){const tot=conc.reduce((s,x)=>s+x.kg,0);h+='<div class="card"><h3>Fórmula do concentrado</h3><div class="sub" style="margin-bottom:8px">Concentrados + premix na matéria natural — '+f(tot,2)+' kg/vaca/dia. Use para pedir a ração ou montar a mistura.</div><table class="t"><thead><tr><th>Ingrediente</th><th>% MN</th><th>kg por tonelada</th>'+(vacas?'<th>kg/dia no lote</th>':'')+'</tr></thead><tbody>'+
+  if(conc.length){const tot=conc.reduce((s,x)=>s+x.kg,0);h+='<div class="card"><div class="ch-h"><div><h3>Fórmula do concentrado</h3></div>'+(ADM?'<button class="btn btn-o btn-sm" onclick="concentradoComoComposto()">Salvar como composto (ração)</button>':'')+'</div><div class="sub" style="margin:-6px 0 8px">Concentrados + premix na matéria natural — '+f(tot,2)+' kg/vaca/dia. Use para pedir a ração ou montar a mistura.</div><table class="t"><thead><tr><th>Ingrediente</th><th>% MN</th><th>kg por tonelada</th>'+(vacas?'<th>kg/dia no lote</th>':'')+'</tr></thead><tbody>'+
     conc.map(x=>'<tr><td>'+esc(x.nome)+'</td><td class="num">'+f(x.pct*100,2)+'%</td><td class="num">'+f(x.pct*1000,1)+'</td>'+(vacas?'<td class="num">'+f(x.kg*vacas,1)+'</td>':'')+'</tr>').join("")+'</tbody></table></div>'}
   if(prem.length>1){h+='<div class="card"><h3>Fórmula do premix</h3><table class="t"><tbody>'+prem.map(x=>'<tr><td>'+esc(x.nome)+'</td><td class="num">'+f(x.pct*100,2)+'%</td><td class="num">'+f(x.kg*1000,0)+' g/vaca</td></tr>').join("")+'</tbody></table></div>'}
   return h}
-function resCMS(R){const p=R.prev;const rc=CUR.restr.find(r=>r.id==="cms");const L=(k,l,obs)=>'<tr'+(rc&&rc.on&&(rc.alvo||"nasem1")===k?' style="background:var(--GL)"':'')+'><td>'+l+(obs?' <span class="ref">'+obs+'</span>':'')+'</td><td class="num">'+f(p[k][0],2)+'</td><td class="num">'+f(p[k][1],2)+'</td><td class="num">'+f(p[k][0]/R.msDieta,1)+'</td></tr>';
-  return'<div class="card"><h3>Previsões de consumo de MS</h3><div class="sub" style="margin-bottom:8px">kg MS/vaca/dia para a média do lote e para média + 1 desvio-padrão do leite ('+f(R.leite.leiteDP,1)+' kg). A linha em verde é o alvo usado na restrição de CMS.</div><table class="t"><thead><tr><th>Equação</th><th>Média</th><th>M + DP</th><th>kg MN (média)</th></tr></thead><tbody>'+
-    L("nasem1","NASEM 2021 (1)","animal")+L("nasem2","NASEM 2021 (2)","dieta: FDNF, FDA/FDN, dFDN")+L("ufla","NRC UFLA","1,3131 + 0,87 × NRC")+L("nrc","NRC 2001")+L("cncps","CNCPS / AMTS")+
-    '<tr class="tot"><td>Dieta formulada</td><td class="num">'+f(R.cms,2)+'</td><td></td><td class="num">'+f(R.cmn,1)+'</td></tr></tbody></table><div class="tiny muted" style="margin-top:6px">kp usados: forragem '+f(R.kp.kF*100,2)+'%/h · concentrado '+f(R.kp.kC*100,2)+'%/h · líquido '+f(R.kp.kL*100,2)+'%/h.</div></div>'}
-function imprimir(){VISTA_RES="nutr";renderResultados();document.querySelectorAll("details.box").forEach(d=>d.open=true);setTimeout(()=>window.print(),100)}
+function resCMS(R){const p=R.prev;const rc=CUR.restr.find(r=>r.id==="cms");const L=(k,l,obs)=>'<tr'+(rc&&rc.on&&(rc.alvo||"nasem1")===k?' style="background:var(--GL)"':'')+'><td>'+l+(obs?' <span class="ref">'+obs+'</span>':'')+'</td><td class="num">'+f(p[k][0],2)+'</td><td class="num">'+f(p[k][1],2)+'</td><td class="num">'+f(R.cms/p[k][0]*100,1)+'%</td></tr>';
+  return'<div class="card"><h3>Previsões de consumo de MS</h3><div class="sub" style="margin-bottom:8px">kg MS/vaca/dia para a média do lote e para média + 1 desvio-padrão do leite ('+f(R.leite.leiteDP,1)+' kg). "CMS da dieta / prevista" como no AMTS. A linha em verde é o alvo da restrição de CMS.</div><table class="t"><thead><tr><th>Equação</th><th>Média</th><th>M + DP</th><th>Dieta / prevista</th></tr></thead><tbody>'+
+    L("nasem1","Predicted DMI (NASEM Animal)")+L("nasem2","Predicted DMI (NASEM Animal/Fiber)")+L("cncps","CMS predito (CNCPS)")+L("nrc","CMS predito (NRC 2001)")+L("ufla","NRC UFLA","1,3131 + 0,87 × NRC")+
+    '<tr class="tot"><td>Dieta formulada</td><td class="num">'+f(R.cms,2)+'</td><td></td><td class="num">'+f(R.cmn,1)+' kg MN</td></tr></tbody></table><div class="tiny muted" style="margin-top:6px">kp usados: forragem '+f(R.kp.kF*100,2)+'%/h · concentrado '+f(R.kp.kC*100,2)+'%/h · líquido '+f(R.kp.kL*100,2)+'%/h.</div></div>'}
+function imprimir(){const R=RES;if(!R)return;const d=document.getElementById("dconteudo");if(d)d.innerHTML=DTABS.filter(([v])=>v!=="cms").map(([v,l])=>'<div class="sec" style="font-size:13px;margin-top:18px">'+l+'</div>'+conteudoAba(v,R)).join("");setTimeout(()=>{window.print();renderResultados()},100)}
 
 /* ============================================================
    SALVAR / ABRIR / APLICAR
@@ -764,7 +875,7 @@ function ultimaAnalise(tipo){const xs=Object.values(FOODS).filter(a=>a.org==="An
 function melhorPalpite(nome){const n=norm(nome).trim();if(MAPA[slug(nome)]&&FOODS[MAPA[slug(nome)]])return MAPA[slug(nome)];
   if(/^agua\b/.test(n))return"u:agua";
   /* importados com o mesmo nome têm prioridade */
-  const imp=Object.values(FOODS).filter(a=>a.org==="Importado").find(a=>norm(a.nome)===n||n.includes(norm(a.nome))||norm(a.nome).includes(n));if(imp)return imp.key;
+  const imp=Object.values(FOODS).filter(a=>a.org==="Importado"||a.org==="Composto").find(a=>norm(a.nome)===n||n.includes(norm(a.nome))||norm(a.nome).includes(n));if(imp)return imp.key;
   if(/silag.*milho|milho.*silag/.test(n)&&!/gr[aã]o|umid/.test(n))return ultimaAnalise("silagemdemilho")||"u:"+slug("Silagem de milho típica");
   if(/pr[eé].?secad|haylage|azev[eé]m|aveia|tifton|gram[ií]nea/.test(n)&&!/alfafa/.test(n))return ultimaAnalise("presecado")||"u:"+slug("Silagem de gramínea temperada");
   if(COMERCIAL.test(n))return"";
@@ -772,7 +883,7 @@ function melhorPalpite(nome){const n=norm(nome).trim();if(MAPA[slug(nome)]&&FOOD
 function importarDietaLote(){const l=lotes().find(x=>x.id===CUR.loteId);if(!l||!(l.alimentos||[]).length){toast("Este lote não tem dieta cadastrada",true);return}
   const lin=(l.alimentos||[]).map((a,i)=>{const g=melhorPalpite(a.nome);return'<tr><td>'+esc(a.nome)+'<div class="tiny muted">'+f(+a.kg,2)+' kg · R$ '+f(+a.custo,2)+'/kg</div></td><td><select class="sel" style="width:100%" id="mp-'+i+'"><option value="">— não incluir —</option>'+opcoesAlimento(g)+'</select></td></tr>'}).join("");
   abrirModal('<h2>Carregar dieta do lote '+esc(CUR.loteNome)+'</h2><p class="small muted">Os nomes da Dieta & Custos são livres. Ligue cada um a um alimento com composição — a escolha fica salva para esta fazenda. Rações, mixes e núcleos comerciais precisam estar cadastrados em <b>Alimentos</b> (com o laudo ou rótulo); sem isso a dieta fica incompleta.</p><div class="tw" style="margin-top:10px"><table class="t"><thead><tr><th>Na Dieta & Custos</th><th style="text-align:left">Alimento usado no cálculo</th></tr></thead><tbody>'+lin+'</tbody></table></div><div class="md-f"><button class="btn btn-o" onclick="fecharModal()">Cancelar</button><button class="btn btn-g" onclick="confirmarImportLote()">Carregar</button></div>',true)}
-function opcoesAlimento(sel){const grupos=[["Análise","Análises desta fazenda"],["Importado","Importados"],["UFLA","Tabela UFLA"]];
+function opcoesAlimento(sel){const grupos=[["Análise","Análises desta fazenda"],["Composto","Compostos"],["Importado","Importados"],["UFLA","Tabela UFLA"]];
   return grupos.map(([o,l])=>{const xs=Object.values(FOODS).filter(a=>a.org===o).sort((a,b)=>a.nome.localeCompare(b.nome));return xs.length?'<optgroup label="'+l+'">'+xs.map(a=>'<option value="'+esc(a.key)+'"'+(a.key===sel?" selected":"")+'>'+esc(a.nome)+'</option>').join("")+'</optgroup>':""}).join("")}
 function confirmarImportLote(){const l=lotes().find(x=>x.id===CUR.loteId);const up={};const itens=[];
   (l.alimentos||[]).forEach((a,i)=>{const k=document.getElementById("mp-"+i).value;if(!k)return;up["formulador/mapa/"+FARM+"/"+slug(a.nome)]=k;
@@ -812,39 +923,95 @@ function renderSalvas(m){if(!FARM){m.innerHTML='<div class="card">'+seletorFazen
    ============================================================ */
 function renderAlimentos(m){const n=norm(FILTRO_AL);const xs=Object.values(FOODS).filter(a=>(FILTRO_ORG==="todos"||a.org===FILTRO_ORG)&&(!n||norm(a.nome+" "+(a.nasem||"")).includes(n))).sort((a,b)=>a.nome.localeCompare(b.nome));
   const cnt=o=>Object.values(FOODS).filter(a=>a.org===o).length;
-  m.innerHTML='<div class="card"><div class="ch-h"><div><h3>Banco de alimentos</h3><div class="sub">Tabela UFLA/NASEM ('+cnt("UFLA")+'), alimentos importados ('+cnt("Importado")+') e análises de bromatologia da fazenda selecionada ('+cnt("Análise")+'). O preço padrão vale para novas formulações.</div></div>'+
-    (ADM?'<button class="btn btn-o btn-sm" onclick="editarAlimento()">+ Novo alimento</button><button class="btn btn-g btn-sm" onclick="importarAlimentos()">Importar planilha</button>':'')+'</div>'+
+  m.innerHTML='<div class="card"><div class="ch-h"><div><h3>Banco de alimentos</h3><div class="sub">Tabela UFLA/NASEM ('+cnt("UFLA")+'), alimentos importados ('+cnt("Importado")+'), compostos ('+cnt("Composto")+') e análises de bromatologia da fazenda selecionada ('+cnt("Análise")+'). O preço padrão vale para novas formulações.</div></div>'+
+    (ADM?'<button class="btn btn-o btn-sm" onclick="editarComposto()">+ Novo composto</button><button class="btn btn-o btn-sm" onclick="editarAlimento()">+ Novo alimento</button><button class="btn btn-g btn-sm" onclick="importarAlimentos()">Importar planilha</button>':'')+'</div>'+
     '<div class="row2" style="margin-bottom:10px"><input class="inp" style="flex:1;min-width:200px" placeholder="Buscar…" value="'+esc(FILTRO_AL)+'" oninput="FILTRO_AL=this.value;clearTimeout(window._fa);window._fa=setTimeout(()=>{renderAlimentos(document.getElementById(\'m\'));const i=document.querySelector(\'#m .card input\');i.focus();i.setSelectionRange(i.value.length,i.value.length)},200)">'+
-    '<div class="pill">'+[["todos","Todos"],["Análise","Análises"],["Importado","Importados"],["UFLA","UFLA"]].map(([v,l])=>'<button class="'+(FILTRO_ORG===v?"on":"")+'" onclick="FILTRO_ORG=\''+v+'\';renderAlimentos(document.getElementById(\'m\'))">'+l+'</button>').join("")+'</div></div>'+
+    '<div class="pill">'+[["todos","Todos"],["Análise","Análises"],["Composto","Compostos"],["Importado","Importados"],["UFLA","UFLA"]].map(([v,l])=>'<button class="'+(FILTRO_ORG===v?"on":"")+'" onclick="FILTRO_ORG=\''+v+'\';renderAlimentos(document.getElementById(\'m\'))">'+l+'</button>').join("")+'</div></div>'+
     '<div class="tw"><table class="t"><thead><tr><th>Alimento</th><th>MS</th><th>PB</th><th>FDN</th><th>Amido</th><th>AG</th><th>ELl</th><th>R$/kg MN</th><th></th></tr></thead><tbody>'+
     xs.slice(0,400).map(a=>'<tr><td><div class="nmw"><span class="cat cat-'+esc(a.cat)+'">'+esc(a.cat)+'</span><span class="n">'+esc(a.nome)+'</span>'+(a.org!=="UFLA"?'<span class="org">'+esc(a.org)+'</span>':'')+'</div></td><td class="num">'+f(a.ms*100,1)+'</td><td class="num">'+f(a.pb*100,1)+'</td><td class="num">'+f(a.fdn*100,1)+'</td><td class="num">'+f(a.amido*100,1)+'</td><td class="num">'+f(a.ag*100,1)+'</td><td class="num">'+f(a.ell,2)+'</td>'+
       '<td>'+(ADM?'<input class="inp num" style="width:80px;padding:4px 6px" type="number" step="any" value="'+(a.custo||"")+'" onchange="salvarPreco(\''+esc(a.key)+'\',this.value)">':f(a.custo,2))+'</td><td><button class="btn btn-o btn-sm" onclick="verAlimento(\''+esc(a.key)+'\')">Ver</button></td></tr>').join("")+'</tbody></table></div>'+(xs.length>400?'<div class="small muted">Mostrando 400 de '+xs.length+'. Refine a busca.</div>':'')+'</div>'}
 function salvarPreco(key,v){const x=num(v);db.ref("formulador/precos/"+precoKey(key)).set(x==null?null:x).then(()=>toast("Preço salvo")).catch(e=>toast(e.message,true))}
-function verAlimento(key){const a=FOODS[key];if(!a)return;
-  const linhas=COMP_KEYS.map(k=>{const[l,u,pct]=COMP_INFO[k];const v=pct?(+a[k]||0)*100:+a[k]||0;return'<tr><td>'+l+'</td><td class="num">'+f(v,pct?2:2)+'</td><td class="muted tiny" style="text-align:left">'+u+'</td></tr>'});
-  const meio=Math.ceil(linhas.length/2);
-  abrirModal('<h2><span class="cat cat-'+esc(a.cat)+'">'+esc(a.cat)+'</span> '+esc(a.nome)+'</h2><div class="small muted">'+esc(a.org==="UFLA"?"Tabela UFLA/NASEM · "+(a.nasem||""):a.org==="Análise"?"Análise de bromatologia de "+fData(a.dataAnalise)+" — o que não foi analisado vem de: "+a.baseNome:"Importado"+(a.fonte?" · "+a.fonte:""))+'</div>'+
-    (a.org==="Análise"?'<div class="alert" style="margin-top:10px"><div class="small">Da análise: MS, PB, FDN, FDA, amido, cinzas, Ca, P, uFDN240 e kd do amido. ED base calculada com dFDN '+f(a.dFDN48,0)+'% e digestibilidade do amido '+a.dAmido+'%. '+esc(a.notaBroma||"")+'</div></div>':'')+
-    '<div style="display:grid;grid-template-columns:1fr 1fr;gap:0 20px;margin-top:10px"><table class="t"><tbody>'+linhas.slice(0,meio).join("")+'</tbody></table><table class="t"><tbody>'+linhas.slice(meio).join("")+'</tbody></table></div>'+
-    '<div class="md-f">'+(ADM&&a.org==="Importado"?'<button class="btn btn-r" onclick="excluirAlimento(\''+esc(key)+'\')">Excluir</button><button class="btn btn-o" onclick="editarAlimento(\''+esc(key)+'\')">Editar</button>':'')+(ADM?'<button class="btn btn-o" onclick="editarAlimento(null,\''+esc(key)+'\')">Criar cópia editável</button>':'')+'<button class="btn btn-g" onclick="fecharModal()">Fechar</button></div>',true)}
-function editarAlimento(key,baseKey){const a=key?FOODS[key]:baseKey?Object.assign({},FOODS[baseKey],{nome:FOODS[baseKey].nome+" (cópia)"}):null;
-  const base=a||{nome:"",cat:"C",custo:0};
-  const campos=COMP_KEYS.map(k=>{const[l,u,pct]=COMP_INFO[k];const v=a?(pct?(+a[k]||0)*100:+a[k]||0):"";return'<div class="fld"><label>'+l+' <span class="ref">'+u+'</span></label><input class="inp num" type="number" step="any" id="ea-'+k+'" value="'+(v===""?"":+(+v).toFixed(4))+'"></div>'}).join("");
-  abrirModal('<h2>'+(key?"Editar alimento":"Novo alimento")+'</h2><p class="small muted">Valores em % como no laudo (MS na matéria natural, o resto na MS). Para partir de um alimento parecido, use "Criar cópia editável" no banco. Campos vazios ficam zero.</p>'+
-    '<div class="row2" style="margin:10px 0"><input class="inp" id="ea-nome" style="flex:2;min-width:200px" placeholder="Nome" value="'+esc(base.nome)+'"><select class="sel" id="ea-cat">'+Object.entries(CATS).map(([k,l])=>'<option value="'+k+'"'+(base.cat===k?" selected":"")+'>'+l+'</option>').join("")+'</select><input class="inp num" id="ea-custo" style="width:110px" type="number" step="any" placeholder="R$/kg MN" value="'+(base.custo||"")+'"><input class="inp" id="ea-fonte" style="flex:1;min-width:140px" placeholder="Fonte (laudo, fornecedor)" value="'+esc(base.fonte||"")+'"></div>'+
-    '<div class="row2 small" style="margin-bottom:8px"><button class="btn btn-o btn-sm" onclick="calcEDform()">Calcular ED base e ELl pela composição</button><span class="muted" id="ea-edm"></span></div>'+
-    '<div class="agrid">'+campos+'</div><div class="md-f"><button class="btn btn-o" onclick="fecharModal()">Cancelar</button><button class="btn btn-g" onclick="salvarAlimento(\''+(key&&key.startsWith("c:")?key.slice(2):"")+'\')">Salvar</button></div>',true)}
-function calcEDform(){const g=k=>num(document.getElementById("ea-"+k).value)||0;const fdn=g("fdn");if(!fdn){toast("Informe ao menos FDN",true);return}
-  const dF=num(prompt("dFDN 48 h in vitro (% da FDN) — deixe vazio para estimar pela lignina/valor médio:",""));
-  const e=edBase({fdn,dfdn48:dF||0,amido:g("amido"),damido:num(prompt("Digestibilidade do amido (% do amido) — ex.: milho fino 92, médio 89, grosso 77, silagem 85–91:","89"))||89,ag:g("ag"),pb:g("pb"),cinzas:g("cinzas")});
-  document.getElementById("ea-ed").value=e.ed.toFixed(3);document.getElementById("ea-ell").value=(e.ed*0.82*0.66).toFixed(3);if(!g("cnf"))document.getElementById("ea-cnf").value=e.cnf.toFixed(2);if(!g("mor"))document.getElementById("ea-mor").value=Math.max(0,e.mor).toFixed(2);
-  document.getElementById("ea-edm").textContent="ED base "+f(e.ed,3)+" Mcal/kg · dFDN usada "+f(e.dFDN,1)+"%"}
-function salvarAlimento(id){const nome=document.getElementById("ea-nome").value.trim();if(!nome){toast("Dê um nome",true);return}
-  const comp={};COMP_KEYS.forEach(k=>{const[,,pct]=COMP_INFO[k];const v=num(document.getElementById("ea-"+k).value);comp[k]=v==null?0:pct?v/100:v});
-  if(!comp.ms){toast("Informe a MS",true);return}
-  if(!comp.pdr&&!comp.pndr&&comp.pb){comp.pdr=0.65;comp.pndr=0.35}
-  const doc={nome,cat:document.getElementById("ea-cat").value,custo:num(document.getElementById("ea-custo").value)||0,fonte:document.getElementById("ea-fonte").value.trim(),comp,atualizado_em:new Date().toISOString(),autor:NOME};
-  const ref=id?db.ref("formulador/alimentos/"+id):db.ref("formulador/alimentos").push();ref.set(doc).then(()=>{fecharModal();toast("Alimento salvo")}).catch(e=>toast(e.message,true))}
+/* ============================================================
+   EDITOR DE ALIMENTO (estilo AMTS: valor corrente × nova versão)
+   ============================================================ */
+const ED_GRUPOS=[["Identificação",["nome","cat","fonte","escopo"]],["Preço",["custo"]],["Amostra",["dataAmostra","lab"]],
+  ["Principais",["ms","pb","pdr","pndr","dpndr","fdn","fdnf","ufdn","fda","cnf","amido","kd","mor","ag","cinzas","ed","ell"]],
+  ["Fibra física",["efdn","efdn2","mn8","mn19"]],["Aminoácidos",["his","ile","leu","lis","met"]],["Ácidos graxos",["c160","c180","c181","c182","c183","insat"]],
+  ["Macrominerais",["ca","p","mg","k","s","na","cl"]],["Microminerais",["co","cu","mn","zn","se","i"]],["Vitaminas",["vita","vitd","vite"]]];
+const ED_TXT={nome:"Nome",cat:"Categoria",fonte:"Fornecedor / fonte",escopo:"Disponível em",custo:"Preço (R$/kg MN)",dataAmostra:"Data da amostra",lab:"Laboratório"};
+let EDA=null;
+function valoresAlimento(a){const v={nome:a?a.nome:"",cat:a?a.cat:"C",fonte:a?(a.fonte||(a.org==="UFLA"?"Tabela UFLA/NASEM "+(a.nasem||""):a.org==="Análise"?"Bromatologia "+fData(a.dataAnalise):"")):"",escopo:a&&a.fazenda?"fazenda":"todas",custo:a?+a.custo||0:0,dataAmostra:a?(a.dataAmostra||a.dataAnalise||""):"",lab:a?a.lab||"":""};
+  COMP_KEYS.forEach(k=>{const[,,pct]=COMP_INFO[k];const x=a?+a[k]||0:0;v[k]=pct?+(x*100).toFixed(4):+x.toFixed(4)});return v}
+function abrirEditorAlimento(key,copiaDe){const a=key?FOODS[key]||(CUR&&CUR.snap&&CUR.snap[key]):null;const base=copiaDe?FOODS[copiaDe]:a;
+  const atual=valoresAlimento(base);const nova=Object.assign({},atual);if(copiaDe){nova.nome=base.nome+" (cópia)";nova.escopo=FARM?"fazenda":"todas"}
+  if(!a&&!copiaDe){nova.escopo="todas"}
+  EDA={key:copiaDe?null:key,org:copiaDe?"novo":a?a.org:"novo",atual:(key||copiaDe)?atual:null,nova,notas:a?a.notas||"":"",fech:{},filtro:"",partes:a&&a.partes?a.partes:null,ro:!ADM||!!(a&&a.partes)};
+  abrirModal('<div id="eda"></div>',"xl");renderEDA()}
+function renderEDA(){const E=EDA;const a=E.key?FOODS[E.key]:null;const n=norm(E.filtro);
+  const titulo=E.key?(E.org==="UFLA"?"Editar alimento — tabela UFLA":E.org==="Análise"?"Editar alimento — análise da fazenda":E.org==="Composto"?"Composto":"Editar alimento"):"Novo alimento";
+  const aviso=E.org==="UFLA"||E.org==="Análise"?'<div class="alert" style="margin:8px 0 0"><div class="small">'+(E.org==="UFLA"?"A tabela UFLA é a referência e não muda. Ao salvar alterações de composição, o sistema cria uma <b>nova versão</b> deste alimento (só desta fazenda ou para todas) e troca na dieta aberta. Mudar só o preço altera o preço padrão.":"A análise vem da Bromatologia do painel. Ao salvar, o sistema cria uma <b>versão ajustada</b> para esta fazenda e troca na dieta aberta; a análise original fica intacta.")+'</div></div>':E.partes?'<div class="alert" style="margin:8px 0 0"><div class="small">A composição deste composto vem das partes. Para mudar, use "Editar partes".</div></div>':'';
+  let rows="";
+  ED_GRUPOS.forEach(([g,campos])=>{const vis=campos.filter(c=>!n||norm((ED_TXT[c]||COMP_INFO[c][0])+" "+(COMP_INFO[c]?COMP_INFO[c][1]:"")).includes(n));if(!vis.length)return;const fe=E.fech[g]&&!n;
+    rows+='<tr class="gh'+(fe?" fech":"")+'" onclick="EDA.fech[\''+g+'\']=!EDA.fech[\''+g+'\'];renderEDA()"><td colspan="4">'+g+'</td></tr>';if(fe)return;
+    vis.forEach(c=>{const lab=ED_TXT[c]||(COMP_INFO[c][0]+' <span class="ref">'+COMP_INFO[c][1]+'</span>');const va=E.atual?E.atual[c]:"";const vn=E.nova[c];const roC=E.ro&&!(E.partes&&(c==="nome"||c==="custo"||c==="fonte"))||(c==="escopo"&&E.org==="Análise");
+      let inp;if(c==="cat")inp='<select class="sel inp" style="width:170px" onchange="EDA.nova.cat=this.value;renderEDA()"'+(roC?" disabled":"")+'>'+Object.entries(CATS).map(([k,l])=>'<option value="'+k+'"'+(vn===k?" selected":"")+'>'+l+'</option>').join("")+'</select>';
+      else if(c==="escopo")inp='<select class="sel inp" style="width:170px" onchange="EDA.nova.escopo=this.value;renderEDA()"'+(roC||!FARM?" disabled":"")+'><option value="fazenda"'+(vn==="fazenda"?" selected":"")+'>Só esta fazenda</option><option value="todas"'+(vn==="todas"?" selected":"")+'>Todas as fazendas</option></select>';
+      else if(c==="nome"||c==="fonte"||c==="lab")inp='<input class="inp txt" value="'+esc(vn)+'" onchange="EDA.nova.'+c+'=this.value;renderEDA()"'+(roC?" disabled":"")+'>';
+      else if(c==="dataAmostra")inp='<input class="inp" type="date" value="'+esc(vn)+'" onchange="EDA.nova.dataAmostra=this.value;renderEDA()"'+(roC?" disabled":"")+'>';
+      else inp='<input class="inp" type="number" step="any" value="'+(vn===""||vn==null?"":vn)+'" onchange="EDA.nova.'+c+'=num(this.value)==null?0:num(this.value);renderEDA()"'+(roC?" disabled":"")+'>';
+      const shown=c==="cat"?(CATS[va]||va):c==="escopo"?(va==="fazenda"?"Só esta fazenda":"Todas"):(typeof va==="number"?f(va,COMP_INFO[c]&&!COMP_INFO[c][2]?3:3):esc(va||""));
+      let df="—",cls="";if(E.atual&&typeof va==="number"&&typeof vn==="number"){if(va===0&&vn===0)df="0%";else if(va===0)df="novo";else{const d=(vn-va)/Math.abs(va)*100;df=(d>0?"+":"")+f(d,Math.abs(d)<10?1:0)+"%";cls=Math.abs(d)<0.05?"":d>0?"up":"dn"}}else if(E.atual&&va!==vn)df="alterado";
+      const mud=E.atual&&String(va)!==String(vn);
+      rows+='<tr'+(mud?' class="mud"':'')+'><td class="nm">'+lab+'</td><td>'+(E.atual?shown:"")+'</td><td>'+inp+'</td><td class="df '+cls+'">'+(E.atual?df:"")+'</td></tr>'})});
+  const usos=usosAlimento(E.key);
+  const side='<div class="edside">'+
+    '<div class="bx"><h4>Usado nas dietas</h4>'+(usos.length?usos.map(u=>'<div class="small">• '+esc(u)+'</div>').join(""):'<div class="small muted">Nenhuma dieta salva desta fazenda usa este alimento.</div>')+'</div>'+
+    '<div class="bx"><h4>Notas</h4><textarea class="inp" style="width:100%;height:80px" onchange="EDA.notas=this.value"'+(ADM?"":" disabled")+'>'+esc(E.notas)+'</textarea></div>'+
+    (ADM&&!E.partes?'<div class="bx"><h4>Energia pela composição</h4><div class="row2" style="gap:6px;margin-bottom:6px"><div class="fld" style="flex:1"><label>dFDN 48 h (% FDN)</label><input class="inp num" id="eda-df" type="number" step="any" placeholder="estimar"></div><div class="fld" style="flex:1"><label>Dig. amido (%)</label><input class="inp num" id="eda-da" type="number" step="any" value="'+(E.nova.cat==="SM"?(E.nova.ms<31?91:E.nova.ms<=38?89:85):89)+'"></div></div><button class="btn btn-o btn-sm" onclick="edaCalcED()">Calcular ED base e ELl</button><div class="tiny muted" id="eda-edm" style="margin-top:4px"></div></div>'+
+      '<div class="bx"><h4>Importar análise</h4><textarea class="inp" id="eda-cola" style="width:100%;height:70px;font-size:12px" placeholder="Cole o laudo: uma linha por item, ex.&#10;MS 34,97&#10;PB 8,25&#10;FDN 41,2&#10;Amido 23,5"></textarea><button class="btn btn-o btn-sm" style="margin-top:6px" onclick="edaColar()">Aplicar valores</button></div>':'')+
+    (E.partes&&ADM?'<button class="btn btn-o" onclick="editarComposto(\''+esc(E.key)+'\')">Editar partes do composto</button>':'')+
+    (E.org==="Importado"&&E.key?'<button class="btn btn-o" onclick="edaHistorico()">Histórico de versões</button>':'')+
+    (ADM&&E.key&&!E.partes?'<button class="btn btn-o" onclick="abrirEditorAlimento(null,\''+esc(E.key)+'\')">Criar cópia</button>':'')+
+    (ADM&&E.key&&(E.org==="Importado"||E.org==="Composto")?'<button class="btn btn-r" onclick="excluirAlimento(\''+esc(E.key)+'\')">Excluir alimento</button>':'')+
+    '<div style="margin-top:auto;display:flex;gap:8px">'+(ADM?'<button class="btn btn-g" style="flex:1" onclick="salvarEDA()">'+(E.org==="UFLA"||E.org==="Análise"?"Salvar nova versão":"Atualizar valores")+'</button>':'')+'<button class="btn btn-o" style="flex:1" onclick="fecharModal()">'+(ADM?"Cancelar":"Fechar")+'</button></div></div>';
+  document.getElementById("eda").innerHTML='<div class="ch-h"><div><h2>'+titulo+': '+esc(E.nova.nome||"")+'</h2>'+aviso+'</div><button class="ico" style="font-size:22px" onclick="fecharModal()">×</button></div>'+
+    '<div class="edg"><div><div class="row2" style="margin-bottom:8px"><input class="inp" style="flex:1" placeholder="Buscar componente (ex.: amido, lisina, Ca)…" value="'+esc(E.filtro)+'" oninput="EDA.filtro=this.value;clearTimeout(window._ef);window._ef=setTimeout(()=>{renderEDA();const i=document.querySelector(\'#eda .edg input\');i.focus();i.setSelectionRange(i.value.length,i.value.length)},200)"></div>'+
+    '<div class="edt"><table><thead><tr><th>Componente</th><th>'+(E.atual?"Valor corrente":"")+'</th><th>'+(E.atual?"Nova versão":"Valor")+'</th><th>'+(E.atual?"Diferença":"")+'</th></tr></thead><tbody>'+rows+'</tbody></table></div></div>'+side+'</div>'}
+function usosAlimento(key){if(!key)return[];const out=[];if(CUR&&CUR.itens.some(i=>i.key===key))out.push("Dieta aberta"+(CUR.nome?" ("+CUR.nome+")":""));Object.values(FORMS||{}).forEach(d=>{if((d.itens||[]).some(i=>i.key===key))out.push((d.nome||"(sem nome)")+(d.loteNome?" — "+d.loteNome:""))});return out}
+function edaCalcED(){const v=EDA.nova;if(!v.fdn){toast("Informe a FDN",true);return}const dF=num(document.getElementById("eda-df").value),dA=num(document.getElementById("eda-da").value)||89;
+  const e=edBase({fdn:v.fdn,dfdn48:dF||0,amido:v.amido,damido:dA,ag:v.ag,pb:v.pb,cinzas:v.cinzas});v.ed=+e.ed.toFixed(4);v.ell=+(e.ed*0.82*0.66).toFixed(4);
+  if(!v.cnf)v.cnf=+Math.max(0,e.cnf).toFixed(2);if(!v.mor)v.mor=+Math.max(0,e.mor).toFixed(2);renderEDA();document.getElementById("eda-edm").textContent="ED base "+f(e.ed,3)+" · dFDN usada "+f(e.dFDN,1)+"%"}
+function edaColar(){const txt=document.getElementById("eda-cola").value;let n=0;txt.split(/\r?\n/).forEach(l=>{const m=l.match(/^\s*(.+?)[\s:;=\t]+(-?[\d.,]+)\s*%?\s*$/);if(!m)return;
+  const nome=norm(m[1]).replace(/\(.*?\)/g,"").replace(/%\s*(da|na)?\s*(ms|mn|pb)\b/g,"").replace(/[%:]/g,"").replace(/\s+/g," ").trim();const v=num(m[2]);if(v==null)return;
+  const e=Object.entries(IMP_ALIAS).find(([k,al])=>COMP_INFO[k]&&(al.includes(nome)||al.includes(nome.split(" ")[0])&&nome.split(" ").length===1));if(!e)return;EDA.nova[e[0]]=v;n++});
+  renderEDA();toast(n?n+" valor(es) aplicado(s)":"Nenhum item reconhecido",!n)}
+function compDe(v){const comp={};COMP_KEYS.forEach(k=>{const[,,pct]=COMP_INFO[k];const x=+v[k]||0;comp[k]=pct?x/100:x});return comp}
+function salvarEDA(){const E=EDA,v=E.nova;if(!String(v.nome||"").trim()){toast("Dê um nome",true);return}
+  const compMudou=E.atual&&COMP_KEYS.some(k=>Math.abs((+E.atual[k]||0)-(+v[k]||0))>1e-9);
+  if(!E.partes&&(!E.atual||compMudou)&&!(+v.ms>0)&&v.cat!=="X"){toast("Informe a MS",true);return}const outros=E.atual&&["nome","cat","fonte","dataAmostra","lab"].some(k=>String(E.atual[k]||"")!==String(v[k]||""));
+  const now=new Date().toISOString();const doc={nome:v.nome.trim(),cat:v.cat,custo:+v.custo||0,fonte:v.fonte||"",dataAmostra:v.dataAmostra||"",lab:v.lab||"",notas:E.notas||"",comp:compDe(v),atualizado_em:now,autor:NOME};
+  if(v.escopo==="fazenda"&&FARM)doc.fazenda=FARM;
+  if(E.partes){const up={};up["formulador/alimentos/"+E.key.slice(2)+"/nome"]=doc.nome;up["formulador/alimentos/"+E.key.slice(2)+"/notas"]=doc.notas;up["formulador/alimentos/"+E.key.slice(2)+"/fonte"]=doc.fonte;
+    if(E.atual&&+E.atual.custo!==+v.custo)up["formulador/alimentos/"+E.key.slice(2)+"/custoManual"]=+v.custo;db.ref().update(up).then(()=>{fecharModal();toast("Composto atualizado")});return}
+  if(E.key&&(E.org==="UFLA"||E.org==="Análise")){
+    if(!compMudou&&!outros&&!E.notas){if(+E.atual.custo!==+v.custo){salvarPreco(E.key,v.custo);fecharModal()}else fecharModal();return}
+    if(!compMudou&&!outros&&+E.atual.custo!==+v.custo)salvarPreco(E.key,v.custo);
+    if(doc.nome===E.atual.nome)doc.nome=E.atual.nome+(E.org==="Análise"?" (ajustada)":" (editado)");
+    if(E.org==="Análise")doc.fazenda=FARM;doc.origem=E.key;
+    const ref=db.ref("formulador/alimentos").push();TROCA={de:E.key,para:"c:"+ref.key};
+    ref.set(limpar(doc)).then(()=>{fecharModal();toast("Nova versão salva: "+doc.nome)}).catch(e=>{TROCA=null;toast(e.message,true)});return}
+  if(E.key&&E.org==="Importado"){const id=E.key.slice(2);const ant=CUST[id];const up={};up["formulador/alimentos/"+id]=limpar(Object.assign({},ant,doc,{fazenda:doc.fazenda||null}));
+    if(ant&&(compMudou||outros||+ant.custo!==+doc.custo))up["formulador/alimentos_hist/"+id+"/"+db.ref().push().key]=limpar(Object.assign({},ant,{substituido_em:now,substituido_por:NOME}));
+    db.ref().update(up).then(()=>{fecharModal();toast("Alimento atualizado")}).catch(e=>toast(e.message,true));return}
+  /* novo */
+  if(!doc.comp.pdr&&!doc.comp.pndr&&doc.comp.pb){doc.comp.pdr=0.65;doc.comp.pndr=0.35}if(!doc.comp.kd)doc.comp.kd=0.3;
+  db.ref("formulador/alimentos").push(limpar(doc)).then(()=>{fecharModal();toast("Alimento salvo")}).catch(e=>toast(e.message,true))}
+function edaHistorico(){const id=EDA.key.slice(2);db.ref("formulador/alimentos_hist/"+id).once("value").then(s=>{const h=s.val()||{};const xs=Object.entries(h).sort((a,b)=>String(b[1].substituido_em).localeCompare(String(a[1].substituido_em)));
+  const box=document.querySelector("#eda .edside");const old=document.getElementById("eda-hist");if(old)old.remove();
+  box.insertAdjacentHTML("afterbegin",'<div class="bx" id="eda-hist"><h4>Versões anteriores</h4>'+(xs.length?xs.map(([k,x])=>'<div class="row2 small" style="justify-content:space-between;padding:3px 0"><span>'+fData(x.substituido_em)+' · '+esc(x.substituido_por||"")+'<br><span class="muted">MS '+f((x.comp||{}).ms*100,1)+' · PB '+f((x.comp||{}).pb*100,1)+' · R$ '+f(x.custo,2)+'</span></span>'+(ADM?'<button class="btn btn-o btn-sm" onclick="edaRestaurar(\''+k+'\')">Usar</button>':'')+'</div>').join(""):'<div class="small muted">Sem versões anteriores.</div>')+'</div>');window._edaHist=h})}
+function edaRestaurar(k){const x=(window._edaHist||{})[k];if(!x)return;const a=Object.assign({nome:x.nome,cat:x.cat,custo:x.custo,fonte:x.fonte,dataAmostra:x.dataAmostra,lab:x.lab},x.comp||{});const v=valoresAlimento(a);v.escopo=EDA.nova.escopo;EDA.nova=v;EDA.notas=x.notas||EDA.notas;renderEDA();toast("Valores da versão carregados — confira e salve")}
+function verAlimento(key){abrirEditorAlimento(key)}
+function editarAlimento(key,baseKey){if(baseKey)abrirEditorAlimento(null,baseKey);else abrirEditorAlimento(key||null)}
 function excluirAlimento(key){if(!confirm("Excluir este alimento? Formulações salvas continuam com a composição da época."))return;db.ref("formulador/alimentos/"+key.slice(2)).remove().then(()=>{fecharModal();toast("Excluído")})}
 /* importação por colagem: cabeçalho com nomes de colunas ou linhas copiadas do "Banco de alimentos" da planilha UFLA */
 const IMP_ALIAS={nome:["alimento","nome","ingrediente"],cat:["categoria","cat","tipo"],custo:["custo","preco","preço","r$/kg"],nasem:["nasem","codigo","código"],ms:["ms","materia seca","matéria seca"],pb:["pb","proteina bruta","proteína bruta"],pdr:["pdr"],pndr:["pndr"],dpndr:["d pndr","dpndr","digest pndr"],his:["his"],ile:["ile"],leu:["leu"],lis:["lis","lys"],met:["met"],fdn:["fdn","ndf"],efdn:["efdn"],efdn2:["efdn2"],mn8:["mn>8",">8"],mn19:["mn>19",">19"],fdnf:["fdnf"],ufdn:["ufdn240","ufdn"],fda:["fda","adf"],cnf:["cnf"],amido:["amido","starch"],kd:["kd amid","kd amido","kd"],mor:["mor"],ed:["ed base","ed"],ell:["ell","el"],ag:["ag","ee","extrato etereo","extrato etéreo"],c160:["c16:0"],c180:["c18:0"],c181:["c18:1"],c182:["c18:2"],c183:["c18:3"],insat:["ag insat","insat"],cinzas:["cinzas","mm"],ca:["ca"],p:["p"],mg:["mg"],k:["k"],s:["s"],na:["na"],cl:["cl"],co:["co"],cu:["cu"],mn:["mn"],zn:["zn"],se:["se"],i:["i"],vita:["a","vit a"],vitd:["d","vit d"],vite:["e","vit e"]};
@@ -884,6 +1051,34 @@ function renderHomo(){const H=HOMO;const hm=homogeneidade(H.amostras);const ms=[
     '<table class="t" style="margin-top:8px"><tbody><tr><td>Média</td>'+hm.m.map(x=>'<td class="num">'+f(x,1)+'</td>').join("")+'</tr><tr><td>CV (%)</td>'+hm.cv.map(x=>'<td class="num"><span class="chip '+(x<2.5?"ok":x<4?"ok":"bad")+'">'+f(x,1)+'</span></td>').join("")+'</tr></tbody></table><div class="tiny muted">CV &lt; 4% ótimo · &lt; 2,5% excelente (por peneira)</div>'+
     '<div class="sec">Sobra</div><div class="row2" style="margin-bottom:6px"><div class="fld"><label>Oferecido (kg)</label><input class="inp num" type="number" value="'+H.ofer+'" onchange="HOMO.ofer=num(this.value)||0;renderHomo()"></div><div class="fld"><label>Sobra (kg)</label><input class="inp num" type="number" value="'+H.sobra+'" onchange="HOMO.sobra=num(this.value)||0;renderHomo()"></div><div class="small muted">Sobra = '+f(H.ofer?H.sobra/H.ofer*100:null,1)+'%</div></div>'+tab(H.sobras,"Sobra")+
     '<table class="t" style="margin-top:8px"><thead><tr><th>Seleção</th><th>>19 mm</th><th>8–19 mm</th><th>Fundo</th></tr></thead><tbody><tr><td>Previsto (kg)</td>'+sel.map(s=>'<td class="num">'+f(s.pred,0)+'</td>').join("")+'</tr><tr><td>Consumido (kg)</td>'+sel.map(s=>'<td class="num">'+f(s.obs,0)+'</td>').join("")+'</tr><tr><td><b>Índice</b></td>'+sel.map(s=>'<td class="num"><span class="chip '+(s.idx<95?"bad":s.idx>105?"warn":"ok")+'">'+f(s.idx,0)+'</span></td>').join("")+'</tr></tbody></table><div class="tiny muted">&lt; 100 recusa · 100 sem seleção · &gt; 100 procura</div>'}
+
+/* ============================================================
+   COMPOSTOS
+   ============================================================ */
+let EDC=null;
+function editarComposto(key,partesIni,nomeIni){const c=key?CUST[key.slice(2)]:null;
+  EDC={id:key?key.slice(2):null,nome:c?c.nome:(nomeIni||""),cat:c?c.cat||"C":"C",custoManual:c&&c.custoManual!=null?c.custoManual:"",fonte:c?c.fonte||"":"",unid:"kg",
+    partes:(c?c.partes||[]:partesIni||[]).map(p=>({key:p.key,nome:p.nome,kg:+p.kg||0,comp:p.comp,custo:p.custo}))};
+  abrirModal('<h2>'+(key?"Editar composto":"Novo composto")+'</h2><p class="small muted">Ração, concentrado ou mistura feita de outros alimentos — como os "compostos" do AMTS. Informe as quantidades (kg de matéria natural por vaca, por batida ou por tonelada: o que vale é a proporção) e o preço de cada ingrediente. A composição sai das partes e acompanha correções nos alimentos de origem.</p><div id="edc"></div>',true);renderEDC()}
+function renderEDC(){const E=EDC;const pr=E.partes.map(p=>({key:p.key,nome:p.nome,kg:p.kg,custo:p.custo,a:FOODS[p.key]||Object.assign({nome:p.nome,custo:+p.custo||0},p.comp||{})}));const r=compostoComp(pr);const W=E.partes.reduce((s,p)=>s+(+p.kg||0),0);
+  document.getElementById("edc").innerHTML='<div class="row2" style="margin:10px 0"><input class="inp" style="flex:2;min-width:200px" placeholder="Nome (ex.: ULTRAMAX REINALDO)" value="'+esc(E.nome)+'" oninput="EDC.nome=this.value"><select class="sel" onchange="EDC.cat=this.value"><option value="C"'+(E.cat==="C"?" selected":"")+'>Concentrado</option><option value="P"'+(E.cat==="P"?" selected":"")+'>Premix / mineral</option></select><input class="inp num" style="width:130px" type="number" step="any" placeholder="R$/kg (opcional)" title="Deixe vazio para usar o preço calculado pelas partes" value="'+esc(E.custoManual)+'" onchange="EDC.custoManual=this.value===\'\'?\'\':num(this.value);renderEDC()"><input class="inp" style="flex:1;min-width:120px" placeholder="Fonte / fábrica" value="'+esc(E.fonte)+'" oninput="EDC.fonte=this.value"></div>'+
+    '<div class="srch" style="margin-bottom:8px"><input class="inp" id="edc-q" placeholder="Adicionar ingrediente…" oninput="buscaEDC(this.value)" onfocus="buscaEDC(this.value)" onkeydown="ddKey(event,\'edc-dd\')" autocomplete="off"><div class="dd" id="edc-dd"></div></div>'+
+    '<div class="tw"><table class="t"><thead><tr><th>Ingrediente</th><th>Quantidade (kg MN)</th><th>% MN</th><th>R$/kg</th><th></th></tr></thead><tbody>'+
+    E.partes.map((p,i)=>{const a=FOODS[p.key];return'<tr><td>'+esc(a?a.nome:p.nome)+(a?'':' <span class="chip warn">composição salva</span>')+'</td><td><input class="inp num" style="width:100px" type="number" step="any" value="'+p.kg+'" onchange="EDC.partes['+i+'].kg=num(this.value)||0;renderEDC()"></td><td class="num">'+f(W?p.kg/W*100:0,2)+'%</td><td><input class="inp num" style="width:80px" type="number" step="any" value="'+(p.custo!=null?p.custo:a?a.custo:"")+'" onchange="EDC.partes['+i+'].custo=num(this.value);renderEDC()"></td><td><button class="ico" onclick="EDC.partes.splice('+i+',1);renderEDC()">×</button></td></tr>'}).join("")+
+    '<tr class="tot"><td>Total</td><td class="num">'+f(W,3)+'</td><td class="num">100%</td><td></td><td></td></tr></tbody></table></div>'+
+    (r?'<div class="kpis" style="margin-top:12px">'+[["MS",f(r.comp.ms*100,1)+"%"],["PB",f(r.comp.pb*100,1)+"% MS"],["PNDR",f(r.comp.pndr*100,0)+"% PB"],["FDN",f(r.comp.fdn*100,1)+"% MS"],["Amido",f(r.comp.amido*100,1)+"% MS"],["EE",f(r.comp.ag*100,1)+"% MS"],["ELl",f(r.comp.ell,2)+" Mcal"],["Ca / P",f(r.comp.ca*100,2)+" / "+f(r.comp.p*100,2)],["Preço pelas partes","R$ "+f(r.custo,3)+"/kg"]].map(([l,v])=>'<div class="kpi"><div class="l">'+l+'</div><div class="v" style="font-size:16px">'+v+'</div></div>').join("")+'</div>':'')+
+    '<div class="md-f"><button class="btn btn-o" onclick="fecharModal()">Cancelar</button><button class="btn btn-g" onclick="salvarComposto()">Salvar composto</button></div>'}
+function buscaEDC(q){const dd=document.getElementById("edc-dd");const n=norm(q).trim();const usados=new Set(EDC.partes.map(p=>p.key));
+  const xs=Object.values(FOODS).filter(a=>a.org!=="Composto"&&!usados.has(a.key)&&(!n||n.split(/\s+/).every(w=>norm(a.nome).includes(w)))).sort((a,b)=>a.nome.localeCompare(b.nome)).slice(0,50);
+  dd.innerHTML=xs.map(a=>'<button onmousedown="event.preventDefault();addEDC(\''+esc(a.key)+'\')"><span class="cat cat-'+esc(a.cat)+'">'+esc(a.cat)+'</span><span style="flex:1">'+esc(a.nome)+'</span><span class="org">'+esc(a.org)+'</span></button>').join("")||'<div class="g">Nada encontrado</div>';dd.classList.add("on");document.getElementById("edc-q").onblur=()=>setTimeout(()=>dd.classList.remove("on"),150)}
+function addEDC(key){const a=FOODS[key];EDC.partes.push({key,nome:a.nome,kg:0,custo:+a.custo||0});renderEDC();setTimeout(()=>{const ins=document.querySelectorAll("#edc tbody input");if(ins.length)ins[ins.length-1].focus()},0)}
+function salvarComposto(){const E=EDC;if(!E.nome.trim()){toast("Dê um nome ao composto",true);return}const ps=E.partes.filter(p=>p.kg>0);if(!ps.length){toast("Informe as quantidades",true);return}
+  const doc={tipo:"composto",nome:E.nome.trim(),cat:E.cat,custoManual:E.custoManual===""?null:E.custoManual,fonte:E.fonte||"",atualizado_em:new Date().toISOString(),autor:NOME,
+    partes:ps.map(p=>{const a=FOODS[p.key]||Object.assign({nome:p.nome,custo:p.custo},p.comp||{});const comp={};COMP_KEYS.forEach(k=>comp[k]=+a[k]||0);return{key:p.key,nome:a.nome||p.nome,kg:+p.kg,custo:p.custo!=null&&p.custo!==""?+p.custo:+a.custo||0,cat:a.cat||"C",comp}})};
+  const ref=E.id?db.ref("formulador/alimentos/"+E.id):db.ref("formulador/alimentos").push();ref.set(limpar(doc)).then(()=>{fecharModal();toast("Composto salvo")}).catch(e=>toast(e.message,true))}
+function concentradoComoComposto(){if(!RES)return;const its=CUR.itens.filter(it=>{const a=foodDe(it);return a&&(a.cat==="C"||a.cat==="P")&&+it.kg>0&&!a.partes});
+  if(!its.length){toast("Não há concentrados na dieta",true);return}
+  editarComposto(null,its.map(it=>{const a=foodDe(it);return{key:it.key,nome:a.nome,kg:+it.kg,custo:it.custo!=null?+it.custo:+a.custo||0}}),"Ração "+(CUR.loteNome||CUR.nome||""))}
 
 
 </script>
