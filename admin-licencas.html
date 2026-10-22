@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Licenças do Formulador</title>
+<meta name="theme-color" content="#052e16">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+<style>
+:root{--bg:#f3f6f3;--card:#fff;--border:#e2e8f0;--line:#f1f5f9;--text:#0f172a;--muted:#64748b;--faint:#94a3b8;--G:#15803d;--GD:#052e16;--GL:#f0fdf4;--amber:#b45309;--amberL:#fffbeb;--red:#dc2626;--redL:#fef2f2;--blue:#2a78d6}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:Inter,system-ui,sans-serif;background:var(--bg);color:var(--text);font-size:14px;-webkit-font-smoothing:antialiased;font-variant-numeric:tabular-nums}
+button,select,input,textarea{font-family:inherit;font-size:inherit;color:inherit}button{cursor:pointer}
+.muted{color:var(--muted)}.small{font-size:12.5px}.tiny{font-size:11.5px}.num{text-align:right;white-space:nowrap}
+.inp,.sel{border:1px solid var(--border);border-radius:9px;padding:9px 11px;background:#fff;width:100%;min-width:0}.inp:focus,.sel:focus{border-color:var(--G);outline:none}
+.btn{border:1px solid transparent;border-radius:9px;padding:9px 14px;font-weight:700;display:inline-flex;align-items:center;gap:6px;white-space:nowrap;justify-content:center}
+.btn-g{background:var(--G);color:#fff}.btn-o{background:#fff;border-color:var(--border)}.btn-r{background:#fff;color:var(--red);border-color:#fecaca}.btn-sm{padding:5px 10px;font-size:12.5px;border-radius:8px}.btn:disabled{opacity:.5}
+#login{display:flex;min-height:100vh;align-items:center;justify-content:center;padding:24px;background:var(--GD)}
+.lb{background:#fff;border-radius:16px;padding:26px;width:100%;max-width:360px}.lb h1{font-size:20px;margin-bottom:4px}.lb p{color:var(--muted);font-size:13px;margin-bottom:14px}.lb .inp{margin-bottom:8px;padding:12px;font-size:15px}.lb .btn{width:100%;padding:12px;font-size:15px}
+#app{display:none}
+.top{background:var(--GD);color:#fff;position:sticky;top:0;z-index:5}.top-in{max-width:1200px;margin:0 auto;padding:12px 16px;display:flex;align-items:center;gap:10px}.top b{font-size:16px;margin-right:auto}.top .btn-o{background:rgba(255,255,255,.1);border-color:rgba(255,255,255,.25);color:#fff}
+main{max-width:1200px;margin:0 auto;padding:16px 16px 80px}
+.card{background:#fff;border:1px solid var(--border);border-radius:14px;padding:16px;margin-bottom:14px}
+h2{font-size:18px;margin-bottom:4px}h3{font-size:15px;margin-bottom:8px}
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-bottom:14px}.kpi{background:#fff;border:1px solid var(--border);border-radius:12px;padding:12px 14px;cursor:pointer}.kpi.on{border-color:var(--G);box-shadow:inset 0 0 0 1px var(--G)}.kpi .l{font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);font-weight:700}.kpi .v{font-size:24px;font-weight:800;margin-top:2px}.kpi .v small{font-size:12px;color:var(--muted);font-weight:600}
+.row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+table{width:100%;border-collapse:collapse}th{text-align:left;font-size:11px;text-transform:uppercase;letter-spacing:.04em;color:var(--muted);padding:8px;border-bottom:1px solid var(--border);white-space:nowrap}td{padding:10px 8px;border-bottom:1px solid var(--line);vertical-align:middle}tr.cl{cursor:pointer}tr.cl:hover td{background:#fafcfa}
+.tw{overflow-x:auto}
+.chip{font-size:11px;font-weight:700;padding:2px 8px;border-radius:99px;background:var(--line);white-space:nowrap}.chip.ok{background:#dcfce7;color:#166534}.chip.warn{background:var(--amberL);color:var(--amber)}.chip.bad{background:var(--redL);color:var(--red)}
+.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px 14px}.fld label{display:block;font-size:12px;font-weight:600;color:var(--muted);margin-bottom:4px}.fld.w2{grid-column:1/-1}
+@media(max-width:640px){.grid{grid-template-columns:1fr}.hide-m{display:none}}
+#mdw{display:none;position:fixed;inset:0;background:rgba(2,20,10,.45);z-index:30;align-items:flex-start;justify-content:center;padding:30px 12px;overflow:auto}#md{background:#fff;border-radius:16px;padding:20px;width:100%;max-width:640px}#md.lg{max-width:920px}
+.md-f{display:flex;gap:8px;justify-content:flex-end;margin-top:16px;flex-wrap:wrap}
+.cred{white-space:pre-wrap;user-select:all;border:1px solid var(--border);border-radius:9px;padding:12px;font-family:ui-monospace,monospace;background:#fafafa;margin:8px 0}
+.sec{font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin:16px 0 6px}
+#toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%) translateY(80px);background:var(--G);color:#fff;padding:10px 16px;border-radius:10px;font-weight:600;transition:.25s;z-index:50;max-width:90vw}#toast.on{transform:translateX(-50%) translateY(0)}
+.empty{text-align:center;padding:30px;color:var(--muted)}.empty b{display:block;color:var(--text);font-size:15px;margin-bottom:4px}
+</style>
+</head>
+<body>
+<div id="login"><div class="lb"><h1>Licenças do Formulador</h1><p>Área do administrador da plataforma</p>
+<input class="inp" id="l-e" type="email" placeholder="E-mail" autocomplete="username"><input class="inp" id="l-s" type="password" placeholder="Senha" autocomplete="current-password" onkeydown="if(event.key==='Enter')login()">
+<button class="btn btn-g" onclick="login()">Entrar</button><p id="l-m" style="color:var(--red);margin:10px 0 0"></p></div></div>
+<div id="app"><div class="top"><div class="top-in"><b>Licenças do Formulador</b><button class="btn btn-o btn-sm" onclick="configURL()">Endereço do formulador</button><button class="btn btn-o btn-sm" onclick="auth.signOut()">Sair</button></div></div><main id="m"></main></div>
+<div id="mdw" onclick="if(event.target===this)fecharModal()"><div id="md"></div></div><div id="toast"></div>
+<script>
+const firebaseConfig={apiKey:"AIzaSyClpsHjO8OLThD--hDOfg7Fg3t6hhuM-To",authDomain:"meta-gestao-608d7.firebaseapp.com",databaseURL:"https://meta-gestao-608d7-default-rtdb.firebaseio.com",projectId:"meta-gestao-608d7",storageBucket:"meta-gestao-608d7.firebasestorage.app",messagingSenderId:"318618053627",appId:"1:318618053627:web:ae289200bd1e87be29395e"};
+/* endereço do formulador que vai na mensagem para o comprador — ajuste quando publicar */
+let URL_FORMULADOR="https://meta-gestao-608d7.web.app/app-formulador.html";try{URL_FORMULADOR=localStorage.getItem("lic_url")||URL_FORMULADOR}catch(e){}
+function configURL(){const v=prompt("Endereço onde o formulador está publicado (vai na mensagem para o comprador):",URL_FORMULADOR);if(v&&v.trim()){URL_FORMULADOR=v.trim();try{localStorage.setItem("lic_url",URL_FORMULADOR)}catch(e){}toast("Endereço salvo")}}
+firebase.initializeApp(firebaseConfig);const auth=firebase.auth(),db=firebase.database();
+const PLANOS=[["Mensal",1],["Trimestral",3],["Semestral",6],["Anual",12],["Cortesia",12]];
+const PAPEIS={admin:"Administrador",tecnico:"Técnico",leitura:"Consulta"};
+let LIC={},EQ={},USR={},FILTRO="",BUSCA="",NOME="";
+const $=id=>document.getElementById(id);
+const esc=s=>String(s==null?"":s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const f=(x,d)=>x==null||!isFinite(x)?"—":(+x).toLocaleString("pt-BR",{minimumFractionDigits:d==null?2:d,maximumFractionDigits:d==null?2:d});
+const hoje=()=>new Date().toISOString().slice(0,10);
+const fData=s=>{if(!s)return"—";const d=String(s).slice(0,10).split("-");return d.length===3?d[2]+"/"+d[1]+"/"+d[0]:s};
+const dias=s=>s?Math.round((new Date(s+"T12:00:00")-new Date(hoje()+"T12:00:00"))/864e5):null;
+function somaMeses(data,m){const d=new Date((data||hoje())+"T12:00:00");d.setMonth(d.getMonth()+m);return d.toISOString().slice(0,10)}
+function toast(m,err){const e=$("toast");e.textContent=m;e.style.background=err?"var(--red)":"var(--G)";e.classList.add("on");clearTimeout(e._t);e._t=setTimeout(()=>e.classList.remove("on"),3200)}
+function abrirModal(h,lg){$("md").className=lg?"lg":"";$("md").innerHTML=h;$("mdw").style.display="flex"}
+function fecharModal(){$("mdw").style.display="none"}
+function senhaAleatoria(){const c="abcdefghjkmnpqrstuvwxyz23456789";let s="";for(let i=0;i<8;i++)s+=c[Math.floor(Math.random()*c.length)];return s}
+function msgErro(e){return e.code==="auth/email-already-in-use"?"este e-mail já tem login.":e.code==="auth/invalid-email"?"e-mail inválido.":e.code==="auth/weak-password"?"senha fraca (mín. 6 caracteres).":e.message}
+function login(){const e=$("l-e").value.trim(),s=$("l-s").value;if(e&&s)auth.signInWithEmailAndPassword(e,s).catch(()=>$("l-m").textContent="E-mail ou senha incorretos.")}
+auth.onAuthStateChanged(async u=>{if(!u){$("login").style.display="flex";$("app").style.display="none";return}
+  let us={};try{us=(await db.ref("usuarios/"+u.uid).once("value")).val()||{}}catch(e){}
+  if(us.plataforma!==true){$("l-m").textContent="Este usuário não administra a plataforma.";auth.signOut();return}
+  NOME=us.nome||u.email;$("login").style.display="none";$("app").style.display="block";carregar()});
+async function carregar(){$("m").innerHTML='<div class="empty"><b>Carregando…</b></div>';
+  try{const[a,b]=await Promise.all([db.ref("contas_info").once("value"),db.ref("contas_equipe").once("value")]);LIC=a.val()||{};EQ=b.val()||{};
+    const uids=new Set();Object.values(EQ).forEach(c=>Object.keys(c||{}).forEach(k=>uids.add(k)));
+    const rs=await Promise.all([...uids].map(k=>db.ref("usuarios/"+k).once("value").then(s=>[k,s.val()]).catch(()=>[k,null])));USR={};rs.forEach(([k,v])=>{if(v)USR[k]=v});render()}
+  catch(e){$("m").innerHTML='<div class="card empty"><b>Sem permissão para ler as licenças</b>'+esc(e.message)+'<br>Publique as regras novas do banco.</div>'}}
+function situacao(c){if(!c.ativo)return["suspensa","bad"];const d=dias(c.validade);if(d!=null&&d<0)return["vencida","bad"];if(d!=null&&d<=15)return["vence em "+d+" d","warn"];return["ativa","ok"]}
+function ultimoAcesso(cid){let u=null;Object.keys(EQ[cid]||{}).forEach(k=>{const a=(USR[k]||{}).ultimo_acesso;if(a&&(!u||a>u))u=a});return u}
+/* ---------- painel ---------- */
+function render(){const ls=Object.entries(LIC);const n=k=>ls.filter(([,c])=>k(c)).length;
+  const ativas=ls.filter(([,c])=>situacao(c)[1]!=="bad");const mrr=ativas.reduce((s,[,c])=>s+(+c.valor||0)/(PLANOS.find(p=>p[0]===c.plano)||[0,1])[1]*(c.plano==="Cortesia"?0:1),0);
+  const K=[["","Licenças",ls.length,""],["ativas","Ativas",ativas.length,""],["vencendo","Vencem em 30 dias",n(c=>c.ativo&&dias(c.validade)!=null&&dias(c.validade)>=0&&dias(c.validade)<=30),""],["vencidas","Vencidas ou suspensas",n(c=>situacao(c)[1]==="bad"),""],["mrr","Receita mensal",'<small>R$</small> '+f(mrr,0),""]];
+  const flt=([,c])=>{const t=(c.nome+" "+(c.responsavel||"")+" "+(c.email||"")+" "+(c.documento||"")).toLowerCase();if(BUSCA&&!t.includes(BUSCA.toLowerCase()))return false;
+    if(FILTRO==="ativas")return situacao(c)[1]!=="bad";if(FILTRO==="vencendo")return c.ativo&&dias(c.validade)!=null&&dias(c.validade)>=0&&dias(c.validade)<=30;if(FILTRO==="vencidas")return situacao(c)[1]==="bad";return true};
+  const lst=ls.filter(flt).sort((a,b)=>(a[1].validade||"9").localeCompare(b[1].validade||"9"));
+  $("m").innerHTML='<div class="kpis">'+K.map(([k,l,v])=>'<div class="kpi'+(FILTRO===k&&k!=="mrr"?" on":"")+'" onclick="'+(k==="mrr"?"":"FILTRO=\''+k+'\';render()")+'"><div class="l">'+l+'</div><div class="v">'+v+'</div></div>').join("")+'</div>'+
+    '<div class="card"><div class="row" style="margin-bottom:10px"><h3 style="margin:0;flex:1">Licenças</h3><input class="inp" style="max-width:260px" placeholder="Buscar cliente, e-mail, CPF/CNPJ…" value="'+esc(BUSCA)+'" oninput="BUSCA=this.value;clearTimeout(window._b);window._b=setTimeout(()=>{render();const i=document.querySelector(\'.card input\');i.focus();i.setSelectionRange(i.value.length,i.value.length)},250)"><button class="btn btn-g" onclick="novaVenda()">+ Nova venda</button></div>'+
+    (lst.length?'<div class="tw"><table><thead><tr><th>Cliente</th><th class="hide-m">Contato</th><th>Plano</th><th class="num hide-m">Valor</th><th>Validade</th><th>Situação</th><th class="num hide-m">Logins</th><th class="hide-m">Último acesso</th></tr></thead><tbody>'+
+      lst.map(([id,c])=>{const[st,cl]=situacao(c);const nl=Object.keys(EQ[id]||{}).length;const ua=ultimoAcesso(id);return'<tr class="cl" onclick="abrirLicenca(\''+id+'\')"><td><b>'+esc(c.nome)+'</b><div class="tiny muted">'+esc(c.responsavel||"")+'</div></td><td class="small hide-m">'+esc(c.email||"")+'<div class="tiny muted">'+esc(c.telefone||"")+'</div></td><td>'+esc(c.plano||"")+'</td><td class="num hide-m">'+(c.valor?"R$ "+f(+c.valor):"—")+'</td><td>'+fData(c.validade)+'</td><td><span class="chip '+cl+'">'+st+'</span></td><td class="num hide-m">'+nl+(c.max_logins?" / "+c.max_logins:"")+'</td><td class="small hide-m">'+(ua?fData(ua):'<span class="muted">nunca</span>')+'</td></tr>'}).join("")+'</tbody></table></div>'
+    :'<div class="empty"><b>'+(ls.length?"Nenhuma licença neste filtro":"Nenhuma licença vendida ainda")+'</b>'+(ls.length?"":"Clique em “Nova venda” para cadastrar o comprador e gerar o acesso.")+'</div>')+'</div>'}
+/* ---------- nova venda ---------- */
+function formLicenca(c,nova){c=c||{};const pl=c.plano||"Anual";
+  return'<div class="grid">'+
+    '<div class="fld"><label>Nome da conta (aparece no topo do formulador e nos relatórios)</label><input class="inp" id="v-nome" value="'+esc(c.nome||"")+'" placeholder="Ex.: Nutri Fulano Consultoria"></div>'+
+    '<div class="fld"><label>Comprador (responsável)</label><input class="inp" id="v-resp" value="'+esc(c.responsavel||"")+'"></div>'+
+    '<div class="fld"><label>CPF ou CNPJ</label><input class="inp" id="v-doc" value="'+esc(c.documento||"")+'"></div>'+
+    '<div class="fld"><label>WhatsApp / telefone</label><input class="inp" id="v-tel" value="'+esc(c.telefone||"")+'" placeholder="(46) 99999-9999"></div>'+
+    (nova?'<div class="fld"><label>E-mail de acesso</label><input class="inp" id="v-email" type="email"></div><div class="fld"><label>Senha inicial</label><input class="inp" id="v-senha" value="'+senhaAleatoria()+'"></div>':'')+
+    '<div class="fld"><label>Plano</label><select class="sel" id="v-plano" onchange="autoValidade()">'+PLANOS.map(([p])=>'<option'+(p===pl?" selected":"")+'>'+p+'</option>').join("")+'</select></div>'+
+    '<div class="fld"><label>Valor do plano (R$)</label><input class="inp" id="v-valor" type="number" step="0.01" value="'+(c.valor!=null?c.valor:"")+'"></div>'+
+    '<div class="fld"><label>Data da venda</label><input class="inp" id="v-venda" type="date" value="'+(c.data_venda||hoje())+'" onchange="autoValidade()"></div>'+
+    '<div class="fld"><label>Válida até</label><input class="inp" id="v-val" type="date" value="'+(c.validade||somaMeses(hoje(),12))+'"></div>'+
+    '<div class="fld"><label>Máximo de logins (vazio = sem limite)</label><input class="inp" id="v-max" type="number" min="1" value="'+(c.max_logins||"")+'"></div>'+
+    '<div class="fld w2"><label>Observações</label><input class="inp" id="v-obs" value="'+esc(c.obs||"")+'"></div></div>'}
+function autoValidade(){const p=PLANOS.find(x=>x[0]===$("v-plano").value);if(p&&$("v-venda"))$("v-val").value=somaMeses($("v-venda").value,p[1])}
+function novaVenda(){abrirModal('<h2>Nova venda</h2><p class="small muted">Cria a conta em branco do comprador e o login dele, como administrador da conta.</p>'+formLicenca({},true)+'<p class="small" id="v-m" style="color:var(--red);margin-top:8px"></p><div class="md-f"><button class="btn btn-o" onclick="fecharModal()">Cancelar</button><button class="btn btn-g" id="v-ok" onclick="salvarVenda()">Criar licença e acesso</button></div>',true)}
+function lerForm(){const g=k=>($("v-"+k)||{}).value;return{nome:(g("nome")||"").trim(),responsavel:(g("resp")||"").trim(),documento:(g("doc")||"").trim(),telefone:(g("tel")||"").trim(),plano:g("plano"),valor:g("valor")?+g("valor"):null,data_venda:g("venda")||null,validade:g("val")||null,max_logins:g("max")?+g("max"):null,obs:(g("obs")||"").trim()}}
+async function criarUsuarioAuth(email,senha){const sec=(firebase.apps||[]).find(a=>a.name==="licencas")||firebase.initializeApp(firebase.app().options,"licencas");const cr=await sec.auth().createUserWithEmailAndPassword(email,senha);const uid=cr.user.uid;try{await sec.auth().signOut()}catch(e){}return uid}
+async function salvarVenda(){const m=t=>{$("v-m").textContent=t};const c=lerForm();const email=($("v-email").value||"").trim().toLowerCase(),senha=$("v-senha").value;
+  if(!c.nome||!c.responsavel){m("Informe o nome da conta e o comprador.");return}if(!email){m("Informe o e-mail de acesso.");return}if(senha.length<6){m("A senha precisa de 6 caracteres ou mais.");return}if(!c.validade){m("Informe a validade.");return}
+  $("v-ok").disabled=true;m("");try{const uid=await criarUsuarioAuth(email,senha);const cid="c"+Date.now().toString(36);const agora=new Date().toISOString();
+    const info=Object.assign({},c,{email,ativo:true,criado_em:agora,criado_por:NOME});Object.keys(info).forEach(k=>{if(info[k]==null||info[k]==="")delete info[k]});
+    const up={};up["contas_info/"+cid]=info;up["contas_info/"+cid+"/historico/"+db.ref().push().key]={data:agora,tipo:"venda",plano:c.plano,valor:c.valor||0,validade:c.validade,por:NOME};
+    up["usuarios/"+uid]={nome:c.responsavel,email,conta:cid,papel:"admin"};up["contas_equipe/"+cid+"/"+uid]={nome:c.responsavel,email,papel:"admin",criado_em:agora,criado_por:NOME};
+    await db.ref().update(up);await carregar();credenciais(c.responsavel,c.telefone,email,senha,"Licença criada")}
+  catch(e){$("v-ok").disabled=false;m("Não criou: "+msgErro(e))}}
+function credenciais(nome,tel,email,senha,tit){const txt="Olá"+(nome?", "+nome.split(" ")[0]:"")+"! Seu acesso ao formulador está pronto.\n\nEndereço: "+URL_FORMULADOR+"\nE-mail: "+email+"\nSenha: "+senha+"\n\nNo primeiro acesso, troque a senha em “Minha senha”.";
+  const fone=String(tel||"").replace(/\D/g,"");const wa="https://wa.me/"+(fone?(fone.length<=11?"55":"")+fone:"")+"?text="+encodeURIComponent(txt);
+  abrirModal('<h2>'+esc(tit)+'</h2><p class="small muted">Mande para o comprador:</p><div class="cred" id="cred">'+esc(txt)+'</div><div class="md-f"><button class="btn btn-o" onclick="navigator.clipboard&&navigator.clipboard.writeText($(\'cred\').innerText).then(()=>toast(\'Copiado\'))">Copiar</button><a class="btn btn-o" href="'+esc(wa)+'" target="_blank" rel="noopener" style="text-decoration:none">Enviar pelo WhatsApp</a><button class="btn btn-g" onclick="fecharModal()">Ok</button></div>')}
+/* ---------- detalhe da licença ---------- */
+function abrirLicenca(id){const c=LIC[id];if(!c)return;const[st,cl]=situacao(c);const eq=Object.entries(EQ[id]||{}).sort((a,b)=>(a[1].nome||"").localeCompare(b[1].nome||""));const hs=Object.values(c.historico||{}).sort((a,b)=>(b.data||"").localeCompare(a.data||""));
+  abrirModal('<div class="row"><h2 style="flex:1;margin:0">'+esc(c.nome)+'</h2><span class="chip '+cl+'">'+st+'</span></div><p class="small muted">Vendida em '+fData(c.data_venda||c.criado_em)+' · '+esc(c.plano||"")+(c.valor?' · R$ '+f(+c.valor):'')+' · válida até <b>'+fData(c.validade)+'</b></p>'+
+    '<div class="sec">Renovar</div><div class="row">'+PLANOS.filter(p=>p[0]!=="Cortesia").map(([p,mm])=>'<button class="btn btn-o btn-sm" onclick="renovar(\''+id+'\',\''+p+'\','+mm+')">+ '+p+'</button>').join("")+
+    '<button class="btn btn-sm '+(c.ativo?"btn-r":"btn-g")+'" style="margin-left:auto" onclick="ativar(\''+id+'\','+(!c.ativo)+')">'+(c.ativo?"Suspender acesso":"Reativar acesso")+'</button></div>'+
+    '<div class="sec">Logins ('+eq.length+(c.max_logins?" de "+c.max_logins:"")+')</div><div class="tw"><table><thead><tr><th>Nome</th><th>E-mail</th><th>Perfil</th><th>Último acesso</th><th></th></tr></thead><tbody>'+
+    (eq.length?eq.map(([uid,u])=>'<tr><td><b>'+esc(u.nome||"")+'</b>'+(u.bloqueado?' <span class="chip bad">bloqueado</span>':'')+'</td><td class="small">'+esc(u.email||"")+'</td><td>'+esc(PAPEIS[u.papel]||u.papel||"")+'</td><td class="small">'+fData((USR[uid]||{}).ultimo_acesso)+'</td>'+
+      '<td style="white-space:nowrap;text-align:right"><button class="btn btn-o btn-sm" onclick="resetSenha(\''+esc(u.email||"")+'\')">Redefinir senha</button> <button class="btn btn-sm '+(u.bloqueado?"btn-o":"btn-r")+'" onclick="bloquear(\''+id+'\',\''+uid+'\','+(!u.bloqueado)+')">'+(u.bloqueado?"Desbloquear":"Bloquear")+'</button></td></tr>').join(""):'<tr><td colspan="5" class="muted">Nenhum login.</td></tr>')+
+    '</tbody></table></div><div class="row" style="margin-top:8px"><button class="btn btn-o btn-sm" onclick="novoLogin(\''+id+'\')">+ Novo login nesta conta</button></div>'+
+    '<div class="sec">Dados do cliente</div>'+formLicenca(c,false)+'<div class="row" style="margin-top:8px;justify-content:flex-end"><button class="btn btn-g btn-sm" onclick="salvarDados(\''+id+'\')">Salvar dados</button></div>'+
+    (hs.length?'<div class="sec">Histórico</div><table><tbody>'+hs.map(h=>'<tr><td class="small">'+fData(h.data)+'</td><td class="small">'+esc(h.tipo==="venda"?"Venda":h.tipo==="renovacao"?"Renovação":h.tipo==="suspensao"?"Suspensa":h.tipo==="reativacao"?"Reativada":h.tipo)+(h.plano?" · "+esc(h.plano):"")+'</td><td class="small num">'+(h.valor?"R$ "+f(+h.valor):"")+'</td><td class="small">'+(h.validade?"até "+fData(h.validade):"")+'</td><td class="tiny muted">'+esc(h.por||"")+'</td></tr>').join("")+'</tbody></table>':'')+
+    '<div class="md-f"><button class="btn btn-o" onclick="fecharModal()">Fechar</button></div>',true)}
+async function renovar(id,plano,m){const c=LIC[id];const base=c.validade&&c.validade>hoje()?c.validade:hoje();const nova=somaMeses(base,m);const v=prompt("Valor recebido pela renovação "+plano+" (R$):",c.plano===plano&&c.valor?c.valor:"");if(v===null)return;
+  const up={validade:nova,plano,ativo:true};if(v!=="")up.valor=+String(v).replace(",",".");up["historico/"+db.ref().push().key]={data:new Date().toISOString(),tipo:"renovacao",plano,valor:v!==""?+String(v).replace(",","."):0,validade:nova,por:NOME};
+  await db.ref("contas_info/"+id).update(up);toast("Renovada até "+fData(nova));await carregar();abrirLicenca(id)}
+async function ativar(id,on){if(!on&&!confirm("Suspender o acesso de "+LIC[id].nome+"? Ninguém da conta consegue entrar até reativar. Os dados ficam guardados."))return;
+  await db.ref("contas_info/"+id).update({ativo:!!on,["historico/"+db.ref().push().key]:{data:new Date().toISOString(),tipo:on?"reativacao":"suspensao",por:NOME}});toast(on?"Acesso reativado":"Acesso suspenso");await carregar();abrirLicenca(id)}
+async function salvarDados(id){const c=lerForm();if(!c.nome){toast("Informe o nome da conta",true);return}const up={};Object.entries(c).forEach(([k,v])=>up[k]=v===""?null:v);await db.ref("contas_info/"+id).update(up);toast("Dados salvos");await carregar();abrirLicenca(id)}
+function novoLogin(id){const c=LIC[id];const n=Object.keys(EQ[id]||{}).length;if(c.max_logins&&n>=c.max_logins&&!confirm("Esta licença já tem "+n+" de "+c.max_logins+" logins. Criar mesmo assim?"))return;
+  abrirModal('<h2>Novo login — '+esc(c.nome)+'</h2><div class="grid"><div class="fld"><label>Nome</label><input class="inp" id="n-nome"></div><div class="fld"><label>E-mail</label><input class="inp" id="n-email" type="email"></div><div class="fld"><label>Senha inicial</label><input class="inp" id="n-senha" value="'+senhaAleatoria()+'"></div><div class="fld"><label>Perfil</label><select class="sel" id="n-papel">'+Object.entries(PAPEIS).map(([k,l])=>'<option value="'+k+'"'+(k==="tecnico"?" selected":"")+'>'+l+'</option>').join("")+'</select></div></div><p class="small" id="n-m" style="color:var(--red);margin-top:8px"></p><div class="md-f"><button class="btn btn-o" onclick="abrirLicenca(\''+id+'\')">Voltar</button><button class="btn btn-g" onclick="criarLogin(\''+id+'\')">Criar login</button></div>')}
+async function criarLogin(id){const nome=$("n-nome").value.trim(),email=$("n-email").value.trim().toLowerCase(),senha=$("n-senha").value,papel=$("n-papel").value;const m=t=>{$("n-m").textContent=t};
+  if(!nome||!email){m("Informe nome e e-mail.");return}if(senha.length<6){m("A senha precisa de 6 caracteres ou mais.");return}
+  try{const uid=await criarUsuarioAuth(email,senha);const agora=new Date().toISOString();const up={};up["usuarios/"+uid]={nome,email,conta:id,papel};up["contas_equipe/"+id+"/"+uid]={nome,email,papel,criado_em:agora,criado_por:NOME};await db.ref().update(up);await carregar();credenciais(nome,"",email,senha,"Login criado")}
+  catch(e){m("Não criou: "+msgErro(e))}}
+function resetSenha(email){auth.sendPasswordResetEmail(email).then(()=>toast("E-mail de nova senha enviado para "+email)).catch(e=>toast("Não enviou: "+msgErro(e),true))}
+async function bloquear(id,uid,b){const up={};up["usuarios/"+uid+"/bloqueado"]=b||null;up["contas_equipe/"+id+"/"+uid+"/bloqueado"]=b||null;await db.ref().update(up);toast(b?"Login bloqueado":"Login liberado");await carregar();abrirLicenca(id)}
+</script>
+</body>
+</html>
