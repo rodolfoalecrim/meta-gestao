@@ -194,6 +194,8 @@ table.aat th.grpc{text-align:center;background:#fdf2f2;color:#b42318;border-bott
 .fx-nut .rs input.inp[id^=rs-mn]:hover,.fx-nut .rs input.inp[id^=rs-mx]:hover{border-color:var(--line);background:#fff}
 .fx-nut .rs input.inp[id^=rs-mn]:focus,.fx-nut .rs input.inp[id^=rs-mx]:focus{border-color:var(--G);background:#fff;color:var(--text)}
 .fx table.ing .inp.q.ms{background:#f4f8ff;border-color:#c9d8f0;font-weight:600;width:64px}
+.fx table.ing tfoot .inp.q.tot{font-weight:800;border-color:#94a3b8;background:#fff}
+.fx-nut .rs input.exg{font-style:italic;color:#0b5d3b}
 .cmsctl{display:flex;flex-wrap:wrap;gap:6px 10px;align-items:center;margin:0 0 8px;padding:6px 8px;background:#f8fafc;border:1px solid var(--line);border-radius:8px}.cmsctl .sel{font-size:12.5px;padding:3px 6px}.cmsctl .inp{padding:3px 5px}
 .ribbon .rb.pri2{background:var(--GL);color:var(--GD)}.ribbon .rb.pri2:hover{background:#dcfce7}
 .antag{font-size:12.5px;color:var(--muted);font-weight:500;margin-left:6px}
@@ -358,7 +360,7 @@ function div(a,b){return b?a/b:NaN}
 
 /* entrada: an = dados do animal; itens = [{a:alimento, kg:kg MN/vaca/dia}] */
 function calcDieta(an,itens){
-  const pv=+an.pv,leite=+an.leite,leiteDP=an.leiteDP!=null?+an.leiteDP:leite+(+an.dp||0),gord=+an.gord,prot=+an.prot,lact=+an.lact,par=+an.par,del=+an.del,ecc=+an.ecc,dfdn48=+an.dfdn48;
+  const pv=+an.pv,leite=+an.leite,leiteDP=an.leiteDP!=null?+an.leiteDP:leite+(+an.dp||0),gord=+an.gord,prot=+an.prot,lact=+an.lact,par=+an.par,del=+an.del,ecc=+an.ecc;let dfdn48=+an.dfdn48;
   const sem=del/7; /* H5 */
   const it=itens.filter(x=>x&&x.a).map(x=>({a:x.a,kg:Math.max(0,+x.kg||0)}));
   /* kp (E109–E111) — usam kg de MATÉRIA NATURAL de volumoso e concentrado, como na planilha */
@@ -377,7 +379,7 @@ function calcDieta(an,itens){
     /* vitamina suplementar = premix/mineral (categoria P) ou a parte de premix dentro de um mix */
     ["vita","vitd","vite"].forEach(k=>o[k+"S"]=g*(a.cat==="P"?(+a[k]||0):(+a[k+"Sup"]||0)));
     /* amido fermentável (lógica CNCPS): kd de cada alimento × taxa de passagem (forragem ou concentrado) */
-    o.kdAm=+a.kdAm||0;o.kdPad=false;if(!(o.kdAm>0)&&(+a.amido||0)>0){o.kdAm=kdPadrao(a);o.kdPad=true}
+    o.dfdn48=+a.dfdn48||0;o.kdAm=+a.kdAm||0;o.kdPad=false;if(!(o.kdAm>0)&&(+a.amido||0)>0){o.kdAm=kdPadrao(a);o.kdPad=true}
     o.mo=g*(+a.mo||0);o.psol=o.pb*(+a.psol||0);o.nnp=o.pb*(+a.nnp||0);
     /* AA digestível da PNDR (NASEM 2021): PNDR digestível × AA % PB ÷ fator de recuperação da hidrólise */
     AAN.forEach((k,j)=>o["aa_"+k]=o.dpndr*1000*(+a[k]||0)*AAN_REC[j]);o.semAA=(o.pndr>0.0005&&!(+a.lis>0))?o.pndr:0;
@@ -387,6 +389,9 @@ function calcDieta(an,itens){
     return o});
   const T={};NUTR_SOMA.concat(["kg","custo","mn8kg","mn19kg"]).forEach(k=>T[k]=lin.reduce((s,o)=>s+nz(o[k]),0));
   const cms=T.ms,cmn=T.kg;lin.forEach(o=>o.pMS=div(o.ms,cms));
+  /* dFDN 48 h da forragem: média das forragens da dieta ponderada pela FDN (valores de laudo quando o alimento vem da bromatologia) */
+  const dfF=(()=>{let w=0,sx=0;lin.forEach(o=>{if((o.cat==="F"||o.cat==="SM")&&o.dfdn48>0&&o.fdn>0){w+=o.fdn;sx+=o.fdn*o.dfdn48}});return w>0?sx/w*100:null})();
+  const dfdnAuto=an.dfdnAuto!==0&&an.dfdnAuto!=="0"&&dfF!=null;if(dfdnAuto)dfdn48=dfF;
   const D={};NUTR_SOMA.forEach(k=>D[k]=div(T[k],cms));          /* linha 104 (fração da MS; traço em mg/kg) */
   const grp=c=>{const l=lin.filter(o=>c.includes(o.cat));return{mn:l.reduce((s,o)=>s+o.kg,0),ms:l.reduce((s,o)=>s+o.ms,0),pMS:l.reduce((s,o)=>s+nz(o.pMS),0),custo:l.reduce((s,o)=>s+o.custo,0)}};
   const vol=grp(["F","SM"]),conc=grp(["C","P"]),prem=grp(["P"]);
@@ -485,7 +490,7 @@ function calcDieta(an,itens){
         const req=AAN_EFF[j]?(mlk+scrf+fe)/AAN_EFF[j]+ur+gest/0.33+body/kg:null;return{k,mic,rup,abs,req,bal:req!=null?abs-req:null,pct:req?abs/req*100:null,pm:div(abs,pmSup)*100,gMcal:abs/(T.ed*0.82),eff:AAN_EFF[j],uso:{mlk,scrf,fe,ur,gest,body}}});
       const g=k=>rows.find(r=>r.k===k);return{rows,lisMet:div(g("lis").abs,g("met").abs),semAA:T.semAA||0}})();
   const aaR=k=>aaN.rows.find(r=>r.k===k),aaPM=k=>aaR(k).pm;
-  return{an,lin,T,D,cms,cmn,msDieta:div(cms,cmn),cmsPV:div(cms,pv),vol,conc,prem,kp:{kF,kC,kL},prev,
+  return{dfdn:{v:dfdn48,auto:dfdnAuto,forragens:dfF},an,lin,T,D,cms,cmn,msDieta:div(cms,cmn),cmsPV:div(cms,pv),vol,conc,prem,kp:{kF,kC,kL},prev,
     leite:{lce,kgGord:leite*gord/100,kgProt:leite*prot/100,kgLact:leite*lact/100,kgProtV,leiteDP},
     amido:{digTot:digAmTot,fezes:amFez,rumKd:amRumKd,intKd:amIntKd,rumN:amRumN,intN:amIntN,digN:amRumN+amIntN,digKd:amRumKd+amIntKd},
     fdnDR,fdn8AmDR:div(D.fdn8,D.amidoDR),
@@ -624,7 +629,7 @@ const RESTR=[
   {id:"balPDR",n:"Balanço de PDR no rúmen",u:"g/d",f:R=>R.pm.balPDR*1000,esc:50,dec:0},
   {id:"co",n:"Co",u:"mg/kg MS",f:R=>R.D.co,esc:0.1,dec:2},{id:"cu",n:"Cu",u:"mg/kg MS",f:R=>R.D.cu,esc:2,dec:1},{id:"mn",n:"Mn",u:"mg/kg MS",f:R=>R.D.mn,esc:5,dec:1},{id:"zn",n:"Zn",u:"mg/kg MS",f:R=>R.D.zn,esc:10,dec:1},{id:"se",n:"Se",u:"mg/kg MS",f:R=>R.D.se,esc:0.1,dec:2},{id:"i",n:"I",u:"mg/kg MS",f:R=>R.D.i,esc:0.1,dec:2},
   {id:"vitAPct",n:"Vitamina A (% exigência)",u:"%",f:R=>R.vit.aPct,esc:20,dec:0},{id:"vitDPct",n:"Vitamina D (% exigência)",u:"%",f:R=>R.vit.dPct,esc:20,dec:0},{id:"vitEPct",n:"Vitamina E (% exigência)",u:"%",f:R=>R.vit.ePct,esc:20,dec:0},
-  {id:"vitA",n:"Vitamina A",u:"mil UI/d",f:R=>R.vit.a/1000,esc:20,dec:0},{id:"vitD",n:"Vitamina D",u:"mil UI/d",f:R=>R.vit.d/1000,esc:5,dec:1},{id:"vitE",n:"Vitamina E",u:"UI/d",f:R=>R.vit.e,esc:100,dec:0},
+  {id:"vitA",n:"Vitamina A",u:"mil UI/d",f:R=>(R.an.vitTotal?R.vit.a:R.vit.aS)/1000,req:R=>R.vitReq.vita/1000,esc:20,dec:1},{id:"vitD",n:"Vitamina D",u:"mil UI/d",f:R=>(R.an.vitTotal?R.vit.d:R.vit.dS)/1000,req:R=>R.vitReq.vitd/1000,esc:5,dec:1},{id:"vitE",n:"Vitamina E",u:"UI/d",f:R=>R.an.vitTotal?R.vit.e:R.vit.eS,req:R=>R.vitReq.vite,esc:100,dec:0},
   {id:"monensina",n:"Monensina",u:"mg/d",f:R=>R.adit.monensina,esc:50,dec:0},{id:"monKg",n:"Monensina",u:"mg/kg MS",f:R=>R.adit.monKg,esc:2,dec:1},{id:"biotina",n:"Biotina",u:"mg/d",f:R=>R.adit.biotina,esc:5,dec:1},
   {id:"nh3Pct",n:"Amônia ruminal (% exigida)",u:"%",f:R=>R.nh3.pct,esc:20,dec:0},
   {id:"nh3Bal",n:"Balanço de N amoniacal no rúmen",u:"g N/d",f:R=>R.nh3.bal,esc:20,dec:0},
@@ -675,10 +680,10 @@ function restricoesUFLA(an){const t=an.tipo||"lact";if(an.posParto)return amtsPo
 function restricoesPre(an){return[
   {id:"cms",on:true,alvo:"nrcSeca"},{id:"elBal",on:true,min:0},{id:"el",on:true,min:1.35,max:1.50},{id:"pmBal",on:true,min:0},{id:"pmSup",on:false,min:1100},
   {id:"pb",on:true,min:12,max:15},{id:"dcad",on:true,min:-150,max:-50},{id:"ca",on:false,min:1.0,max:1.5},{id:"p",on:true,min:0.30,max:0.40},{id:"mg",on:true,min:0.40},
-  {id:"k",on:false,max:1.3},{id:"s",on:false,min:0.35,max:0.45},{id:"fdn",on:false,min:35},{id:"amido",on:false,max:20},{id:"vol",on:false,min:60},{id:"msDieta",on:false,min:40,max:55},{id:"co",on:false,min:0.2,max:5},{id:"cu",on:false,min:17,max:40},{id:"mn",on:false,min:40,max:150},{id:"zn",on:false,min:28,max:280},{id:"se",on:false,min:0.3,max:0.5},{id:"i",on:false,min:0.5,max:1},{id:"fe",on:false,min:15,max:500},{id:"vitAPct",on:false,min:100},{id:"vitDPct",on:false,min:100},{id:"vitEPct",on:false,min:100},{id:"monensina",on:false,min:185,max:660},{id:"biotina",on:false,min:20},{id:"nh3Pct",on:false,min:100,max:200},{id:"colina",on:false,min:12.9,max:25}]}
+  {id:"k",on:false,max:1.3},{id:"s",on:false,min:0.35,max:0.45},{id:"fdn",on:false,min:35},{id:"amido",on:false,max:20},{id:"vol",on:false,min:60},{id:"msDieta",on:false,min:40,max:55},{id:"co",on:false,min:0.2,max:5},{id:"cu",on:false,min:17,max:40},{id:"mn",on:false,min:40,max:150},{id:"zn",on:false,min:28,max:280},{id:"se",on:false,min:0.3,max:0.5},{id:"i",on:false,min:0.5,max:1},{id:"fe",on:false,min:15,max:500},{id:"vitA",on:false,exig:1},{id:"vitD",on:false,exig:1},{id:"vitE",on:false,exig:1},{id:"monensina",on:false,min:185,max:660},{id:"biotina",on:false,min:20},{id:"nh3Pct",on:false,min:100,max:200},{id:"colina",on:false,min:12.9,max:25}]}
 function restricoesSeca(an){return[
   {id:"cms",on:true,alvo:"nrcSeca"},{id:"elBal",on:true,min:0},{id:"el",on:true,max:1.35},{id:"pmBal",on:true,min:0},
-  {id:"pb",on:true,min:11,max:13},{id:"ca",on:false,min:0.4,max:0.6},{id:"p",on:false,min:0.25,max:0.35},{id:"mg",on:false,min:0.25},{id:"k",on:false,max:1.5},{id:"vol",on:false,min:70},{id:"amido",on:false,max:15},{id:"co",on:false,min:0.2,max:5},{id:"cu",on:false,min:17,max:40},{id:"mn",on:false,min:40,max:150},{id:"zn",on:false,min:28,max:280},{id:"se",on:false,min:0.3,max:0.5},{id:"i",on:false,min:0.5,max:1},{id:"fe",on:false,min:15,max:500},{id:"vitAPct",on:false,min:100},{id:"vitDPct",on:false,min:100},{id:"vitEPct",on:false,min:100},{id:"monensina",on:false,min:185,max:660},{id:"biotina",on:false,min:20},{id:"nh3Pct",on:false,min:100,max:200}]}
+  {id:"pb",on:true,min:11,max:13},{id:"ca",on:false,min:0.4,max:0.6},{id:"p",on:false,min:0.25,max:0.35},{id:"mg",on:false,min:0.25},{id:"k",on:false,max:1.5},{id:"vol",on:false,min:70},{id:"amido",on:false,max:15},{id:"co",on:false,min:0.2,max:5},{id:"cu",on:false,min:17,max:40},{id:"mn",on:false,min:40,max:150},{id:"zn",on:false,min:28,max:280},{id:"se",on:false,min:0.3,max:0.5},{id:"i",on:false,min:0.5,max:1},{id:"fe",on:false,min:15,max:500},{id:"vitA",on:false,exig:1},{id:"vitD",on:false,exig:1},{id:"vitE",on:false,exig:1},{id:"monensina",on:false,min:185,max:660},{id:"biotina",on:false,min:20},{id:"nh3Pct",on:false,min:100,max:200}]}
 /* fases da engorda (dairy beef): referências usuais de confinamento por peso */
 function faseEngorda(pv){pv=+pv||0;return pv<250?{n:"Crescimento (até 250 kg)",pb:[15,16.5],em:[2.55,2.75],gmd:[1.1,1.3]}:pv<450?{n:"Recria intensiva / adaptação (250–450 kg)",pb:[13.5,15],em:[2.65,2.85],gmd:[1.3,1.5]}:{n:"Terminação (acima de 450 kg)",pb:[12.5,13.5],em:[2.8,3.05],gmd:[1.3,1.6]}}
 function amtsEngorda(an){const fz=faseEngorda(an.pv),g=+an.gmd||fz.gmd[0];return[
@@ -688,13 +693,13 @@ function amtsEngorda(an){const fz=faseEngorda(an.pv),g=+an.gmd||fz.gmd[0];return
   {id:"fdnf",on:true,min:8,max:null},{id:"fdn",on:false,min:18,max:35},{id:"fdn8",on:false,min:10,max:null},{id:"amido",on:true,min:null,max:50},{id:"ag",on:true,min:null,max:6},
   {id:"ca",on:false,min:0.5,max:0.8},{id:"p",on:false,min:0.25,max:0.40},{id:"k",on:false,min:0.6,max:1.2},{id:"mg",on:false,min:0.15,max:0.30},{id:"s",on:false,min:0.15,max:0.30},{id:"na",on:false,min:0.1,max:0.25},
   {id:"co",on:false,min:0.15,max:5},{id:"cu",on:false,min:10,max:40},{id:"mn",on:false,min:20,max:150},{id:"zn",on:false,min:30,max:280},{id:"se",on:false,min:0.1,max:0.5},{id:"i",on:false,min:0.5,max:1},{id:"fe",on:false,min:15,max:500},
-  {id:"vitAPct",on:false,min:100},{id:"vitDPct",on:false,min:100},{id:"vitEPct",on:false,min:100},{id:"monensina",on:false,min:50,max:480},{id:"monKg",on:false,min:11,max:33}]}
+  {id:"vitA",on:false,exig:1},{id:"vitD",on:false,exig:1},{id:"vitE",on:false,exig:1},{id:"monensina",on:false,min:50,max:480},{id:"monKg",on:false,min:11,max:33}]}
 /* fases da recria (tabela de referência: PB e EM por peso) */
 function faseRecria(pv){pv=+pv||0;return pv<150?{n:"Desmama a 3 meses",pb:[18,20],em:[2.65,2.75],gmd:[0.8,0.9]}:pv<330?{n:"Fase intermediária (4–12 meses)",pb:[15,16.5],em:[2.45,2.55],gmd:[0.75,0.85]}:{n:"Pré-cobertura / gestação",pb:[13.5,14.5],em:[2.35,2.45],gmd:[0.7,0.75]}}
 function restricoesRecria(an){const fz=faseRecria(an.pv),g=+an.gmd||fz.gmd[0];return[
   {id:"cms",on:true,alvo:"nrcNov",modo:"max"},{id:"gmdEM",on:true,min:g,max:+(g*1.1).toFixed(2)},{id:"gmdPM",on:true,min:g},
   {id:"pb",on:true,min:fz.pb[0],max:fz.pb[1]},{id:"em",on:true,min:fz.em[0],max:fz.em[1]},
-  {id:"ca",on:false,min:0.4},{id:"p",on:false,min:0.3},{id:"vol",on:false,min:50},{id:"ag",on:false,max:5},{id:"fdn",on:false,min:30},{id:"co",on:false,min:0.2,max:5},{id:"cu",on:false,min:10,max:40},{id:"mn",on:false,min:20,max:150},{id:"zn",on:false,min:30,max:280},{id:"se",on:false,min:0.3,max:0.5},{id:"i",on:false,min:0.3,max:1},{id:"fe",on:false,min:15,max:500},{id:"vitAPct",on:false,min:100},{id:"vitDPct",on:false,min:100},{id:"vitEPct",on:false,min:100},{id:"monensina",on:false,min:50,max:200},{id:"biotina",on:false,min:10},{id:"nh3Pct",on:false,min:100,max:200}]}
+  {id:"ca",on:false,min:0.4},{id:"p",on:false,min:0.3},{id:"vol",on:false,min:50},{id:"ag",on:false,max:5},{id:"fdn",on:false,min:30},{id:"co",on:false,min:0.2,max:5},{id:"cu",on:false,min:10,max:40},{id:"mn",on:false,min:20,max:150},{id:"zn",on:false,min:30,max:280},{id:"se",on:false,min:0.3,max:0.5},{id:"i",on:false,min:0.3,max:1},{id:"fe",on:false,min:15,max:500},{id:"vitA",on:false,exig:1},{id:"vitD",on:false,exig:1},{id:"vitE",on:false,exig:1},{id:"monensina",on:false,min:50,max:200},{id:"biotina",on:false,min:10},{id:"nh3Pct",on:false,min:100,max:200}]}
 function restricoesLact(an){return[
   {id:"cms",on:true,alvo:"nasem1"},
   {id:"pb",on:true,min:15,max:18},{id:"pdr",on:true,min:10,max:12},
@@ -703,7 +708,7 @@ function restricoesLact(an){return[
   {id:"leitePM",on:true,min:+an.leite||0},{id:"leiteEL",on:true,min:+an.leite||0},
   {id:"ca",on:true,min:0.65,max:0.8},{id:"p",on:true,min:0.35,max:0.4},
   {id:"msDieta",on:false,min:45,max:55},{id:"fdnf",on:false,min:15,max:19},{id:"amidoFerm",on:false,min:18,max:22},{id:"amidoFermPct",on:false,min:20,max:70},{id:"acucar",on:false,min:4,max:8},{id:"fdnfPVm",on:false,min:null,max:1.0},{id:"fdnPV",on:false,min:null,max:1.2},{id:"amidoDR",on:false,min:15},
-  {id:"mg",on:false,min:0.2,max:0.4},{id:"k",on:false,min:0.95,max:1.5},{id:"na",on:false,min:0.2,max:0.25},{id:"dcad",on:false,min:200},{id:"co",on:false,min:0.2,max:5},{id:"cu",on:false,min:11,max:40},{id:"mn",on:false,min:28,max:150},{id:"zn",on:false,min:55,max:280},{id:"se",on:false,min:0.3,max:0.5},{id:"i",on:false,min:0.5,max:1},{id:"fe",on:false,min:15,max:500},{id:"vitAPct",on:false,min:100},{id:"vitDPct",on:false,min:100},{id:"vitEPct",on:false,min:100},{id:"monensina",on:false,min:185,max:660},{id:"monKg",on:false,min:11,max:22},{id:"biotina",on:false,min:20},{id:"nh3Pct",on:false,min:100,max:200},{id:"colina",on:false,min:12.9,max:25}]}
+  {id:"mg",on:false,min:0.2,max:0.4},{id:"k",on:false,min:0.95,max:1.5},{id:"na",on:false,min:0.2,max:0.25},{id:"dcad",on:false,min:200},{id:"co",on:false,min:0.2,max:5},{id:"cu",on:false,min:11,max:40},{id:"mn",on:false,min:28,max:150},{id:"zn",on:false,min:55,max:280},{id:"se",on:false,min:0.3,max:0.5},{id:"i",on:false,min:0.5,max:1},{id:"fe",on:false,min:15,max:500},{id:"vitA",on:false,exig:1},{id:"vitD",on:false,exig:1},{id:"vitE",on:false,exig:1},{id:"monensina",on:false,min:185,max:660},{id:"monKg",on:false,min:11,max:22},{id:"biotina",on:false,min:20},{id:"nh3Pct",on:false,min:100,max:200},{id:"colina",on:false,min:12.9,max:25}]}
 
 /* modelo AMTS: limites como no quadro "Dados da dieta" do AMTS (on = "No otim.") */
 function restricoesAMTS(an){const t=an.tipo||"lact";if(an.posParto)return amtsPos(an);if(an.engorda)return amtsEngorda(an);return t==="pre"?amtsPre(an):t==="seca"?amtsSeca(an):t==="recria"?amtsRecria(an):amtsLact(an)}
@@ -715,21 +720,21 @@ function amtsPre(an){return[
   {id:"metPM",on:true,min:2.2,max:2.4},{id:"lisPM",on:true,min:6.6,max:7.6},{id:"lisMet",on:false,min:2.67,max:2.90},{id:"metEM",on:false,min:1.00,max:1.15},
   {id:"fdn",on:false,min:45,max:60},{id:"fdnPV",on:false,min:0.6,max:1.2},{id:"fdn8",on:true,min:22,max:100},{id:"cnf",on:true,min:28,max:32},{id:"amido",on:false,min:15,max:20},{id:"ag",on:true,min:3.5,max:4.0},
   {id:"dcad",on:true,min:-250,max:-50},{id:"caG",on:true,min:0,max:60},{id:"ca",on:false,min:0.39,max:0.60},{id:"p",on:false,min:0.20,max:0.30},{id:"k",on:false,min:0.70,max:0.80},{id:"mg",on:true,min:0.40,max:0.45},
-  {id:"co",on:false,min:0.2,max:5},{id:"cu",on:false,min:17,max:40},{id:"mn",on:false,min:40,max:150},{id:"zn",on:false,min:28,max:280},{id:"se",on:false,min:0.3,max:0.5},{id:"i",on:false,min:0.5,max:1},{id:"fe",on:false,min:15,max:500},{id:"vitAPct",on:false,min:100},{id:"vitDPct",on:false,min:100},{id:"vitEPct",on:false,min:100},{id:"monensina",on:false,min:185,max:660},{id:"biotina",on:false,min:20},{id:"colina",on:false,min:12.9,max:25}]}
+  {id:"co",on:false,min:0.2,max:5},{id:"cu",on:false,min:17,max:40},{id:"mn",on:false,min:40,max:150},{id:"zn",on:false,min:28,max:280},{id:"se",on:false,min:0.3,max:0.5},{id:"i",on:false,min:0.5,max:1},{id:"fe",on:false,min:15,max:500},{id:"vitA",on:false,exig:1},{id:"vitD",on:false,exig:1},{id:"vitE",on:false,exig:1},{id:"monensina",on:false,min:185,max:660},{id:"biotina",on:false,min:20},{id:"colina",on:false,min:12.9,max:25}]}
 function amtsSeca(an){return[
   {id:"cms",on:true,alvo:"nrcSeca"},{id:"custo",on:false,min:0,max:1000},{id:"msDieta",on:false,min:40,max:55},
   {id:"elPct",on:true,min:99,max:115},{id:"pmPct",on:true,min:100,max:120},{id:"el",on:false,min:1.25,max:1.40},
   {id:"pb",on:false,min:12,max:14},{id:"pdr",on:false,min:9,max:11},{id:"nh3Pct",on:true,min:100,max:200},
   {id:"fdn",on:false,min:45,max:60},{id:"fdnPV",on:false,min:0.6,max:1.2},{id:"fdn8",on:false,min:25,max:100},{id:"amido",on:false,min:10,max:18},{id:"ag",on:false,min:0,max:4},
   {id:"ca",on:false,min:0.40,max:0.60},{id:"p",on:false,min:0.20,max:0.30},{id:"k",on:false,max:1.5},{id:"mg",on:false,min:0.25,max:0.40},
-  {id:"co",on:false,min:0.2,max:5},{id:"cu",on:false,min:17,max:40},{id:"mn",on:false,min:40,max:150},{id:"zn",on:false,min:28,max:280},{id:"se",on:false,min:0.3,max:0.5},{id:"i",on:false,min:0.5,max:1},{id:"fe",on:false,min:15,max:500},{id:"vitAPct",on:false,min:100},{id:"vitDPct",on:false,min:100},{id:"vitEPct",on:false,min:100},{id:"monensina",on:false,min:185,max:660},{id:"biotina",on:false,min:20}]}
+  {id:"co",on:false,min:0.2,max:5},{id:"cu",on:false,min:17,max:40},{id:"mn",on:false,min:40,max:150},{id:"zn",on:false,min:28,max:280},{id:"se",on:false,min:0.3,max:0.5},{id:"i",on:false,min:0.5,max:1},{id:"fe",on:false,min:15,max:500},{id:"vitA",on:false,exig:1},{id:"vitD",on:false,exig:1},{id:"vitE",on:false,exig:1},{id:"monensina",on:false,min:185,max:660},{id:"biotina",on:false,min:20}]}
 function amtsRecria(an){const fz=faseRecria(an.pv),g=+an.gmd||fz.gmd[0];return[
   {id:"cms",on:true,alvo:"nrcNov",modo:"max"},{id:"custo",on:false,min:0,max:1000},{id:"msDieta",on:false,min:45,max:55},
   {id:"gmdEM",on:true,min:g,max:+(g*1.05).toFixed(2)},{id:"gmdPM",on:true,min:g,max:null},{id:"em",on:false,min:1.95,max:2.35},
   {id:"pb",on:false,min:fz.pb[0],max:fz.pb[1]},{id:"pdr",on:false,min:10,max:12},{id:"nh3Pct",on:true,min:100,max:200},
   {id:"fdn",on:false,min:20,max:35},{id:"fdnPV",on:false,min:0,max:1.2},{id:"fdnfPVm",on:false,min:0,max:1.0},{id:"cnf",on:false,min:22,max:100},{id:"fdn8",on:false,min:20,max:100},{id:"amido",on:false,min:15,max:30},{id:"ag",on:false,min:0,max:4},
   {id:"ca",on:false,min:0.44,max:0.50},{id:"p",on:false,min:0.21,max:0.25},{id:"k",on:false,min:0.55,max:0.65},{id:"mg",on:false,min:0.20,max:0.25},{id:"s",on:false,min:0.20,max:0.25},{id:"na",on:false,min:0.15,max:0.20},{id:"cl",on:false,min:0.13,max:0.15},
-  {id:"co",on:false,min:0.2,max:5},{id:"cu",on:false,min:10,max:40},{id:"mn",on:false,min:20,max:150},{id:"zn",on:false,min:30,max:280},{id:"se",on:false,min:0.3,max:0.5},{id:"i",on:false,min:0.3,max:1},{id:"fe",on:false,min:15,max:500},{id:"vitAPct",on:false,min:100},{id:"vitDPct",on:false,min:100},{id:"vitEPct",on:false,min:100},{id:"monensina",on:false,min:50,max:200},{id:"biotina",on:false,min:10}]}
+  {id:"co",on:false,min:0.2,max:5},{id:"cu",on:false,min:10,max:40},{id:"mn",on:false,min:20,max:150},{id:"zn",on:false,min:30,max:280},{id:"se",on:false,min:0.3,max:0.5},{id:"i",on:false,min:0.3,max:1},{id:"fe",on:false,min:15,max:500},{id:"vitA",on:false,exig:1},{id:"vitD",on:false,exig:1},{id:"vitE",on:false,exig:1},{id:"monensina",on:false,min:50,max:200},{id:"biotina",on:false,min:10}]}
 /* pós-parto (vacas frescas, 0–21 DEL): exigências de energia, PM, AA, minerais e vitaminas pelo NASEM 2021 (lactação com DEL baixo,
    que já reduz o CMS previsto); limites de fibra, amido e gordura mais conservadores para o rúmen em adaptação */
 function amtsPos(an){const L=+an.leite||0;return[
@@ -742,7 +747,7 @@ function amtsPos(an){const L=+an.leite||0;return[
   {id:"ag",on:true,min:null,max:4.5},{id:"insat",on:true,min:null,max:2.5},
   {id:"ca",on:true,min:0.85,max:1.0},{id:"p",on:true,min:0.38,max:0.42},{id:"mg",on:true,min:0.30,max:0.35},{id:"k",on:false,min:1.2,max:1.6},{id:"na",on:false,min:0.4,max:0.5},{id:"dcad",on:false,min:250},
   {id:"co",on:false,min:0.2,max:5},{id:"cu",on:false,min:11,max:40},{id:"mn",on:false,min:28,max:150},{id:"zn",on:false,min:55,max:280},{id:"se",on:false,min:0.3,max:0.5},{id:"i",on:false,min:0.5,max:1},{id:"fe",on:false,min:15,max:500},
-  {id:"vitAPct",on:true,min:100},{id:"vitDPct",on:true,min:100},{id:"vitEPct",on:true,min:100},
+  {id:"vitA",on:true,exig:1},{id:"vitD",on:true,exig:1},{id:"vitE",on:true,exig:1},
   {id:"colina",on:true,min:12.9,max:25},{id:"monensina",on:false,min:185,max:660},{id:"biotina",on:false,min:20}]}
 function amtsLact(an){const L=+an.leite||0;return[
   {id:"cms",on:true,alvo:"nasem1"},{id:"rmca",on:false,min:0,max:1000},{id:"custo",on:false,min:0,max:1000},{id:"msDieta",on:false,min:null,max:55},
@@ -752,7 +757,7 @@ function amtsLact(an){const L=+an.leite||0;return[
   {id:"fdn",on:false,min:25,max:35},{id:"cnf",on:true,min:35,max:45},{id:"fdn8",on:true,min:22,max:100},{id:"fdnfPVm",on:false,min:0,max:1.0},{id:"fdnPV",on:false,min:0,max:1.2},
   {id:"fdnf",on:false,min:0,max:100},{id:"vol",on:false,min:0,max:100},{id:"amido",on:false,min:0,max:28},{id:"amidoFerm",on:false,min:18,max:20},{id:"amidoFermPct",on:false,min:20,max:70},{id:"acucar",on:false,min:5,max:10},{id:"ag",on:true,min:0,max:5},
   {id:"ca",on:false,min:0.65,max:0.8},{id:"p",on:false,min:0.35,max:0.4},{id:"k",on:false,min:0.95,max:1.5},{id:"mg",on:false,min:0.2,max:0.4},{id:"dcad",on:false,min:200},
-  {id:"co",on:false,min:0.2,max:5},{id:"cu",on:false,min:11,max:40},{id:"mn",on:false,min:28,max:150},{id:"zn",on:false,min:55,max:280},{id:"se",on:false,min:0.3,max:0.5},{id:"i",on:false,min:0.5,max:1},{id:"fe",on:false,min:15,max:500},{id:"vitAPct",on:false,min:100},{id:"vitDPct",on:false,min:100},{id:"vitEPct",on:false,min:100},{id:"monensina",on:false,min:185,max:660},{id:"monKg",on:false,min:11,max:22},{id:"biotina",on:false,min:20},{id:"colina",on:false,min:12.9,max:25}]}
+  {id:"co",on:false,min:0.2,max:5},{id:"cu",on:false,min:11,max:40},{id:"mn",on:false,min:28,max:150},{id:"zn",on:false,min:55,max:280},{id:"se",on:false,min:0.3,max:0.5},{id:"i",on:false,min:0.5,max:1},{id:"fe",on:false,min:15,max:500},{id:"vitA",on:false,exig:1},{id:"vitD",on:false,exig:1},{id:"vitE",on:false,exig:1},{id:"monensina",on:false,min:185,max:660},{id:"monKg",on:false,min:11,max:22},{id:"biotina",on:false,min:20},{id:"colina",on:false,min:12.9,max:25}]}
 
 
 /* alvo de CMS a partir das previsões */
@@ -762,7 +767,9 @@ function cmsAlvo(rc,R){if(rc.alvo==="manual")return+rc.valor||null;const p=R.pre
 /* ---------- formulação ----------
    itens: [{a, kg, min, max, pmin, pmax, fixo}] (kg MN; pmin/pmax em % da MS)
    restr: lista como restricoesPadrao (on, min, max; cms com alvo) */
-function formular(an,itens,restr,opt){opt=opt||{};
+/* restrições antigas de vitamina em % da exigência viram UI/d com o mínimo = exigência × fator */
+function migraRestr(rs){(rs||[]).forEach(r=>{const m=/^vit([ADE])Pct$/.exec(r.id);if(!m)return;r.id="vit"+m[1];r.exig=r.min!=null&&r.min!==""?+r.min/100:1;r.min=null;r.max=null});return rs}
+function formular(an,itens,restr,opt){opt=opt||{};migraRestr(restr);
   const n=itens.length;if(!n)return{status:"vazio"};
   const lb=itens.map(x=>x.fixo?+x.kg||0:Math.max(0,+x.min||0)),ub=itens.map((x,i)=>x.fixo?+x.kg||0:(x.max!=null&&x.max!==""?+x.max:60));
   const cost=itens.map(x=>+x.a.custo||0);
@@ -773,7 +780,9 @@ function formular(an,itens,restr,opt){opt=opt||{};
   const cons=[];
   restr.filter(r=>r.on&&RESTR_BY[r.id]).forEach(r=>{const d=RESTR_BY[r.id];
     if(r.id==="cms"){cons.push({id:"cms",n:d.n,u:d.u,esc:0.2,dec:2,f:R=>R.cms,lo:R=>{if(r.modo==="max")return null;const v=cmsAlvo(r,R);return v==null?null:v-(+r.tol||0)},hi:R=>{const v=cmsAlvo(r,R);return v==null?null:v+(+r.tol||0)}});return}
-    const lo=r.min!=null&&r.min!==""?+r.min:null,hi=r.max!=null&&r.max!==""?+r.max:null;if(lo==null&&hi==null)return;
+    const lo=r.min!=null&&r.min!==""?+r.min:null,hi=r.max!=null&&r.max!==""?+r.max:null;
+    if(lo==null&&d.req&&r.exig){const fx=+r.exig||1;cons.push({id:r.id,n:d.n,u:d.u,esc:d.esc,dec:d.dec,f:d.f,lo:R=>d.req(R)*fx,hi:()=>hi});return}
+    if(lo==null&&hi==null)return;
     cons.push({id:r.id,n:d.n,u:d.u,esc:d.esc,dec:d.dec,f:d.f,lo:()=>lo,hi:()=>hi})});
   /* % da MS por alimento: ms_i − p·CMS ≥ 0 (linear) */
   itens.forEach((it,i)=>{const pm=it.pmin!=null&&it.pmin!==""?+it.pmin/100:null,pM=it.pmax!=null&&it.pmax!==""?+it.pmax/100:null;
@@ -832,7 +841,7 @@ const COMP_INFO={ms:["MS","% MN",1],pb:["PB","% MS",1],pdr:["PDR","% PB",1],pndr
  ed:["ED base","Mcal/kg MS",0],ell:["ELl","Mcal/kg MS",0],ag:["AG (EE)","% MS",1],c160:["C16:0","% AG",1],c180:["C18:0","% AG",1],c181:["C18:1","% AG",1],c182:["C18:2","% AG",1],c183:["C18:3","% AG",1],insat:["AG insaturados","% AG",1],
  cinzas:["Cinzas","% MS",1],ca:["Ca","% MS",1],p:["P","% MS",1],mg:["Mg","% MS",1],k:["K","% MS",1],s:["S","% MS",1],na:["Na","% MS",1],cl:["Cl","% MS",1],
  co:["Co","mg/kg MS",0],cu:["Cu","mg/kg MS",0],mn:["Mn","mg/kg MS",0],zn:["Zn","mg/kg MS",0],se:["Se","mg/kg MS",0],i:["I","mg/kg MS",0],vita:["Vit. A","UI/kg MS",0],vitd:["Vit. D","UI/kg MS",0],biotina:["Biotina","mg/kg MS",0],acucar:["Açúcar","% MS",1],arg:["Arg","% PB",1],phe:["Phe","% PB",1],thr:["Thr","% PB",1],trp:["Trp","% PB",1],val:["Val","% PB",1],mo:["Mo","mg/kg MS",0],lignina:["Lignina","% MS",1],dfdn48:["dFDN 48 h","% FDN",1],psol:["Proteína solúvel","% PB",1],kdAm:["kd do amido","%/h",1],nnp:["NNP","% PB",1],fe:["Fe","mg/kg MS",0],colina:["Colina (protegida/metabolizável)","g/kg MS",0],vitaSup:["Vit. A suplementar","UI/kg MS",0],vitdSup:["Vit. D suplementar","UI/kg MS",0],viteSup:["Vit. E suplementar","UI/kg MS",0],monensina:["Monensina","mg/kg MS",0],vite:["Vit. E","UI/kg MS",0]};
-const AN_PADRAO={posParto:0,pv:600,leite:35,dp:5,gord:3.8,prot:3.3,lact:4.6,preco:2.8,del:150,ecc:3,par:0.7,dfdn48:55,nul:14,mant:0.10,amidoFecal:2,diasTrans:0,vacas:0,tipo:"lact",gest:0,mw:680,gmd:0.8,idade:0,altura:0,tmin:15,engorda:0,pfinal:620,fmant:1.1,vitTotal:1};
+const AN_PADRAO={posParto:0,dfdnAuto:1,pv:600,leite:35,dp:5,gord:3.8,prot:3.3,lact:4.6,preco:2.8,del:150,ecc:3,par:0.7,dfdn48:55,nul:14,mant:0.10,amidoFecal:2,diasTrans:0,vacas:0,tipo:"lact",gest:0,mw:680,gmd:0.8,idade:0,altura:0,tmin:15,engorda:0,pfinal:620,fmant:1.1,vitTotal:1};
 const TIPO_COD={"Vacas em lactação":"lact","Pós-parto (vacas frescas)":"pos","Pós-parto":"pos","Pré-parto":"pre","Vacas secas":"seca","Recria (novilhas)":"recria","Novilhas":"recria","Engorda (dairy beef)":"engorda"};
 const TIPO_NOME={lact:"Vacas em lactação",pos:"Pós-parto (vacas frescas)",pre:"Pré-parto",seca:"Vacas secas",recria:"Recria (novilhas)",engorda:"Engorda (dairy beef)"};
 function tk(an){return an&&an.engorda?"engorda":an&&an.posParto?"pos":(an&&an.tipo)||"lact"}
@@ -875,6 +884,7 @@ function compDeLaudo(base,b,tipo){const a=Object.assign({},base);const pct=v=>v!
   let dF=+b.dfdn||0;const obs=String(b.dfdn_obs||"").toLowerCase();let nota="";
   if(dF>0&&/30/.test(obs)){dF+=6;nota="dFDN 30 h convertida para 48 h (+6 pontos)"}else if(dF>0&&/240|tt/i.test(obs)){dF=0;nota="dFDN informada não é de 48 h — "}
   const lig=+b.lignina||0;if(!dF)nota+=lig>0?"digestibilidade da FDN estimada pela lignina":"digestibilidade da FDN pelo valor médio do NASEM (52%)";
+  if(dF>0)a.dfdn48=dF/100;
   const ms=(a.ms||0)*100;const dAm=tipo==="silagemdemilho"||a.cat==="SM"?(ms<31?91:ms<=38?89:85):a.cat==="F"?90:89;
   const e=edBase({fdn:a.fdn*100,dfdn48:dF,lig,amido:a.amido*100,damido:dAm,ag:a.ag*100,pb:a.pb*100,cinzas:a.cinzas*100});
   a.ed=Math.round(e.ed*1000)/1000;a.ell=a.ed*0.82*0.66;
@@ -1007,13 +1017,13 @@ function resumoAnimal(){const a=CUR.an,t=a.tipo||"lact",vc=(+a.vacas?" · "+f(a.
   if(t==="pre"||t==="seca")return TIPO_NOME[t]+" · "+f(a.pv,0)+" kg · ECC "+f(a.ecc,2)+" · "+(+a.gest?f(a.gest,0)+" dias de gestação ("+f(280-a.gest,0)+" para o parto)":"gestação não informada")+vc;
   return(a.posParto?"Pós-parto · ":"")+f(a.pv,0)+" kg · "+f(a.leite,1)+" kg leite · G "+f(a.gord,2)+"% · PB "+f(a.prot,2)+"% · DEL "+f(a.del,0)+" · ECC "+f(a.ecc,2)+(+a.gest>=190?" · prenhe "+f(a.gest,0)+" d":"")+vc+" · R$ "+f(a.preco,2)+"/L"}
 function removerNaoUsados(){const n=CUR.itens.length;CUR.itens=CUR.itens.filter(it=>+it.kg>0||it.fixo);OPT=null;rerenderIng();toast((n-CUR.itens.length)+" alimento(s) removido(s)")}
-function setAn(k,v){let x=num(v);if(k==="par")x=x==null?0:Math.max(0,Math.min(100,x))/100;CUR.an[k]=x;
+function setAn(k,v){let x=num(v);if(k==="par")x=x==null?0:Math.max(0,Math.min(100,x))/100;if(k==="dfdn48"){CUR.an.dfdnAuto=x==null?1:0;if(x==null)x=55}CUR.an[k]=x;
   if(k==="leite")ajustaLeiteR(x);
   recalc();const ar=document.getElementById("an-res");if(ar)ar.textContent=resumoAnimal()}
 function ajustaLeiteR(L){CUR.restr.forEach(r=>{if(r.id!=="leitePM"&&r.id!=="leiteEL")return;if(r.max!=null){r.min=+(L*0.99).toFixed(2);r.max=+(L*1.01).toFixed(2)}else r.min=L})}
 function anDoLote(l){const p=PROPS[FARM]||{};const an=Object.assign({},AN_PADRAO);
   if(+p.preco_litro>0)an.preco=+p.preco_litro;if(+p.gordura>0)an.gord=+p.gordura;if(+p.proteina>0)an.prot=+p.proteina;
-  const x=LOTF[l.id]||{};Object.keys(AN_PADRAO).forEach(k=>{if(k!=="tipo"&&x[k]!=null&&x[k]!=="")an[k]=+x[k]});
+  const x=LOTF[l.id]||{};Object.keys(AN_PADRAO).forEach(k=>{if(k!=="tipo"&&x[k]!=null&&x[k]!=="")an[k]=+x[k]});an.dfdnAuto=(x.dfdn48!=null&&x.dfdn48!=="")?0:1;
   {const lc=x.local&&LOCS[x.local];if(lc&&!(x.tmin!=null&&x.tmin!=="")){const tm=lc.tmin!=null&&lc.tmin!==""?+lc.tmin:(lc.temp!=null&&lc.temp!==""?+lc.temp-(lc.noturna?6:4):null);if(tm!=null)an.tmin=tm}}
   an.tipo=TIPO_COD[x.tipo]||"lact";an.engorda=0;an.posParto=0;if(an.tipo==="pos"){an.tipo="lact";an.posParto=1;if(!(+x.del>0))an.del=10}if(an.tipo==="engorda"){an.tipo="recria";an.engorda=1;if(!(+x.gmd>0))an.gmd=1.4;if(!(+x.pv>0))an.pv=300}
   if(+l.prod>0)an.leite=+l.prod;if(+l.del>0)an.del=+l.del;if(+l.gordura>0)an.gord=+l.gordura;if(+l.preco>0)an.preco=+l.preco;if(+l.vacas>0)an.vacas=+l.vacas;if(+l.nul>0)an.nul=+l.nul;
@@ -1062,7 +1072,13 @@ function cardIngredientes(){const R=RES;
     '<button class="lnk" onclick="SHOWLIM=!SHOWLIM;document.getElementById(\'ing-card\').classList.toggle(\'showlim\');this.textContent=SHOWLIM?\'Ocultar limites\':\'Limites do otimizador\'">'+(SHOWLIM?"Ocultar limites":"Limites do otimizador")+'</button></div>'+
     (ADM?'<div class="srch fxs" style="display:flex;gap:6px">'+(bibsVisiveis().length?'<select class="sel" style="max-width:170px;font-size:12.5px" title="Buscar só numa biblioteca" onchange="BIB_BUSCA=this.value;try{localStorage.setItem(\'mf_bib\',this.value)}catch(e){};const q=document.getElementById(\'al-q\');q.focus();buscaAl(q.value)"><option value="">Todas as bibliotecas</option>'+bibsVisiveis().map(([id,b])=>'<option value="'+esc(id)+'"'+(BIB_BUSCA===id?" selected":"")+'>'+esc(b.nome)+'</option>').join("")+'</select>':'')+'<input class="inp" id="al-q" style="flex:1" placeholder="+ Adicionar alimento (digite parte do nome: soja, silagem, calcário…)" oninput="buscaAl(this.value)" onfocus="buscaAl(this.value)" onkeydown="ddKey(event,\'al-dd\')" autocomplete="off"><div class="dd" id="al-dd"></div></div>':'')+
     '<div class="tw"><table class="t ing"><thead><tr><th title="Travar">🔒</th><th>Alimento</th><th class="r">kg MN</th><th class="r">kg MS</th><th class="r">% MS</th><th class="r">R$/kg</th><th class="r">R$/dia</th><th class="lim r">mín kg</th><th class="lim r">máx kg</th><th class="lim r">mín %MS</th><th class="lim r">máx %MS</th><th></th></tr></thead><tbody>'+rows+
-    '</tbody><tfoot><tr class="tot"><td></td><td>Total</td><td class="num" id="ct-mn">—</td><td class="num" id="ct-ms">—</td><td class="num">100%</td><td></td><td class="num" id="ct-c">—</td><td class="lim"></td><td class="lim"></td><td class="lim"></td><td class="lim"></td><td></td></tr></tfoot></table></div></div>'}
+    '</tbody><tfoot><tr class="tot"><td></td><td>Total</td><td>'+(ADM?'<input class="inp q tot" id="ct-mn" type="number" step="0.1" min="0" title="Mudar o total em MN: os alimentos não travados se ajustam na mesma proporção" onchange="setTotal(\'mn\',this.value)">':'<span id="ct-mn">—</span>')+'</td><td>'+(ADM?'<input class="inp q ms tot" id="ct-ms" type="number" step="0.1" min="0" title="Mudar o consumo de MS: os alimentos não travados se ajustam na mesma proporção" onchange="setTotal(\'ms\',this.value)">':'<span id="ct-ms">—</span>')+'</td><td class="num">100%</td><td></td><td class="num" id="ct-c">—</td><td class="lim"></td><td class="lim"></td><td class="lim"></td><td class="lim"></td><td></td></tr></tfoot></table></div></div>'}
+/* muda o total (MN ou MS) e reparte nos alimentos não travados, mantendo a proporção entre eles */
+function setTotal(base,v){const x=num(v);const R=RES;if(x==null||x<=0||!R)return;const q=(it,i)=>{const kg=+it.kg||0;if(base!=="ms")return kg;const a=foodDe(it);return a?kg*(+a.ms||0):0};
+  let fixo=0,livre=0;CUR.itens.forEach((it,i)=>{if(it.fixo)fixo+=q(it,i);else livre+=q(it,i)});
+  if(!(livre>0)||x<=fixo){toast("Não dá: os alimentos travados já somam "+f(fixo,2)+" kg",true);atualizarComputados();return}
+  const k=(x-fixo)/livre;CUR.itens.forEach(it=>{if(it.fixo)return;it.kg=+((+it.kg||0)*k).toFixed(3);if(it.partes)it.partes.forEach(p=>p.kg=p.kg*k)});
+  OPT=null;rerenderIng();toast((base==="ms"?"Consumo de MS":"Total em MN")+" ajustado para "+f(x,2)+" kg — proporções mantidas")}
 function kgKey(e,i){if(e.key!=="Enter")return;e.preventDefault();const n=document.getElementById("ik"+(i+(e.shiftKey?-1:1)));e.target.dispatchEvent(new Event("change"));if(n){n.focus();n.select()}}
 let MIX_FECH=new Set();
 function togMix(k){if(MIX_FECH.has(k))MIX_FECH.delete(k);else MIX_FECH.add(k);rerenderIng()}
@@ -1071,18 +1087,30 @@ function subLinhas(a,kg,i){const W=a.partes.reduce((s,p)=>s+p.kg,0)||1;const ro=
     return'<tr class="sub"><td></td><td class="nm"><div class="nmw" style="padding-left:26px"><span class="n">'+esc(p.nome)+'</span>'+(p.falta?'<span class="chip warn">composição salva</span>':'')+'</div></td>'+
     '<td><input class="inp q sub" type="number" step="0.1" min="0" value="'+(+kd.toFixed(3))+'" title="kg MN deste ingrediente na dieta" onchange="setParte('+i+','+j+',\'kg\',this.value)"'+ro+'></td>'+
     '<td class="num">'+f(ms,2)+'</td><td class="num">'+f(p.kg/W*100,1)+'% mix</td><td><input class="inp p sub" type="number" step="any" value="'+(+(+pr).toFixed(3))+'" onchange="setParte('+i+','+j+',\'custo\',this.value)"'+ro+'></td><td class="num">'+f(kd*pr,2)+'</td><td class="lim"></td><td class="lim"></td><td class="lim"></td><td class="lim"></td>'+
-    '<td>'+(ADM?'<button class="ico" title="Tirar do mix nesta dieta" onclick="setParte('+i+','+j+',\'del\')">×</button>':'')+'</td></tr>'}).join("")+
+    '<td style="white-space:nowrap">'+(ADM?'<button class="ico" title="Tirar da batida: sai do mix e fica na dieta como alimento separado" onclick="tirarDoMix('+i+','+j+')">⇱</button><button class="ico" title="Excluir da dieta" onclick="setParte('+i+','+j+',\'del\')">×</button>':'')+'</td></tr>'}).join("")+
     (a.local&&ADM?'<tr class="sub mixbar"><td></td><td colspan="11"><span class="small" style="color:var(--amber);font-weight:700">Mix alterado nesta dieta.</span> <button class="lnk" onclick="salvarMixLocal('+i+')">Salvar no cadastro do mix</button> · <button class="lnk" onclick="salvarMixLocal('+i+',true)">Salvar como mix novo</button> · <button class="lnk" onclick="voltarMix('+i+')">Voltar ao mix original</button></td></tr>':'')}
 /* altera um ingrediente do mix só nesta dieta (como no AMTS): guarda as partes em kg/vaca na própria linha */
 function partesLocais(it){const a=foodDe(it);const W=a.partes.reduce((s,p)=>s+p.kg,0)||1;return a.partes.map(p=>{const comp={};COMP_KEYS.forEach(k=>comp[k]=+p.a[k]||0);return{key:p.key,nome:p.nome,kg:(+it.kg||0)*p.kg/W,custo:p.custo!=null?p.custo:+p.a.custo||0,comp}})}
 function setParte(i,j,k,v){const it=CUR.itens[i];const ps=partesLocais(it);if(k==="del")ps.splice(j,1);else{const x=num(v);if(x==null&&k==="kg")return;ps[j][k]=k==="kg"?Math.max(0,x):x}
   const tot=ps.reduce((s,p)=>s+p.kg,0);if(!tot){toast("O mix precisa de pelo menos um ingrediente com quantidade",true);rerenderIng();return}
   it.partes=ps;it.kg=+tot.toFixed(4);it.custo=null;OPT=null;rerenderIng()}
+function tirarDoMix(i,j){const it=CUR.itens[i];const ps=partesLocais(it);if(ps.length<2){toast("O mix ficaria vazio — use ⇲ para desfazer o mix",true);return}const p=ps.splice(j,1)[0];
+  it.partes=ps;it.kg=+ps.reduce((s,q)=>s+q.kg,0).toFixed(4);it.custo=null;
+  if(!FOODS[p.key]){CUR.snap=CUR.snap||{};CUR.snap[p.key]=Object.assign({key:p.key,nome:p.nome,org:"Do mix",custo:p.custo},p.comp)}
+  const ex=CUR.itens.find(x=>x.key===p.key&&x!==it);if(ex)ex.kg=+(+ex.kg+p.kg).toFixed(4);else CUR.itens.splice(i+1,0,{key:p.key,kg:+p.kg.toFixed(4),custo:p.custo,min:null,max:null,pmin:null,pmax:null,fixo:false,nomeLote:null});
+  OPT=null;rerenderIng();toast(p.nome+" saiu da batida e ficou na dieta ("+f(p.kg,2)+" kg)")}
 function voltarMix(i){const it=CUR.itens[i];delete it.partes;it.custo=null;OPT=null;rerenderIng()}
 function desfazerMix(i){const it=CUR.itens[i];const a=foodDe(it);if(!a||!a.partes)return;const W=a.partes.reduce((s,p)=>s+p.kg,0)||1;const novos=[];
   a.partes.forEach(p=>{const kg=(+it.kg||0)*p.kg/W;if(!FOODS[p.key]){CUR.snap=CUR.snap||{};CUR.snap[p.key]=Object.assign({key:p.key,nome:p.nome,cat:p.a.cat||"C",org:"Do mix",custo:p.custo},p.a)}
     const ex=CUR.itens.find(x=>x.key===p.key&&x!==it);if(ex){ex.kg=+(+ex.kg+kg).toFixed(4);return}novos.push({key:p.key,kg:+kg.toFixed(4),custo:p.custo!=null?p.custo:null,min:null,max:null,pmin:null,pmax:null,fixo:false,nomeLote:null})});
-  CUR.itens.splice(i,1,...novos);OPT=null;rerenderIng();toast("Mix desfeito em "+a.partes.length+" ingredientes. Ajuste/otimize e depois use “Criar mix” para agrupar de novo.")}
+  CUR.itens.splice(i,1,...novos);OPT=null;rerenderIng();
+  const id=it.key.startsWith("c:")?it.key.slice(2):null;if(ADM&&id&&CUST[id]){abrirModal('<h2>Mix desfeito</h2><p>Os '+a.partes.length+' ingredientes voltaram soltos para a dieta. O cadastro do mix “<b>'+esc(a.nome)+'</b>” continua na fazenda — quer excluir?</p>'+(()=>{const us=lotesComAlimento(it.key).filter(n=>n!==CUR.loteNome);return us.length?'<p class="small" style="color:var(--amber)">Atenção: ainda aparece na dieta de '+esc(us.join(", "))+'.</p>':''})()+'<div class="md-f"><button class="btn btn-o" onclick="fecharModal()">Manter o mix</button><button class="btn btn-r" onclick="excluirMix(\''+esc(it.key)+'\',true)">Excluir o mix</button></div>')}
+  else toast("Mix desfeito em "+a.partes.length+" ingredientes. Ajuste/otimize e depois use “Criar mix” para agrupar de novo.")}
+function lotesComAlimento(key){return lotes().filter(l=>(l.alimentos||[]).some(a=>MAPA[slug(a.nome)]===key)||(()=>{const h=Object.values(HIST[l.id]||{}).sort((a,b)=>(b.data||"").localeCompare(a.data||""))[0];return!!(h&&(h.itens||[]).some(x=>x.key===key))})()).map(l=>l.nomeDieta||l.nome||"lote")}
+/* exclui o cadastro do mix e tira de todas as bibliotecas */
+function excluirMix(key,semPergunta){const a=FOODS[key];if(!semPergunta&&!confirm("Excluir o mix “"+(a?a.nome:"")+"”? Dietas e históricos já salvos continuam com a composição da época."))return;const id=key.slice(2);
+  const up={};up["formulador/alimentos/"+id]=null;Object.entries(BIBS||{}).forEach(([bid,b])=>{if(b&&b.alimentos&&b.alimentos[bk(key)])up["formulador/bibliotecas/"+bid+"/alimentos/"+bk(key)]=null});
+  db.ref().update(up).then(()=>{fecharModal();toast("Mix excluído")}).catch(e=>toast("Não excluiu: "+e.message,true))}
 function salvarMixLocal(i,novo){const it=CUR.itens[i];const a=foodDe(it);if(!a||!a.partes)return;
   if(!novo&&!(it.key.startsWith("c:")&&CUST[it.key.slice(2)])){novo=true}
   if(!novo&&!confirm("Gravar estas proporções no cadastro do mix “"+a.nome+"”? Outras dietas que usam este mix também passam a usar a nova composição."))return;
@@ -1126,7 +1154,7 @@ function confirmarMix(){const sel=mixSel();if(sel.length<2){toast("Marque pelo m
 
 function atualizarComputados(){const R=RES;CUR.itens.forEach((it,i)=>{const set=(id,t)=>{const e=document.getElementById(id);if(e)e.textContent=t};
     const o=R?R.lin.find((x,j)=>j===i):null;{const e=document.getElementById("ims"+i);if(e&&document.activeElement!==e)e.value=o?+o.ms.toFixed(3):"";}set("ci-p"+i,o?f(o.pMS*100,1)+"%":"—");set("ci-c"+i,o?f(o.custo,2):"—")});
-  const set=(id,t)=>{const e=document.getElementById(id);if(e)e.textContent=t};set("ct-mn",R?f(R.cmn,2):"—");set("ct-ms",R?f(R.cms,2):"—");set("ct-c",R?f(R.custo.dia,2):"—");
+  const set=(id,t)=>{const e=document.getElementById(id);if(e)e.textContent=t};const sv=(id,v)=>{const e=document.getElementById(id);if(!e)return;if(e.tagName==="INPUT"){if(document.activeElement!==e)e.value=v==null?"":+v.toFixed(2)}else e.textContent=v==null?"—":f(v,2)};sv("ct-mn",R?R.cmn:null);sv("ct-ms",R?R.cms:null);set("ct-c",R?f(R.custo.dia,2):"—");
   const cf=document.getElementById("cmsfoot");if(cf){const t=CUR.an.tipo||"lact";const it=!R||!R.cms?[]:t==="recria"?[["CMS NRC 2001 (novilha)",R.prev.nrcNov[0]],["CMS necessária p/ GMD alvo",R.fase.rec.dmiReq]]:t!=="lact"?[["CMS NRC 2001 (vaca seca)",R.prev.nrcSeca[0]]]:[["CMS predito (CNCPS)",R.prev.cncps[0]],["CMS predito (NRC)",R.prev.nrc[0]],["Predicted DMI (NASEM Animal)",R.prev.nasem1[0]],["Predicted DMI (NASEM Animal/Fiber)",R.prev.nasem2[0]]];
     cf.innerHTML=it.map(([l,v])=>'<div><span class="muted">'+l+':</span><b>'+f(v,2)+'</b></div>').join("")+(()=>{if(!R||!R.cms)return"";const rc=CUR.restr.find(r=>r.id==="cms");const al=rc?cmsAlvo(rc,R):null;return al?'<div><span class="muted">CMS do usuário / CMS predita:</span><b>'+f(R.cms/al*100,1)+'%</b></div>':""})()}}
 function setMS(i,v){const it=CUR.itens[i];const a=foodDe(it);const x=num(v);if(x==null||!a||!(+a.ms>0))return;it.kg=+(x/(+a.ms)).toFixed(4);const e=document.getElementById("ik"+i);if(e)e.value=it.kg;OPT=null;recalc()}
@@ -1146,14 +1174,15 @@ function addAl(key){const a=FOODS[key];if(!a)return;const fixoPadrao=a.cat==="P"
 function ordenarItens(){const o={F:0,SM:0,C:1,P:2,X:3};CUR.itens.sort((x,y)=>{const a=foodDe(x)||{},b=foodDe(y)||{};return(o[a.cat]??1)-(o[b.cat]??1)})}
 
 /* ---------- restrições ---------- */
-const RGRUPOS=[["Consumo",["cms","msDieta","vol"]],["Energia",["el","em","elBal","elPct","leiteEL","gmdEM"]],["Proteína",["pb","pdr","pndr","pndrDig","psol","nnp","balPDR","nh3Pct","nh3Bal","pmBal","pmSup","pmPct","leitePM","gmdPM"]],["Aminoácidos",["lisReq","metReq","hisReq","argPM","thrPM","valPM","phePM","trpPM","lisMet","lis","met","lisPM","metPM","hisPM","ilePM","leuPM","metEM"]],["Fibra e carboidratos",["fdn","fdnf","fdn8","fdn19","ufdn","fdnfPV","fdnfPVm","fdnPV","ufdnPV","amido","amidoFerm","amidoFermPct","amidoLento","amidoDR","acucar","fdn8am","cnf"]],["Gordura",["ag","insat","insatKg"]],["Minerais",["caG","ca","p","mg","k","s","na","cl","dcad"]],["Microminerais",["co","cu","fe","mn","zn","se","i","cuMo"]],["Vitaminas",["vitAPct","vitDPct","vitEPct","vitA","vitD","vitE"]],["Aditivos",["colina","monensina","monKg","biotina"]],["Econômico",["rmca","custo"]]];
-function cardRestricoes(){const ativos=new Set(CUR.restr.map(r=>r.id));const R=RES;
+const RGRUPOS=[["Consumo",["cms","msDieta","vol"]],["Energia",["el","em","elBal","elPct","leiteEL","gmdEM"]],["Proteína",["pb","pdr","pndr","pndrDig","psol","nnp","balPDR","nh3Pct","nh3Bal","pmBal","pmSup","pmPct","leitePM","gmdPM"]],["Aminoácidos",["lisReq","metReq","hisReq","argPM","thrPM","valPM","phePM","trpPM","lisMet","lis","met","lisPM","metPM","hisPM","ilePM","leuPM","metEM"]],["Fibra e carboidratos",["fdn","fdnf","fdn8","fdn19","ufdn","fdnfPV","fdnfPVm","fdnPV","ufdnPV","amido","amidoFerm","amidoFermPct","amidoLento","amidoDR","acucar","fdn8am","cnf"]],["Gordura",["ag","insat","insatKg"]],["Minerais",["caG","ca","p","mg","k","s","na","cl","dcad"]],["Microminerais",["co","cu","fe","mn","zn","se","i","cuMo"]],["Vitaminas",["vitA","vitD","vitE"]],["Aditivos",["colina","monensina","monKg","biotina"]],["Econômico",["rmca","custo"]]];
+function cardRestricoes(){migraRestr(CUR.restr);const ativos=new Set(CUR.restr.map(r=>r.id));const R=RES;
   const linha=(r,i)=>{const d=RESTR_BY[r.id];if(!d)return"";const v=R?d.f(R):null;const chk='<input type="checkbox" id="rs-on'+i+'" class="fix" title="Usar no otimizador" '+(r.on?"checked":"")+' onchange="setR('+i+',\'on\',this.checked)">';
     if(r.id==="cms"){const alvo=R?cmsAlvo(r,R):null;const ok=alvo!=null&&v!=null&&(r.modo==="max"?v<=alvo+0.05+(+r.tol||0):Math.abs(v-alvo)<=0.05+(+r.tol||0));
       return'<div class="nm cmsr"><b>Consumo de MS</b> <span class="u">kg/d</span><div class="row2" style="gap:4px;margin-top:3px"><select class="sel btn-sm" style="padding:2px 4px;max-width:100%;font-size:12px" onchange="setR('+i+',\'alvo\',this.value)">'+CMS_ALVOS.map(([k,l])=>'<option value="'+k+'"'+((r.alvo||"nasem1")===k?" selected":"")+'>'+l+'</option>').join("")+'</select><select class="sel btn-sm" style="padding:2px 4px;font-size:12px" title="Igual à prevista ou no máximo a prevista (consumo voluntário como teto)" onchange="setR('+i+',\'modo\',this.value)"><option value=""'+(r.modo!=="max"?" selected":"")+'>= prevista</option><option value="max"'+(r.modo==="max"?" selected":"")+'>≤ prevista</option></select>'+((CUR.an.tipo||"lact")==="lact"?'<label class="tiny"><input type="checkbox" '+(r.mdp?"checked":"")+' onchange="setR('+i+',\'mdp\',this.checked)"> M+DP</label>':'')+(r.alvo==="manual"?'<input class="inp" id="rs-v'+i+'" style="width:64px" type="number" step="any" placeholder="kg" value="'+(r.valor!=null?r.valor:"")+'" onchange="setR('+i+',\'valor\',this.value)">':'')+'</div></div>'+
         '<span class="u" style="text-align:right">± <input class="inp" id="rs-t'+i+'" style="width:40px;padding:2px 3px" type="number" step="any" placeholder="0" value="'+(r.tol!=null?r.tol:"")+'" onchange="setR('+i+',\'tol\',this.value)"></span><span class="val '+(v==null?"":ok?"ok":"lo")+'">'+f(v,2)+'<div class="tiny muted">prev. '+f(alvo,2)+'</div></span><span></span>'+chk}
-    const st=v==null?"na":stRef(v,r.min,r.max,d.dec);
-    return'<div class="nm'+(r.on?"":" off")+'" title="'+esc(d.n+" ("+d.u+")")+'">'+esc(d.n)+' <span class="u">'+esc(d.u)+'</span></div><input class="inp" id="rs-mn'+i+'" type="number" step="any" placeholder="" value="'+(r.min!=null?r.min:"")+'" onchange="setR('+i+',\'min\',this.value)"><span class="val '+(st==="na"?"":st)+'">'+f(v,d.dec)+'</span><input class="inp" id="rs-mx'+i+'" type="number" step="any" placeholder="" value="'+(r.max!=null?r.max:"")+'" onchange="setR('+i+',\'max\',this.value)">'+chk};
+    const ex=d.req&&(r.min==null||r.min==="")&&r.exig&&R?+(d.req(R)*(+r.exig||1)).toFixed(d.dec):null;const mn=ex!=null?ex:r.min;
+    const st=v==null?"na":stRef(v,mn,r.max,d.dec);
+    return'<div class="nm'+(r.on?"":" off")+'" title="'+esc(d.n+" ("+d.u+")"+(ex!=null?" — mínimo = exigência NASEM":""))+'">'+esc(d.n)+' <span class="u">'+esc(d.u)+(ex!=null?' · exigência':'')+'</span></div><input class="inp'+(ex!=null?' exg':'')+'" id="rs-mn'+i+'" type="number" step="any" placeholder="" value="'+(mn!=null?mn:"")+'" title="'+(d.req?"Vazio = exigência do NASEM":"")+'" onchange="setR('+i+',\'min\',this.value)"><span class="val '+(st==="na"?"":st)+'">'+f(v,d.dec)+'</span><input class="inp" id="rs-mx'+i+'" type="number" step="any" placeholder="" value="'+(r.max!=null?r.max:"")+'" onchange="setR('+i+',\'max\',this.value)">'+chk};
   const usados=new Set();let corpo="";
   CUR.restr.forEach((r,i)=>{if(r.id==="cms")usados.add(i)});
   RGRUPOS.forEach(([g,ids])=>{const rs=CUR.restr.map((r,i)=>({r,i})).filter(x=>x.r.id!=="cms"&&ids.includes(x.r.id));if(!rs.length)return;rs.forEach(x=>usados.add(x.i));corpo+='<div class="gh">'+g+'</div>'+rs.map(x=>linha(x.r,x.i)).join("")});
@@ -1165,8 +1194,8 @@ function cardRestricoes(){const ativos=new Set(CUR.restr.map(r=>r.id));const R=R
     (opts?'<div class="row2 fxs" style="margin-top:8px"><select class="sel" id="rs-add" style="flex:1;font-size:12.5px" onchange="addR()"><option value="">+ Adicionar nutriente…</option>'+opts+'</select></div>':'')+
     '<div class="tiny muted" style="margin-top:6px">Verde = dentro · vermelho = abaixo · laranja = acima. Otim = vale para o otimizador.</div></div>'}
 function presetR(m){if(!confirm("Trocar as restrições pelo modelo "+(m==="amts"?"padrão":"simplificado")+" ("+TIPO_NOME[tk(CUR.an)]+")?"))return;CUR.restr=m==="amts"?restricoesAMTS(CUR.an):restricoesUFLA(CUR.an);CUR.restrTipo=CUR.an.tipo;renderResultados()}
-function setR(i,k,v){const r=CUR.restr[i];if(k==="on"||k==="mdp")r[k]=!!v;else if(k==="alvo"||k==="modo")r[k]=v;else r[k]=num(v);renderResultados()}
-function addR(){const s=document.getElementById("rs-add");if(!s.value)return;CUR.restr.push({id:s.value,on:true,min:null,max:null});renderResultados();const nv=document.getElementById("rs-mn"+(CUR.restr.length-1));if(nv)nv.focus()}
+function setR(i,k,v){const r=CUR.restr[i];if(k==="on"||k==="mdp")r[k]=!!v;else if(k==="alvo"||k==="modo")r[k]=v;else{r[k]=num(v);const d=RESTR_BY[r.id];if(k==="min"&&d&&d.req){if(r.min==null)r.exig=1;else r.exig=null}}renderResultados()}
+function addR(){const s=document.getElementById("rs-add");if(!s.value)return;CUR.restr.push({id:s.value,on:true,min:null,max:null,exig:RESTR_BY[s.value]&&RESTR_BY[s.value].req?1:null});renderResultados();const nv=document.getElementById("rs-mn"+(CUR.restr.length-1));if(nv)nv.focus()}
 
 /* ---------- otimizar ---------- */
 function otimizar(){if(!ADM)return;if(!CUR.itens.length){toast("Adicione alimentos primeiro",true);return}
@@ -1387,7 +1416,7 @@ function renderAlimentos(m){const n=norm(FILTRO_AL);const B=BIB_SEL&&bibDe(BIB_S
     ((bibsVisiveis().length||ADM)?'<div class="hchips"><span class="tiny muted" style="align-self:center">Bibliotecas:</span><button class="'+(!BIB_SEL?"on":"")+'" onclick="BIB_SEL=\'\';render()">Todas</button>'+bibsVisiveis().map(([id,b])=>'<button class="'+(BIB_SEL===id?"on":"")+'" onclick="BIB_SEL=\''+esc(id)+'\';render()">'+esc(b.nome)+'</button>').join("")+(ADM?'<button onclick="novaBib()">+ Nova</button>':'')+'</div>':'')+
     '<div class="tw"><table class="t"><thead><tr><th>Alimento</th><th>MS</th><th>PB</th><th>FDN</th><th>Amido</th><th>AG</th><th>ELl</th><th>R$/kg MN</th><th></th></tr></thead><tbody>'+
     xs.slice(0,400).map(a=>'<tr><td><div class="nmw"><span class="cat cat-'+esc(a.cat)+'">'+esc(a.cat)+'</span><span class="n" title="'+esc(a.nasemNome||"")+'">'+esc(a.nome)+(B&&B.fixa&&a.nasemNome?' <span class="tiny muted">· '+esc(a.nasemNome)+'</span>':'')+'</span>'+(a.org!=="UFLA"?'<span class="org">'+esc(a.org==="Composto"?"Mix":a.org==="Importado"?"Cadastrado":a.org)+'</span>':'')+'</div></td><td class="num">'+f(a.ms*100,1)+'</td><td class="num">'+f(a.pb*100,1)+'</td><td class="num">'+f(a.fdn*100,1)+'</td><td class="num">'+f(a.amido*100,1)+'</td><td class="num">'+f(a.ag*100,1)+'</td><td class="num">'+f(a.ell,2)+'</td>'+
-      '<td>'+(ADM?'<input class="inp num" style="width:80px;padding:4px 6px" type="number" step="any" value="'+(a.custo||"")+'" onchange="salvarPreco(\''+esc(a.key)+'\',this.value)">':f(a.custo,2))+'</td><td style="white-space:nowrap"><button class="btn btn-o btn-sm" onclick="verAlimento(\''+esc(a.key)+'\')">Ver</button>'+(a.org==="Composto"?' <button class="btn btn-o btn-sm" title="Relatório do mix e ficha de batida" onclick="menuMix(\''+esc(a.key)+'\')">PDF</button>':'')+(ADM?' <button class="btn btn-o btn-sm" title="Bibliotecas" onclick="bibsDoAlimento(\''+esc(a.key)+'\')">'+ico("bib")+'<span class="bibn">'+(nBibs(a.key)||"")+'</span></button>':'')+'</td></tr>').join("")+'</tbody></table></div>'+(xs.length>400?'<div class="small muted">Mostrando 400 de '+xs.length+'. Refine a busca.</div>':'')+'</div>'}
+      '<td>'+(ADM?'<input class="inp num" style="width:80px;padding:4px 6px" type="number" step="any" value="'+(a.custo||"")+'" onchange="salvarPreco(\''+esc(a.key)+'\',this.value)">':f(a.custo,2))+'</td><td style="white-space:nowrap"><button class="btn btn-o btn-sm" onclick="verAlimento(\''+esc(a.key)+'\')">Ver</button>'+(a.org==="Composto"?' <button class="btn btn-o btn-sm" title="Relatório do mix e ficha de batida" onclick="menuMix(\''+esc(a.key)+'\')">PDF</button>'+(ADM?' <button class="btn btn-o btn-sm" title="Excluir o mix" style="color:var(--red)" onclick="excluirMix(\''+esc(a.key)+'\')">Excluir</button>':''):'')+(ADM?' <button class="btn btn-o btn-sm" title="Bibliotecas" onclick="bibsDoAlimento(\''+esc(a.key)+'\')">'+ico("bib")+'<span class="bibn">'+(nBibs(a.key)||"")+'</span></button>':'')+'</td></tr>').join("")+'</tbody></table></div>'+(xs.length>400?'<div class="small muted">Mostrando 400 de '+xs.length+'. Refine a busca.</div>':'')+'</div>'}
 function salvarPreco(key,v){const x=num(v);db.ref("formulador/precos/"+precoKey(key)).set(x==null?null:x).then(()=>toast("Preço salvo")).catch(e=>toast(e.message,true))}
 /* ============================================================
    EDITOR DE ALIMENTO (estilo AMTS: valor corrente × nova versão)
@@ -1549,10 +1578,10 @@ const TIPOS_ANIMAL=["Vacas em lactação","Pós-parto (vacas frescas)","Pré-par
 /* [chave, rótulo, unidade, onde grava (d = dietas, f = formulador), campo no painel, tipo, tipos de lote em que vale] */
 const LT="lact",PRE="pre",SEC="seca",REC="recria",ENG="engorda",TODOS=[LT,PRE,SEC,REC,ENG],VACA=[LT,PRE,SEC];
 const LOTE_CAMPOS=[["Identificação",[["nomeDieta","Nome do lote / dieta","","d","nomeDieta","t",TODOS],["nome","Nome no painel","","d","nome","t",TODOS],["tipo","Tipo de animal","","f",null,"tipo",TODOS],["local","Localização (barracão)","","f",null,"local",TODOS],["vacas","Número de animais","cab.","d","vacas","n",TODOS],["obs","Observações","","f",null,"t",TODOS]]],
-  ["Animal",[["pv","Peso vivo","kg","f",null,"n",TODOS],["mw","Peso adulto da raça","kg","f",null,"n",[LT,PRE,SEC,REC]],["ecc","ECC","1–5","f",null,"n",VACA],["par","Multíparas","% do lote","f",null,"pct",VACA],["del","Dias em lactação (DEL)","dias","d","del","n",[LT]],["gest","Dias em gestação","dias","f",null,"n",[LT,PRE,SEC,REC]],["diasTrans","Dias de transição","pré-parto","f",null,"n",[PRE]],
+  ["Animal",[["pv","Peso vivo","kg","f",null,"n",TODOS],["mw","Peso adulto da raça","kg","f",null,"n",[LT,PRE,SEC,REC]],["ecc","ECC","1–5","f",null,"n",VACA],["par","Ordem de parto","","f",null,"par",VACA],["del","Dias em lactação (DEL)","dias","d","del","n",[LT]],["gest","Dias em gestação","dias","f",null,"n",[LT,PRE,SEC,REC]],["diasTrans","Dias de transição","pré-parto","f",null,"n",[PRE]],
     ["idade","Idade","meses","f",null,"n",[REC,ENG]],["altura","Altura de cernelha","cm","f",null,"n",[REC]],["gmd","GMD desejado","kg/dia","f",null,"n",[REC,ENG]],["pfinal","Peso de abate (final)","kg","f",null,"n",[ENG]],["fmant","Fator de mantença da raça","Holandês 1,2 · cruzado 1,1 · corte 1,0","f",null,"n",[ENG]],["gmdAtual","GMD atual (Recria do painel)","kg/dia","f",null,"n",[REC]]]],
   ["Produção",[["leite","Produção de leite","kg/dia","d","prod","n",[LT]],["dp","Desvio-padrão do leite","kg/dia","f",null,"n",[LT]],["gord","Gordura no leite","%","d","gordura","n",[LT]],["prot","Proteína bruta no leite","%","f",null,"n",[LT]],["protV","Proteína verdadeira no leite","%",null,null,"calc",[LT]],["lact","Lactose no leite","%","f",null,"n",[LT]],["nul","NUL","mg/dL","d","nul","n",[LT]],["ccs","CCS","mil cél/mL","d","ccs","n",[LT]],["preco","Preço do leite","R$/L","d","preco","n",[LT]]]],
-  ["Parâmetros de cálculo",[["dfdn48","dFDN 48 h da forragem","% FDN","f",null,"n",TODOS],["mant","ELl de mantença","Mcal/kg PV^0,75","f",null,"n",VACA],["amidoFecal","Amido fecal","% MS","f",null,"n",TODOS],["tmin","Temperatura mínima média (para água)","°C","f",null,"n",TODOS]]]];
+  ["Parâmetros de cálculo",[["dfdn48","dFDN 48 h da forragem","% FDN","f",null,"dfdn",TODOS],["mant","ELl de mantença","Mcal/kg PV^0,75","f",null,"n",VACA],["amidoFecal","Amido fecal","% MS","f",null,"n",TODOS],["tmin","Temperatura mínima média (para água)","°C","f",null,"n",TODOS]]]];
 function loteEntries(){return Object.entries((DIETA&&DIETA.lotes)||{}).filter(([k,l])=>l&&l.id)}
 function valorLote(l,c){const[k,,,onde,campo,tipo]=c;if(tipo==="calc"){const an=anDoLote(l);return an.prot*0.951}
   if(onde==="d"){const v=l[campo];if(k==="nomeDieta"||k==="nome")return v||"";if(+v>0||(k==="vacas"&&v!=null))return v;const an=anDoLote(l);return k==="leite"?an.leite:k==="gord"?an.gord:k==="preco"?an.preco:k==="del"?an.del:v}
@@ -1573,6 +1602,9 @@ function renderLotes(m){if(!FARM){m.innerHTML='<div class="card"><div class="ch-
       if(tipo==="local")return'<td'+sel+'><select class="sel inp" '+ch+dis+'><option value="">—</option>'+locsOrd().map(([id,o])=>'<option value="'+esc(id)+'"'+(id===v?" selected":"")+'>'+esc(o.nome)+'</option>').join("")+'</select></td>';
       if(tipo==="tipo")return'<td'+sel+'><select class="sel inp" '+ch+dis+'>'+TIPOS_ANIMAL.map(t=>'<option'+(t===v?" selected":"")+'>'+t+'</option>').join("")+'</select></td>';
       if(tipo==="t")return'<td'+sel+'><input class="inp txt" value="'+esc(v)+'" '+ch+dis+'></td>';
+      if(tipo==="dfdn"){const x=(LOTF[l.id]||{}).dfdn48;return'<td'+sel+'><input class="inp" type="number" step="any" placeholder="auto (laudos)" title="Vazio = calculada das forragens da dieta (dFDN 48 h dos laudos de bromatologia; sem laudo, a da tabela). Digite um valor para fixar." value="'+(x!=null&&x!==""?x:"")+'" '+ch+dis+'></td>'}
+      if(tipo==="par"){const x=v===""||v==null?0.7:+v;const o=x<=0?"p":x>=1?"m":"x";
+        return'<td'+sel+'><div style="display:flex;gap:4px;justify-content:flex-end"><select class="sel inp" style="width:auto" onchange="setPar(\''+esc(key)+'\',this.value)" onfocus="LOTE_SEL=\''+esc(l.id)+'\';marcarCol()"'+dis+'><option value="p"'+(o==="p"?" selected":"")+'>Primíparas</option><option value="m"'+(o==="m"?" selected":"")+'>Multíparas</option><option value="x"'+(o==="x"?" selected":"")+'>Misto</option></select>'+(o==="x"?'<input class="inp" style="width:58px" type="number" min="1" max="99" step="1" title="% de multíparas no lote" value="'+Math.round(x*100)+'" '+ch+dis+'><span class="small muted" style="align-self:center">% mult.</span>':'')+'</div></td>'}
       const vv=tipo==="pct"?(v===""||v==null?"":Math.round(+v*100)):(v===""||v==null?"":v);
       return'<td'+sel+'><input class="inp" type="number" step="any" value="'+vv+'" '+ch+dis+'></td>'}).join("")+'</tr>'})});
   rows+='<tr><td class="nm">Fase / referência</td>'+ls.map(([k,l])=>{const an=anDoLote(l);let t="";if(an.tipo==="recria"){const fz=an.engorda?faseEngorda(an.pv):faseRecria(an.pv);t=fz.n+" · PB "+fz.pb.join("–")+"% · EM "+fz.em.join("–")}else if(an.tipo==="pre")t=+an.gest?(280-an.gest)+" dias para o parto":"informe os dias de gestação";else if(an.tipo==="seca")t="vaca seca";else t=+an.gest>=190?"prenhe — gestação entra na exigência":"";return'<td'+(l.id===LOTE_SEL?' class="sel"':'')+' style="white-space:normal;text-align:left"><span class="small muted">'+esc(t)+'</span></td>'}).join("")+'</tr>';
@@ -1581,10 +1613,11 @@ function renderLotes(m){if(!FARM){m.innerHTML='<div class="card"><div class="ch-
   m.innerHTML=h+'<div class="card"><div class="ch-h"><div><h3>Lotes da fazenda</h3><div class="sub">Os lotes são os mesmos da Dieta & Custos do painel. Clique no nome para selecionar; as alterações salvam na hora.</div></div></div><div class="lgrid"><table>'+rows+'</table></div></div>'}
 function marcarCol(){document.querySelectorAll(".lgrid .sel").forEach(e=>e.classList.remove("sel"))}
 function setLote(key,k,v){const c=LOTE_CAMPOS.flatMap(g=>g[1]).find(x=>x[0]===k);if(!c)return;const[, , ,onde,campo,tipo]=c;const l=DIETA.lotes[key];
-  let val=tipo==="t"||tipo==="tipo"||tipo==="local"?String(v).trim():num(v);if(tipo==="pct"&&val!=null)val=Math.max(0,Math.min(100,val))/100;
+  let val=tipo==="t"||tipo==="tipo"||tipo==="local"?String(v).trim():num(v);if((tipo==="pct"||tipo==="par")&&val!=null)val=Math.max(0,Math.min(100,val))/100;
   const up={};if(onde==="d"){up["dietas/"+FARM+"/lotes/"+key+"/"+campo]=val==null?0:val;up["dietas/"+FARM+"/atualizado_em"]=new Date().toISOString()}
   else up["formulador/lotes/"+FARM+"/"+l.id+"/"+k]=val===""?null:val;
   db.ref().update(up).then(()=>{if(CUR&&CUR.loteId===l.id){CUR.loteSync=true}}).catch(e=>toast("Não salvou: "+e.message,true))}
+function setPar(key,o){const l=DIETA.lotes[key];const an=anDoLote(l);const x=+an.par;setLote(key,"par",o==="p"?0:o==="m"?100:(x>0&&x<1?x*100:70))}
 function novoIdLote(){return"lote_"+Date.now()+"_"+Math.random().toString(36).slice(2,7)}
 function criarLote(base){const nome=prompt("Nome do lote:",base?(base.nomeDieta||base.nome)+" (cópia)":"Lote "+(loteEntries().length+1));if(!nome)return;
   const id=novoIdLote();const p=PROPS[FARM]||{};
@@ -2046,7 +2079,7 @@ function togBMet(k){const pad=HIST_BT==="silagemdemilho"?["ms","amido","pb","fdn
 function linhasCMS(R){const p=R.prev,t=CUR.an.tipo||"lact";const L=[];const ad=(k,l,obs)=>{if(p[k]&&p[k][0]!=null)L.push({k,l,obs,v:p[k][0],dp:t==="lact"?p[k][1]:null})};
   if(t==="recria"){ad("nrcNov",CUR.an.engorda?"NASEM 2016 — corte (crescimento/terminação)":"NRC 2001 — novilhas","depende da ELm da dieta");L.push({k:"req",l:"Necessária para o GMD alvo",v:R.fase.rec.dmiReq,ref:true})}
   else if(t!=="lact")ad("nrcSeca","NRC 2001 — vaca seca",+CUR.an.gest?f(280-CUR.an.gest,0)+" dias para o parto":"sem dias de gestação");
-  else{ad("nasem1","NASEM 2021 — animal");ad("nasem2","NASEM 2021 — animal + fibra");ad("nrc","NRC 2001");ad("cncps","CNCPS")}
+  else{ad("nasem1","NASEM 2021 — animal");ad("nasem2","NASEM 2021 — animal + fibra","dFDN 48 h "+f(R.dfdn.v,1)+"% "+(R.dfdn.auto?"(forragens da dieta)":"(informada no lote)"));ad("nrc","NRC 2001");ad("cncps","CNCPS")}
   return L}
 function stCMS(cms,v){if(!v)return"na";const r=cms/v;return r>1.02?"hi":r<0.95?"lo":"ok"}
 function painelConsumo(R){const t=CUR.an.tipo||"lact",L=linhasCMS(R),rc=CUR.restr.find(r=>r.id==="cms"),alvoK=rc&&rc.on?(rc.alvo||"nasem1"):null;
