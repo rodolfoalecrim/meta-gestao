@@ -2831,6 +2831,7 @@ function abrirFichaRecriaProd(id){const a=_recriaAnimaisCache[id];const cont=doc
 function abrirEditarFichaProd(id){const a=_recriaAnimaisCache[id];const cont=document.getElementById("recria-content");if(!a||!cont)return;delete _idFotoPendente["rec-e-"];cont.innerHTML='<div class="chart-card"><div style="font-size:15px;font-weight:800;margin-bottom:10px">Ficha do animal Nº '+idEsc(a.numero||"?")+'</div><div class="form-field"><label class="form-label">Peso ao nascer (kg)</label><input type="number" step="0.1" inputmode="decimal" class="form-input" id="rec-e-peso" value="'+(a.peso_nascimento!=null&&!a.peso_nascimento_estimado?a.peso_nascimento:"")+'" placeholder="Se pesou" oninput="idColHint(\'rec-e-\',\'rec-e-peso\')"></div>'+idCamposHtml("rec-e-",a,ID_CLS_PR,"rec-e-peso")+'<button class="btn-action btn-primary" onclick="salvarFichaProd(\''+id+'\')">💾 Salvar ficha</button><button class="btn-action btn-secondary" onclick="abrirFichaRecriaProd(\''+id+'\')">Cancelar</button></div>';idColHint("rec-e-","rec-e-peso")}
 async function salvarFichaProd(id){const a=_recriaAnimaisCache[id];if(!a)return;const c=idLerCampos("rec-e-");const e=idValidarCampos(c);if(e){showToast("❌ "+e,true);return}const up=Object.assign({},c);const pn=idNum((document.getElementById("rec-e-peso")||{}).value);if(pn!=null){if(pn<15||pn>70){showToast("❌ Peso ao nascer fora do esperado (15 a 70 kg)",true);return}up.peso_nascimento=pn;up.peso_nascimento_estimado=null;up.peso_nascimento_informado=true}try{await db.ref("recria/"+farmId+"/"+id).update(up);Object.assign(a,up);if(_idFotoPendente["rec-e-"]){showToast("Enviando foto…");try{Object.assign(a,await idSalvarFotoAnimal(farmId,id,_idFotoPendente["rec-e-"]))}catch(eF){console.error(eF);showToast("Ficha salva, mas a foto não foi enviada.",true)}delete _idFotoPendente["rec-e-"]}showToast("✅ Ficha salva!");abrirFichaRecriaProd(id)}catch(err){console.error(err);showToast("❌ Erro ao salvar: "+err.message,true)}}
 async function idTrocarFotoProd(input,id){const f=input.files&&input.files[0];input.value="";const a=_recriaAnimaisCache[id];if(!f||!a)return;try{showToast("Enviando foto…");const dURL=await idReduzir(await idLerArquivo(f),900,.74);Object.assign(a,await idSalvarFotoAnimal(farmId,id,dURL));showToast("✅ Foto atualizada!");abrirFichaRecriaProd(id)}catch(e){console.error(e);showToast("❌ Erro ao salvar a foto: "+e.message,true)}}
+function recAtualizarCamposPeso(){const n=document.getElementById("rec-novo-nascimento");const w=document.getElementById("rec-novo-atual-wrap");const lbl=document.getElementById("rec-novo-peso-lbl");if(!n||!w)return;const dias=n.value?Math.round((new Date(new Date().toISOString().slice(0,10)+"T12:00:00")-new Date(n.value+"T12:00:00"))/864e5):0;const antiga=dias>3;w.style.display=antiga?"block":"none";if(lbl)lbl.textContent=antiga?"Peso ao nascer (kg) — só se souber":"Peso ao nascer (kg) — se pesou"}
 function calcGmdAnimalSimples(a){
   const pesagens=Object.values(a.pesagens||{}).sort((x,y)=>(x.data||"")>(y.data||"")?1:-1);
   const ultima=pesagens[pesagens.length-1];
@@ -2948,13 +2949,19 @@ function atualizarFormRecriaTipo(){
   }else{
     wrap.innerHTML=`
       <div class="form-field"><label class="form-label">Número/identificação do animal</label><input type="text" class="form-input" id="rec-novo-numero" placeholder="Ex: 512"></div>
-      <div class="form-field"><label class="form-label">Data de nascimento</label><input type="date" class="form-input" id="rec-novo-nascimento" value="${hoje}"></div>
-      <div class="form-field"><label class="form-label">Peso ao nascer (kg) — se pesou</label><input type="number" step="0.1" inputmode="decimal" class="form-input" id="rec-novo-peso" placeholder="Ex: 38" oninput="idColHint('rec-id-','rec-novo-peso')"></div>
+      <div class="form-field"><label class="form-label">Data de nascimento</label><input type="date" class="form-input" id="rec-novo-nascimento" value="${hoje}" oninput="recAtualizarCamposPeso()"></div>
+      <div id="rec-novo-atual-wrap" style="display:none;border:1.5px solid #bfe3cc;background:#f4fbf6;border-radius:12px;padding:10px 12px;margin-bottom:14px">
+        <div class="form-label" style="color:#14532d;margin-bottom:2px">⚖️ Peso atual (pesagem de hoje)</div>
+        <div style="font-size:11.5px;color:var(--muted);margin-bottom:8px">Ela não nasceu hoje, então o peso que você tem é o de agora. Sem o peso ao nascer, usamos um valor de referência.</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px"><div class="form-field" style="margin-bottom:0"><label class="form-label">Peso (kg)</label><input type="number" step="0.1" inputmode="decimal" class="form-input" id="rec-novo-peso-atual" placeholder="Ex: 145"></div><div class="form-field" style="margin-bottom:0"><label class="form-label">Altura (cm)</label><input type="number" step="0.1" inputmode="decimal" class="form-input" id="rec-novo-altura-atual" placeholder="Opcional"></div></div>
+      </div>
+      <div class="form-field"><label class="form-label" id="rec-novo-peso-lbl">Peso ao nascer (kg) — se pesou</label><input type="number" step="0.1" inputmode="decimal" class="form-input" id="rec-novo-peso" placeholder="Ex: 38" oninput="idColHint('rec-id-','rec-novo-peso')"></div>
       <div class="form-field"><label class="form-label">Altura ao nascer (cm) — opcional</label><input type="number" step="0.1" inputmode="decimal" class="form-input" id="rec-novo-altura" placeholder="Ex: 75"></div>
       ${idCamposHtml("rec-id-",null,ID_CLS_PR,"rec-novo-peso")}
     `;
     delete _idFotoPendente["rec-id-"];
     idColHint("rec-id-","rec-novo-peso");
+    recAtualizarCamposPeso();
   }
 }
 
@@ -2987,6 +2994,12 @@ async function salvarLancamentoRecria(){
       if(pesoOk)registroAnimal.peso_nascimento_informado=true;else registroAnimal.peso_nascimento_estimado=true;
       if(alturaNasc>0)registroAnimal.altura_nascimento=alturaNasc;
       Object.keys(idc).forEach(k=>{if(idc[k]!=null)registroAnimal[k]=idc[k]});
+      const hojeIso=new Date().toISOString().slice(0,10);
+      const diasVida=Math.round((new Date(hojeIso+"T12:00:00")-new Date(nascimento+"T12:00:00"))/864e5);
+      const pesoAtual=parseFloat(document.getElementById("rec-novo-peso-atual")?.value);
+      const alturaAtual=parseFloat(document.getElementById("rec-novo-altura-atual")?.value);
+      if(diasVida>3&&pesoAtual>0){if(pesoAtual<20||pesoAtual>800){showToast("❌ Peso atual fora do esperado",true);return}const pes={data:hojeIso,peso:pesoAtual,registrado_por:"PRODUTOR"};if(alturaAtual>0)pes.altura=alturaAtual;registroAnimal.pesagens={primeiro_registro:pes}}
+      registroAnimal.aleitamento=diasVida<=60;
       const novoRef=await db.ref("recria/"+farmId).push(registroAnimal);
       if(_idFotoPendente["rec-id-"]){showToast("Enviando foto…");try{await idSalvarFotoAnimal(farmId,novoRef.key,_idFotoPendente["rec-id-"])}catch(eF){console.error(eF);showToast("Bezerra salva, mas a foto não foi enviada.",true)}delete _idFotoPendente["rec-id-"]}
       showToast("✅ Bezerra cadastrada!");
