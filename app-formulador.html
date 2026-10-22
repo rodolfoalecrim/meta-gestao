@@ -334,7 +334,7 @@ td.ok,span.ok{color:#15803d}td.lo,span.lo{color:#dc2626}span.hi{color:#b45309}
 <button class="btn btn-g" onclick="login()">Entrar</button><p id="l-m" style="color:var(--red);margin:10px 0 0"></p></div></div>
 <div id="app">
  <div class="top"><div class="top-in"><div class="brand"><b>Meta Formulador</b><span id="sub-top">Formulação de dietas</span></div>
-  <button class="btn btn-o btn-sm" onclick="logout()">Sair</button></div>
+  <div style="display:flex;gap:6px"><button class="btn btn-o btn-sm" onclick="minhaSenha()">Minha senha</button><button class="btn btn-o btn-sm" onclick="logout()">Sair</button></div></div>
   <div class="tabs" id="tabs"></div></div>
  <div class="wrap"><aside id="side"></aside><main id="m"></main></div>
 </div>
@@ -938,18 +938,19 @@ function precoKey(k){return k.replace(/[.#$\[\]\/:]/g,"~")}
 
 /* ---------- auth ---------- */
 function login(){const e=document.getElementById("l-e").value.trim(),s=document.getElementById("l-s").value;if(e&&s)auth.signInWithEmailAndPassword(e,s).catch(()=>document.getElementById("l-m").textContent="E-mail ou senha incorretos.")}
-function logout(){if(confirm("Sair do Meta Formulador?"))auth.signOut()}
+function logout(){if(confirm("Sair do sistema?"))auth.signOut()}
 function mostrar(id){document.getElementById("login").style.display=id==="login"?"flex":"none";document.getElementById("app").style.display=id==="app"?"block":"none"}
-const ICO={leite:'<path d="M8 2h8M9 2v4l-3 5v9a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2v-9l-3-5V2"/><path d="M6 13h12"/>',bib:'<path d="M4 4h4v16H4zM10 4h4v16h-4z"/><path d="M16.5 4.5l3.8 1-3.9 15-3.8-1z"/>',mix:'<rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><path d="M17.5 14v7M14 17.5h7"/>',hist:'<path d="M3 3v18h18"/><path d="M7 15l4-5 3 3 5-7"/>',colar:'<rect x="6" y="4" width="12" height="17" rx="2"/><path d="M9 4V3h6v1M9 10h6M9 14h6M9 18h4"/>',comparar:'<path d="M8 3v18M16 3v18"/><path d="M3 8h5M3 14h5M16 10h5M16 16h5"/>',relatorio:'<path d="M6 2h9l5 5v15H6z"/><path d="M14 2v6h6M9 13h7M9 17h7"/>',lotes:'<path d="M3 10l9-6 9 6v10H3z"/><path d="M9 20v-6h6v6"/>',copiar:'<rect x="8" y="8" width="12" height="12" rx="2"/><path d="M16 8V4H4v12h4"/>',dieta:'<path d="M4 4h16v16H4z"/><path d="M8 9h8M8 13h8M8 17h5"/>',salvas:'<path d="M6 3h9l4 4v14H6z"/><path d="M9 13l2 2 4-4"/>',alim:'<path d="M12 3c4 3 6 6 6 10a6 6 0 0 1-12 0c0-4 2-7 6-10z"/><path d="M12 9v9"/>',ferr:'<path d="M14 6a4 4 0 0 0 5 5l-8 8a2 2 0 0 1-3-3z"/>',nova:'<path d="M12 5v14M5 12h14"/>',lote:'<path d="M4 7h16M4 12h16M4 17h10"/><path d="M18 15l2 2-2 2"/>',otim:'<circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/>',salvar:'<path d="M5 3h11l3 3v15H5z"/><path d="M8 3v6h8V3M8 21v-7h8v7"/>',aplicar:'<path d="M5 12l5 5 9-11"/>',limpar:'<path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13"/>',imprimir:'<path d="M7 9V3h10v6M7 17H4v-7h16v7h-3M7 14h10v7H7z"/>',lapis:'<path d="M4 20h4L19 9l-4-4L4 16z"/>'};
+const ICO={chave:'<circle cx="8" cy="15" r="4"/><path d="M11 12l9-9M17 6l3 3M14 9l2 2"/>',leite:'<path d="M8 2h8M9 2v4l-3 5v9a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2v-9l-3-5V2"/><path d="M6 13h12"/>',bib:'<path d="M4 4h4v16H4zM10 4h4v16h-4z"/><path d="M16.5 4.5l3.8 1-3.9 15-3.8-1z"/>',mix:'<rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><path d="M17.5 14v7M14 17.5h7"/>',hist:'<path d="M3 3v18h18"/><path d="M7 15l4-5 3 3 5-7"/>',colar:'<rect x="6" y="4" width="12" height="17" rx="2"/><path d="M9 4V3h6v1M9 10h6M9 14h6M9 18h4"/>',comparar:'<path d="M8 3v18M16 3v18"/><path d="M3 8h5M3 14h5M16 10h5M16 16h5"/>',relatorio:'<path d="M6 2h9l5 5v15H6z"/><path d="M14 2v6h6M9 13h7M9 17h7"/>',lotes:'<path d="M3 10l9-6 9 6v10H3z"/><path d="M9 20v-6h6v6"/>',copiar:'<rect x="8" y="8" width="12" height="12" rx="2"/><path d="M16 8V4H4v12h4"/>',dieta:'<path d="M4 4h16v16H4z"/><path d="M8 9h8M8 13h8M8 17h5"/>',salvas:'<path d="M6 3h9l4 4v14H6z"/><path d="M9 13l2 2 4-4"/>',alim:'<path d="M12 3c4 3 6 6 6 10a6 6 0 0 1-12 0c0-4 2-7 6-10z"/><path d="M12 9v9"/>',ferr:'<path d="M14 6a4 4 0 0 0 5 5l-8 8a2 2 0 0 1-3-3z"/>',nova:'<path d="M12 5v14M5 12h14"/>',lote:'<path d="M4 7h16M4 12h16M4 17h10"/><path d="M18 15l2 2-2 2"/>',otim:'<circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/>',salvar:'<path d="M5 3h11l3 3v15H5z"/><path d="M8 3v6h8V3M8 21v-7h8v7"/>',aplicar:'<path d="M5 12l5 5 9-11"/>',limpar:'<path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13"/>',imprimir:'<path d="M7 9V3h10v6M7 17H4v-7h16v7h-3M7 14h10v7H7z"/>',lapis:'<path d="M4 20h4L19 9l-4-4L4 16z"/>'};
 function ico(n){return'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">'+ICO[n]+'</svg>'}
 auth.onAuthStateChanged(async u=>{
   if(!u){mostrar("login");return}
   USER=u;let role=null,nome="",us={};try{us=(await db.ref("usuarios/"+u.uid).once("value")).val()||{};role=us.role;nome=us.nome||""}catch(e){}
-  BASE="";CONTA=null;PLAT=us.plataforma===true;
+  BASE="";CONTA=null;PLAT=us.plataforma===true;MEU=us;
+  if(us.bloqueado){mostrar("login");document.getElementById("l-m").textContent="Seu acesso está bloqueado. Fale com o administrador da sua conta.";auth.signOut();return}
   if(us.conta){let ci=null;try{ci=(await db.ref("contas_info/"+us.conta).once("value")).val()}catch(e){}
     if(!ci||ci.ativo!==true){mostrar("login");document.getElementById("l-m").textContent=ci?"A licença de "+(ci.nome||"sua conta")+" está suspensa. Fale com o suporte.":"Conta não encontrada.";auth.signOut();return}
     if(ci.validade&&ci.validade<new Date().toISOString().slice(0,10)){mostrar("login");document.getElementById("l-m").textContent="A licença venceu em "+fData(ci.validade)+". Fale com o suporte para renovar.";auth.signOut();return}
-    BASE="contas/"+us.conta+"/";CONTA=Object.assign({id:us.conta},ci);role=us.papel==="admin"?"admin":"vendedor"}
+    BASE="contas/"+us.conta+"/";CONTA=Object.assign({id:us.conta},ci);role=us.papel==="admin"||us.papel==="tecnico"?"admin":"vendedor"}
   if(!ROLES_OK.includes(role)){mostrar("login");document.getElementById("l-m").textContent="O usuário "+(u.email||"")+" não tem acesso ao formulador.";auth.signOut();return}
   ROLE=role;ADM=role==="admin";NOME=nome||(u.email||"").split("@")[0];if(CONTA){const t=document.querySelector(".brand b");if(t)t.textContent=CONTA.nome||"Formulador"}mostrar("app");iniciar()});
 function iniciar(){
@@ -992,7 +993,7 @@ function setTab(t){TAB=t;render();scrollTo(0,0)}
 function render(){
   document.getElementById("tabs").innerHTML=TABS.map(([k,l])=>'<button class="'+(TAB===k?"on":"")+'" onclick="setTab(\''+k+'\')">'+l+(k==="salvas"&&Object.keys(FORMS).length?' <span class="muted">'+Object.keys(FORMS).length+'</span>':'')+'</button>').join("");
   document.getElementById("sub-top").textContent=FARM?nomeFarm(FARM):"Formulação de dietas";
-  document.getElementById("side").innerHTML='<button class="farm" onclick="abrirFazendas()" title="Abrir ou criar fazenda">Fazenda<b>'+esc(FARM?nomeFarm(FARM):"Escolher…")+'</b><span class="tiny" style="color:var(--G);font-weight:600">Abrir / criar fazenda</span></button>'+[["lotes","Lotes","lotes"],["formular","Dietas","dieta"],["historico","Histórico","hist"],["leite","Controle leiteiro","leite"],["alimentos","Alimentos","alim"],["ferramentas","Ferramentas","ferr"]].map(([k,l,i])=>'<button class="'+(TAB===k&&!(k==="alimentos"&&BIB_SEL)?"on":"")+'" onclick="'+(k==="alimentos"?"BIB_SEL=\'\';":"")+'setTab(\''+k+'\')">'+ico(i)+l+(k==="salvas"&&Object.keys(FORMS).length?' <span class="muted small" style="margin-left:auto">'+Object.keys(FORMS).length+'</span>':'')+'</button>'+(k==="alimentos"?sideBibs():"")).join("")+(PLAT?'<button onclick="abrirLicencas()">'+ico("lotes")+'Licenças</button>':'');
+  document.getElementById("side").innerHTML='<button class="farm" onclick="abrirFazendas()" title="Abrir ou criar fazenda">Fazenda<b>'+esc(FARM?nomeFarm(FARM):"Escolher…")+'</b><span class="tiny" style="color:var(--G);font-weight:600">Abrir / criar fazenda</span></button>'+[["lotes","Lotes","lotes"],["formular","Dietas","dieta"],["historico","Histórico","hist"],["leite","Controle leiteiro","leite"],["alimentos","Alimentos","alim"],["ferramentas","Ferramentas","ferr"]].map(([k,l,i])=>'<button class="'+(TAB===k&&!(k==="alimentos"&&BIB_SEL)?"on":"")+'" onclick="'+(k==="alimentos"?"BIB_SEL=\'\';":"")+'setTab(\''+k+'\')">'+ico(i)+l+(k==="salvas"&&Object.keys(FORMS).length?' <span class="muted small" style="margin-left:auto">'+Object.keys(FORMS).length+'</span>':'')+'</button>'+(k==="alimentos"?sideBibs():"")).join("")+(PLAT?'<button onclick="abrirLicencas()">'+ico("chave")+'Licenças e logins</button>':CONTA&&MEU.papel==="admin"?'<button onclick="abrirEquipe()">'+ico("chave")+'Equipe e logins</button>':'');
   const m=document.getElementById("m");const fab=document.getElementById("fab");fab.innerHTML="";
   if(TAB==="lotes")renderLotes(m);else if(TAB==="formular")renderFormular(m);else if(TAB==="salvas")renderSalvas(m);else if(TAB==="alimentos")renderAlimentos(m);else if(TAB==="historico")renderHistorico(m);else if(TAB==="leite")renderLeite(m);else renderFerramentas(m)}
 function seletorFazenda(){const ids=Object.keys(PROPS).filter(id=>PROPS[id]&&(PROPS[id].propriedade||PROPS[id].produtor)).sort((a,b)=>nomeFarm(a).localeCompare(nomeFarm(b)));
@@ -1546,7 +1547,7 @@ function modalLicencas(){const ls=Object.entries(LIC).sort((a,b)=>(a[1].nome||""
   abrirModal('<h2>Licenças</h2><p class="small muted">Cada licença é uma conta em branco, separada das outras. O técnico entra com o e-mail e a senha criados aqui.</p>'+
     '<div class="tw"><table class="t"><thead><tr><th>Conta</th><th>Responsável</th><th>Plano</th><th>Validade</th><th>Situação</th><th></th></tr></thead><tbody>'+
     (ls.length?ls.map(([id,c])=>{const venc=c.validade&&c.validade<hj;return'<tr><td><b>'+esc(c.nome||id)+'</b></td><td class="small">'+esc(c.responsavel||"")+'<br><span class="muted">'+esc(c.email||"")+'</span></td><td>'+esc(c.plano||"")+'</td><td>'+(c.validade?fData(c.validade):"—")+'</td><td>'+(c.ativo&&!venc?'<span class="chip ok">ativa</span>':venc?'<span class="chip warn">vencida</span>':'<span class="chip bad">suspensa</span>')+'</td>'+
-      '<td style="white-space:nowrap"><button class="btn btn-o btn-sm" onclick="editarLicenca(\''+esc(id)+'\')">Editar</button> <button class="btn btn-o btn-sm" onclick="ativarLicenca(\''+esc(id)+'\','+(c.ativo?"false":"true")+')">'+(c.ativo?"Suspender":"Ativar")+'</button></td></tr>'}).join(""):'<tr><td colspan="6" class="muted" style="text-align:center;padding:14px">Nenhuma licença ainda.</td></tr>')+
+      '<td style="white-space:nowrap"><button class="btn btn-o btn-sm" onclick="abrirEquipe(\''+esc(id)+'\')">Logins</button> <button class="btn btn-o btn-sm" onclick="editarLicenca(\''+esc(id)+'\')">Editar</button> <button class="btn btn-o btn-sm" onclick="ativarLicenca(\''+esc(id)+'\','+(c.ativo?"false":"true")+')">'+(c.ativo?"Suspender":"Ativar")+'</button></td></tr>'}).join(""):'<tr><td colspan="6" class="muted" style="text-align:center;padding:14px">Nenhuma licença ainda.</td></tr>')+
     '</tbody></table></div><div class="md-f"><button class="btn btn-o" onclick="fecharModal()">Fechar</button><button class="btn btn-g" onclick="editarLicenca()">+ Nova licença</button></div>',"lg")}
 function editarLicenca(id){const c=id?LIC[id]||{}:{};const v=new Date();v.setFullYear(v.getFullYear()+1);
   abrirModal('<h2>'+(id?"Editar licença":"Nova licença")+'</h2><div class="grid2">'+
@@ -1565,9 +1566,9 @@ async function salvarLicenca(id){const g=k=>(document.getElementById("lc-"+k)||{
     const cr=await sec.auth().createUserWithEmailAndPassword(email,senha);const uid=cr.user.uid;await sec.auth().signOut();
     const cid="c"+Date.now().toString(36);const up={};
     up["contas_info/"+cid]=Object.assign(info,{email,ativo:true,criado_em:new Date().toISOString(),criado_por:NOME});
-    up["usuarios/"+uid]={nome:info.responsavel||info.nome,email,conta:cid,papel:"admin"};
+    up["usuarios/"+uid]={nome:info.responsavel||info.nome,email,conta:cid,papel:"admin"};up["contas_equipe/"+cid+"/"+uid]={nome:info.responsavel||info.nome,email,papel:"admin",criado_em:new Date().toISOString(),criado_por:NOME};
     await db.ref().update(up);LIC[cid]=up["contas_info/"+cid];
-    abrirModal('<h2>Licença criada</h2><p>Envie ao técnico:</p><div class="obs" style="white-space:pre-wrap;user-select:all">Acesso: '+esc(location.href.split("#")[0])+'\nE-mail: '+esc(email)+'\nSenha: '+esc(senha)+'</div><p class="small muted">Peça para ele trocar a senha no primeiro acesso.</p><div class="md-f"><button class="btn btn-g" onclick="modalLicencas()">Ok</button></div>')}
+    abrirModal('<h2>Licença criada</h2><p>Envie ao técnico:</p><div class="obs" style="white-space:pre-wrap;user-select:all">Acesso: '+esc(location.href.split("#")[0])+'\nE-mail: '+esc(email)+'\nSenha: '+esc(senha)+'</div><p class="small muted">No primeiro acesso, ele troca a senha em “Minha senha”.</p><div class="md-f"><button class="btn btn-g" onclick="modalLicencas()">Ok</button></div>')}
   catch(e){msg("Não criou: "+(e.code==="auth/email-already-in-use"?"este e-mail já tem acesso.":e.message))}}
 function ativarLicenca(id,on){db.ref("contas_info/"+id+"/ativo").set(!!on).then(()=>{LIC[id].ativo=!!on;modalLicencas();toast(on?"Licença ativada":"Licença suspensa")}).catch(e=>toast(e.message,true))}
 function renderFerramentas(m){
@@ -2430,6 +2431,55 @@ function clRelatorio(){const d=CL_SEL,vs=clVacas(d),S=clStats(vs),dA=clAnterior(
   if(al.length)h+='<h3>Vacas para olhar</h3><table><thead><tr><th>Vaca</th><th>Lote</th><th class="n">Leite</th><th class="n">DEL</th><th>Motivo</th></tr></thead><tbody>'+al.map(x=>'<tr><td>'+esc(x.v.vaca)+'</td><td>'+esc(x.v.lote)+'</td><td class="n">'+f(x.v.litros,1)+'</td><td class="n">'+(x.v.del||"—")+'</td><td>'+esc(x.t)+'</td></tr>').join("")+'</tbody></table>';
   if(REL_OBS)h+='<h3>Recomendações</h3><div class="obs">'+esc(REL_OBS)+'</div>';
   h+=rodape()+'</div>';abrirRelatorio("Controle leiteiro — "+nomeFarm(FARM),[h])}
+
+/* ============================================================
+   ACESSOS — geração e gestão de logins
+   · dono da plataforma (usuarios/{uid}/plataforma = true): licenças + logins de qualquer conta
+   · administrador da conta (papel "admin"): logins da própria equipe
+   índice da equipe: contas_equipe/{conta}/{uid} = {nome,email,papel,bloqueado,criado_em}
+   ============================================================ */
+const PAPEIS={admin:["Administrador","Formula, salva nos lotes e gerencia a equipe"],tecnico:["Técnico","Formula e salva nos lotes"],leitura:["Consulta","Só visualiza dietas e relatórios"]};
+let EQ={},EQ_CONTA=null;
+function podeEquipe(){return PLAT||(CONTA&&MEU.papel==="admin")}
+let MEU={};
+function abrirEquipe(cid){cid=cid||(CONTA&&CONTA.id);if(!cid)return;EQ_CONTA=cid;
+  db.ref("contas_equipe/"+cid).once("value").then(s=>{EQ=s.val()||{};modalEquipe()}).catch(e=>toast("Sem permissão: "+e.message,true))}
+function modalEquipe(){const cid=EQ_CONTA;const nomeC=(PLAT&&LIC[cid]?LIC[cid].nome:CONTA&&CONTA.nome)||"Conta";const us=Object.entries(EQ).sort((a,b)=>(a[1].nome||"").localeCompare(b[1].nome||""));
+  abrirModal('<h2>Logins — '+esc(nomeC)+'</h2><p class="small muted">Cada pessoa entra com o próprio e-mail e senha. Quem está bloqueado não consegue mais entrar.</p>'+
+    '<div class="tw"><table class="t"><thead><tr><th>Nome</th><th>E-mail</th><th>Perfil</th><th>Situação</th><th></th></tr></thead><tbody>'+
+    (us.length?us.map(([uid,u])=>{const eu=USER&&uid===USER.uid;return'<tr><td><b>'+esc(u.nome||"")+'</b>'+(eu?' <span class="tiny muted">(você)</span>':'')+'</td><td class="small">'+esc(u.email||"")+'</td>'+
+      '<td><select class="sel btn-sm" style="width:auto"'+(eu?" disabled":"")+' onchange="mudarPapel(\''+uid+'\',this.value)">'+Object.entries(PAPEIS).map(([k,[l]])=>'<option value="'+k+'"'+(u.papel===k?" selected":"")+'>'+l+'</option>').join("")+'</select></td>'+
+      '<td>'+(u.bloqueado?'<span class="chip bad">bloqueado</span>':'<span class="chip ok">ativo</span>')+'</td>'+
+      '<td style="white-space:nowrap"><button class="btn btn-o btn-sm" title="Envia um e-mail para a pessoa criar uma senha nova" onclick="resetSenha(\''+esc(u.email||"")+'\')">Redefinir senha</button>'+(eu?'':' <button class="btn btn-o btn-sm" style="color:'+(u.bloqueado?"var(--G)":"var(--red)")+'" onclick="bloquear(\''+uid+'\','+(!u.bloqueado)+')">'+(u.bloqueado?"Desbloquear":"Bloquear")+'</button>')+'</td></tr>'}).join(""):'<tr><td colspan="5" class="muted" style="text-align:center;padding:14px">Nenhum login ainda.</td></tr>')+
+    '</tbody></table></div><div class="tiny muted" style="margin-top:6px">'+Object.entries(PAPEIS).map(([,[l,d]])=>'<b>'+l+'</b>: '+d).join(" · ")+'</div>'+
+    '<div class="md-f">'+(PLAT?'<button class="btn btn-o" onclick="modalLicencas()">Voltar às licenças</button>':'<button class="btn btn-o" onclick="fecharModal()">Fechar</button>')+'<button class="btn btn-g" onclick="novoLogin()">+ Novo login</button></div>',"lg")}
+function senhaAleatoria(){const c="abcdefghjkmnpqrstuvwxyz23456789";let s="";for(let i=0;i<8;i++)s+=c[Math.floor(Math.random()*c.length)];return s}
+function novoLogin(){abrirModal('<h2>Novo login</h2><div class="grid2">'+
+  '<label class="fld"><span>Nome</span><input class="inp" id="nl-n"></label><label class="fld"><span>E-mail</span><input class="inp" id="nl-e" type="email"></label>'+
+  '<label class="fld"><span>Senha inicial</span><input class="inp" id="nl-s" value="'+senhaAleatoria()+'"></label>'+
+  '<label class="fld"><span>Perfil</span><select class="sel" id="nl-p">'+Object.entries(PAPEIS).map(([k,[l]])=>'<option value="'+k+'"'+(k==="tecnico"?" selected":"")+'>'+l+'</option>').join("")+'</select></label></div>'+
+  '<p class="small muted" id="nl-m"></p><div class="md-f"><button class="btn btn-o" onclick="modalEquipe()">Voltar</button><button class="btn btn-g" onclick="criarLogin()">Criar login</button></div>')}
+/* cria o usuário no Firebase Auth por uma instância secundária (quem está logado continua logado) */
+async function criarUsuarioAuth(email,senha){const sec=(firebase.apps||[]).find(a=>a.name==="acessos")||firebase.initializeApp(firebase.app().options,"acessos");
+  const cr=await sec.auth().createUserWithEmailAndPassword(email,senha);const uid=cr.user.uid;try{await sec.auth().signOut()}catch(e){}return uid}
+function msgErroAuth(e){return e.code==="auth/email-already-in-use"?"este e-mail já tem login.":e.code==="auth/invalid-email"?"e-mail inválido.":e.code==="auth/weak-password"?"senha fraca (mín. 6 caracteres).":e.message}
+async function criarLogin(){const g=k=>(document.getElementById("nl-"+k)||{}).value||"";const m=t=>{document.getElementById("nl-m").textContent=t};
+  const nome=g("n").trim(),email=g("e").trim().toLowerCase(),senha=g("s"),papel=g("p");if(!nome||!email){m("Informe nome e e-mail.");return}if(senha.length<6){m("A senha precisa de 6 caracteres ou mais.");return}
+  m("Criando…");try{const uid=await criarUsuarioAuth(email,senha);const cid=EQ_CONTA;const agora=new Date().toISOString();const up={};
+    up["usuarios/"+uid]={nome,email,conta:cid,papel};up["contas_equipe/"+cid+"/"+uid]={nome,email,papel,criado_em:agora,criado_por:NOME};
+    await db.ref().update(up);EQ[uid]=up["contas_equipe/"+cid+"/"+uid];mostrarCredenciais(email,senha,"modalEquipe()")}
+  catch(e){m("Não criou: "+msgErroAuth(e))}}
+function mostrarCredenciais(email,senha,voltar){const txt="Acesso: "+location.href.split("#")[0]+"\nE-mail: "+email+"\nSenha: "+senha;
+  abrirModal('<h2>Login criado</h2><p>Envie para a pessoa:</p><div class="obs" id="cred" style="white-space:pre-wrap;user-select:all;border:1px solid var(--line,#e2e8f0);border-radius:8px;padding:10px;font-family:ui-monospace,monospace">'+esc(txt)+'</div><p class="small muted">No primeiro acesso, ela pode trocar a senha em “Minha senha”.</p>'+
+    '<div class="md-f"><button class="btn btn-o" onclick="navigator.clipboard&&navigator.clipboard.writeText(document.getElementById(\'cred\').innerText).then(()=>toast(\'Copiado\'))">Copiar</button><button class="btn btn-g" onclick="'+voltar+'">Ok</button></div>')}
+function mudarPapel(uid,p){const up={};up["usuarios/"+uid+"/papel"]=p;up["contas_equipe/"+EQ_CONTA+"/"+uid+"/papel"]=p;db.ref().update(up).then(()=>{EQ[uid].papel=p;toast("Perfil alterado")}).catch(e=>toast(e.message,true))}
+function bloquear(uid,b){if(b&&!confirm("Bloquear o acesso de "+(EQ[uid].nome||EQ[uid].email)+"?"))return;const up={};up["usuarios/"+uid+"/bloqueado"]=b||null;up["contas_equipe/"+EQ_CONTA+"/"+uid+"/bloqueado"]=b||null;
+  db.ref().update(up).then(()=>{EQ[uid].bloqueado=b;modalEquipe();toast(b?"Acesso bloqueado":"Acesso liberado")}).catch(e=>toast(e.message,true))}
+function resetSenha(email){if(!email)return;auth.sendPasswordResetEmail(email).then(()=>toast("E-mail para criar nova senha enviado para "+email)).catch(e=>toast("Não enviou: "+msgErroAuth(e),true))}
+/* minha senha */
+function minhaSenha(){abrirModal('<h2>Minha senha</h2><div class="grid2"><label class="fld"><span>Senha atual</span><input class="inp" id="ms-a" type="password" autocomplete="current-password"></label><label class="fld"><span>Nova senha</span><input class="inp" id="ms-n" type="password" autocomplete="new-password"></label></div><p class="small muted" id="ms-m"></p><div class="md-f"><button class="btn btn-o" onclick="fecharModal()">Cancelar</button><button class="btn btn-g" onclick="trocarSenha()">Salvar</button></div>')}
+async function trocarSenha(){const a=document.getElementById("ms-a").value,n=document.getElementById("ms-n").value,m=t=>{document.getElementById("ms-m").textContent=t};if(n.length<6){m("A nova senha precisa de 6 caracteres ou mais.");return}
+  try{const u=auth.currentUser;const cred=firebase.auth.EmailAuthProvider.credential(u.email,a);await u.reauthenticateWithCredential(cred);await u.updatePassword(n);fecharModal();toast("Senha alterada")}catch(e){m(e.code==="auth/wrong-password"||e.code==="auth/invalid-credential"?"Senha atual incorreta.":msgErroAuth(e))}}
 
 
 </script>
