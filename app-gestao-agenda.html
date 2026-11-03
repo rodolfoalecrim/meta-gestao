@@ -222,8 +222,8 @@ function entrar(){const e=document.getElementById("lem").value.trim(),s=document
 function sair(){auth.signOut()}
 auth.onAuthStateChanged(async u=>{document.getElementById("load").style.display="none";
   if(!u){document.getElementById("login").style.display="flex";document.getElementById("app").style.display="none";return}
-  let me={};try{me=(await db.ref("usuarios/"+u.uid).once("value")).val()||{}}catch(e){}
-  if(me.role!=="admin"){document.getElementById("login").style.display="flex";document.getElementById("lmsg").textContent="Este acesso é só para supervisores (perfil admin).";auth.signOut();return}
+  let me={},erro="";try{me=(await db.ref("usuarios/"+u.uid).once("value")).val()||{}}catch(e){erro=e.message||String(e)}
+  if(me.role!=="admin"){document.getElementById("login").style.display="flex";const lm=document.getElementById("lmsg");lm.innerHTML="Este acesso é só para supervisores (perfil admin).<br><span style='color:#64748b;font-size:11px;user-select:all'>UID: "+esc(u.uid)+" · perfil encontrado: "+esc(erro?"erro ao ler ("+erro+")":me.role===undefined?"nenhum registro em usuarios":JSON.stringify(me.role))+"</span>";auth.signOut();return}
   document.getElementById("login").style.display="none";document.getElementById("app").style.display="block";document.getElementById("unome").textContent=me.nome||u.email;
   iniciar()});
 
