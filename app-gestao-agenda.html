@@ -1,0 +1,506 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Gestão de Agendas — Meta</title>
+<link rel="icon" href="meta_icon_192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+:root{--G:#15803d;--GD:#0b4a22;--GL:#f0fdf4;--bg:#f4f6f3;--card:#fff;--tx:#14201a;--mu:#64748b;--ln:#e3e8e1;--red:#dc2626;--amb:#d97706;--gray:#94a3b8;
+  --nut:#2F6B3C;--sau:#B0362B;--fen:#C98A2E;--agr:#3E6E8E}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:Inter,system-ui,sans-serif;background:var(--bg);color:var(--tx);font-size:14px;-webkit-font-smoothing:antialiased}
+.mono{font-family:"JetBrains Mono",ui-monospace,monospace}
+button{font-family:inherit;cursor:pointer}
+/* login */
+#login{min-height:100vh;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,#003c09,#1a6b35);padding:16px}
+.lbox{background:#fff;border-radius:18px;padding:32px 28px;width:100%;max-width:360px;box-shadow:0 20px 60px rgba(0,0,0,.25)}
+.lbox img{height:44px;display:block;margin:0 auto 14px}
+.lbox h1{font-size:18px;text-align:center;margin-bottom:4px}
+.lbox p{font-size:12px;color:var(--mu);text-align:center;margin-bottom:18px}
+.inp{width:100%;padding:11px 12px;border:1px solid var(--ln);border-radius:10px;font:inherit;margin-bottom:10px;background:#fff}
+.inp:focus{outline:2px solid #bbf7d0;border-color:var(--G)}
+.btn{border:0;border-radius:10px;padding:10px 14px;font-weight:700;font-size:13px}
+.btn-g{background:var(--G);color:#fff}.btn-o{background:#fff;border:1px solid var(--ln);color:var(--tx)}
+.btn-g:hover{background:#166534}.btn-o:hover{background:#f8faf7}
+#lmsg{color:var(--red);font-size:12px;min-height:16px;text-align:center}
+/* app */
+#app{display:none}
+header{background:var(--GD);color:#fff;padding:10px 20px;display:flex;align-items:center;gap:14px;position:sticky;top:0;z-index:30}
+header img{height:30px;background:#fff;border-radius:6px;padding:2px 6px}
+header .tt{font-weight:800;font-size:15px}header .st{font-size:11px;opacity:.7}
+header .sp{flex:1}
+header .u{font-size:12px;opacity:.85}
+header .btn{background:rgba(255,255,255,.12);color:#fff;padding:7px 11px}
+.live{display:inline-block;width:7px;height:7px;border-radius:50%;background:#4ade80;margin-right:5px;box-shadow:0 0 0 3px rgba(74,222,128,.25)}
+.bar{background:#fff;border-bottom:1px solid var(--ln);padding:10px 20px;display:flex;flex-wrap:wrap;gap:10px;align-items:center;position:sticky;top:50px;z-index:20}
+.bar label{font-size:11px;font-weight:700;color:var(--mu);text-transform:uppercase;letter-spacing:.3px}
+.sel{padding:7px 10px;border:1px solid var(--ln);border-radius:9px;font:inherit;font-size:13px;background:#fff}
+.chips{display:flex;gap:6px;flex-wrap:wrap}
+.chip{border:1px solid var(--ln);background:#fff;border-radius:999px;padding:5px 11px;font-size:12px;font-weight:600;color:var(--tx)}
+.chip.on{background:var(--G);border-color:var(--G);color:#fff}
+.tabs{display:flex;gap:2px;padding:0 20px;background:#fff;border-bottom:1px solid var(--ln);overflow-x:auto}
+.tab{background:none;border:0;padding:12px 14px;font-weight:700;font-size:13px;color:var(--mu);border-bottom:3px solid transparent;white-space:nowrap}
+.tab.on{color:var(--G);border-bottom-color:var(--G)}
+main{padding:18px 20px 60px;max-width:1500px;margin:0 auto}
+.grid{display:grid;gap:14px}
+.k6{grid-template-columns:repeat(6,1fr)}.k4{grid-template-columns:repeat(4,1fr)}.c2{grid-template-columns:1fr 1fr}.c32{grid-template-columns:3fr 2fr}
+@media(max-width:1100px){.k6{grid-template-columns:repeat(3,1fr)}.c2,.c32{grid-template-columns:1fr}}
+@media(max-width:600px){.k6,.k4{grid-template-columns:repeat(2,1fr)}main{padding:14px 12px 60px}.bar{padding:8px 12px;top:50px;position:static}header{padding:10px 12px;gap:8px}header .u,header .st,#bcsv{display:none}header .tt{font-size:14px;white-space:nowrap}header img{height:24px}.tabs{padding:0 8px}}
+.card{background:var(--card);border:1px solid var(--ln);border-radius:14px;padding:16px}
+.card h3{font-size:13px;font-weight:800;margin-bottom:2px}
+.card .sub{font-size:11.5px;color:var(--mu);margin-bottom:12px}
+.kpi{background:#fff;border:1px solid var(--ln);border-radius:14px;padding:14px 14px 12px;position:relative}
+.kpi .l{font-size:11px;font-weight:700;color:var(--mu);text-transform:uppercase;letter-spacing:.3px}
+.kpi .v{font-family:"JetBrains Mono",monospace;font-size:26px;font-weight:700;margin:6px 0 2px;line-height:1}
+.kpi .d{font-size:11.5px;color:var(--mu)}
+.kpi .dl{font-weight:700}.up{color:var(--G)}.dn{color:var(--red)}
+.kpi.ok{border-left:4px solid var(--G)}.kpi.at{border-left:4px solid var(--amb)}.kpi.cr{border-left:4px solid var(--red)}.kpi.in{border-left:4px solid #cbd5e1}
+.sec{font-size:12px;font-weight:800;color:var(--mu);text-transform:uppercase;letter-spacing:.5px;margin:22px 0 10px}
+.cw{position:relative;height:260px}.cw.s{height:220px}
+table.t{width:100%;border-collapse:collapse;font-size:13px}
+.t th{text-align:left;font-size:11px;color:var(--mu);font-weight:700;text-transform:uppercase;letter-spacing:.3px;padding:8px;border-bottom:1px solid var(--ln);white-space:nowrap;cursor:pointer;user-select:none}
+.t td{padding:9px 8px;border-bottom:1px solid #eef1ec;vertical-align:middle}
+.t tr.cl{cursor:pointer}.t tr.cl:hover td{background:#f8faf7}
+.t td.n{text-align:right;font-family:"JetBrains Mono",monospace;font-size:12.5px}.t th.n{text-align:right}
+.tw{overflow-x:auto}
+.av{width:28px;height:28px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;color:#fff;font-weight:800;font-size:11px;margin-right:8px;vertical-align:middle;flex-shrink:0}
+.pill{display:inline-block;padding:2px 8px;border-radius:999px;font-size:11px;font-weight:700;white-space:nowrap}
+.p-ok{background:#dcfce7;color:#166534}.p-at{background:#fef3c7;color:#92400e}.p-cr{background:#fee2e2;color:#991b1b}.p-in{background:#f1f5f9;color:#475569}
+.meter{height:7px;background:#eef1ec;border-radius:9px;overflow:hidden;min-width:60px}.meter>i{display:block;height:100%;border-radius:9px}
+.alert{display:flex;gap:10px;align-items:flex-start;padding:10px 12px;border-radius:10px;margin-bottom:8px;font-size:13px;line-height:1.4}
+.alert b{font-weight:800}.a-cr{background:#fef2f2;border:1px solid #fecaca}.a-at{background:#fffbeb;border:1px solid #fde68a}.a-ok{background:var(--GL);border:1px solid #bbf7d0}
+.alert .ic{font-size:15px;line-height:1.2}
+.empty{color:var(--mu);text-align:center;padding:24px;font-size:13px}
+/* calendário */
+.cal{border-collapse:separate;border-spacing:3px;font-size:11px}
+.cal th{font-weight:700;color:var(--mu);padding:2px 0;text-align:center;min-width:36px}
+.cal th.wk{color:#b91c1c}
+.cal td.nm{white-space:nowrap;font-weight:700;font-size:12.5px;padding-right:8px;position:sticky;left:0;background:#fff;z-index:1}
+.cal td.c{height:34px;min-width:36px;border-radius:7px;text-align:center;font-family:"JetBrains Mono",monospace;font-weight:700;cursor:pointer;font-size:11px}
+.cal td.c:hover{outline:2px solid var(--tx)}
+.cal td.hj{box-shadow:inset 0 0 0 2px var(--GD)}
+.leg{display:flex;flex-wrap:wrap;gap:12px;font-size:11.5px;color:var(--mu);margin-top:10px}.leg i{display:inline-block;width:12px;height:12px;border-radius:3px;vertical-align:-2px;margin-right:4px}
+/* feed */
+.fb{border-left:3px solid var(--ln);padding:8px 12px;margin-bottom:10px;background:#fafbf9;border-radius:0 10px 10px 0}
+.fb .h{font-size:12px;color:var(--mu);margin-bottom:4px;display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.fb .q{font-size:13.5px;line-height:1.45}
+.fb .q:before{content:"“";color:var(--G);font-weight:800;margin-right:2px}.fb .q:after{content:"”";color:var(--G);font-weight:800}
+/* gaveta */
+#dw{position:fixed;inset:0;background:rgba(15,23,20,.45);z-index:50;display:none}
+#dw .pn{position:absolute;right:0;top:0;bottom:0;width:min(640px,100%);background:#fff;overflow-y:auto;padding:20px;box-shadow:-10px 0 40px rgba(0,0,0,.2)}
+#dw .x{position:sticky;top:0;float:right;background:#fff;border:1px solid var(--ln);border-radius:9px;padding:6px 10px;font-weight:700}
+.dia{margin-top:16px}.dia>h4{font-size:12px;font-weight:800;color:var(--mu);text-transform:uppercase;margin-bottom:6px;letter-spacing:.3px}
+.vi{border:1px solid var(--ln);border-radius:10px;padding:10px 12px;margin-bottom:8px}
+.vi .t1{display:flex;gap:8px;align-items:center;flex-wrap:wrap}.vi .fz{font-weight:800}.vi .cd{font-size:12px;color:var(--mu)}
+.vi .at{font-size:12px;margin-top:5px;display:flex;flex-wrap:wrap;gap:6px}
+.mk{display:inline-block;padding:3px 9px;border-radius:7px;font-size:12px;font-weight:700;margin-bottom:6px}
+.dot{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:4px}
+.hint{font-size:11.5px;color:var(--mu);line-height:1.5;margin-top:8px}
+.toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:var(--GD);color:#fff;padding:10px 16px;border-radius:10px;font-weight:600;font-size:13px;display:none;z-index:80}
+#load{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:var(--bg);z-index:90;font-weight:700;color:var(--mu)}
+/* impressão */
+.ponly{display:none}
+@media print{
+  @page{size:A4 landscape;margin:10mm}
+  header,.bar,.tabs,#dw,.noprint,.toast{display:none!important}
+  body{background:#fff;font-size:11px}main{padding:0;max-width:none}
+  .ponly{display:block}.pane{display:block!important;break-before:page}.pane:first-of-type{break-before:auto}
+  .card,.kpi{break-inside:avoid;box-shadow:none}
+  .cw{height:200px}
+}
+</style>
+</head>
+<body>
+<div id="load">Carregando…</div>
+
+<div id="login" style="display:none">
+  <div class="lbox">
+    <img src="meta_logo.jpg" alt="Meta" onerror="this.style.display='none'">
+    <h1>Gestão de Agendas</h1>
+    <p>Acesso dos supervisores e administradores</p>
+    <input class="inp" id="lem" type="email" placeholder="E-mail" autocomplete="username">
+    <input class="inp" id="lpw" type="password" placeholder="Senha" autocomplete="current-password" onkeydown="if(event.key==='Enter')entrar()">
+    <button class="btn btn-g" style="width:100%;padding:12px" onclick="entrar()">Entrar</button>
+    <div id="lmsg" style="margin-top:10px"></div>
+  </div>
+</div>
+
+<div id="app">
+  <header>
+    <img src="meta_logo.jpg" alt="Meta" onerror="this.style.display='none'">
+    <div><div class="tt">Gestão de Agendas</div><div class="st"><span class="live"></span>dados em tempo real</div></div>
+    <div class="sp"></div>
+    <span class="u" id="unome"></span>
+    <button class="btn" id="bcsv" onclick="exportarCSV()" title="Baixa as visitas do período em planilha">CSV</button>
+    <button class="btn" onclick="imprimir()" title="Gera o relatório em PDF">PDF</button>
+    <button class="btn" onclick="sair()">Sair</button>
+  </header>
+  <div class="bar">
+    <label>Período</label>
+    <select class="sel" id="fper" onchange="mudaPer()">
+      <option value="sem">Esta semana</option>
+      <option value="sem1">Semana passada</option>
+      <option value="4s" selected>Últimas 4 semanas</option>
+      <option value="mes">Este mês</option>
+      <option value="mes1">Mês passado</option>
+      <option value="90">Últimos 90 dias</option>
+      <option value="cus">Personalizado…</option>
+    </select>
+    <span id="fcus" style="display:none"><input type="date" class="sel" id="fde" onchange="mudaPer()"> a <input type="date" class="sel" id="fate" onchange="mudaPer()"></span>
+    <label style="margin-left:6px">Vendedor</label>
+    <select class="sel" id="fven" onchange="render()"></select>
+    <label style="margin-left:6px">Área</label>
+    <div class="chips" id="fare"></div>
+    <span style="flex:1"></span>
+    <span class="mono" style="font-size:12px;color:var(--mu)" id="fdesc"></span>
+  </div>
+  <nav class="tabs" id="tabs"></nav>
+  <main>
+    <div class="ponly" id="phead"></div>
+    <section class="pane" id="p-geral"></section>
+    <section class="pane" id="p-equipe"></section>
+    <section class="pane" id="p-cal"></section>
+    <section class="pane" id="p-ativ"></section>
+    <section class="pane" id="p-ck"></section>
+    <section class="pane" id="p-cart"></section>
+  </main>
+</div>
+<div id="dw" onclick="if(event.target.id==='dw')fecharDw()"><div class="pn" id="dwp"></div></div>
+<div class="toast" id="toast"></div>
+
+<script>
+/* ============================================================
+   GESTÃO DE AGENDAS — painel dos supervisores
+   Lê (só leitura) os mesmos dados que os vendedores gravam na agenda do app-vendedor:
+   agendas/{uid}/{AAAA-Www}/{itens,folgas,eventos,acompanhamentos}, usuarios, propriedades
+   ============================================================ */
+const firebaseConfig={apiKey:"AIzaSyClpsHjO8OLThD--hDOfg7Fg3t6hhuM-To",authDomain:"meta-gestao-608d7.firebaseapp.com",databaseURL:"https://meta-gestao-608d7-default-rtdb.firebaseio.com",projectId:"meta-gestao-608d7",storageBucket:"meta-gestao-608d7.firebasestorage.app",messagingSenderId:"318618053627",appId:"1:318618053627:web:ae289200bd1e87be29395e"};
+firebase.initializeApp(firebaseConfig);
+const auth=firebase.auth(),db=firebase.database();
+
+const AREAS={nutricao:{l:"Nutrição",c:"#2F6B3C"},saude_animal:{l:"Saúde Animal",c:"#B0362B"},fenacao:{l:"Fenação",c:"#C98A2E"},agricola:{l:"Agrícola",c:"#3E6E8E"}};
+const ST={realizado:{l:"Realizada",c:"#15803d",p:"p-ok"},nao_realizado:{l:"Não realizada",c:"#dc2626",p:"p-cr"},remarcado:{l:"Remarcada",c:"#d97706",p:"p-at"},sem_retorno:{l:"Sem check-in",c:"#94a3b8",p:"p-in"},hoje:{l:"Hoje",c:"#60a5fa",p:"p-in"},futuro:{l:"Agendada",c:"#cbd5e1",p:"p-in"}};
+const MOT={sem_coordenada:"Fazenda sem coordenada",gps_indisponivel:"GPS do celular indisponível",fora_do_raio:"Fora do raio da fazenda"};
+const DIAS_S=["dom","seg","ter","qua","qui","sex","sáb"];
+const CORES=["#15803d","#2563eb","#7c3aed","#d97706","#dc2626","#0891b2","#db2777","#059669","#4d7c0f","#9333ea","#0f766e","#b45309"];
+
+let USR={},AG={},PROPS={},ITENS=[],MARC=[],SEMS=[],VEND=[],TAB="geral",AREA="",DE="",ATE="",HOJE="",CH={},ORD={k:"idx",d:-1},LISTENING=false;
+
+/* ---------- utilidades ---------- */
+const p2=n=>String(n).padStart(2,"0");
+const iso=d=>d.getFullYear()+"-"+p2(d.getMonth()+1)+"-"+p2(d.getDate());
+const pISO=s=>{const[y,m,d]=s.split("-").map(Number);return new Date(y,m-1,d)};
+const addD=(s,n)=>{const d=pISO(s);d.setDate(d.getDate()+n);return iso(d)};
+const segDe=s=>{const d=pISO(s);d.setDate(d.getDate()-((d.getDay()+6)%7));return iso(d)};
+const fD=s=>s?s.slice(8,10)+"/"+s.slice(5,7):"—";
+const fDL=s=>s?s.slice(8,10)+"/"+s.slice(5,7)+"/"+s.slice(0,4):"—";
+const diasEntre=(a,b)=>Math.round((pISO(b)-pISO(a))/864e5);
+function segDaSemana(k){const[y,w]=k.split("-W").map(Number);const j=new Date(y,0,4);j.setDate(j.getDate()-((j.getDay()+6)%7)+(w-1)*7);return iso(j)}
+const esc=s=>String(s==null?"":s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const pct=(a,b)=>b?Math.round(a/b*100):null;
+const fP=v=>v==null?"—":v+"%";
+const fN=(v,d=0)=>v==null||!isFinite(v)?"—":v.toLocaleString("pt-BR",{minimumFractionDigits:d,maximumFractionDigits:d});
+const norm=s=>String(s||"").normalize("NFD").replace(/[̀-ͯ]/g,"").toUpperCase().replace(/\s+/g," ").trim();
+const cap=s=>String(s||"").toLowerCase().replace(/(^|\s)\S/g,c=>c.toUpperCase());
+function toast(t){const e=document.getElementById("toast");e.textContent=t;e.style.display="block";clearTimeout(e._t);e._t=setTimeout(()=>e.style.display="none",2600)}
+function corDe(uid){const i=VEND.findIndex(v=>v.uid===uid);return CORES[(i<0?0:i)%CORES.length]}
+function ini(n){return String(n||"?").split(" ").slice(0,2).map(w=>w[0]||"").join("").toUpperCase()}
+function av(uid){const v=USR[uid]||{};return'<span class="av" style="background:'+corDe(uid)+'">'+esc(ini(v.nome||"?"))+'</span>'}
+function nomeU(uid){const u=USR[uid]||{};return u.nome||(u.email||"").split("@")[0]||uid.slice(0,6)}
+function objetivoGrupo(o){const n=norm(o);if(!n)return"Sem objetivo";if(n.includes("PROSPEC"))return"Prospecção";if(n.includes("LEVANTAMENTO"))return"Levantamento de dados";if(n.includes("FECHA"))return"Fechamento";if(n.includes("POS VENDA")||n.includes("POS-VENDA"))return"Pós venda";if(n.includes("ENTREGA"))return"Entrega";if(n.includes("COBRAN"))return"Cobrança";if(n.includes("VISITA TEC")||n.includes("TECNIC")||n.includes("MANEJO")||n.includes("COLETA"))return"Visita técnica";if(n.includes("ACOMPANHA"))return"Acompanhamento";if(n.includes("CAMPANHA"))return"Campanha";return"Outros"}
+
+/* ---------- login ---------- */
+function entrar(){const e=document.getElementById("lem").value.trim(),s=document.getElementById("lpw").value;const m=document.getElementById("lmsg");if(!e||!s){m.textContent="Informe e-mail e senha.";return}m.textContent="Entrando…";
+  auth.signInWithEmailAndPassword(e,s).catch(er=>{m.textContent=/wrong-password|invalid-credential|user-not-found|invalid-login/.test(er.code||"")?"E-mail ou senha incorretos.":er.message})}
+function sair(){auth.signOut()}
+auth.onAuthStateChanged(async u=>{document.getElementById("load").style.display="none";
+  if(!u){document.getElementById("login").style.display="flex";document.getElementById("app").style.display="none";return}
+  let me={};try{me=(await db.ref("usuarios/"+u.uid).once("value")).val()||{}}catch(e){}
+  if(me.role!=="admin"){document.getElementById("login").style.display="flex";document.getElementById("lmsg").textContent="Este acesso é só para supervisores (perfil admin).";auth.signOut();return}
+  document.getElementById("login").style.display="none";document.getElementById("app").style.display="block";document.getElementById("unome").textContent=me.nome||u.email;
+  iniciar()});
+
+function iniciar(){if(LISTENING)return;LISTENING=true;montarFiltros();
+  let pend=3;const pronto=()=>{if(--pend<=0){achatar();render()}};const atual=()=>{if(pend<=0){achatar();render()}};
+  /* a lista inteira de usuarios pode estar fechada nas regras; nesse caso lê o perfil de cada um que tem agenda */
+  let listaOk=false;
+  const perfis=()=>Promise.all(Object.keys(AG).filter(u=>!USR[u]).map(u=>db.ref("usuarios/"+u).once("value").then(x=>{const v=x.val();if(v){const c=Object.assign({},v);delete c.ultimo_acesso;USR[u]=c}}).catch(()=>{})));
+  db.ref("usuarios").once("value").then(s=>{USR=s.val()||{};listaOk=true;pronto()}).catch(()=>pronto());
+  db.ref("propriedades").once("value").then(s=>{PROPS=s.val()||{};pronto()}).catch(()=>pronto());
+  let prim=true;db.ref("agendas").on("value",s=>{AG=s.val()||{};perfis().then(()=>{if(prim){prim=false;pronto()}else atual()})},e=>{toast("Sem acesso às agendas: "+e.message);if(prim){prim=false;pronto()}})}
+
+/* ---------- normaliza os dados em listas ---------- */
+function achatar(){ITENS=[];MARC=[];SEMS=[];
+  Object.entries(AG).forEach(([uid,sems])=>{Object.entries(sems||{}).forEach(([wk,x])=>{if(!x||!/^\d{4}-W\d{2}$/.test(wk))return;let pri=null,n=0;
+    Object.entries(x.itens||{}).forEach(([id,it])=>{if(!it||!it.data)return;n++;if(it.criado_em&&(!pri||it.criado_em<pri))pri=it.criado_em;
+      const at=(Array.isArray(it.atividades)&&it.atividades.length?it.atividades:[{area:it.area,produto:it.produto,objetivo:it.objetivo}]).map(a=>({area:(a&&a.area)||it.area||"",produto:(a&&(a.produto||a.produtoLivre))||"",objetivo:(a&&(a.objetivo||a.objetivoLivre))||""}));
+      if(!it.atividades&&it.produtoLivre&&!at[0].produto)at[0].produto=it.produtoLivre;if(!it.atividades&&it.objetivoLivre&&!at[0].objetivo)at[0].objetivo=it.objetivoLivre;
+      const ck=it.checkin||null;
+      ITENS.push({uid,wk,id,data:it.data,status:it.status||"planejado",fora:it.foraDoPlanejamento===true,fazenda:it.farmNome||"",cidade:it.farmCidade||"",farmId:it.farmId||"",at,acomp:it.acompanhante||null,ck,
+        ckData:ck&&ck.timestamp?iso(new Date(ck.timestamp)):null,gps:ck?ck.localizacaoValidada===true:null,motivo:ck&&ck.motivo||"",dist:ck&&ck.distanciaKm,resumo:ck&&ck.resumo||"",criado:it.criado_em||""})});
+    Object.entries(x.folgas||{}).forEach(([d,f])=>MARC.push({uid,data:d,tipo:"off",txt:(f&&f.motivo)||"Folga",obs:f&&f.observacao}));
+    Object.entries(x.eventos||{}).forEach(([d,f])=>MARC.push({uid,data:d,tipo:"evt",txt:(f&&(f.titulo||f.tipo))||"Evento",obs:f&&f.observacao,sub:f&&f.tipo}));
+    Object.entries(x.acompanhamentos||{}).forEach(([d,f])=>MARC.push({uid,data:d,tipo:"acp",txt:"Acompanha "+cap((f&&f.vendedorNome)||""),obs:[(f&&f.cidade)||"",(f&&f.observacao)||""].filter(Boolean).join(" · ")}));
+    SEMS.push({uid,wk,seg:segDaSemana(wk),pri,n})})});
+  const temAg=new Set(Object.keys(AG));
+  VEND=Object.entries(USR).filter(([uid,u])=>u&&(u.role==="vendedor"||temAg.has(uid))&&!u.conta).map(([uid,u])=>({uid,nome:u.nome||(u.email||"").split("@")[0],email:(u.email||"").toLowerCase(),role:u.role}))
+    .sort((a,b)=>(a.role==="admin")-(b.role==="admin")||a.nome.localeCompare(b.nome));
+  const sv=document.getElementById("fven"),cur=sv.value;
+  sv.innerHTML='<option value="">Toda a equipe</option><optgroup label="Vendedores">'+VEND.filter(v=>v.role!=="admin").map(v=>'<option value="'+v.uid+'">'+esc(v.nome)+'</option>').join("")+'</optgroup>'+
+    (VEND.some(v=>v.role==="admin")?'<optgroup label="Supervisores">'+VEND.filter(v=>v.role==="admin").map(v=>'<option value="'+v.uid+'">'+esc(v.nome)+'</option>').join("")+'</optgroup>':"");
+  sv.value=cur&&VEND.some(v=>v.uid===cur)?cur:""}
+
+/* ---------- filtros ---------- */
+function montarFiltros(){
+  document.getElementById("fare").innerHTML=[["","Todas"]].concat(Object.entries(AREAS).map(([k,a])=>[k,a.l])).map(([k,l])=>'<button class="chip'+(k===AREA?" on":"")+'" onclick="setArea(\''+k+'\')">'+l+'</button>').join("");
+  const T=[["geral","Visão geral"],["equipe","Equipe"],["cal","Calendário"],["ativ","Atividades"],["ck","Check-ins"],["cart","Carteira"]];
+  document.getElementById("tabs").innerHTML=T.map(([k,l])=>'<button class="tab'+(k===TAB?" on":"")+'" onclick="setTab(\''+k+'\')">'+l+'</button>').join("");
+  mudaPer(true)}
+function setArea(a){AREA=a;montarFiltros();render()}
+function setTab(t){TAB=t;document.querySelectorAll(".tab").forEach((b,i)=>b.classList.toggle("on",["geral","equipe","cal","ativ","ck","cart"][i]===t));mostrarPane();window.scrollTo(0,0)}
+function mostrarPane(){document.querySelectorAll(".pane").forEach(p=>p.style.display=p.id==="p-"+TAB?"block":"none");Object.values(CH).forEach(c=>{try{c.resize()}catch(e){}})}
+function mudaPer(sil){HOJE=iso(new Date());const v=document.getElementById("fper").value;document.getElementById("fcus").style.display=v==="cus"?"inline":"none";
+  const seg=segDe(HOJE);
+  if(v==="sem"){DE=seg;ATE=addD(seg,6)}else if(v==="sem1"){DE=addD(seg,-7);ATE=addD(seg,-1)}else if(v==="4s"){DE=addD(seg,-21);ATE=addD(seg,6)}
+  else if(v==="mes"){DE=HOJE.slice(0,8)+"01";const d=pISO(DE);d.setMonth(d.getMonth()+1);d.setDate(0);ATE=iso(d)}
+  else if(v==="mes1"){const d=pISO(HOJE.slice(0,8)+"01");d.setDate(0);ATE=iso(d);DE=ATE.slice(0,8)+"01"}
+  else if(v==="90"){DE=addD(HOJE,-89);ATE=HOJE}
+  else{const a=document.getElementById("fde").value,b=document.getElementById("fate").value;if(!a||!b){if(!DE){DE=addD(HOJE,-29);ATE=HOJE}document.getElementById("fde").value=DE;document.getElementById("fate").value=ATE}else{DE=a<b?a:b;ATE=a<b?b:a}}
+  if(sil!==true)render()}
+function filtrar(de,ate,uid){const ar=AREA;return ITENS.filter(i=>i.data>=de&&i.data<=ate&&(!uid||i.uid===uid)&&VEND.some(v=>v.uid===i.uid)&&(!ar||i.at.some(a=>a.area===ar)))}
+const VSEL=()=>document.getElementById("fven").value;
+
+/* ---------- indicadores ---------- */
+function stEf(i){if(i.status&&i.status!=="planejado")return i.status;return i.data<HOJE?"sem_retorno":i.data===HOJE?"hoje":"futuro"}
+function kpis(de,ate,uid){const L=filtrar(de,ate,uid);const pl=L.filter(i=>!i.fora);
+  const venc=L.filter(i=>i.data<HOJE||i.status!=="planejado");const plv=venc.filter(i=>!i.fora);
+  const real=L.filter(i=>i.status==="realizado");const realPl=real.filter(i=>!i.fora);
+  const cks=L.filter(i=>i.ck);const gps=cks.filter(i=>i.gps);const noDia=cks.filter(i=>i.ckData&&i.ckData<=i.data);
+  const semRet=L.filter(i=>stEf(i)==="sem_retorno");
+  const diasCampo=new Set(real.map(i=>i.uid+i.data)).size;const diasPl=new Set(pl.map(i=>i.uid+i.data)).size;
+  const acomp=L.filter(i=>i.acomp&&i.acomp.nome);
+  // planejamento antecipado: semana montada antes da segunda-feira
+  const ss=SEMS.filter(s=>s.n>0&&s.seg>=segDe(de)&&s.seg<=ate&&(!uid||s.uid===uid)&&VEND.some(v=>v.uid===s.uid));
+  const ant=ss.filter(s=>s.pri&&new Date(s.pri)<pISO(s.seg));
+  const desv=L.filter(i=>i.fora);
+  const r={n:L.length,planejadas:pl.length,vencidas:venc.length,realizadas:real.length,execucao:pct(realPl.length,plv.length),
+    retorno:pct(venc.length-semRet.length,venc.length),semRetorno:semRet.length,naoReal:L.filter(i=>i.status==="nao_realizado").length,remarc:L.filter(i=>i.status==="remarcado").length,
+    checkins:cks.length,gps:pct(gps.length,cks.length),noDia:pct(noDia.length,cks.length),desvios:desv.length,
+    porDia:diasCampo?real.length/diasCampo:null,plPorDia:diasPl?pl.length/diasPl:null,acomp:pct(acomp.length,L.length),
+    semanas:ss.length,antecipado:pct(ant.length,ss.length),fazendas:new Set(real.map(i=>i.farmId||norm(i.fazenda))).size,L};
+  // índice de disciplina (0–100): check-in feito 40% + execução 30% + GPS 15% + planejamento antecipado 15%
+  const parts=[[r.retorno,.4],[r.execucao,.3],[r.gps,.15],[r.antecipado,.15]].filter(p=>p[0]!=null);const w=parts.reduce((s,p)=>s+p[1],0);
+  r.idx=w?Math.round(parts.reduce((s,p)=>s+p[0]*p[1],0)/w):null;return r}
+function periodoAnterior(){const n=diasEntre(DE,ATE)+1;return[addD(DE,-n),addD(DE,-1)]}
+function cls(v,bom,ruim){if(v==null)return"in";return v>=bom?"ok":v>=ruim?"at":"cr"}
+function delta(a,b,inv,suf){if(a==null||b==null)return'<span class="d">sem base anterior</span>';const d=a-b;if(Math.abs(d)<0.5)return'<span class="d">igual ao período anterior</span>';const bom=inv?d<0:d>0;
+  return'<span class="d"><span class="dl '+(bom?"up":"dn")+'">'+(d>0?"▲ +":"▼ ")+fN(d,Number.isInteger(d)?0:1)+(suf||"")+'</span> vs. período anterior</span>'}
+function kpiCard(l,v,sub,c,tip){return'<div class="kpi '+(c||"in")+'"'+(tip?' title="'+esc(tip)+'"':"")+'><div class="l">'+l+'</div><div class="v">'+v+'</div>'+sub+'</div>'}
+
+/* ---------- render geral ---------- */
+function render(){if(!DE)return;HOJE=iso(new Date());const n=diasEntre(DE,ATE)+1;
+  document.getElementById("fdesc").textContent=fDL(DE)+" a "+fDL(ATE)+" · "+n+" dias";
+  Object.values(CH).forEach(c=>{try{c.destroy()}catch(e){}});CH={};
+  const uid=VSEL();
+  document.getElementById("phead").innerHTML='<div style="display:flex;align-items:center;gap:12px;margin-bottom:10px;border-bottom:2px solid var(--G);padding-bottom:8px"><img src="meta_logo.jpg" style="height:34px"><div><b style="font-size:15px">Gestão de Agendas — '+(uid?esc(nomeU(uid)):"Toda a equipe")+(AREA?" · "+AREAS[AREA].l:"")+'</b><br><span style="color:#64748b">'+fDL(DE)+' a '+fDL(ATE)+' · gerado em '+new Date().toLocaleString("pt-BR")+'</span></div></div>';
+  rGeral(uid);rEquipe();rCal(uid);rAtiv(uid);rCk(uid);rCart(uid);mostrarPane()}
+
+function rGeral(uid){const K=kpis(DE,ATE,uid),[a0,a1]=periodoAnterior(),P=kpis(a0,a1,uid);const el=document.getElementById("p-geral");
+  if(!K.n){el.innerHTML='<div class="card empty">Nenhuma visita na agenda neste período'+(uid?" para "+esc(nomeU(uid)):"")+'.</div>'+alertas(uid);return}
+  el.innerHTML='<div class="grid k6">'+
+    kpiCard("Visitas planejadas",fN(K.planejadas),delta(K.planejadas,P.planejadas,false),"in","Visitas que estavam no planejamento da semana")+
+    kpiCard("Realizadas",fN(K.realizadas),delta(K.realizadas,P.realizadas,false),"in","Visitas com check-in como realizada (inclui as fora do planejamento)")+
+    kpiCard("Execução da agenda",fP(K.execucao),delta(K.execucao,P.execucao,false," p.p."),cls(K.execucao,80,60),"Planejadas realizadas ÷ planejadas com data já vencida")+
+    kpiCard("Check-in feito",fP(K.retorno),delta(K.retorno,P.retorno,false," p.p."),cls(K.retorno,90,70),"Visitas vencidas que receberam retorno (realizada, não realizada ou remarcada). O que fica sem check-in não dá para saber se aconteceu")+
+    kpiCard("Sem check-in",fN(K.semRetorno),delta(K.semRetorno,P.semRetorno,true),K.semRetorno?"cr":"ok","Visitas com a data já passada que continuam como planejadas")+
+    kpiCard("Índice de disciplina",K.idx==null?"—":K.idx,delta(K.idx,P.idx,false," pts"),cls(K.idx,80,60),"0–100: check-in feito 40% + execução 30% + GPS validado 15% + semana planejada antes da segunda 15%")+
+  '</div><div class="grid k6" style="margin-top:14px">'+
+    kpiCard("GPS validado",fP(K.gps),'<span class="d">'+fN(K.checkins)+' check-ins</span>',cls(K.gps,70,40),"Check-ins com a localização confirmada perto da fazenda")+
+    kpiCard("Check-in no dia",fP(K.noDia),'<span class="d">feito até o dia da visita</span>',cls(K.noDia,85,60))+
+    kpiCard("Desvios de rota",fN(K.desvios),'<span class="d">visitas fora do planejamento</span>',K.desvios>K.realizadas*.2?"at":"in")+
+    kpiCard("Visitas por dia de campo",fN(K.porDia,1),'<span class="d">planejadas: '+fN(K.plPorDia,1)+'/dia</span>',"in")+
+    kpiCard("Planejou antes da segunda",fP(K.antecipado),'<span class="d">'+K.semanas+' semana(s) de agenda</span>',cls(K.antecipado,80,50))+
+    kpiCard("Com acompanhante",fP(K.acomp),'<span class="d">supervisor ou promotor</span>',"in")+
+  '</div>'+
+  '<div class="grid c32" style="margin-top:14px"><div class="card"><h3>Evolução semanal</h3><div class="sub">Resultado das visitas planejadas por semana e % de execução</div><div class="cw"><canvas id="ch-sem"></canvas></div></div>'+
+  '<div class="card"><h3>Pontos de atenção</h3><div class="sub">O que pede ação dos supervisores agora</div>'+alertas(uid)+'</div></div>'+
+  (uid?"":'<div class="card" style="margin-top:14px"><h3>Ranking — índice de disciplina</h3><div class="sub">Clique numa barra para abrir a agenda do vendedor</div><div class="cw" id="cw-rk"><canvas id="ch-rk"></canvas></div></div>')+
+  '<div class="grid c2" style="margin-top:14px"><div class="card"><h3>Resultado das visitas</h3><div class="sub">Todas as visitas do período</div><div class="cw s"><canvas id="ch-st"></canvas></div></div>'+
+  '<div class="card"><h3>Áreas trabalhadas</h3><div class="sub">Cada atividade conta separadamente (uma visita pode ter várias)</div><div class="cw s"><canvas id="ch-ar"></canvas></div></div></div>';
+  chSemanal(uid);chStatus(K.L);chAreas(K.L,"ch-ar");if(!uid)chRank()}
+
+function alertas(uid){const out=[];const seg=segDe(HOJE),prox=addD(seg,7),dow=(pISO(HOJE).getDay()+6)%7;
+  const vs=VEND.filter(v=>v.role!=="admin"&&(!uid||v.uid===uid));
+  vs.forEach(v=>{const L=ITENS.filter(i=>i.uid===v.uid);const sr=L.filter(i=>i.data>=DE&&i.data<=ATE&&stEf(i)==="sem_retorno").length;const pr=[];let g="at";
+    if(sr>=5){pr.push(sr+" visitas vencidas sem check-in");g="cr"}
+    const semAtual=L.some(i=>i.data>=seg&&i.data<prox),semProx=L.some(i=>i.data>=prox&&i.data<addD(prox,7));
+    const offSem=MARC.filter(m=>m.uid===v.uid&&m.data>=seg&&m.data<prox).length>=5;
+    if(!semAtual&&!offSem){pr.push("agenda desta semana não montada");g="cr"}else if(dow>=4&&!semProx)pr.push("próxima semana ainda não planejada");
+    const ult=L.filter(i=>i.ckData).map(i=>i.ckData).sort().pop();
+    if(L.some(i=>i.data>=addD(HOJE,-14)&&i.data<HOJE)&&(!ult||diasEntre(ult,HOJE)>7))pr.push(ult?"último check-in há "+diasEntre(ult,HOJE)+" dias":"nenhum check-in registrado");
+    if(pr.length)out.push([g,g==="cr"?"⛔":"⚠️","<b>"+esc(v.nome)+"</b> — "+pr.join(" · "),v.uid])});
+  const L=filtrar(DE,ATE,uid);const sc=L.filter(i=>i.motivo==="sem_coordenada");
+  if(sc.length){const f=new Set(sc.map(i=>i.fazenda));out.push(["at","📍",sc.length+" check-ins sem validação porque a fazenda não tem coordenada cadastrada ("+f.size+" fazendas). Ver aba Check-ins.",null])}
+  const fr=L.filter(i=>i.motivo==="fora_do_raio"&&i.dist>10);if(fr.length)out.push(["at","🧭",fr.length+" check-in(s) feitos a mais de 10 km da fazenda.",null]);
+  if(!out.length)return'<div class="alert a-ok"><span class="ic">✅</span><span>Nada pendente: agendas montadas e check-ins em dia.</span></div>';
+  const ord={cr:0,at:1};out.sort((a,b)=>ord[a[0]]-ord[b[0]]);
+  return out.slice(0,12).map(a=>'<div class="alert a-'+a[0]+'"'+(a[3]?' style="cursor:pointer" onclick="abrirVend(\''+a[3]+'\')"':"")+'><span class="ic">'+a[1]+'</span><span>'+a[2]+'</span></div>').join("")+(out.length>12?'<div class="hint">+'+(out.length-12)+' outro(s)</div>':"")}
+
+/* ---------- gráficos ---------- */
+Chart.defaults.font.family="Inter, system-ui, sans-serif";Chart.defaults.font.size=11;Chart.defaults.color="#64748b";Chart.defaults.plugins.legend.labels.boxWidth=10;Chart.defaults.maintainAspectRatio=false;
+function chSemanal(uid){let ini=segDe(DE);const fim=segDe(ATE);if(diasEntre(ini,fim)<7*7)ini=addD(fim,-7*7);const semanas=[];for(let s=ini;s<=fim;s=addD(s,7))semanas.push(s);
+  const tipos=["realizado","nao_realizado","remarcado","sem_retorno","futuro"];const dados={};tipos.forEach(t=>dados[t]=[]);const ex=[];
+  semanas.forEach(s=>{const L=filtrar(s,addD(s,6),uid).filter(i=>!i.fora);tipos.forEach(t=>dados[t].push(L.filter(i=>{const e=stEf(i);return t==="futuro"?e==="futuro"||e==="hoje":e===t}).length));
+    const v=L.filter(i=>i.data<HOJE||i.status!=="planejado");ex.push(pct(v.filter(i=>i.status==="realizado").length,v.length))});
+  CH.sem=new Chart(document.getElementById("ch-sem"),{data:{labels:semanas.map(s=>fD(s)),datasets:[
+    {type:"line",label:"% execução",data:ex,yAxisID:"y2",borderColor:"#0b4a22",backgroundColor:"#0b4a22",tension:.3,pointRadius:3,spanGaps:true},
+    ...tipos.map(t=>({type:"bar",label:t==="futuro"?"Agendadas":ST[t].l,data:dados[t],backgroundColor:ST[t].c,stack:"s",borderRadius:2}))]},
+    options:{interaction:{mode:"index",intersect:false},scales:{x:{stacked:true,grid:{display:false}},y:{stacked:true,title:{display:true,text:"visitas"},grid:{color:"#eef1ec"}},y2:{position:"right",min:0,max:100,grid:{display:false},ticks:{callback:v=>v+"%"}}},plugins:{legend:{position:"bottom"}}}})}
+function chStatus(L){const t=["realizado","nao_realizado","remarcado","sem_retorno","hoje","futuro"];const v=t.map(k=>L.filter(i=>stEf(i)===k).length);
+  CH.st=new Chart(document.getElementById("ch-st"),{type:"bar",data:{labels:t.map(k=>ST[k].l),datasets:[{data:v,backgroundColor:t.map(k=>ST[k].c),borderRadius:4}]},options:{indexAxis:"y",plugins:{legend:{display:false}},scales:{x:{grid:{color:"#eef1ec"}},y:{grid:{display:false}}}}})}
+function contaAreas(L){const c={};Object.keys(AREAS).forEach(k=>c[k]=0);L.forEach(i=>i.at.forEach(a=>{if(c[a.area]!=null)c[a.area]++}));return c}
+function chAreas(L,id){const c=contaAreas(L);const ks=Object.keys(AREAS);CH[id]=new Chart(document.getElementById(id),{type:"doughnut",data:{labels:ks.map(k=>AREAS[k].l),datasets:[{data:ks.map(k=>c[k]),backgroundColor:ks.map(k=>AREAS[k].c),borderWidth:2,borderColor:"#fff"}]},
+  options:{cutout:"62%",plugins:{legend:{position:"right"},tooltip:{callbacks:{label:x=>{const t=x.dataset.data.reduce((a,b)=>a+b,0);return x.label+": "+x.raw+" ("+(t?Math.round(x.raw/t*100):0)+"%)"}}}}}})}
+function chRank(){const rows=VEND.filter(v=>v.role!=="admin").map(v=>({v,k:kpis(DE,ATE,v.uid)})).filter(r=>r.k.n).sort((a,b)=>(b.k.idx||0)-(a.k.idx||0));
+  document.getElementById("cw-rk").style.height=Math.max(160,rows.length*30+40)+"px";
+  CH.rk=new Chart(document.getElementById("ch-rk"),{type:"bar",data:{labels:rows.map(r=>r.v.nome),datasets:[{label:"Índice",data:rows.map(r=>r.k.idx),backgroundColor:rows.map(r=>({ok:"#15803d",at:"#d97706",cr:"#dc2626",in:"#94a3b8"})[cls(r.k.idx,80,60)]),borderRadius:4}]},
+    options:{indexAxis:"y",onClick:(e,el)=>{if(el.length)abrirVend(rows[el[0].index].v.uid)},plugins:{legend:{display:false},tooltip:{callbacks:{afterLabel:x=>{const k=rows[x.dataIndex].k;return["Check-in feito: "+fP(k.retorno),"Execução: "+fP(k.execucao),"GPS: "+fP(k.gps),"Planejou antes: "+fP(k.antecipado)]}}}},scales:{x:{min:0,max:100,grid:{color:"#eef1ec"}},y:{grid:{display:false}}}}})}
+
+/* ---------- equipe (tabela) ---------- */
+const COLS=[["nome","Vendedor"],["planejadas","Planej.",1],["realizadas","Realiz.",1],["execucao","Execução",1,"%"],["retorno","Check-in feito",1,"%"],["semRetorno","Sem check-in",1],["naoReal","Não realiz.",1],["remarc","Remarc.",1],["desvios","Desvios",1],["gps","GPS",1,"%"],["porDia","Visitas/dia",1,"d"],["antecipado","Planejou antes",1,"%"],["acomp","Acompanh.",1,"%"],["idx","Índice",1]];
+function ordenar(k){ORD=ORD.k===k?{k,d:-ORD.d}:{k,d:k==="nome"?1:-1};rEquipe()}
+function rEquipe(){const el=document.getElementById("p-equipe");const rows=VEND.map(v=>{const k=kpis(DE,ATE,v.uid);k.nome=v.nome;k.uid=v.uid;k.role=v.role;return k}).filter(r=>r.n||r.role!=="admin");
+  rows.sort((a,b)=>{const x=a[ORD.k],y=b[ORD.k];if(ORD.k==="nome")return String(x).localeCompare(String(y))*ORD.d;return((x==null?-1:x)-(y==null?-1:y))*ORD.d});
+  const T=kpis(DE,ATE,"");
+  const cel=(r,c)=>{const v=r[c[0]];if(c[0]==="nome")return'<td style="white-space:nowrap">'+av(r.uid)+'<b>'+esc(v)+'</b>'+(r.role==="admin"?' <span class="pill p-in">supervisor</span>':"")+'</td>';
+    if(c[0]==="idx")return'<td class="n"><span class="pill p-'+({ok:"ok",at:"at",cr:"cr",in:"in"})[cls(v,80,60)]+'">'+(v==null?"—":v)+'</span></td>';
+    if(c[0]==="execucao"||c[0]==="retorno"){const cc=c[0]==="execucao"?cls(v,80,60):cls(v,90,70);return'<td class="n"><div style="display:flex;align-items:center;gap:6px;justify-content:flex-end"><span>'+fP(v)+'</span><div class="meter" style="width:54px"><i style="width:'+(v||0)+'%;background:'+({ok:"#15803d",at:"#d97706",cr:"#dc2626",in:"#cbd5e1"})[cc]+'"></i></div></div></td>'}
+    if(c[0]==="semRetorno"&&v)return'<td class="n" style="color:var(--red);font-weight:700">'+v+'</td>';
+    return'<td class="n">'+(c[3]==="%"?fP(v):c[3]==="d"?fN(v,1):fN(v))+'</td>'};
+  el.innerHTML='<div class="card"><h3>Desempenho por vendedor</h3><div class="sub">Clique no nome para ver a agenda completa, com os relatos de cada visita. Clique no título da coluna para ordenar.</div><div class="tw"><table class="t"><thead><tr>'+
+    COLS.map(c=>'<th class="'+(c[2]?"n":"")+'" onclick="ordenar(\''+c[0]+'\')">'+c[1]+(ORD.k===c[0]?(ORD.d>0?" ▲":" ▼"):"")+'</th>').join("")+'</tr></thead><tbody>'+
+    rows.map(r=>'<tr class="cl" onclick="abrirVend(\''+r.uid+'\')">'+COLS.map(c=>cel(r,c)).join("")+'</tr>').join("")+
+    '<tr style="background:#f8faf7;font-weight:800"><td><b>Equipe</b></td>'+COLS.slice(1).map(c=>'<td class="n">'+(c[0]==="idx"?(T.idx==null?"—":T.idx):c[3]==="%"?fP(T[c[0]]):c[3]==="d"?fN(T[c[0]],1):fN(T[c[0]]))+'</td>').join("")+'</tr>'+
+    '</tbody></table></div><p class="hint"><b>Execução</b> = planejadas realizadas ÷ planejadas já vencidas · <b>Check-in feito</b> = vencidas com retorno ÷ vencidas · <b>Desvios</b> = fazendas visitadas fora do planejamento · <b>Planejou antes</b> = semanas montadas até domingo · <b>Índice</b> = check-in 40% + execução 30% + GPS 15% + planejamento antecipado 15%.</p></div>'+
+    '<div class="grid c2" style="margin-top:14px"><div class="card"><h3>Planejadas × realizadas</h3><div class="sub">Por vendedor no período</div><div class="cw" id="cw-pr"><canvas id="ch-pr"></canvas></div></div>'+
+    '<div class="card"><h3>Mix de áreas por vendedor</h3><div class="sub">% das atividades de cada um</div><div class="cw" id="cw-mx"><canvas id="ch-mx"></canvas></div></div></div>';
+  const rs=rows.filter(r=>r.n);const h=Math.max(200,rs.length*30+60)+"px";document.getElementById("cw-pr").style.height=h;document.getElementById("cw-mx").style.height=h;
+  CH.pr=new Chart(document.getElementById("ch-pr"),{type:"bar",data:{labels:rs.map(r=>r.nome),datasets:[{label:"Planejadas",data:rs.map(r=>r.planejadas),backgroundColor:"#cbd5e1",borderRadius:3},{label:"Realizadas",data:rs.map(r=>r.realizadas),backgroundColor:"#15803d",borderRadius:3},{label:"Sem check-in",data:rs.map(r=>r.semRetorno),backgroundColor:"#f87171",borderRadius:3}]},options:{indexAxis:"y",plugins:{legend:{position:"bottom"}},scales:{x:{grid:{color:"#eef1ec"}},y:{grid:{display:false}}}}});
+  const ks=Object.keys(AREAS);const mx=rs.map(r=>{const c=contaAreas(r.L);const t=ks.reduce((s,k)=>s+c[k],0)||1;return ks.map(k=>Math.round(c[k]/t*100))});
+  CH.mx=new Chart(document.getElementById("ch-mx"),{type:"bar",data:{labels:rs.map(r=>r.nome),datasets:ks.map((k,j)=>({label:AREAS[k].l,data:mx.map(m=>m[j]),backgroundColor:AREAS[k].c}))},options:{indexAxis:"y",plugins:{legend:{position:"bottom"},tooltip:{callbacks:{label:x=>x.dataset.label+": "+x.raw+"%"}}},scales:{x:{stacked:true,max:100,ticks:{callback:v=>v+"%"},grid:{color:"#eef1ec"}},y:{stacked:true,grid:{display:false}}}}})}
+
+/* ---------- calendário ---------- */
+function rCal(uid){const el=document.getElementById("p-cal");let de=DE,ate=ATE,corte=false;if(diasEntre(de,ate)>41){de=addD(ate,-41);corte=true}
+  const dias=[];for(let d=de;d<=ate;d=addD(d,1))if(pISO(d).getDay()!==0||ITENS.some(i=>i.data===d))dias.push(d);
+  const vs=VEND.filter(v=>(!uid||v.uid===uid)&&(v.role!=="admin"||ITENS.some(i=>i.uid===v.uid&&i.data>=de&&i.data<=ate)||MARC.some(m=>m.uid===v.uid&&m.data>=de&&m.data<=ate)));
+  const cel=(v,d)=>{const m=MARC.find(x=>x.uid===v.uid&&x.data===d);const L=filtrar(d,d,v.uid);const hj=d===HOJE?" hj":"";
+    if(m&&!L.length){const c={off:["#f1f5f9","#475569","OFF"],evt:["#ede9fe","#6d28d9","EVT"],acp:["#e0f2fe","#0369a1","ACP"]}[m.tipo];return'<td class="c'+hj+'" style="background:'+c[0]+';color:'+c[1]+'" title="'+esc(m.txt+(m.obs?" — "+m.obs:""))+'" onclick="abrirDia(\''+v.uid+'\',\''+d+'\')">'+c[2]+'</td>'}
+    if(!L.length)return'<td class="c'+hj+'" style="background:#fafbf9;color:#cbd5e1">·</td>';
+    const r=L.filter(i=>i.status==="realizado").length,sr=L.filter(i=>stEf(i)==="sem_retorno").length,fut=d>=HOJE&&L.every(i=>i.status==="planejado");
+    let bg,co;if(fut){bg="#fff";co="#64748b"}else{const p=r/L.length;bg=sr===L.length?"#fee2e2":p>=.8?"#bbf7d0":p>=.5?"#dcfce7":p>0?"#fef3c7":"#fee2e2";co=sr===L.length?"#991b1b":p>=.5?"#166534":p>0?"#92400e":"#991b1b"}
+    return'<td class="c'+hj+'" style="background:'+bg+';color:'+co+(fut?";box-shadow:inset 0 0 0 1px #cbd5e1":"")+'" title="'+L.length+' visita(s), '+r+' realizada(s)'+(sr?", "+sr+" sem check-in":"")+(m?" · "+esc(m.txt):"")+'" onclick="abrirDia(\''+v.uid+'\',\''+d+'\')">'+(fut?L.length:r+"/"+L.length)+(m?"*":"")+'</td>'};
+  el.innerHTML='<div class="card"><h3>Calendário da equipe</h3><div class="sub">Cada célula mostra realizadas / planejadas do dia. Clique para ver as visitas.'+(corte?" Mostrando os últimos 42 dias do período.":"")+'</div>'+
+    (vs.length?'<div class="tw"><table class="cal"><thead><tr><th></th>'+dias.map(d=>{const w=pISO(d).getDay();return'<th class="'+(w===6?"wk":"")+'">'+DIAS_S[w]+'<br>'+d.slice(8)+'</th>'}).join("")+'</tr></thead><tbody>'+
+    vs.map(v=>'<tr><td class="nm">'+av(v.uid)+esc(v.nome)+'</td>'+dias.map(d=>cel(v,d)).join("")+'</tr>').join("")+'</tbody></table></div>':'<div class="empty">Sem vendedores.</div>')+
+    '<div class="leg"><span><i style="background:#bbf7d0"></i>≥80% realizadas</span><span><i style="background:#dcfce7"></i>50–79%</span><span><i style="background:#fef3c7"></i>abaixo de 50%</span><span><i style="background:#fee2e2"></i>nenhuma / sem check-in</span><span><i style="background:#fff;box-shadow:inset 0 0 0 1px #cbd5e1"></i>agendada</span><span><i style="background:#f1f5f9"></i>OFF</span><span><i style="background:#ede9fe"></i>Evento</span><span><i style="background:#e0f2fe"></i>Acompanhando vendedor</span><span>* dia com marcação e visitas</span></div></div>'+
+    '<div class="card" style="margin-top:14px"><h3>Dias fora de campo</h3><div class="sub">Folgas, eventos e acompanhamentos no período</div>'+marcTabela(uid)+'</div>'}
+function marcTabela(uid){const M=MARC.filter(m=>m.data>=DE&&m.data<=ATE&&(!uid||m.uid===uid)&&VEND.some(v=>v.uid===m.uid)).sort((a,b)=>a.data.localeCompare(b.data));
+  if(!M.length)return'<div class="empty">Nenhuma marcação no período.</div>';
+  const cont={off:0,evt:0,acp:0};M.forEach(m=>cont[m.tipo]++);
+  return'<div style="display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap"><span class="pill p-in">'+cont.off+' dia(s) OFF</span><span class="pill" style="background:#ede9fe;color:#6d28d9">'+cont.evt+' evento(s)</span><span class="pill" style="background:#e0f2fe;color:#0369a1">'+cont.acp+' acompanhamento(s)</span></div><div class="tw"><table class="t"><thead><tr><th>Data</th><th>Quem</th><th>Tipo</th><th>Descrição</th></tr></thead><tbody>'+
+    M.map(m=>'<tr><td class="mono">'+fD(m.data)+' '+DIAS_S[pISO(m.data).getDay()]+'</td><td style="white-space:nowrap">'+av(m.uid)+esc(nomeU(m.uid))+'</td><td>'+({off:'<span class="pill p-in">OFF</span>',evt:'<span class="pill" style="background:#ede9fe;color:#6d28d9">Evento</span>',acp:'<span class="pill" style="background:#e0f2fe;color:#0369a1">Acompanhamento</span>'})[m.tipo]+'</td><td>'+esc(m.txt)+(m.obs?' <span class="muted" style="color:var(--mu)">— '+esc(m.obs)+'</span>':"")+'</td></tr>').join("")+'</tbody></table></div>'}
+
+/* ---------- atividades ---------- */
+function rAtiv(uid){const el=document.getElementById("p-ativ");const L=filtrar(DE,ATE,uid);if(!L.length){el.innerHTML='<div class="card empty">Nenhuma visita no período.</div>';return}
+  const ats=[];L.forEach(i=>i.at.forEach(a=>{if(!AREA||a.area===AREA)ats.push(Object.assign({it:i},a))}));
+  const obj={},prod={},acp={};ats.forEach(a=>{const g=objetivoGrupo(a.objetivo);(obj[g]=obj[g]||{n:0,r:0}).n++;if(a.it.status==="realizado")obj[g].r++;
+    const p=norm(a.produto);if(p){(prod[p]=prod[p]||{n:0,r:0,ar:a.area}).n++;if(a.it.status==="realizado")prod[p].r++}});
+  L.forEach(i=>{if(i.acomp&&i.acomp.nome){const k=cap(i.acomp.nome);(acp[k]=acp[k]||{n:0,r:0,tipo:i.acomp.tipo}).n++;if(i.status==="realizado")acp[k].r++}});
+  const funil=["Prospecção","Levantamento de dados","Fechamento","Pós venda"].map(k=>[k,(obj[k]||{}).n||0,(obj[k]||{}).r||0]);
+  const topP=Object.entries(prod).sort((a,b)=>b[1].n-a[1].n).slice(0,12);
+  el.innerHTML='<div class="grid c2"><div class="card"><h3>Objetivos das visitas</h3><div class="sub">Planejadas e realizadas por objetivo</div><div class="cw"><canvas id="ch-ob"></canvas></div></div>'+
+    '<div class="card"><h3>Funil comercial</h3><div class="sub">Atividades por etapa da venda no período</div>'+
+    funil.map(([k,n,r],j)=>{const mx=Math.max(...funil.map(f=>f[1]),1);return'<div style="margin:10px 0"><div style="display:flex;justify-content:space-between;font-size:12.5px;margin-bottom:4px"><b>'+k+'</b><span class="mono">'+n+' <span style="color:var(--mu)">('+r+' realizadas)</span></span></div><div class="meter" style="height:16px;margin-left:'+(j*4)+'%;margin-right:'+(j*4)+'%"><i style="width:'+(n/mx*100)+'%;background:'+["#86efac","#4ade80","#16a34a","#14532d"][j]+'"></i></div></div>'}).join("")+
+    '<p class="hint">Conversão prospecção → fechamento no período: <b>'+(funil[0][1]?Math.round(funil[2][1]/funil[0][1]*100)+"%":"—")+'</b> (relação entre atividades, não entre as mesmas fazendas).</p></div></div>'+
+    '<div class="grid c2" style="margin-top:14px"><div class="card"><h3>Produtos mais trabalhados</h3><div class="sub">Top 12 por número de atividades</div><div class="tw"><table class="t"><thead><tr><th>Produto</th><th>Área</th><th class="n">Ativid.</th><th class="n">Realizadas</th></tr></thead><tbody>'+
+    (topP.length?topP.map(([p,x])=>'<tr><td><b>'+esc(cap(p))+'</b></td><td><span class="dot" style="background:'+((AREAS[x.ar]||{}).c||"#999")+'"></span>'+esc((AREAS[x.ar]||{}).l||"—")+'</td><td class="n">'+x.n+'</td><td class="n">'+x.r+'</td></tr>').join(""):'<tr><td colspan="4" class="empty">Sem produtos informados.</td></tr>')+'</tbody></table></div></div>'+
+    '<div class="card"><h3>Acompanhantes</h3><div class="sub">Visitas com supervisor técnico ou promotor externo</div><div class="tw"><table class="t"><thead><tr><th>Quem</th><th>Tipo</th><th class="n">Visitas</th><th class="n">Realizadas</th></tr></thead><tbody>'+
+    (Object.keys(acp).length?Object.entries(acp).sort((a,b)=>b[1].n-a[1].n).map(([k,x])=>'<tr><td><b>'+esc(k)+'</b></td><td>'+(x.tipo==="promotor_externo"?'<span class="pill p-at">promotor</span>':'<span class="pill p-ok">supervisor</span>')+'</td><td class="n">'+x.n+'</td><td class="n">'+x.r+'</td></tr>').join(""):'<tr><td colspan="4" class="empty">Nenhuma visita com acompanhante.</td></tr>')+'</tbody></table></div></div></div>'+
+    '<div class="card" style="margin-top:14px"><h3>Áreas trabalhadas</h3><div class="sub">Distribuição das atividades</div><div class="cw s"><canvas id="ch-ar2"></canvas></div></div>';
+  const ob=Object.entries(obj).sort((a,b)=>b[1].n-a[1].n);
+  CH.ob=new Chart(document.getElementById("ch-ob"),{type:"bar",data:{labels:ob.map(o=>o[0]),datasets:[{label:"Planejadas",data:ob.map(o=>o[1].n),backgroundColor:"#cbd5e1",borderRadius:3},{label:"Realizadas",data:ob.map(o=>o[1].r),backgroundColor:"#15803d",borderRadius:3}]},options:{indexAxis:"y",plugins:{legend:{position:"bottom"}},scales:{x:{grid:{color:"#eef1ec"}},y:{grid:{display:false}}}}});
+  chAreas(L,"ch-ar2")}
+
+/* ---------- check-ins ---------- */
+function rCk(uid){const el=document.getElementById("p-ck");const L=filtrar(DE,ATE,uid);const C=L.filter(i=>i.ck);
+  const mot={};C.filter(i=>!i.gps).forEach(i=>{mot[i.motivo||"outro"]=(mot[i.motivo||"outro"]||0)+1});
+  const atraso={"No dia":0,"1 dia depois":0,"2 a 6 dias":0,"7 dias ou mais":0};C.forEach(i=>{if(!i.ckData)return;const d=diasEntre(i.data,i.ckData);atraso[d<=0?"No dia":d===1?"1 dia depois":d<7?"2 a 6 dias":"7 dias ou mais"]++});
+  const sc={};C.filter(i=>i.motivo==="sem_coordenada").forEach(i=>{const k=norm(i.fazenda)+"|"+norm(i.cidade);(sc[k]=sc[k]||{f:i.fazenda,c:i.cidade,n:0,id:i.farmId,u:new Set()}).n++;sc[k].u.add(nomeU(i.uid))});
+  const fb=C.filter(i=>i.resumo).sort((a,b)=>(b.ck.timestamp||"").localeCompare(a.ck.timestamp||""));
+  const sem=L.filter(i=>stEf(i)==="sem_retorno").sort((a,b)=>a.data.localeCompare(b.data));
+  el.innerHTML='<div class="grid k4">'+kpiCard("Check-ins",fN(C.length),'<span class="d">de '+fN(L.filter(i=>i.data<=HOJE).length)+' visitas até hoje</span>',"in")+
+    kpiCard("GPS validado",fP(pct(C.filter(i=>i.gps).length,C.length)),'<span class="d">'+C.filter(i=>i.gps).length+' confirmados no local</span>',cls(pct(C.filter(i=>i.gps).length,C.length),70,40))+
+    kpiCard("Com relato",fP(pct(fb.length,C.length)),'<span class="d">check-ins com texto do que aconteceu</span>',cls(pct(fb.length,C.length),90,70))+
+    kpiCard("Sem check-in",fN(sem.length),'<span class="d">visitas vencidas sem retorno</span>',sem.length?"cr":"ok")+'</div>'+
+    '<div class="grid c2" style="margin-top:14px"><div class="card"><h3>Por que o GPS não validou</h3><div class="sub">Check-ins aceitos sem confirmação de local</div><div class="cw s"><canvas id="ch-mot"></canvas></div><p class="hint">“Fazenda sem coordenada” se resolve cadastrando a localização da fazenda no painel — a partir daí o check-in passa a ser validado.</p></div>'+
+    '<div class="card"><h3>Quando o check-in é feito</h3><div class="sub">Distância entre a data da visita e o registro</div><div class="cw s"><canvas id="ch-atr"></canvas></div></div></div>'+
+    '<div class="grid c2" style="margin-top:14px"><div class="card"><h3>Relatos das visitas</h3><div class="sub">O que os vendedores escreveram no check-in (mais recentes primeiro)</div><div style="max-height:560px;overflow-y:auto">'+
+    (fb.length?fb.slice(0,80).map(i=>'<div class="fb" style="border-left-color:'+ST[i.status].c+'"><div class="h">'+av(i.uid)+'<b style="color:var(--tx)">'+esc(nomeU(i.uid))+'</b> · '+fDL(i.data)+' · <b style="color:var(--tx)">'+esc(i.fazenda)+'</b> '+esc(i.cidade?"("+cap(i.cidade)+")":"")+' <span class="pill '+ST[i.status].p+'">'+ST[i.status].l+'</span>'+(i.gps?'<span class="pill p-ok">GPS ok</span>':'')+'</div><div class="q">'+esc(i.resumo)+'</div></div>').join(""):'<div class="empty">Nenhum relato no período.</div>')+'</div></div>'+
+    '<div class="card"><h3>Fazendas sem coordenada</h3><div class="sub">Cadastrar a localização destas fazendas libera a validação por GPS</div><div class="tw" style="max-height:560px;overflow-y:auto"><table class="t"><thead><tr><th>Fazenda</th><th>Cidade</th><th>Vendedor</th><th class="n">Check-ins</th></tr></thead><tbody>'+
+    (Object.keys(sc).length?Object.values(sc).sort((a,b)=>b.n-a.n).map(x=>'<tr><td><b>'+esc(x.f)+'</b>'+(x.id?"":' <span class="pill p-at" title="Fazenda digitada à mão, não está no cadastro">fora do cadastro</span>')+'</td><td>'+esc(cap(x.c))+'</td><td>'+esc([...x.u].join(", "))+'</td><td class="n">'+x.n+'</td></tr>').join(""):'<tr><td colspan="4" class="empty">Nenhuma.</td></tr>')+'</tbody></table></div></div></div>'+
+    '<div class="card" style="margin-top:14px"><h3>Visitas sem check-in</h3><div class="sub">Data já passou e a visita continua como planejada — não dá para saber se aconteceu</div><div class="tw" style="max-height:480px;overflow-y:auto"><table class="t"><thead><tr><th>Data</th><th>Vendedor</th><th>Fazenda</th><th>Cidade</th><th>Atividades</th><th class="n">Dias</th></tr></thead><tbody>'+
+    (sem.length?sem.map(i=>'<tr><td class="mono">'+fD(i.data)+'</td><td style="white-space:nowrap">'+av(i.uid)+esc(nomeU(i.uid))+'</td><td><b>'+esc(i.fazenda)+'</b></td><td>'+esc(cap(i.cidade))+'</td><td>'+atTxt(i)+'</td><td class="n">'+diasEntre(i.data,HOJE)+'</td></tr>').join(""):'<tr><td colspan="6" class="empty">Todas as visitas vencidas têm check-in.</td></tr>')+'</tbody></table></div></div>';
+  const mk=Object.keys(mot);CH.mot=new Chart(document.getElementById("ch-mot"),{type:"bar",data:{labels:mk.map(k=>MOT[k]||"Outro"),datasets:[{data:mk.map(k=>mot[k]),backgroundColor:mk.map(k=>k==="fora_do_raio"?"#dc2626":k==="sem_coordenada"?"#d97706":"#94a3b8"),borderRadius:4}]},options:{indexAxis:"y",plugins:{legend:{display:false}},scales:{x:{grid:{color:"#eef1ec"}},y:{grid:{display:false}}}}});
+  const ak=Object.keys(atraso);CH.atr=new Chart(document.getElementById("ch-atr"),{type:"bar",data:{labels:ak,datasets:[{data:ak.map(k=>atraso[k]),backgroundColor:["#15803d","#86efac","#fbbf24","#dc2626"],borderRadius:4}]},options:{plugins:{legend:{display:false}},scales:{y:{grid:{color:"#eef1ec"}},x:{grid:{display:false}}}}})}
+function atTxt(i){return i.at.map(a=>'<span style="white-space:nowrap"><span class="dot" style="background:'+((AREAS[a.area]||{}).c||"#999")+'"></span>'+esc(cap(a.produto)||"—")+(a.objetivo?' <span style="color:var(--mu)">· '+esc(cap(a.objetivo))+'</span>':"")+'</span>').join("<br>")}
+
+/* ---------- carteira ---------- */
+const ALIAS={"vetsinvesting@gmail.com":["PAULO","PAULO VETS"],"jozielsantossoares@gmail.com":["JOZIEL","JOZIEL SANTOS"],"vetdalmolin@gmail.com":["MAICON","MAICON DALMOLIN"],"arthursoaresaa@gmail.com":["ARTHUR","ARTHUR SOARES"],"lucasbianchi214@gmail.com":["LUCAS BIANCHI"],"jrlucasramos2@gmail.com":["JOSE LUCAS"],"mullerjulio02@gmail.com":["JULIO","JULIO MULLER"],"vagner7leguas@gmail.com":["VAGNER","VAGNER LEGUAS"],"bovitecdv@hotmail.com":["ROBSON","BOVITECDV"],"boneseverton@gmail.com":["EVERTON"]};
+function fazendasDe(v){const nomes=new Set([norm(v.nome)].concat((ALIAS[v.email]||[]).map(norm)));return Object.entries(PROPS).filter(([id,p])=>{if(!p)return false;const ve=String(p.vendedor||"").toLowerCase().trim();if(v.email&&ve===v.email)return true;const n=norm(p.nome_vendedor||p.vendedor);return n&&nomes.has(n)}).map(([id,p])=>Object.assign({id},p))}
+let VIS_ULT=null,VIS_CARR=false;
+function carregarFichas(){if(VIS_CARR)return;VIS_CARR=true;db.ref("visitas").once("value").then(s=>{const v=s.val()||{};VIS_ULT={};Object.entries(v).forEach(([fid,vs])=>{Object.values(vs||{}).forEach(x=>{const d=String((x&&(x.data_visita||x.data))||"").slice(0,10);if(/^\d{4}-\d{2}-\d{2}$/.test(d)&&(!VIS_ULT[fid]||d>VIS_ULT[fid]))VIS_ULT[fid]=d})});rCart(VSEL())}).catch(()=>{VIS_ULT={};rCart(VSEL())})}
+function ultimaVisita(f){const nn=norm(f.produtor);const L=ITENS.filter(i=>i.status==="realizado"&&(i.farmId===f.id||(nn&&norm(i.fazenda)===nn)));const a=L.map(i=>i.data).sort().pop()||null;const b=VIS_ULT&&VIS_ULT[f.id]||null;return a&&b?(a>b?a:b):a||b}
+function rCart(uid){const el=document.getElementById("p-cart");if(!VIS_CARR)carregarFichas();const vs=VEND.filter(v=>v.role!=="admin"&&(!uid||v.uid===uid));
+  const rows=vs.map(v=>{const fz=fazendasDe(v);const at=fz.filter(f=>norm(f.situacao)==="ATIVO"),pr=fz.filter(f=>/PROSPEC/.test(norm(f.situacao)));
+    const ua=at.map(f=>({f,u:ultimaVisita(f)}));const vis=ua.filter(x=>x.u&&x.u>=DE&&x.u<=ATE).length;const L=filtrar(DE,ATE,v.uid);
+    const novos=L.filter(i=>!i.farmId).map(i=>norm(i.fazenda));return{v,at:at.length,pr:pr.length,vis,cob:pct(vis,at.length),s60:ua.filter(x=>!x.u||diasEntre(x.u,HOJE)>60),foraCad:new Set(novos).size}});
+  const lst=[];rows.forEach(r=>r.s60.forEach(x=>lst.push({v:r.v,f:x.f,u:x.u})));lst.sort((a,b)=>(a.u||"").localeCompare(b.u||"")||(b.f.vacas||0)-(a.f.vacas||0));
+  el.innerHTML='<div class="card"><h3>Cobertura da carteira</h3><div class="sub">Clientes ATIVOS de cada vendedor (cadastro de propriedades) com visita no período — check-in da agenda ou Ficha de Visita'+(VIS_ULT?"":" · carregando fichas de visita…")+'</div><div class="tw"><table class="t"><thead><tr><th>Vendedor</th><th class="n">Clientes ativos</th><th class="n">Visitados no período</th><th>Cobertura</th><th class="n">Prospects</th><th class="n">Sem visita há +60 dias</th><th class="n">Fazendas fora do cadastro</th></tr></thead><tbody>'+
+    rows.map(r=>'<tr class="cl" onclick="abrirVend(\''+r.v.uid+'\')"><td style="white-space:nowrap">'+av(r.v.uid)+'<b>'+esc(r.v.nome)+'</b></td><td class="n">'+r.at+'</td><td class="n">'+r.vis+'</td><td><div style="display:flex;align-items:center;gap:6px"><div class="meter" style="flex:1;max-width:140px"><i style="width:'+(r.cob||0)+'%;background:#15803d"></i></div><span class="mono" style="font-size:12px">'+fP(r.cob)+'</span></div></td><td class="n">'+r.pr+'</td><td class="n" style="'+(r.s60.length?"color:var(--red);font-weight:700":"")+'">'+r.s60.length+'</td><td class="n" title="Visitas em fazendas digitadas à mão, ainda não cadastradas">'+r.foraCad+'</td></tr>').join("")+
+    '</tbody></table></div><p class="hint">A última visita considera o check-in da agenda e a Ficha de Visita (painel e app do vendedor), o que for mais recente.</p></div>'+
+    '<div class="card" style="margin-top:14px"><h3>Clientes ativos sem visita há mais de 60 dias</h3><div class="sub">Candidatos para entrar no planejamento das próximas semanas</div><div class="tw" style="max-height:600px;overflow-y:auto"><table class="t"><thead><tr><th>Cliente</th><th>Cidade</th><th>Vendedor</th><th class="n">Vacas</th><th class="n">Última visita</th></tr></thead><tbody>'+
+    (lst.length?lst.map(x=>'<tr><td><b>'+esc(x.f.produtor||"—")+'</b></td><td>'+esc(cap(x.f.cidade))+'</td><td style="white-space:nowrap">'+av(x.v.uid)+esc(x.v.nome)+'</td><td class="n">'+fN(+x.f.vacas||null)+'</td><td class="n">'+(x.u?fDL(x.u)+' <span style="color:var(--mu)">('+diasEntre(x.u,HOJE)+'d)</span>':'<span style="color:var(--red)">nunca</span>')+'</td></tr>').join(""):'<tr><td colspan="5" class="empty">Todos os clientes ativos foram visitados nos últimos 60 dias.</td></tr>')+'</tbody></table></div></div>'}
+
+/* ---------- gaveta: agenda do vendedor ---------- */
+function abrirDw(h){document.getElementById("dwp").innerHTML='<button class="x" onclick="fecharDw()">Fechar ✕</button>'+h;document.getElementById("dw").style.display="block";document.body.style.overflow="hidden"}
+function fecharDw(){document.getElementById("dw").style.display="none";document.body.style.overflow=""}
+document.addEventListener("keydown",e=>{if(e.key==="Escape")fecharDw()});
+function visitaHTML(i){const s=stEf(i);return'<div class="vi"><div class="t1"><span class="fz">'+esc(i.fazenda||"—")+'</span><span class="cd">'+esc(cap(i.cidade))+'</span><span style="flex:1"></span>'+(i.fora?'<span class="pill p-at">fora do planejamento</span>':"")+'<span class="pill '+ST[s].p+'">'+ST[s].l+'</span></div>'+
+  '<div class="at">'+atTxt(i)+'</div>'+(i.acomp&&i.acomp.nome?'<div class="at"><span class="pill p-in">👥 com '+esc(cap(i.acomp.nome))+(i.acomp.tipo==="promotor_externo"?" (promotor)":" (supervisor)")+'</span></div>':"")+
+  (i.ck?'<div class="at" style="color:var(--mu)">Check-in '+(i.ckData?fD(i.ckData):"")+' · '+(i.gps?'<b style="color:var(--G)">GPS validado</b>':esc(MOT[i.motivo]||"sem validação")+(i.dist?" ("+fN(i.dist,1)+" km)":""))+'</div>':"")+
+  (i.resumo?'<div class="fb" style="margin:8px 0 0;border-left-color:'+ST[i.status].c+'"><div class="q">'+esc(i.resumo)+'</div></div>':"")+'</div>'}
+function diaHTML(uid,d){const L=ITENS.filter(i=>i.uid===uid&&i.data===d&&(!AREA||i.at.some(a=>a.area===AREA)));const M=MARC.filter(m=>m.uid===uid&&m.data===d);if(!L.length&&!M.length)return"";
+  return'<div class="dia"><h4>'+DIAS_S[pISO(d).getDay()]+', '+fDL(d)+'</h4>'+M.map(m=>'<div class="mk" style="'+({off:"background:#f1f5f9;color:#475569",evt:"background:#ede9fe;color:#6d28d9",acp:"background:#e0f2fe;color:#0369a1"})[m.tipo]+'">'+({off:"OFF",evt:"Evento",acp:"Acompanhamento"})[m.tipo]+': '+esc(m.txt)+(m.obs?" — "+esc(m.obs):"")+'</div>').join("")+L.map(visitaHTML).join("")+'</div>'}
+function abrirVend(uid){const K=kpis(DE,ATE,uid);const dias=[...new Set(ITENS.filter(i=>i.uid===uid&&i.data>=DE&&i.data<=ATE).map(i=>i.data).concat(MARC.filter(m=>m.uid===uid&&m.data>=DE&&m.data<=ATE).map(m=>m.data)))].sort().reverse();
+  abrirDw('<div style="display:flex;align-items:center;gap:6px;margin-bottom:4px">'+av(uid)+'<h2 style="font-size:18px">'+esc(nomeU(uid))+'</h2></div><div style="color:var(--mu);font-size:12px;margin-bottom:12px">'+fDL(DE)+' a '+fDL(ATE)+(AREA?" · "+AREAS[AREA].l:"")+'</div>'+
+    '<div class="grid k4">'+kpiCard("Execução",fP(K.execucao),'<span class="d">'+K.realizadas+' de '+K.planejadas+'</span>',cls(K.execucao,80,60))+kpiCard("Check-in feito",fP(K.retorno),'<span class="d">'+K.semRetorno+' sem check-in</span>',cls(K.retorno,90,70))+kpiCard("GPS",fP(K.gps),'<span class="d">'+K.checkins+' check-ins</span>',cls(K.gps,70,40))+kpiCard("Índice",K.idx==null?"—":K.idx,'<span class="d">'+K.desvios+' desvio(s)</span>',cls(K.idx,80,60))+'</div>'+
+    (dias.length?dias.map(d=>diaHTML(uid,d)).join(""):'<div class="empty">Sem agenda no período.</div>'))}
+function abrirDia(uid,d){abrirDw('<div style="display:flex;align-items:center;gap:6px">'+av(uid)+'<h2 style="font-size:18px">'+esc(nomeU(uid))+'</h2></div>'+diaHTML(uid,d)+'<div style="margin-top:14px"><button class="btn btn-o" onclick="abrirVend(\''+uid+'\')">Ver o período inteiro</button></div>')}
+
+/* ---------- exportar ---------- */
+function imprimir(){const t=TAB;document.querySelectorAll(".pane").forEach(p=>p.style.display="block");Object.values(CH).forEach(c=>{try{c.resize()}catch(e){}});
+  setTimeout(()=>{window.print();TAB=t;mostrarPane()},400)}
+function exportarCSV(){const L=filtrar(DE,ATE,VSEL()).sort((a,b)=>a.data.localeCompare(b.data));const q=v=>'"'+String(v==null?"":v).replace(/"/g,'""')+'"';
+  const H=["Data","Vendedor","Fazenda","Cidade","Situação","Fora do planejamento","Áreas","Produtos","Objetivos","Acompanhante","Check-in em","GPS validado","Motivo sem GPS","Distância km","Relato"];
+  const rows=L.map(i=>[fDL(i.data),nomeU(i.uid),i.fazenda,i.cidade,ST[stEf(i)].l,i.fora?"sim":"não",i.at.map(a=>(AREAS[a.area]||{}).l||a.area).join(" | "),i.at.map(a=>a.produto).join(" | "),i.at.map(a=>a.objetivo).join(" | "),i.acomp&&i.acomp.nome||"",i.ckData?fDL(i.ckData):"",i.ck?(i.gps?"sim":"não"):"",i.ck&&!i.gps?MOT[i.motivo]||i.motivo:"",i.dist!=null?String(i.dist).replace(".",","):"",i.resumo]);
+  const csv="﻿"+[H].concat(rows).map(r=>r.map(q).join(";")).join("\r\n");const a=document.createElement("a");a.href=URL.createObjectURL(new Blob([csv],{type:"text/csv;charset=utf-8"}));a.download="agendas_"+DE+"_a_"+ATE+".csv";a.click();toast(L.length+" visitas exportadas")}
+</script>
+</body>
+</html>
