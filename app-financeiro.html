@@ -639,15 +639,17 @@ function iniciar(){
   let t;window.addEventListener("resize",()=>{clearTimeout(t);t=setTimeout(()=>{if(TAB==="geral")desenharGraficos()},150)});
 }
 function setAno(a){ANO=a;const ms=mesesAno(a);MES=ms[ms.length-1]||null;render()}
-function setMes(m){MES=m;render()}
-function setModo(m){MODO=m;render()}
+/* escolher um mês mostra sempre a média dos 3 meses que terminam nele */
+function setMes(m){if(m==="ano")return;MES=m;MODO="m3";render()}
+/* Acumulado = o ano inteiro (jan até o último mês importado do ano) */
+function setModo(m){MODO=m;if(m==="acum"){const ms=mesesAno(ANO);if(ms.length)MES=ms[ms.length-1]}render()}
 function setTab(t){const pai={posicao:"balanco",dividas:"balanco",metas:"config",contas:"config",imp:"config"}[t];if(pai){TAB=pai;SUB[pai]=t}else TAB=t;render();scrollTo(0,0)}
 
 /* ---------- render geral ---------- */
 function render(){
   document.getElementById("emp").textContent=(S.config.empresa||"Estrutura gerencial de resultados");
   const sa=document.getElementById("s-ano");sa.innerHTML=anos().map(a=>'<option'+(a===ANO?" selected":"")+'>'+a+'</option>').join("");
-  const ms=mesesAno(ANO);const sm=document.getElementById("s-mes");sm.innerHTML=ms.length?ms.slice().reverse().map(k=>'<option value="'+k+'"'+(k===MES?" selected":"")+'>'+MESES_L[+k.slice(5)-1].replace(/^./,c=>c.toUpperCase())+'</option>').join(""):'<option>sem dados</option>';sm.disabled=!ms.length;
+  const ms=mesesAno(ANO);const sm=document.getElementById("s-mes");sm.innerHTML=ms.length?ms.slice().reverse().map(k=>'<option value="'+k+'"'+(k===MES?" selected":"")+'>'+MESES_L[+k.slice(5)-1].replace(/^./,c=>c.toUpperCase())+'</option>').join(""):'<option>sem dados</option>';sm.disabled=!ms.length;if(MODO==="acum"&&ms.length){const ult=ms[ms.length-1];sm.innerHTML='<option value="ano" selected>'+(ult.slice(5)==="12"?"Ano todo":"Jan–"+MESES_L[+ult.slice(5)-1])+'</option>'+ms.slice().reverse().map(k=>'<option value="'+k+'">'+MESES_L[+k.slice(5)-1].replace(/^./,c=>c.toUpperCase())+'</option>').join("");sm.title="No Acumulado vale o ano inteiro. Escolha um mês para ver a média de 3 meses."}else sm.title="";
   ["mes","m3","acum"].forEach(x=>document.getElementById("m-"+x).classList.toggle("on",MODO===x));
   const nPend=Object.keys(contasVistas().filter(c=>!c.dp||!c.dp.l).reduce((o,c)=>(o[c.cod]=1,o),{})).length;
   const T=[["geral","Visão geral"],["dre","DRE"],["caixa","Caixa"],["balanco","Balanço"],["config","Configurações"+(nPend?'<span class="cnt">'+nPend+'</span>':"")]];
