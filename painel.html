@@ -2928,6 +2928,8 @@ Ração;5;1.80"></textarea>
 
         <div class="cc" style="margin-bottom:16px" id="rp-quadrante-carteira-wrap"></div>
 
+        <div id="rpg-carteira"></div>
+
         <div class="dt-card" style="padding:14px 20px">
           <div style="display:flex;align-items:center;gap:16px;flex-wrap:wrap">
             <div style="font-size:11px;font-weight:700;color:var(--muted);white-space:nowrap">Fazenda / Propriedade</div>
@@ -2936,6 +2938,8 @@ Ração;5;1.80"></textarea>
             </select>
           </div>
         </div>
+
+        <div id="rp-gestao" style="margin-top:16px"></div>
 
         <div id="rp-body" style="margin-top:16px">
           <div style="text-align:center;padding:48px;color:var(--muted)">Selecione uma fazenda pra começar.</div>
@@ -5664,7 +5668,7 @@ function confortoGrade(s){if(s>=80)return{g:"A",cor:"#1f8149",label:"Excelente"}
       <span style="background:#2563eb1a;color:#2563eb;font-weight:700;padding:4px 10px;border-radius:20px">Recupera\xE7\xE3o: ${contagem.recuperacao}</span>
       <span style="background:#dc26261a;color:#dc2626;font-weight:700;padding:4px 10px;border-radius:20px">\u26A0\uFE0F Perigo: ${contagem.perigo}</span>
     </div>
-    <canvas id="rp-ch-quadrante-carteira" height="100"></canvas>`;mk("rp-ch-quadrante-carteira","scatter",{datasets:[{label:"Fazendas",data:pontos,backgroundColor:pontos.map(p=>p.cor+"cc"),pointRadius:pontos.map(p=>Math.max(5,Math.min(14,Math.sqrt(p.vacas||10)*.9))),pointHoverRadius:13,borderColor:"rgba(255,255,255,0.8)",borderWidth:1.5}]},{plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>`${c.raw.label} \u2014 ${c.raw.quadranteLabel} (DEL ${c.raw.x}d \xB7 ${c.raw.y.toFixed(1)}% prenhas)`}},annotation:{annotations:{qCruzeiro:{type:"box",xMin:130,xMax:180,yMin:45,yMax:80,backgroundColor:"rgba(21,128,61,0.06)",borderColor:"rgba(21,128,61,0.2)",borderWidth:1},qPrimavera:{type:"box",xMin:130,xMax:180,yMin:0,yMax:45,backgroundColor:"rgba(217,119,6,0.06)",borderColor:"rgba(217,119,6,0.2)",borderWidth:1},qRecuperacao:{type:"box",xMin:180,xMax:250,yMin:45,yMax:80,backgroundColor:"rgba(37,99,235,0.06)",borderColor:"rgba(37,99,235,0.2)",borderWidth:1},qPerigo:{type:"box",xMin:180,xMax:250,yMin:0,yMax:45,backgroundColor:"rgba(220,38,38,0.06)",borderColor:"rgba(220,38,38,0.2)",borderWidth:1}}}},onClick:(evt,els)=>{if(!els.length)return;const p=pontos[els[0].index];if(p)openFarmModal(p.id,p.label)},scales:{x:{reverse:true,min:130,max:250,title:{display:true,text:"DEL M\xE9dio (dias) \u2014 menor \xE9 melhor \u2192",color:"#94a3b8",font:{size:10}},grid:{color:"rgba(0,0,0,0.04)"},ticks:{color:"#94a3b8",font:{size:9}}},y:{min:0,max:80,title:{display:true,text:"% Vacas Prenhas (rebanho total)",color:"#94a3b8",font:{size:10}},grid:{color:"rgba(0,0,0,0.04)"},ticks:{color:"#94a3b8",font:{size:9}}}}})}function initReproducao(){carregarResumoGeralReproducao();const sel=document.getElementById("rp-farm-sel");if(sel&&sel.options.length<=1){const farms=[...ALL].filter(d=>d.situacao==="ATIVO"||d.situacao==="INATIVO").sort((a,b)=>{const sa=a.situacao==="INATIVO"?1:0,sb=b.situacao==="INATIVO"?1:0;return sa!==sb?sa-sb:(a.produtor||"").localeCompare(b.produtor||"")});farms.forEach(d=>{const o=document.createElement("option");o.value=d.id;o.textContent=(d.situacao==="INATIVO"?"\u23F8\uFE0F ":"")+(d.produtor||"?")+" \u2014 "+(d.cidade||"")+(d.situacao==="INATIVO"?" (Inativo)":"");sel.appendChild(o)})}if(reproducaoFarmId){sel.value=reproducaoFarmId;onReproducaoFarmChange()}}function onReproducaoFarmChange(){reproducaoFarmId=document.getElementById("rp-farm-sel").value;if(!reproducaoFarmId){document.getElementById("rp-body").innerHTML='<div style="text-align:center;padding:48px;color:var(--muted)">Selecione uma fazenda pra come\xE7ar.</div>';return}carregarReproducao()}async function carregarReproducao(){const body=document.getElementById("rp-body");body.innerHTML='<div style="text-align:center;padding:40px;color:var(--muted)">Carregando...</div>';const farm=ALL.find(f=>f.id===reproducaoFarmId)||{};let dados={};reproducaoDatasDisponiveis=[];try{const snap=await db.ref("reproducao/"+reproducaoFarmId).once("value");const bruto=snap.val()||{};const datas=Object.keys(bruto).filter(k=>/^\d{4}-\d{2}-\d{2}$/.test(k)).sort();if(datas.length){reproducaoDatasDisponiveis=datas;reproducaoDataSelecionada=datas[datas.length-1];dados=bruto[reproducaoDataSelecionada];reproducaoInputsAbertos=false}else{reproducaoDataSelecionada=new Date().toISOString().slice(0,10);reproducaoInputsAbertos=true}}catch(e){console.error(e)}renderReproducaoForm(dados,farm)}function carregarRegistroReproducaoSalvo(data){reproducaoDataSelecionada=data;db.ref("reproducao/"+reproducaoFarmId+"/"+data).once("value").then(snap=>{const dados=snap.val()||{};const farm=ALL.find(f=>f.id===reproducaoFarmId)||{};renderReproducaoForm(dados,farm)})}function renderReproducaoForm(d,farm){const body=document.getElementById("rp-body");const dataAtualCampo=reproducaoDataSelecionada||new Date().toISOString().slice(0,10);const nivelAtual=d.nivel_checklist||4;const historicoHtml=reproducaoDatasDisponiveis.length?`
+    <canvas id="rp-ch-quadrante-carteira" height="100"></canvas>`;mk("rp-ch-quadrante-carteira","scatter",{datasets:[{label:"Fazendas",data:pontos,backgroundColor:pontos.map(p=>p.cor+"cc"),pointRadius:pontos.map(p=>Math.max(5,Math.min(14,Math.sqrt(p.vacas||10)*.9))),pointHoverRadius:13,borderColor:"rgba(255,255,255,0.8)",borderWidth:1.5}]},{plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>`${c.raw.label} \u2014 ${c.raw.quadranteLabel} (DEL ${c.raw.x}d \xB7 ${c.raw.y.toFixed(1)}% prenhas)`}},annotation:{annotations:{qCruzeiro:{type:"box",xMin:130,xMax:180,yMin:45,yMax:80,backgroundColor:"rgba(21,128,61,0.06)",borderColor:"rgba(21,128,61,0.2)",borderWidth:1},qPrimavera:{type:"box",xMin:130,xMax:180,yMin:0,yMax:45,backgroundColor:"rgba(217,119,6,0.06)",borderColor:"rgba(217,119,6,0.2)",borderWidth:1},qRecuperacao:{type:"box",xMin:180,xMax:250,yMin:45,yMax:80,backgroundColor:"rgba(37,99,235,0.06)",borderColor:"rgba(37,99,235,0.2)",borderWidth:1},qPerigo:{type:"box",xMin:180,xMax:250,yMin:0,yMax:45,backgroundColor:"rgba(220,38,38,0.06)",borderColor:"rgba(220,38,38,0.2)",borderWidth:1}}}},onClick:(evt,els)=>{if(!els.length)return;const p=pontos[els[0].index];if(p)openFarmModal(p.id,p.label)},scales:{x:{reverse:true,min:130,max:250,title:{display:true,text:"DEL M\xE9dio (dias) \u2014 menor \xE9 melhor \u2192",color:"#94a3b8",font:{size:10}},grid:{color:"rgba(0,0,0,0.04)"},ticks:{color:"#94a3b8",font:{size:9}}},y:{min:0,max:80,title:{display:true,text:"% Vacas Prenhas (rebanho total)",color:"#94a3b8",font:{size:10}},grid:{color:"rgba(0,0,0,0.04)"},ticks:{color:"#94a3b8",font:{size:9}}}}})}function initReproducao(){carregarResumoGeralReproducao();if(typeof rpgCarteira==="function")rpgCarteira();const sel=document.getElementById("rp-farm-sel");if(sel&&sel.options.length<=1){const farms=[...ALL].filter(d=>d.situacao==="ATIVO"||d.situacao==="INATIVO").sort((a,b)=>{const sa=a.situacao==="INATIVO"?1:0,sb=b.situacao==="INATIVO"?1:0;return sa!==sb?sa-sb:(a.produtor||"").localeCompare(b.produtor||"")});farms.forEach(d=>{const o=document.createElement("option");o.value=d.id;o.textContent=(d.situacao==="INATIVO"?"\u23F8\uFE0F ":"")+(d.produtor||"?")+" \u2014 "+(d.cidade||"")+(d.situacao==="INATIVO"?" (Inativo)":"");sel.appendChild(o)})}if(reproducaoFarmId){sel.value=reproducaoFarmId;onReproducaoFarmChange()}}function onReproducaoFarmChange(){reproducaoFarmId=document.getElementById("rp-farm-sel").value;if(typeof rpgCarregar==="function")rpgCarregar(reproducaoFarmId);if(!reproducaoFarmId){document.getElementById("rp-body").innerHTML='<div style="text-align:center;padding:48px;color:var(--muted)">Selecione uma fazenda pra come\xE7ar.</div>';return}carregarReproducao()}async function carregarReproducao(){const body=document.getElementById("rp-body");body.innerHTML='<div style="text-align:center;padding:40px;color:var(--muted)">Carregando...</div>';const farm=ALL.find(f=>f.id===reproducaoFarmId)||{};let dados={};reproducaoDatasDisponiveis=[];try{const snap=await db.ref("reproducao/"+reproducaoFarmId).once("value");const bruto=snap.val()||{};const datas=Object.keys(bruto).filter(k=>/^\d{4}-\d{2}-\d{2}$/.test(k)).sort();if(datas.length){reproducaoDatasDisponiveis=datas;reproducaoDataSelecionada=datas[datas.length-1];dados=bruto[reproducaoDataSelecionada];reproducaoInputsAbertos=false}else{reproducaoDataSelecionada=new Date().toISOString().slice(0,10);reproducaoInputsAbertos=true}}catch(e){console.error(e)}renderReproducaoForm(dados,farm)}function carregarRegistroReproducaoSalvo(data){reproducaoDataSelecionada=data;db.ref("reproducao/"+reproducaoFarmId+"/"+data).once("value").then(snap=>{const dados=snap.val()||{};const farm=ALL.find(f=>f.id===reproducaoFarmId)||{};renderReproducaoForm(dados,farm)})}function renderReproducaoForm(d,farm){const body=document.getElementById("rp-body");const dataAtualCampo=reproducaoDataSelecionada||new Date().toISOString().slice(0,10);const nivelAtual=d.nivel_checklist||4;const historicoHtml=reproducaoDatasDisponiveis.length?`
     <div style="margin-bottom:12px">
       <div style="font-size:11px;font-weight:700;color:var(--muted);margin-bottom:6px">Registros salvos:</div>
       <div style="display:flex;gap:6px;flex-wrap:wrap">
@@ -6428,6 +6432,545 @@ function aplicarMetaDescarte(){const valor=window._rbMetaDescVolCalc;if(valor==n
       <td style="padding:10px 12px;color:#0e7490">${fim.prodTotalDia.toLocaleString("pt-BR")}${ini3.prodTotalDia>0?" ("+(((fim.prodTotalDia/ini3.prodTotalDia-1)*100).toFixed(0))+"%)":""}</td><td style="padding:10px 12px;color:#0e7490">${(()=>{const t=anos.reduce((x,a)=>x+(a.recLeite||0),0);return t>0?_fmtR(t):"\u2014"})()}</td>
       <td style="padding:10px 12px;color:#7c3aed">${anos.filter(a=>a.yr>0).reduce((s2,a)=>s2+a.nasc,0).toLocaleString("pt-BR")} total</td>
       <td style="padding:10px 12px;color:#1d4ed8">${fim.venda>0?"+"+fim.venda.toLocaleString("pt-BR"):"\u2014"}</td><td style="padding:10px 12px;color:#1d4ed8">${(()=>{const t=anos.filter(a=>a.yr>0).reduce((s2,a)=>s2+(a.recVenda||0),0);return t>=1e6?"R$"+(t/1e6).toFixed(2).replace(".",",")+" mi":t>0?"R$"+(t/1e3).toFixed(0)+"k":"\u2014"})()}</td><td style="padding:10px 12px;color:#1f8149">${(()=>{const t=anos.filter(a=>a.yr>0).reduce((s2,a)=>s2+(a.recDesc||0),0);return t>=1e6?"R$"+(t/1e6).toFixed(2).replace(".",",")+" mi":t>0?"R$"+(t/1e3).toFixed(0)+"k":"\u2014"})()}</td><td style="padding:10px 12px;color:#14532d">${(()=>{const t=anos.filter(a=>a.yr>0).reduce((s2,a)=>s2+(a.recDesc||0)+(a.recVenda||0),0);return t>=1e6?"R$"+(t/1e6).toFixed(2).replace(".",",")+" mi":t>0?"R$"+(t/1e3).toFixed(0)+"k":"\u2014"})()}</td><td style="padding:10px 12px;color:#14532d">${(()=>{const t=anos.filter(a=>a.yr>0).reduce((x,a)=>x+(a.recLeite||0)+(a.recDesc||0)+(a.recVenda||0),0);return t>0?_fmtR(t):"\u2014"})()}</td></tr></tfoot>`}}
+</script>
+<script id="rp-core">
+/* ===== META Reprodução — núcleo compartilhado (app produtor + painel) ===== */
+var RP_CFG_PADRAO={pev:50,dg_dias:30,gestacao:283,secagem_dias:60,preparto_dias:21};
+var RP_TIPOS={parto:{l:"Parto",i:"🐣"},cio:{l:"Cio",i:"🔥"},ia:{l:"Inseminação",i:"💉"},cobertura:{l:"Cobertura (touro)",i:"🐂"},dg:{l:"Diagnóstico",i:"🩺"},aborto:{l:"Aborto / perda",i:"⚠️"},secagem:{l:"Secagem",i:"🌙"},descarte:{l:"Saída do rebanho",i:"🚪"}};
+var RP_ORDEM={descarte:0,parto:1,aborto:2,cio:3,ia:4,cobertura:4,dg:5,secagem:6};
+var RP_STATUS={
+  prenhe:{l:"Prenhe",c:"#15803d",bg:"#dcfce7"},
+  seca:{l:"Seca",c:"#7c3aed",bg:"#ede9fe"},
+  inseminada:{l:"Aguardando DG",c:"#2563eb",bg:"#dbeafe"},
+  vazia:{l:"Vazia (apta)",c:"#dc2626",bg:"#fee2e2"},
+  pev:{l:"Período voluntário",c:"#64748b",bg:"#f1f5f9"},
+  novilha:{l:"Novilha",c:"#d97706",bg:"#fef3c7"},
+  sem_dados:{l:"Sem parto lançado",c:"#94a3b8",bg:"#f8fafc"},
+  saiu:{l:"Fora do rebanho",c:"#94a3b8",bg:"#f1f5f9"}
+};
+function rpHoje(){var d=new Date();return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0")}
+function rpD(s){return s?new Date(s+"T12:00:00"):null}
+function rpAdd(s,n){var d=rpD(s);d.setDate(d.getDate()+Math.round(n));return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0")}
+function rpDif(a,b){return Math.round((rpD(a)-rpD(b))/864e5)}
+function rpBR(s){if(!s)return "—";var p=s.split("-");return p[2]+"/"+p[1]+"/"+p[0].slice(2)}
+function rpEsc(t){return String(t==null?"":t).replace(/[&<>"']/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]})}
+function rpCfg(c){var o={};for(var k in RP_CFG_PADRAO)o[k]=(c&&c[k]!=null&&c[k]!=="")?+c[k]:RP_CFG_PADRAO[k];return o}
+function rpNormBrinco(b){return String(b==null?"":b).trim().replace(/\.0$/,"").replace(/^0+(?=\d)/,"").toUpperCase()}
+/* data "dd/mm/aaaa", "dd/mm/aa", "aaaa-mm-dd", serial do Excel, Date */
+function rpParseData(v){
+  if(v==null||v==="")return null;
+  if(v instanceof Date&&!isNaN(v))return v.getFullYear()+"-"+String(v.getMonth()+1).padStart(2,"0")+"-"+String(v.getDate()).padStart(2,"0");
+  if(typeof v==="number"||/^\d{5}(\.\d+)?$/.test(String(v).trim())){var n=+v;if(n>20000&&n<80000){var d=new Date(Date.UTC(1899,11,30)+Math.round(n)*864e5);return d.getUTCFullYear()+"-"+String(d.getUTCMonth()+1).padStart(2,"0")+"-"+String(d.getUTCDate()).padStart(2,"0")}return null}
+  var s=String(v).trim(),m;
+  if(m=s.match(/^(\d{4})-(\d{1,2})-(\d{1,2})/))return m[1]+"-"+m[2].padStart(2,"0")+"-"+m[3].padStart(2,"0");
+  if(m=s.match(/^(\d{1,2})[\/.\-](\d{1,2})[\/.\-](\d{2,4})/)){var a=m[3].length===2?(+m[3]>60?"19":"20")+m[3]:m[3];if(+m[2]<1||+m[2]>12||+m[1]<1||+m[1]>31)return null;return a+"-"+m[2].padStart(2,"0")+"-"+m[1].padStart(2,"0")}
+  return null;
+}
+/* ---------- estado de cada animal a partir dos eventos ---------- */
+function rpOrdenarEventos(evs){return evs.slice().sort(function(a,b){return a.data<b.data?-1:a.data>b.data?1:(RP_ORDEM[a.tipo]||9)-(RP_ORDEM[b.tipo]||9)})}
+function rpEstadoAnimal(an,evs,cfg,hoje){
+  cfg=rpCfg(cfg);hoje=hoje||rpHoje();
+  var st={lact:+(an.lactacao_base||0),partos:[],ultimoParto:null,servicos:[],todosServicos:[],prenhe:false,concepcao:null,dgData:null,seca:false,dataSecagem:null,saiu:null,ultimoCio:null,perdas:[],concepcoes:[]};
+  var cur=[];/* serviços da lactação/ciclo atual */
+  rpOrdenarEventos(evs).forEach(function(e){
+    if(!e.data||e.data>hoje)return;
+    var t=e.tipo;
+    if(t==="parto"){st.lact+=1;st.partos.push(e.data);st.ultimoParto=e.data;cur.forEach(function(s){if(s.res==="pendente")s.res="desconhecido"});cur=[];st.servicos=cur;st.prenhe=false;st.concepcao=null;st.dgData=null;st.seca=false;st.dataSecagem=null;st.ultimoCio=null}
+    else if(t==="ia"||t==="cobertura"){
+      cur.forEach(function(s){if(s.res==="pendente")s.res="falha"});
+      if(st.prenhe){st.prenhe=false;st.concepcao=null;}
+      var sv={data:e.data,touro:e.touro||"",tipo:t,res:"pendente",parto:st.ultimoParto,id:e.id};cur.push(sv);st.todosServicos.push(sv);st.servicos=cur;
+    }
+    else if(t==="cio"){st.ultimoCio=e.data;cur.forEach(function(s){if(s.res==="pendente"&&rpDif(e.data,s.data)>=15)s.res="falha"})}
+    else if(t==="dg"){
+      st.dgData=e.data;
+      if(e.resultado==="+"){
+        var sv=null;for(var i=cur.length-1;i>=0;i--){if(rpDif(e.data,cur[i].data)>=20){sv=cur[i];break}}
+        var conc=e.concepcao||(sv?sv.data:null);
+        if(!conc&&e.dias_gestacao)conc=rpAdd(e.data,-(+e.dias_gestacao));
+        if(!conc)conc=rpAdd(e.data,-cfg.dg_dias);
+        cur.forEach(function(s){if(s.res==="pendente")s.res=(s===sv||(!sv&&s.data===conc))?"concepcao":"falha"});
+        if(!st.prenhe||st.concepcao!==conc){st.concepcoes.push({data:conc,parto:st.ultimoParto,touro:sv?sv.touro:(e.touro||"")})}
+        st.prenhe=true;st.concepcao=conc;st.touroPrenhez=sv?sv.touro:(e.touro||"");
+      }else{
+        cur.forEach(function(s){if(s.res==="pendente"&&rpDif(e.data,s.data)>=20)s.res="falha"});
+        if(st.prenhe)st.perdas.push({data:e.data,concepcao:st.concepcao});
+        st.prenhe=false;st.concepcao=null;
+      }
+    }
+    else if(t==="aborto"){if(st.prenhe||st.concepcao){st.perdas.push({data:e.data,concepcao:st.concepcao})}st.prenhe=false;st.concepcao=null;st.seca=false}
+    else if(t==="secagem"){st.seca=true;st.dataSecagem=e.data}
+    else if(t==="descarte"){st.saiu={data:e.data,motivo:e.motivo||e.obs||""}}
+  });
+  var novilha=(an.categoria==="novilha")&&!st.partos.length&&!(+an.lactacao_base>0);
+  st.novilha=novilha;
+  st.del=(st.ultimoParto&&!st.seca)?rpDif(hoje,st.ultimoParto):null;
+  var ultSv=st.servicos.length?st.servicos[st.servicos.length-1]:null;
+  st.ultimoServico=ultSv;
+  st.nServicos=st.servicos.length;
+  /* previsões */
+  st.prev={};
+  if(st.prenhe&&st.concepcao){
+    st.diasGest=rpDif(hoje,st.concepcao);
+    st.prev.parto=rpAdd(st.concepcao,cfg.gestacao);
+    if(!novilha)st.prev.secagem=rpAdd(st.prev.parto,-cfg.secagem_dias);
+    st.prev.preparto=rpAdd(st.prev.parto,-cfg.preparto_dias);
+    if(st.ultimoParto&&st.concepcao>st.ultimoParto)st.diasAbertos=rpDif(st.concepcao,st.ultimoParto);
+  }else if(ultSv&&ultSv.res==="pendente"){
+    st.prev.dg=rpAdd(ultSv.data,cfg.dg_dias);
+    st.prev.retornoIni=rpAdd(ultSv.data,18);st.prev.retornoFim=rpAdd(ultSv.data,24);
+  }
+  if(!st.prenhe&&st.ultimoParto&&!st.seca)st.prev.aptaEm=rpAdd(st.ultimoParto,cfg.pev);
+  /* status */
+  var s;
+  if(st.saiu)s="saiu";
+  else if(st.seca)s="seca";
+  else if(st.prenhe)s="prenhe";
+  else if(ultSv&&ultSv.res==="pendente")s="inseminada";
+  else if(novilha)s="novilha";
+  else if(!st.ultimoParto)s="sem_dados";
+  else if(st.del<cfg.pev)s="pev";
+  else s="vazia";
+  st.status=s;
+  return st;
+}
+function rpMontarRebanho(animais,eventos,cfg,hoje){
+  hoje=hoje||rpHoje();cfg=rpCfg(cfg);
+  var porAn={};Object.keys(eventos||{}).forEach(function(k){var e=eventos[k];if(!e||!e.animal)return;e.id=k;(porAn[e.animal]=porAn[e.animal]||[]).push(e)});
+  return Object.keys(animais||{}).map(function(id){var a=animais[id]||{};var evs=porAn[id]||[];var st=rpEstadoAnimal(a,evs,cfg,hoje);return {id:id,a:a,evs:evs,st:st}}).sort(function(x,y){return rpCmpBrinco(x.a.brinco,y.a.brinco)});
+}
+function rpCmpBrinco(a,b){var na=parseFloat(a),nb=parseFloat(b);if(!isNaN(na)&&!isNaN(nb)&&na!==nb)return na-nb;return String(a||"").localeCompare(String(b||""),"pt",{numeric:true})}
+/* ---------- agenda de manejo ---------- */
+function rpAgenda(reb,cfg,hoje){
+  cfg=rpCfg(cfg);hoje=hoje||rpHoje();
+  var ag={dg:[],retorno:[],secar:[],preparto:[],partos:[],vazias:[],problema:[]};
+  reb.forEach(function(r){var st=r.st;if(st.status==="saiu")return;
+    if(st.status==="inseminada"){
+      if(hoje>=st.prev.dg)ag.dg.push({r:r,data:st.prev.dg,atraso:rpDif(hoje,st.prev.dg)});
+      else if(hoje>=rpAdd(st.prev.retornoIni,-1)&&hoje<=rpAdd(st.prev.retornoFim,1))ag.retorno.push({r:r,data:st.prev.retornoIni});
+    }
+    if(st.prenhe&&!st.seca&&st.prev.secagem&&st.prev.secagem<=rpAdd(hoje,14))ag.secar.push({r:r,data:st.prev.secagem,atraso:rpDif(hoje,st.prev.secagem)});
+    if(st.prenhe&&st.prev.parto){
+      if(st.prev.preparto<=rpAdd(hoje,7)&&st.prev.parto>=rpAdd(hoje,-15))ag.preparto.push({r:r,data:st.prev.preparto});
+      if(st.prev.parto<=rpAdd(hoje,30)&&st.prev.parto>=rpAdd(hoje,-15))ag.partos.push({r:r,data:st.prev.parto});
+    }
+    if(st.prenhe&&st.prev.parto&&st.prev.parto<rpAdd(hoje,-15))ag.problema.push({r:r,motivo:"Parto previsto em "+rpBR(st.prev.parto)+" e não lançado"});
+    if(st.status==="vazia"){ag.vazias.push({r:r,data:st.ultimoParto,del:st.del});
+      if(st.del>150||st.nServicos>=3)ag.problema.push({r:r,motivo:(st.del>150?"DEL "+st.del+" e vazia":"")+(st.del>150&&st.nServicos>=3?" · ":"")+(st.nServicos>=3?st.nServicos+" serviços sem prenhez":"")});
+    }
+  });
+  Object.keys(ag).forEach(function(k){ag[k].sort(function(a,b){return (a.data||"")<(b.data||"")?-1:1})});
+  ag.vazias.sort(function(a,b){return b.del-a.del});
+  return ag;
+}
+/* ---------- taxas por ciclo de 21 dias ---------- */
+function rpCiclos(reb,cfg,hoje,nCiclos){
+  cfg=rpCfg(cfg);hoje=hoje||rpHoje();nCiclos=nCiclos||12;
+  var fimUlt=rpAdd(hoje,0);var ciclos=[];
+  for(var c=nCiclos-1;c>=0;c--){var fim=rpAdd(fimUlt,-21*c);var ini=rpAdd(fim,-20);ciclos.push({ini:ini,fim:fim,eleg:0,insem:0,prenhas:0,serv:0,servConc:0,servDiag:0})}
+  reb.forEach(function(r){var st=r.st;
+    /* reconstrói janelas de aptidão: de parto+PEV até concepção/saída/próximo parto */
+    var partos=st.partos.slice();
+    partos.forEach(function(p,ix){
+      var apta=rpAdd(p,cfg.pev);var prox=partos[ix+1]||null;
+      var conc=null;st.concepcoes.forEach(function(cc){if(cc.data>=p&&(!prox||cc.data<prox)&&(!conc||cc.data<conc))conc=cc.data});
+      /* se houve perda, a vaca volta a ser elegível depois da perda */
+      var perdas=st.perdas.filter(function(pe){return pe.data>=p&&(!prox||pe.data<prox)});
+      var fimJan=conc||prox||(st.saiu?st.saiu.data:null);
+      var secaEm=(st.dataSecagem&&st.dataSecagem>=p&&(!prox||st.dataSecagem<prox))?st.dataSecagem:null;
+      if(secaEm&&(!fimJan||secaEm<fimJan))fimJan=secaEm;
+      var janelas=[[apta,fimJan]];
+      perdas.forEach(function(pe){var c2=null;st.concepcoes.forEach(function(cc){if(cc.data>pe.data&&(!prox||cc.data<prox)&&(!c2||cc.data<c2))c2=cc.data});janelas.push([pe.data,c2||prox||(st.saiu?st.saiu.data:null)])});
+      janelas.forEach(function(j){
+        ciclos.forEach(function(cy){
+          if(cy.ini<j[0])return;/* precisa estar apta no início do ciclo */
+          if(j[1]&&j[1]<cy.ini)return;
+          var concAqui=!!(j[1]&&j[1]>=cy.ini&&j[1]<=cy.fim&&st.concepcoes.some(function(cc){return cc.data===j[1]}));
+          if(st.saiu&&st.saiu.data<=cy.fim&&!concAqui)return;/* saiu antes/durante o ciclo sem emprenhar */
+          cy.eleg++;
+          var svs=st.todosServicos.filter(function(s){return s.data>=cy.ini&&s.data<=cy.fim});
+          if(svs.length)cy.insem++;
+          if(concAqui)cy.prenhas++;
+        });
+      });
+    });
+    /* taxa de concepção: todos os serviços de vacas (por data do serviço) */
+    st.todosServicos.forEach(function(s){if(!s.parto)return;ciclos.forEach(function(cy){if(s.data>=cy.ini&&s.data<=cy.fim){cy.serv++;if(s.res==="concepcao"||s.res==="falha"){cy.servDiag++;if(s.res==="concepcao")cy.servConc++}}})});
+  });
+  var limiteDiag=rpAdd(hoje,-(cfg.dg_dias+7));
+  ciclos.forEach(function(cy){
+    cy.completo=cy.fim<=limiteDiag;
+    cy.ts=cy.eleg?cy.insem/cy.eleg*100:null;
+    cy.tc=cy.servDiag?cy.servConc/cy.servDiag*100:null;
+    cy.tp=(cy.eleg&&cy.completo)?cy.prenhas/cy.eleg*100:null;
+  });
+  return ciclos;
+}
+function rpResumo(reb,cfg,hoje,nCiclos){
+  cfg=rpCfg(cfg);hoje=hoje||rpHoje();
+  var ciclos=rpCiclos(reb,cfg,hoje,nCiclos||12);
+  var comp=ciclos.filter(function(c){return c.completo});
+  function soma(arr,k){return arr.reduce(function(s,c){return s+c[k]},0)}
+  var eleg=soma(comp,"eleg"),insemC=soma(comp,"insem"),pren=soma(comp,"prenhas");
+  var elegT=soma(ciclos,"eleg"),insemT=soma(ciclos,"insem");
+  var sd=soma(ciclos,"servDiag"),sc=soma(ciclos,"servConc");
+  var ativos=reb.filter(function(r){return r.st.status!=="saiu"});
+  var vacas=ativos.filter(function(r){return !r.st.novilha&&r.st.ultimoParto});
+  var lact=vacas.filter(function(r){return !r.st.seca});
+  var cont={};Object.keys(RP_STATUS).forEach(function(k){cont[k]=0});ativos.forEach(function(r){cont[r.st.status]++});
+  var prenhesVacas=vacas.filter(function(r){return r.st.prenhe}).length;
+  var dels=lact.map(function(r){return r.st.del}).filter(function(x){return x!=null});
+  var abertos=[];reb.forEach(function(r){r.st.concepcoes.forEach(function(cc){if(cc.parto&&cc.data>=rpAdd(hoje,-365))abertos.push(rpDif(cc.data,cc.parto))})});
+  var conc12=0,serv12=0;reb.forEach(function(r){r.st.todosServicos.forEach(function(s){if(s.data>=rpAdd(hoje,-365)&&s.parto){if(s.res==="concepcao")conc12++;if(s.res==="concepcao"||s.res==="falha")serv12++}})});
+  var conc12b=0,perd12=0;reb.forEach(function(r){r.st.concepcoes.forEach(function(cc){if(cc.data>=rpAdd(hoje,-365))conc12b++});r.st.perdas.forEach(function(p){if(p.data>=rpAdd(hoje,-365))perd12++})});
+  var primServ=[];reb.forEach(function(r){var vistos={};r.st.todosServicos.forEach(function(s){if(s.parto&&!vistos[s.parto]&&s.data>=rpAdd(hoje,-365)){vistos[s.parto]=1;primServ.push(rpDif(s.data,s.parto))}})});
+  function media(a){return a.length?a.reduce(function(x,y){return x+y},0)/a.length:null}
+  var mAb=media(abertos);
+  return {
+    ciclos:ciclos,
+    ts:elegT?insemT/elegT*100:null,
+    tc:sd?sc/sd*100:null,
+    tp:eleg?pren/eleg*100:null,
+    elegMedia:comp.length?eleg/comp.length:null,
+    nAtivos:ativos.length,nVacas:vacas.length,nLact:lact.length,nSecas:vacas.length-lact.length,
+    nNovilhas:ativos.filter(function(r){return r.st.novilha}).length,
+    pctPrenhes:vacas.length?prenhesVacas/vacas.length*100:null,prenhesVacas:prenhesVacas,
+    delMedio:media(dels),
+    diasAbertos:mAb,iepProj:mAb!=null?mAb+cfg.gestacao:null,
+    servPorConc:conc12?serv12/conc12:null,
+    pctPerdas:conc12b?perd12/conc12b*100:null,perdas:perd12,
+    primServico:media(primServ),
+    vazias150:ativos.filter(function(r){return r.st.status==="vazia"&&r.st.del>150}).length,
+    cont:cont,
+    serv12:serv12,conc12:conc12,
+    pendConferir:0
+  };
+}
+/* ---------- importador genérico (Mais Leite / planilhas) ---------- */
+var RP_COLS=[
+  {k:"brinco",l:"Brinco / nº animal",re:/^(brinco|animal|vaca|n[uú]mero|num\.?|n[ºo°]?\.?|identifica|id|c[oó]digo|nome)\b/i},
+  {k:"nome",l:"Nome",re:/^nome$/i},
+  {k:"categoria",l:"Categoria",re:/categ/i},
+  {k:"lactacao",l:"Nº lactação",re:/lacta[cç][aã]o$|^lac\b|n[ºo°]?\.?\s*lact|ordem.*parto|n[ºo°]?\.?\s*partos?$|^partos$|^lact/i},
+  {k:"parto",l:"Último parto",re:/(últ|ult)[a-z.]*\s*parto|data.*parto|dt\.?\s*parto|^parto$/i},
+  {k:"del",l:"DEL",re:/^del$|dias\s*(em|de)?\s*lact/i},
+  {k:"ia",l:"Última IA / cobertura",re:/(últ|ult)[a-z.]*\s*(ia|insem|cobert|servi)|data.*(ia|insem|cobert|servi)|dt\.?\s*(ia|insem)|^ia$|^insemina/i},
+  {k:"nserv",l:"Nº serviços",re:/(n[ºo°]?\.?|qtd|quant)\s*.*(serv|ia|insem|dose)|^servi[cç]os$|^doses$/i},
+  {k:"touro",l:"Touro / sêmen",re:/touro|s[eê]men|reprodutor/i},
+  {k:"situacao",l:"Situação reprodutiva",re:/situa|status|estado|repro|condi/i},
+  {k:"dg",l:"Data do diagnóstico",re:/diag|^dg|toque|ultra|confirm/i},
+  {k:"prevparto",l:"Previsão de parto",re:/prev.*parto|parto.*prev|data.*prevista/i},
+  {k:"secagem",l:"Secagem (data)",re:/secag|^seca/i},
+  {k:"nasc",l:"Nascimento",re:/nasc/i}
+];
+function rpDetectarColunas(linhas){
+  var hi=-1,best=0;
+  for(var i=0;i<Math.min(linhas.length,15);i++){var sc=0;(linhas[i]||[]).forEach(function(c){var t=String(c==null?"":c).trim();if(t&&RP_COLS.some(function(col){return col.re.test(t)}))sc++});if(sc>best){best=sc;hi=i}}
+  if(hi<0)return {hi:-1,map:{}};
+  var map={},usados={};
+  var cab=(linhas[hi]||[]).map(function(c){return String(c==null?"":c).trim()});
+  /* ordem de prioridade: campos específicos primeiro */
+  ["prevparto","parto","ia","nserv","dg","secagem","nasc","del","lactacao","touro","situacao","categoria","nome","brinco"].forEach(function(k){
+    var col=RP_COLS.filter(function(c){return c.k===k})[0];
+    for(var j=0;j<cab.length;j++){if(usados[j])continue;if(col.re.test(cab[j])){map[k]=j;usados[j]=1;break}}
+  });
+  if(map.brinco==null&&map.nome!=null){map.brinco=map.nome;delete map.nome}
+  return {hi:hi,map:map,cab:cab};
+}
+function rpSituacao(v){var s=String(v||"").toLowerCase();
+  if(!s)return null;
+  if(/aborto|perda/.test(s))return "aborto";
+  if(/vend|descart|morte|morta|morreu|baixa/.test(s))return "saiu";
+  if(/n[aã]o\s*prenh|negat|vazia|^vz|^v$|falha/.test(s))return "vazia";
+  if(/seca/.test(s)&&/prenh|gest|pr\b/.test(s))return "seca_prenhe";
+  if(/seca/.test(s))return "seca";
+  if(/prenh|gest|positiv|^pr\b|^p$|confirm|prenha/.test(s))return "prenhe";
+  if(/insem|inseminada|servida|coberta|aguard|^ia\b|^ins/.test(s))return "inseminada";
+  if(/novilha/.test(s))return "novilha";
+  if(/lact|parida|recem|recém|pev|vol/.test(s))return "lactacao";
+  return null;
+}
+/* converte as linhas mapeadas em animais + eventos (sem gravar) */
+function rpConverterImport(linhas,det,cfg,hoje){
+  cfg=rpCfg(cfg);hoje=hoje||rpHoje();var m=det.map;var out=[];var avisos=[];
+  for(var i=det.hi+1;i<linhas.length;i++){
+    var L=linhas[i]||[];function g(k){return m[k]!=null?L[m[k]]:null}
+    var br=rpNormBrinco(g("brinco"));if(!br||/^total|^m[eé]dia/i.test(br))continue;
+    var r={brinco:br,nome:g("nome")?String(g("nome")).trim():"",eventos:[],lactacao:null,categoria:null};
+    var lac=parseInt(g("lactacao"),10);if(!isNaN(lac))r.lactacao=lac;
+    var cat=String(g("categoria")||"").toLowerCase();var sit=rpSituacao(g("situacao"));
+    if(/novilha/.test(cat)||sit==="novilha"||(r.lactacao===0))r.categoria="novilha";else r.categoria="vaca";
+    var nasc=rpParseData(g("nasc"));if(nasc)r.nasc=nasc;
+    var parto=rpParseData(g("parto"));var del=parseInt(g("del"),10);
+    if(!parto&&!isNaN(del)&&del>=0&&del<900)parto=rpAdd(hoje,-del);
+    if(parto&&parto<=hoje){r.eventos.push({tipo:"parto",data:parto});if(r.categoria==="novilha")r.categoria="vaca"}
+    var ia=rpParseData(g("ia"));var touro=g("touro")?String(g("touro")).trim():"";
+    if(ia&&(!parto||ia>parto)&&ia<=hoje)r.eventos.push({tipo:"ia",data:ia,touro:touro});
+    var dg=rpParseData(g("dg"));var pp=rpParseData(g("prevparto"));var sec=rpParseData(g("secagem"));
+    if(sit==="prenhe"||sit==="seca_prenhe"||(pp&&sit!=="vazia")){
+      var conc=null;
+      if(pp)conc=rpAdd(pp,-cfg.gestacao);
+      else if(ia)conc=ia;
+      var dgd=dg||(conc?rpAdd(conc,cfg.dg_dias):null);
+      if(dgd&&dgd>hoje)dgd=hoje;
+      if(conc||dgd){var ev={tipo:"dg",data:dgd||hoje,resultado:"+"};if(conc&&(!ia||conc!==ia))ev.concepcao=conc;r.eventos.push(ev)}
+      else avisos.push(br+": prenhe sem data de IA, DG ou previsão de parto — lançada só como vaca, confira.");
+    }else if(sit==="vazia"&&ia){var d2=dg||rpAdd(ia,cfg.dg_dias);if(d2>hoje)d2=hoje;r.eventos.push({tipo:"dg",data:d2,resultado:"-"})}
+    if(sit==="seca"||sit==="seca_prenhe"||(sec&&sec<=hoje)){r.eventos.push({tipo:"secagem",data:sec&&sec<=hoje?sec:hoje})}
+    if(sit==="saiu")r.eventos.push({tipo:"descarte",data:hoje,motivo:String(g("situacao")||"")});
+    if(r.lactacao!=null&&parto)r.lactacao_base=Math.max(0,r.lactacao-1);else if(r.lactacao!=null)r.lactacao_base=r.lactacao;
+    out.push(r);
+  }
+  return {linhas:out,avisos:avisos};
+}
+/* ---------- gravação (Firebase compat) ---------- */
+function rpRef(farm,sub){return db.ref("repro/"+farm+(sub?"/"+sub:""))}
+async function rpCarregar(farm){var s=await rpRef(farm).once("value");var v=s.val()||{};return {animais:v.animais||{},eventos:v.eventos||{},config:rpCfg(v.config)}}
+function rpAnimalPorBrinco(animais,br){br=rpNormBrinco(br);for(var k in animais){if(rpNormBrinco(animais[k].brinco)===br)return k}return null}
+function rpEventoDuplicado(eventos,animalId,ev){for(var k in eventos){var e=eventos[k];if(e.animal===animalId&&e.tipo===ev.tipo&&e.data===ev.data)return true;if(e.animal===animalId&&e.tipo===ev.tipo&&ev.tipo==="parto"&&Math.abs(rpDif(e.data,ev.data))<=20)return true}return false}
+/* aplica lista {brinco,..., eventos:[]} → retorna contagem */
+async function rpGravarLote(farm,dados,lista,meta){
+  var upd={},novosA=0,novosE=0,ign=0;var agora=Date.now();
+  lista.forEach(function(r){
+    var id=rpAnimalPorBrinco(dados.animais,r.brinco);
+    if(!id){id=rpRef(farm,"animais").push().key;var an={brinco:r.brinco,categoria:r.categoria||"vaca",ativo:true,origem:meta.origem,criado_em:agora};if(r.nome)an.nome=r.nome;if(r.nasc)an.nasc=r.nasc;if(r.lactacao_base!=null)an.lactacao_base=r.lactacao_base;upd["animais/"+id]=an;dados.animais[id]=an;novosA++}
+    else if(r.lactacao_base!=null&&dados.animais[id].lactacao_base==null&&!Object.keys(dados.eventos).some(function(k){return dados.eventos[k].animal===id&&dados.eventos[k].tipo==="parto"})){upd["animais/"+id+"/lactacao_base"]=r.lactacao_base}
+    (r.eventos||[]).forEach(function(ev){
+      if(rpEventoDuplicado(dados.eventos,id,ev)){ign++;return}
+      var ek=rpRef(farm,"eventos").push().key;var e=Object.assign({},ev,{animal:id,brinco:r.brinco,por:meta.por,conferido:meta.por!=="produtor",origem:meta.origem,criado_em:agora});
+      Object.keys(e).forEach(function(x){if(e[x]===undefined||e[x]==="")delete e[x]});
+      upd["eventos/"+ek]=e;dados.eventos[ek]=e;novosE++;
+    });
+  });
+  if(Object.keys(upd).length)await rpRef(farm).update(upd);
+  return {animais:novosA,eventos:novosE,ignorados:ign};
+}
+/* puxa vacas + parto (data − DEL) do controle leiteiro mais recente */
+async function rpPuxarControle(farm,dados){
+  var s=await db.ref("controle_leiteiro/"+farm).orderByKey().limitToLast(1).once("value");var v=s.val()||{};
+  var dt=Object.keys(v).filter(function(k){return /^\d{4}-\d{2}-\d{2}$/.test(k)}).sort().pop();
+  if(!dt)return {erro:"Nenhum controle leiteiro encontrado para esta fazenda."};
+  var vacas=v[dt].vacas||[];if(!Array.isArray(vacas))vacas=Object.values(vacas);
+  var lista=[];
+  var conflitos=[];
+  vacas.forEach(function(x){var br=rpNormBrinco(x.vaca||x.brinco);if(!br)return;var r={brinco:br,categoria:"vaca",eventos:[]};var del=parseInt(x.del,10);
+    var lac=parseInt(x.lactacao!=null?x.lactacao:x.lact,10);
+    if(!isNaN(del)&&del>=0&&del<800){var pc=rpAdd(dt,-del);var id=rpAnimalPorBrinco(dados.animais,br);var ult=null;
+      if(id)Object.keys(dados.eventos).forEach(function(k){var e=dados.eventos[k];if(e.animal===id&&e.tipo==="parto"&&(!ult||e.data>ult))ult=e.data});
+      /* só lança parto se a vaca não tem parto, ou se é claramente um parto novo (200+ dias depois do último) */
+      if(!ult||rpDif(pc,ult)>=200)r.eventos.push({tipo:"parto",data:pc});
+      else if(Math.abs(rpDif(pc,ult))>20)conflitos.push(br+": controle indica parto em "+rpBR(pc)+", sistema tem "+rpBR(ult));}
+    if(!isNaN(lac)&&lac>0)r.lactacao_base=lac-1;
+    lista.push(r)});
+  var res=await rpGravarLote(farm,dados,lista,{origem:"controle",por:"tecnico"});
+  res.data=dt;res.vacas=vacas.length;res.conflitos=conflitos;return res;
+}
+function rpChip(status){var s=RP_STATUS[status]||RP_STATUS.sem_dados;return '<span class="rp-chip" style="color:'+s.c+';background:'+s.bg+'">'+s.l+'</span>'}
+function rpPct(v){return v==null?"—":Math.round(v)+"%"}
+function rpLinhaPrevisao(st){
+  if(st.status==="saiu")return "Saiu em "+rpBR(st.saiu.data);
+  if(st.prenhe)return st.diasGest+" dias de gestação · parto "+rpBR(st.prev.parto)+(st.prev.secagem&&!st.seca?" · secar "+rpBR(st.prev.secagem):"");
+  if(st.status==="inseminada")return "IA "+rpBR(st.ultimoServico.data)+" · DG a partir de "+rpBR(st.prev.dg);
+  if(st.status==="vazia")return "DEL "+st.del+" · "+(st.nServicos?st.nServicos+" serviço(s) nesta lactação":"sem serviço ainda");
+  if(st.status==="pev")return "DEL "+st.del+" · apta em "+rpBR(st.prev.aptaEm);
+  if(st.status==="novilha")return "Novilha · sem serviço registrado";
+  return "Lance o último parto para calcular";
+}
+/* timeline HTML de uma vaca */
+function rpTimelineHtml(r,opts){opts=opts||{};
+  var evs=rpOrdenarEventos(r.evs).reverse();
+  if(!evs.length)return '<div style="color:#94a3b8;font-size:12px;padding:8px 0">Nenhum evento lançado ainda.</div>';
+  return evs.map(function(e){var t=RP_TIPOS[e.tipo]||{l:e.tipo,i:"•"};
+    var det=[];if(e.touro)det.push("Touro: "+rpEsc(e.touro));if(e.tipo==="dg")det.push(e.resultado==="+"?"<b style='color:#15803d'>Prenhe</b>":"<b style='color:#dc2626'>Vazia</b>");if(e.concepcao)det.push("concepção "+rpBR(e.concepcao));if(e.motivo)det.push(rpEsc(e.motivo));if(e.obs)det.push(rpEsc(e.obs));
+    var sv=null;if(e.tipo==="ia"||e.tipo==="cobertura"){r.st.todosServicos.forEach(function(s){if(s.id===e.id)sv=s})}
+    if(sv&&sv.res==="concepcao")det.push("✅ emprenhou");else if(sv&&sv.res==="falha")det.push("✖ não emprenhou");
+    return '<div class="rp-tl"><div class="rp-tl-i">'+t.i+'</div><div style="flex:1;min-width:0"><div style="font-weight:700;font-size:13px">'+t.l+' <span style="font-weight:500;color:#64748b">· '+rpBR(e.data)+'</span>'+(e.conferido===false?' <span class="rp-chip" style="background:#fef3c7;color:#b45309">a conferir</span>':'')+'</div>'+(det.length?'<div style="font-size:12px;color:#475569">'+det.join(" · ")+'</div>':'')+'</div>'+(opts.acoes?opts.acoes(e):'')+'</div>'}).join("");
+}
+var RP_CSS='.rp-chip{display:inline-block;font-size:10.5px;font-weight:700;padding:2px 8px;border-radius:999px;white-space:nowrap}'+
+'.rp-tl{display:flex;gap:10px;align-items:flex-start;padding:9px 0;border-bottom:1px solid #f1f5f9}.rp-tl:last-child{border-bottom:none}'+
+'.rp-tl-i{width:30px;height:30px;border-radius:50%;background:#f1f5f9;display:flex;align-items:center;justify-content:center;font-size:15px;flex-shrink:0}'+
+'.rp-prev{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:8px}.rp-prev>div{background:#f8fafc;border:1px solid #e2e8f0;border-radius:12px;padding:10px}.rp-prev small{display:block;font-size:10.5px;color:#64748b;font-weight:600}.rp-prev b{font-size:15px}';
+(function(){try{var st=document.createElement("style");st.id="rp-core-css";st.textContent=RP_CSS;document.head.appendChild(st)}catch(e){}})();
+
+var RP_FILTROS=[["todas","Todas"],["prenhe","Prenhes"],["inseminada","Aguardando DG"],["vazia","Vazias"],["pev","Recém-paridas"],["seca","Secas"],["novilha","Novilhas"],["sem_dados","Sem parto"]];
+function rpResumoCompacto(R,ag,eventos){var r1=function(v){return v!=null?Math.round(v*10)/10:null};var pend=0;for(var k in eventos){if(eventos[k].conferido===false)pend++}
+  return {atualizado:Date.now(),data:rpHoje(),nVacas:R.nVacas,pctPrenhes:r1(R.pctPrenhes),tp:r1(R.tp),ts:r1(R.ts),tc:r1(R.tc),del:R.delMedio!=null?Math.round(R.delMedio):null,dg:ag.dg.length,secar:ag.secar.length,pend:pend}}
+function rpPublicarResumo(farm,R,ag,eventos){try{if(!R.nAtivos)return;db.ref("repro_resumo/"+farm).set(rpResumoCompacto(R,ag,eventos)).catch(function(){})}catch(e){}}
+
+</script>
+<script id="rp-painel">
+/* ===== Reprodução — monitoramento no painel ===== */
+var _rpg={farm:null,dados:null,reb:[],res:null,ag:null,filtro:"todas",busca:"",verPend:false,imp:null};
+var RPG_CSS='.rpg-btn{border:1px solid var(--border);background:#fff;border-radius:9px;padding:7px 12px;font-size:12px;font-weight:700;font-family:Inter,sans-serif;cursor:pointer;color:var(--text);white-space:nowrap}.rpg-btn:hover{border-color:#1f8149;color:#1f8149}.rpg-btn.p{background:#1f8149;border-color:#1f8149;color:#fff}.rpg-btn.p:hover{color:#fff;background:#003c0c}.rpg-btn.s{padding:4px 8px;font-size:11px}'+
+'.rpg-kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px;margin-bottom:16px}.rpg-k{background:#f8fafc;border:1px solid var(--border);border-radius:12px;padding:12px 14px;position:relative}.rpg-k small{display:block;font-size:10.5px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.4px}.rpg-k b{font-size:22px;font-weight:800;display:block;margin-top:2px}.rpg-k i{font-style:normal;font-size:10.5px;color:var(--dim)}.rpg-k .dot{position:absolute;top:12px;right:12px;width:8px;height:8px;border-radius:50%}'+
+'.rpg-grid2{display:grid;grid-template-columns:1.4fr 1fr;gap:16px;margin-bottom:16px}.rpg-grid2>*{min-width:0}@media(max-width:900px){.rpg-grid2{grid-template-columns:1fr}}'+
+'.rpg-box{border:1px solid var(--border);border-radius:12px;padding:14px}.rpg-box h4{font-size:12.5px;font-weight:800;margin:0 0 10px}'+
+'.rpg-ag{display:flex;justify-content:space-between;align-items:center;padding:7px 0;border-bottom:1px dashed #eef2f6;font-size:12.5px}.rpg-ag:last-child{border-bottom:none}.rpg-ag span.l{color:var(--muted);font-size:11.5px}'+
+'.rpg-tbl{width:100%;border-collapse:collapse;font-size:12px}.rpg-tbl th{text-align:left;font-size:10.5px;color:var(--muted);text-transform:uppercase;letter-spacing:.3px;padding:7px 8px;border-bottom:1px solid var(--border);background:#f8fafc;position:sticky;top:0}.rpg-tbl td{padding:7px 8px;border-bottom:1px solid #f1f5f9;vertical-align:middle}.rpg-tbl tr.cl{cursor:pointer}.rpg-tbl tr.cl:hover td{background:#f0fdf4}'+
+'.rpg-chips{display:flex;gap:6px;flex-wrap:wrap}.rpg-chips button{border:1px solid var(--border);background:#fff;border-radius:999px;padding:5px 11px;font-size:11.5px;font-weight:700;cursor:pointer;color:var(--muted);font-family:Inter,sans-serif}.rpg-chips button.on{background:#003c0c;border-color:#003c0c;color:#fff}'+
+'.rpg-ov{position:fixed;inset:0;background:rgba(15,23,42,.55);z-index:2100;display:flex;align-items:center;justify-content:center;padding:16px;backdrop-filter:blur(3px)}.rpg-md{background:#fff;border-radius:18px;width:100%;max-width:720px;max-height:90vh;overflow:auto;box-shadow:0 20px 60px rgba(0,0,0,.25)}.rpg-md-h{display:flex;align-items:center;gap:10px;padding:16px 20px;background:linear-gradient(135deg,#003c0c,#1f8149);color:#fff;position:sticky;top:0;z-index:2}.rpg-md-h b{flex:1;font-size:15px}.rpg-md-b{padding:18px 20px}.rpg-md-b label{display:block;font-size:11.5px;font-weight:700;color:var(--muted);margin:10px 0 4px}.rpg-md-b input,.rpg-md-b select,.rpg-md-b textarea{width:100%;border:1px solid var(--border);border-radius:9px;padding:9px 11px;font-size:13px;font-family:Inter,sans-serif;box-sizing:border-box}'+
+'.rpg-f2{display:grid;grid-template-columns:1fr 1fr;gap:0 12px}.rpg-f2>*{min-width:0}.rpg-tipos{display:flex;gap:6px;flex-wrap:wrap}.rpg-tipos button{border:1px solid var(--border);background:#fff;border-radius:9px;padding:7px 10px;font-size:12px;font-weight:700;cursor:pointer;font-family:Inter,sans-serif}.rpg-tipos button.on{background:#eafbf3;border-color:#1f8149;color:#003c0c}';
+(function(){try{var st=document.createElement("style");st.textContent=RPG_CSS;document.head.appendChild(st)}catch(e){}})();
+
+async function rpgCarregar(farm){
+  var el=document.getElementById("rp-gestao");if(!el)return;
+  _rpg.farm=farm;if(!farm){el.innerHTML="";return}
+  el.innerHTML='<div class="cc" style="text-align:center;padding:30px;color:var(--muted)">Carregando gestão reprodutiva...</div>';
+  try{await rpgRecarregar();rpgRender()}catch(e){console.error(e);el.innerHTML='<div class="cc" style="color:#dc2626">Erro ao carregar gestão reprodutiva: '+rpEsc(e.message||e)+'<div style="font-size:11.5px;color:var(--muted);margin-top:6px">Se for "permission_denied", falta a regra do nó <b>repro</b> no Realtime Database.</div></div>'}
+}
+async function rpgRecarregar(){var h=rpHoje();_rpg.dados=await rpCarregar(_rpg.farm);_rpg.reb=rpMontarRebanho(_rpg.dados.animais,_rpg.dados.eventos,_rpg.dados.config,h);_rpg.res=rpResumo(_rpg.reb,_rpg.dados.config,h);_rpg.ag=rpAgenda(_rpg.reb,_rpg.dados.config,h);rpgSalvarResumo()}
+function rpgPendentes(){var ev=_rpg.dados.eventos;return Object.keys(ev).filter(function(k){return ev[k].conferido===false}).map(function(k){ev[k].id=k;return ev[k]}).sort(function(a,b){return a.data<b.data?1:-1})}
+function rpgSalvarResumo(){rpPublicarResumo(_rpg.farm,_rpg.res,_rpg.ag,_rpg.dados.eventos)}
+function rpgCor(v,bom,ok,inverso){if(v==null)return "#cbd5e1";if(inverso)return v<=bom?"#16a34a":v<=ok?"#f59e0b":"#ef4444";return v>=bom?"#16a34a":v>=ok?"#f59e0b":"#ef4444"}
+function rpgRender(){
+  var el=document.getElementById("rp-gestao");if(!el)return;var R=_rpg.res,ag=_rpg.ag;var pend=rpgPendentes();
+  var tools='<div style="display:flex;gap:6px;flex-wrap:wrap;margin-left:auto">'+
+   '<button class="rpg-btn" onclick="rpgAbrirImport()">📥 Importar rebanho</button>'+
+   '<button class="rpg-btn" onclick="rpgPuxarControle()">🥛 Puxar do controle leiteiro</button>'+
+   '<button class="rpg-btn" onclick="rpgAbrirAnimal()">+ Vaca</button>'+
+   '<button class="rpg-btn p" onclick="rpgAbrirEvento()">+ Evento</button>'+
+   (R.nAtivos?'<button class="rpg-btn" onclick="rpgPreencherEconomico()" title="Preenche o diagnóstico econômico abaixo com os números calculados">💰 Levar p/ diagnóstico</button><button class="rpg-btn" onclick="rpgPDF()">📄 PDF</button>':'')+
+   '<button class="rpg-btn" onclick="rpgAbrirConfig()" title="Parâmetros">⚙️</button></div>';
+  var h='<div class="cc" style="margin-bottom:16px"><div class="cc-hdr" style="flex-wrap:wrap"><span class="cc-ico">🧬</span><span class="cc-title">Gestão reprodutiva do rebanho</span>'+tools+'</div>';
+  if(!R.nAtivos){
+    h+='<div style="text-align:center;padding:26px;color:var(--muted);font-size:13px;line-height:1.6"><div style="font-size:34px">🐄</div><b style="color:var(--text)">Nenhuma vaca cadastrada na gestão reprodutiva desta fazenda.</b><br>Comece importando a planilha do sistema atual (ex.: Mais Leite), puxando as vacas do último controle leiteiro ou cadastrando manualmente.<br>O produtor passa a lançar partos, IAs e diagnósticos pelo app, e você confere aqui.</div></div>';
+    el.innerHTML=h;return;
+  }
+  if(pend.length)h+='<div style="display:flex;align-items:center;gap:10px;background:#fffbeb;border:1px solid #fde68a;border-radius:10px;padding:10px 14px;margin-bottom:14px;font-size:12.5px"><span style="font-size:18px">⏳</span><div style="flex:1"><b>'+pend.length+' lançamento(s) do produtor aguardando conferência</b></div><button class="rpg-btn s" onclick="_rpg.verPend=!_rpg.verPend;rpgRender()">'+(_rpg.verPend?"Ocultar":"Ver e conferir")+'</button><button class="rpg-btn s p" onclick="rpgConferirTodos()">✓ Conferir todos</button></div>';
+  if(pend.length&&_rpg.verPend)h+='<div class="rpg-box" style="margin-bottom:14px;max-height:320px;overflow:auto"><table class="rpg-tbl"><tr><th>Vaca</th><th>Evento</th><th>Data</th><th>Detalhe</th><th>Lançado em</th><th></th></tr>'+pend.map(function(e){var t=RP_TIPOS[e.tipo]||{l:e.tipo,i:""};return '<tr><td><b>'+rpEsc(e.brinco)+'</b></td><td>'+t.i+' '+t.l+'</td><td>'+rpBR(e.data)+'</td><td>'+rpgDetalhe(e)+'</td><td style="color:var(--muted)">'+(e.criado_em?new Date(e.criado_em).toLocaleDateString("pt-BR"):"")+'</td><td style="white-space:nowrap;text-align:right"><button class="rpg-btn s" onclick="rpgConferir(\''+e.id+'\')">✓</button> <button class="rpg-btn s" onclick="rpgAbrirEvento(null,\''+e.id+'\')">✎</button> <button class="rpg-btn s" onclick="rpgExcluirEvento(\''+e.id+'\')">🗑</button></td></tr>'}).join("")+'</table></div>';
+  function K(l,v,meta,cor){return '<div class="rpg-k"><span class="dot" style="background:'+cor+'"></span><small>'+l+'</small><b>'+v+'</b><i>'+meta+'</i></div>'}
+  h+='<div class="rpg-kpis">'+K("Taxa de prenhez",rpPct(R.tp),"meta ≥ 20%",rpgCor(R.tp,20,15))+K("Taxa de serviço",rpPct(R.ts),"meta ≥ 60%",rpgCor(R.ts,60,45))+K("Taxa de concepção",rpPct(R.tc),"meta ≥ 35%",rpgCor(R.tc,35,28))+K("Vacas prenhes",rpPct(R.pctPrenhes),R.prenhesVacas+" de "+R.nVacas,rpgCor(R.pctPrenhes,50,40))+K("DEL médio",R.delMedio!=null?Math.round(R.delMedio):"—","meta 150–170",rpgCor(R.delMedio,170,190,true))+K("Serv./prenhez",R.servPorConc!=null?R.servPorConc.toFixed(1).replace(".",","):"—","12 meses · meta ≤ 2,5",rpgCor(R.servPorConc,2.5,3.2,true))+K("IEP projetado",R.iepProj!=null?(R.iepProj/30.4).toFixed(1).replace(".",",")+" m":"—","meta ≤ 13 meses",rpgCor(R.iepProj&&R.iepProj/30.4,13,14,true))+K("Perdas gestação",rpPct(R.pctPerdas),"12 meses · meta ≤ 10%",rpgCor(R.pctPerdas,10,15,true))+'</div>';
+  h+='<div class="rpg-grid2"><div class="rpg-box"><h4>Ciclos de 21 dias — taxa de serviço, concepção e prenhez</h4><div style="position:relative;height:230px"><canvas id="rpg-chart"></canvas></div><div style="font-size:10.5px;color:var(--dim);margin-top:6px">Elegíveis: vacas acima de '+_rpg.dados.config.pev+' DEL, vazias, no início do ciclo. Ciclos com menos de '+(_rpg.dados.config.dg_dias+7)+' dias ainda aguardam DG (prenhez não calculada). Média de '+(R.elegMedia!=null?Math.round(R.elegMedia):"—")+' elegíveis/ciclo.</div></div>'+
+   '<div class="rpg-box"><h4>Agenda de manejo</h4>'+[["🩺","DG a fazer",ag.dg],["🌙","Secar (14 dias)",ag.secar],["🥣","Entrar no pré-parto",ag.preparto],["🐣","Partos (30 dias)",ag.partos],["🔥","Observar retorno de cio",ag.retorno],["⚠️","Atenção (vazias > 150 DEL, 3+ serviços, parto atrasado)",ag.problema]].map(function(a){return '<div class="rpg-ag"><div>'+a[0]+' '+a[1]+(a[2].length?'<div class="l" style="color:var(--muted);font-size:11px">'+a[2].slice(0,14).map(function(x){return rpEsc(x.r.a.brinco)}).join(", ")+(a[2].length>14?"…":"")+'</div>':'')+'</div><b>'+a[2].length+'</b></div>'}).join("")+
+   '<div style="display:flex;gap:6px;margin-top:10px;flex-wrap:wrap">'+Object.keys(R.cont).filter(function(k){return R.cont[k]&&k!=="saiu"}).map(function(k){return '<span class="rp-chip" style="color:'+RP_STATUS[k].c+';background:'+RP_STATUS[k].bg+'">'+RP_STATUS[k].l+': '+R.cont[k]+'</span>'}).join("")+'</div></div></div>';
+  h+='<div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:10px"><div class="rpg-chips">'+RP_FILTROS.filter(function(f){return f[0]==="todas"||R.cont[f[0]]}).concat(R.cont.saiu?[["saiu","Fora do rebanho"]]:[]).map(function(f){return '<button class="'+(_rpg.filtro===f[0]?"on":"")+'" onclick="_rpg.filtro=\''+f[0]+'\';rpgTabela()">'+f[1]+' '+(f[0]==="todas"?R.nAtivos:R.cont[f[0]])+'</button>'}).join("")+'</div><input id="rpg-busca" placeholder="🔎 Brinco" value="'+rpEsc(_rpg.busca)+'" oninput="_rpg.busca=this.value;rpgTabela()" style="margin-left:auto;border:1px solid var(--border);border-radius:9px;padding:7px 10px;font-size:12px;width:140px"></div><div style="max-height:520px;overflow:auto;border:1px solid var(--border);border-radius:12px" id="rpg-tab"></div></div>';
+  el.innerHTML=h;rpgTabela();rpgGrafico();
+}
+function rpgDetalhe(e){var d=[];if(e.touro)d.push("Touro "+rpEsc(e.touro));if(e.tipo==="dg")d.push(e.resultado==="+"?"<b style='color:#15803d'>Prenhe</b>":"<b style='color:#dc2626'>Vazia</b>");if(e.dias_gestacao)d.push(e.dias_gestacao+" d gest.");if(e.cria)d.push({F:"Fêmea",M:"Macho",N:"Natimorto",G:"Gêmeos"}[e.cria]||e.cria);if(e.motivo)d.push(rpEsc(e.motivo));if(e.obs)d.push(rpEsc(e.obs));return d.join(" · ")}
+function rpgTabela(){var el=document.getElementById("rpg-tab");if(!el)return;var b=rpNormBrinco(_rpg.busca);
+  document.querySelectorAll(".rpg-chips button").forEach(function(x){x.classList.toggle("on",x.getAttribute("onclick").indexOf("'"+_rpg.filtro+"'")>0)});
+  var L=_rpg.reb.filter(function(r){if(_rpg.filtro==="todas"?r.st.status==="saiu":r.st.status!==_rpg.filtro)return false;return !b||rpNormBrinco(r.a.brinco).indexOf(b)===0});
+  el.innerHTML='<table class="rpg-tbl"><thead><tr><th>Brinco</th><th>Lact.</th><th>DEL</th><th>Situação</th><th>Último parto</th><th>Serv.</th><th>Última IA</th><th>Concepção</th><th>Secar em</th><th>Parto previsto</th><th></th></tr></thead><tbody>'+
+   L.map(function(r){var st=r.st;var nc=r.evs.filter(function(e){return e.conferido===false}).length;var hoje=rpHoje();
+    return '<tr class="cl" onclick="rpgAbrirFicha(\''+r.id+'\')"><td><b>'+rpEsc(r.a.brinco)+'</b>'+(r.a.nome?' <span style="color:var(--muted)">'+rpEsc(r.a.nome)+'</span>':'')+'</td><td>'+(st.novilha?"Nov.":st.lact||"—")+'</td><td>'+(st.del!=null?st.del:"—")+'</td><td>'+rpChip(st.status)+'</td><td>'+rpBR(st.ultimoParto)+'</td><td>'+(st.nServicos||"—")+'</td><td>'+(st.ultimoServico?rpBR(st.ultimoServico.data):"—")+'</td><td>'+(st.prenhe?rpBR(st.concepcao)+' <span style="color:var(--muted)">('+st.diasGest+'d)</span>':"—")+'</td><td'+(st.prev.secagem&&!st.seca&&st.prev.secagem<hoje?' style="color:#dc2626;font-weight:700"':'')+'>'+(st.prev.secagem&&!st.seca?rpBR(st.prev.secagem):"—")+'</td><td>'+(st.prev.parto?rpBR(st.prev.parto):"—")+'</td><td>'+(nc?'<span class="rp-chip" style="background:#fef3c7;color:#b45309">'+nc+' a conferir</span>':'')+'</td></tr>'}).join("")+'</tbody></table>'+(L.length?'':'<div style="padding:20px;text-align:center;color:var(--muted)">Nenhuma vaca.</div>');
+}
+function rpgGrafico(){try{if(typeof Chart==="undefined"||typeof mk!=="function")return;var cy=_rpg.res.ciclos;
+  mk("rpg-chart","bar",{labels:cy.map(function(c){return rpBR(c.ini).slice(0,5)}),datasets:[
+    {type:"bar",label:"Taxa de serviço",data:cy.map(function(c){return c.ts!=null?Math.round(c.ts):null}),backgroundColor:"rgba(59,130,246,.35)",borderRadius:4,order:3},
+    {type:"bar",label:"Taxa de prenhez",data:cy.map(function(c){return c.tp!=null?Math.round(c.tp):null}),backgroundColor:"#1f8149",borderRadius:4,order:2},
+    {type:"line",label:"Taxa de concepção",data:cy.map(function(c){return c.tc!=null?Math.round(c.tc):null}),borderColor:"#8b5cf6",backgroundColor:"#8b5cf6",tension:.3,pointRadius:3,spanGaps:true,order:1}
+  ]},{maintainAspectRatio:false,scales:{x:{grid:{display:false},ticks:{color:"#94a3b8",font:{size:10}}},y:{min:0,max:100,ticks:{color:"#94a3b8",font:{size:10},callback:function(v){return v+"%"}},grid:{color:"#f1f5f9"}}},plugins:{tooltip:{callbacks:{afterBody:function(it){var c=cy[it[0].dataIndex];return c.eleg+" elegíveis · "+c.insem+" inseminadas · "+c.prenhas+" prenhes"+(c.completo?"":" (aguardando DG)")}}}}})}catch(e){console.warn(e)}}
+/* ---------- modal ---------- */
+function rpgModal(titulo,html,larg){rpgFechar();var o=document.createElement("div");o.className="rpg-ov";o.id="rpg-ov";o.onclick=function(e){if(e.target===o)rpgFechar()};o.innerHTML='<div class="rpg-md" style="'+(larg?"max-width:"+larg+"px":"")+'"><div class="rpg-md-h"><b>'+titulo+'</b><button class="rpg-btn s" onclick="rpgFechar()">✕</button></div><div class="rpg-md-b">'+html+'</div></div>';document.body.appendChild(o)}
+function rpgFechar(){var o=document.getElementById("rpg-ov");if(o)o.remove()}
+async function rpgDepois(msg,ficha){await rpgRecarregar();rpgRender();if(msg)toast(msg);if(ficha)rpgAbrirFicha(ficha)}
+function rpgAbrirFicha(id){var r=_rpg.reb.filter(function(x){return x.id===id})[0];if(!r)return;var st=r.st;var pv=[];
+  pv.push(["Situação",rpChip(st.status)]);pv.push([st.novilha?"Categoria":"Lactação",st.novilha?"Novilha":st.lact+"ª"]);if(st.del!=null)pv.push(["DEL",st.del]);if(st.ultimoParto)pv.push(["Último parto",rpBR(st.ultimoParto)]);pv.push(["Serviços na lactação",st.nServicos]);
+  if(st.prenhe){pv.push(["Concepção",rpBR(st.concepcao)+" ("+st.diasGest+" d)"]);if(st.dgData)pv.push(["Confirmada (DG)",rpBR(st.dgData)]);if(st.diasAbertos!=null)pv.push(["Dias em aberto",st.diasAbertos]);if(st.prev.secagem&&!st.seca)pv.push(["Secar em",rpBR(st.prev.secagem)]);pv.push(["Parto previsto",rpBR(st.prev.parto)])}
+  if(st.status==="inseminada"){pv.push(["DG a partir de",rpBR(st.prev.dg)]);pv.push(["Retorno de cio",rpBR(st.prev.retornoIni)+"–"+rpBR(st.prev.retornoFim)])}
+  if(st.perdas.length)pv.push(["Perdas registradas",st.perdas.length]);
+  rpgModal("Vaca "+rpEsc(r.a.brinco)+(r.a.nome?" · "+rpEsc(r.a.nome):""),'<div class="rp-prev">'+pv.map(function(p){return '<div><small>'+p[0]+'</small><b>'+p[1]+'</b></div>'}).join("")+'</div>'+
+   '<div style="display:flex;gap:6px;margin:14px 0 6px;flex-wrap:wrap"><button class="rpg-btn p" onclick="rpgAbrirEvento(\''+id+'\')">+ Evento</button><button class="rpg-btn" onclick="rpgAbrirAnimal(\''+id+'\')">✎ Dados da vaca</button></div>'+
+   '<div style="font-size:12px;font-weight:800;margin:12px 0 4px">Histórico</div>'+rpTimelineHtml(r,{acoes:function(e){return '<div style="white-space:nowrap">'+(e.conferido===false?'<button class="rpg-btn s" title="Conferir" onclick="rpgConferir(\''+e.id+'\',\''+id+'\')">✓</button> ':'')+'<button class="rpg-btn s" title="Editar" onclick="rpgAbrirEvento(\''+id+'\',\''+e.id+'\')">✎</button> <button class="rpg-btn s" title="Excluir" onclick="rpgExcluirEvento(\''+e.id+'\',\''+id+'\')">🗑</button></div>'}})+
+   '<div style="font-size:10.5px;color:var(--dim);margin-top:10px">Origem do cadastro: '+rpEsc(r.a.origem||"—")+'</div>',760);
+}
+async function rpgConferir(ek,ficha){try{await rpRef(_rpg.farm,"eventos/"+ek).update({conferido:true,conferido_em:Date.now()});await rpgDepois("✓ Conferido",ficha)}catch(e){toast("Erro: "+e.message,true)}}
+async function rpgConferirTodos(){var p=rpgPendentes();if(!p.length)return;if(!confirm("Marcar os "+p.length+" lançamentos como conferidos?"))return;var u={};p.forEach(function(e){u["eventos/"+e.id+"/conferido"]=true;u["eventos/"+e.id+"/conferido_em"]=Date.now()});try{await rpRef(_rpg.farm).update(u);_rpg.verPend=false;await rpgDepois("✓ "+p.length+" lançamentos conferidos")}catch(e){toast("Erro: "+e.message,true)}}
+async function rpgExcluirEvento(ek,ficha){if(!confirm("Excluir este evento?"))return;try{await rpRef(_rpg.farm,"eventos/"+ek).remove();rpgFechar();await rpgDepois("Evento excluído",ficha)}catch(e){toast("Erro: "+e.message,true)}}
+var _rpgE={};
+function rpgAbrirEvento(animalId,evId){
+  var e=evId?Object.assign({},_rpg.dados.eventos[evId]):null;if(e)animalId=e.animal;
+  var r=animalId?_rpg.reb.filter(function(x){return x.id===animalId})[0]:null;
+  _rpgE={ev:evId||null,animal:animalId||null,tipo:e?e.tipo:"ia",res:e&&e.resultado?e.resultado:"+"};
+  rpgModal(evId?"Editar evento":"Lançar evento",
+   '<div class="rpg-f2"><div><label>Vaca (brinco)</label><input id="rpge-br" list="rpge-brs" value="'+(r?rpEsc(r.a.brinco):"")+'" '+(evId?"disabled":"")+'><datalist id="rpge-brs">'+_rpg.reb.map(function(x){return '<option value="'+rpEsc(x.a.brinco)+'">'}).join("")+'</datalist></div><div><label>Data</label><input type="date" id="rpge-data" max="'+rpHoje()+'" value="'+(e?e.data:rpHoje())+'"></div></div>'+
+   '<label>Evento</label><div class="rpg-tipos">'+Object.keys(RP_TIPOS).map(function(t){return '<button type="button" data-t="'+t+'" class="'+(_rpgE.tipo===t?"on":"")+'" onclick="_rpgE.tipo=\''+t+'\';rpgETipo()">'+RP_TIPOS[t].i+' '+RP_TIPOS[t].l+'</button>'}).join("")+'</div>'+
+   '<div id="rpge-extra"></div><label>Observação</label><input id="rpge-obs" value="'+rpEsc(e&&e.obs||"")+'">'+
+   '<div style="display:flex;justify-content:flex-end;gap:8px;margin-top:16px"><button class="rpg-btn" onclick="rpgFechar()">Cancelar</button><button class="rpg-btn p" onclick="rpgSalvarEvento()">💾 Salvar</button></div>',620);
+  rpgETipo(e);
+}
+function rpgETipo(e){document.querySelectorAll(".rpg-tipos button").forEach(function(b){b.classList.toggle("on",b.dataset.t===_rpgE.tipo)});var t=_rpgE.tipo,h="";e=e||{};
+  var prev={};["rpge-touro","rpge-dgest","rpge-conc","rpge-motivo","rpge-cria"].forEach(function(k){var x=document.getElementById(k);if(x)prev[k]=x.value});
+  if(t==="ia"||t==="cobertura")h='<label>Touro / sêmen</label><input id="rpge-touro" value="'+rpEsc(e.touro||"")+'">';
+  if(t==="dg")h='<label>Resultado</label><select id="rpge-res" onchange="_rpgE.res=this.value"><option value="+"'+(_rpgE.res==="+"?" selected":"")+'>Prenhe</option><option value="-"'+(_rpgE.res==="-"?" selected":"")+'>Vazia</option></select><div class="rpg-f2"><div><label>Dias de gestação (opcional)</label><input id="rpge-dgest" type="number" value="'+(e.dias_gestacao||"")+'"></div><div><label>Data de concepção (opcional)</label><input id="rpge-conc" type="date" value="'+(e.concepcao||"")+'"></div></div><div style="font-size:11px;color:var(--dim);margin-top:4px">Em branco: a concepção é a IA mais recente com 20+ dias antes do DG.</div>';
+  if(t==="parto")h='<label>Cria</label><select id="rpge-cria"><option value="">—</option><option value="F">Fêmea</option><option value="M">Macho</option><option value="N">Natimorto</option><option value="G">Gêmeos</option></select>';
+  if(t==="descarte")h='<label>Motivo</label><input id="rpge-motivo" list="rpge-mots" value="'+rpEsc(e.motivo||"")+'"><datalist id="rpge-mots"><option value="Venda"><option value="Descarte reprodutivo"><option value="Mastite"><option value="Casco"><option value="Baixa produção"><option value="Morte"></datalist>';
+  document.getElementById("rpge-extra").innerHTML=h;Object.keys(prev).forEach(function(k){var x=document.getElementById(k);if(x&&prev[k])x.value=prev[k]});var c=document.getElementById("rpge-cria");if(c&&e.cria)c.value=e.cria}
+async function rpgSalvarEvento(){
+  var br=rpNormBrinco(document.getElementById("rpge-br").value);var data=document.getElementById("rpge-data").value;var t=_rpgE.tipo;
+  if(!br||!data){toast("Informe brinco e data",true);return}
+  var ev={tipo:t,data:data};var g=function(id){var x=document.getElementById(id);return x?String(x.value||"").trim():""};
+  if(g("rpge-obs"))ev.obs=g("rpge-obs");
+  if((t==="ia"||t==="cobertura")&&g("rpge-touro"))ev.touro=g("rpge-touro");
+  if(t==="dg"){ev.resultado=g("rpge-res")||"+";if(g("rpge-dgest"))ev.dias_gestacao=+g("rpge-dgest");if(g("rpge-conc"))ev.concepcao=g("rpge-conc")}
+  if(t==="parto"&&g("rpge-cria"))ev.cria=g("rpge-cria");
+  if(t==="descarte"&&g("rpge-motivo"))ev.motivo=g("rpge-motivo");
+  try{
+    if(_rpgE.ev){var old=_rpg.dados.eventos[_rpgE.ev];var novo=Object.assign({animal:old.animal,brinco:old.brinco,por:old.por||"tecnico",origem:old.origem||"painel",criado_em:old.criado_em||Date.now()},ev,{conferido:true,editado_em:Date.now()});await rpRef(_rpg.farm,"eventos/"+_rpgE.ev).set(novo);rpgFechar();await rpgDepois("Evento atualizado",old.animal)}
+    else{var r=await rpGravarLote(_rpg.farm,_rpg.dados,[{brinco:br,categoria:"vaca",eventos:[ev]}],{origem:"painel",por:"tecnico"});rpgFechar();var id=rpAnimalPorBrinco(_rpg.dados.animais,br);await rpgDepois(r.eventos?"Evento lançado":"Já existia esse evento nessa data",id)}
+  }catch(e){toast("Erro: "+e.message,true)}
+}
+function rpgAbrirAnimal(id){var a=id?_rpg.dados.animais[id]:{};var st=id?_rpg.reb.filter(function(x){return x.id===id})[0].st:null;
+  rpgModal(id?"Dados da vaca "+rpEsc(a.brinco):"Cadastrar vaca",'<div class="rpg-f2"><div><label>Brinco</label><input id="rpga-br" value="'+rpEsc(a.brinco||"")+'"></div><div><label>Nome</label><input id="rpga-nome" value="'+rpEsc(a.nome||"")+'"></div><div><label>Categoria</label><select id="rpga-cat"><option value="vaca">Vaca</option><option value="novilha"'+(a.categoria==="novilha"?" selected":"")+'>Novilha</option></select></div><div><label>Nascimento</label><input type="date" id="rpga-nasc" value="'+(a.nasc||"")+'"></div>'+
+   (id?'<div><label>Partos anteriores aos lançados</label><input type="number" min="0" id="rpga-lb" value="'+(a.lactacao_base||0)+'"></div><div style="font-size:11px;color:var(--muted);align-self:end;padding-bottom:10px">Lactação atual calculada: '+(st.novilha?"novilha":st.lact+"ª")+'</div>':'<div><label>Último parto</label><input type="date" id="rpga-parto" max="'+rpHoje()+'"></div><div><label>Lactação atual</label><input type="number" min="1" id="rpga-lac"></div>')+'</div>'+
+   '<div style="display:flex;justify-content:flex-end;gap:8px;margin-top:16px">'+(id?'<button class="rpg-btn" style="margin-right:auto;color:#dc2626" onclick="rpgExcluirAnimal(\''+id+'\')">Excluir vaca</button>':'')+'<button class="rpg-btn" onclick="rpgFechar()">Cancelar</button><button class="rpg-btn p" onclick="rpgSalvarAnimal(\''+(id||"")+'\')">💾 Salvar</button></div>',560)}
+async function rpgSalvarAnimal(id){var g=function(k){var x=document.getElementById(k);return x?String(x.value||"").trim():""};var br=rpNormBrinco(g("rpga-br"));if(!br){toast("Informe o brinco",true);return}
+  var outro=rpAnimalPorBrinco(_rpg.dados.animais,br);if(outro&&outro!==id){toast("Já existe a vaca "+br,true);return}
+  try{if(id){var u={brinco:br,nome:g("rpga-nome")||null,categoria:g("rpga-cat"),nasc:g("rpga-nasc")||null,lactacao_base:+g("rpga-lb")||0};await rpRef(_rpg.farm,"animais/"+id).update(u);
+      if(br!==rpNormBrinco(_rpg.dados.animais[id].brinco)){var up={};Object.keys(_rpg.dados.eventos).forEach(function(k){if(_rpg.dados.eventos[k].animal===id)up["eventos/"+k+"/brinco"]=br});if(Object.keys(up).length)await rpRef(_rpg.farm).update(up)}
+      rpgFechar();await rpgDepois("Vaca atualizada",id)}
+    else{var p=g("rpga-parto"),lac=parseInt(g("rpga-lac"),10);var r={brinco:br,nome:g("rpga-nome"),categoria:g("rpga-cat"),nasc:g("rpga-nasc")||undefined,eventos:p?[{tipo:"parto",data:p}]:[]};if(!isNaN(lac))r.lactacao_base=Math.max(0,lac-(p?1:0));await rpGravarLote(_rpg.farm,_rpg.dados,[r],{origem:"painel",por:"tecnico"});rpgFechar();await rpgDepois("Vaca "+br+" cadastrada",rpAnimalPorBrinco(_rpg.dados.animais,br))}
+  }catch(e){toast("Erro: "+e.message,true)}}
+async function rpgExcluirAnimal(id){var a=_rpg.dados.animais[id];var evs=Object.keys(_rpg.dados.eventos).filter(function(k){return _rpg.dados.eventos[k].animal===id});if(!confirm("Excluir a vaca "+a.brinco+" e seus "+evs.length+" eventos? Para venda/descarte, prefira lançar o evento \"Saída do rebanho\" (mantém o histórico nas taxas)."))return;var u={};u["animais/"+id]=null;evs.forEach(function(k){u["eventos/"+k]=null});try{await rpRef(_rpg.farm).update(u);rpgFechar();await rpgDepois("Vaca excluída")}catch(e){toast("Erro: "+e.message,true)}}
+function rpgAbrirConfig(){var c=_rpg.dados.config;rpgModal("Parâmetros reprodutivos da fazenda",'<div class="rpg-f2"><div><label>Período voluntário de espera (dias)</label><input type="number" id="rpgc-pev" value="'+c.pev+'"></div><div><label>DG após a IA (dias)</label><input type="number" id="rpgc-dg" value="'+c.dg_dias+'"></div><div><label>Gestação (dias)</label><input type="number" id="rpgc-gest" value="'+c.gestacao+'"></div><div><label>Secar antes do parto (dias)</label><input type="number" id="rpgc-sec" value="'+c.secagem_dias+'"></div><div><label>Pré-parto antes do parto (dias)</label><input type="number" id="rpgc-pp" value="'+c.preparto_dias+'"></div></div><div style="font-size:11px;color:var(--muted);margin-top:8px">Gestação: Holandês ~280 · Girolando ~283 · Jersey ~279 · Gir ~290 dias.</div><div style="display:flex;justify-content:flex-end;gap:8px;margin-top:16px"><button class="rpg-btn" onclick="rpgFechar()">Cancelar</button><button class="rpg-btn p" onclick="rpgSalvarConfig()">💾 Salvar</button></div>',520)}
+async function rpgSalvarConfig(){var v=function(k){return +document.getElementById(k).value};var c={pev:v("rpgc-pev"),dg_dias:v("rpgc-dg"),gestacao:v("rpgc-gest"),secagem_dias:v("rpgc-sec"),preparto_dias:v("rpgc-pp")};if(c.pev<20||c.pev>120||c.gestacao<260||c.gestacao>300||c.dg_dias<25||c.dg_dias>60){toast("Confira os valores (PEV 20–120, DG 25–60, gestação 260–300)",true);return}try{await rpRef(_rpg.farm,"config").set(c);rpgFechar();await rpgDepois("Parâmetros salvos")}catch(e){toast("Erro: "+e.message,true)}}
+async function rpgPuxarControle(){if(!confirm("Puxar as vacas do controle leiteiro mais recente?\n\n• Vacas que ainda não existem são cadastradas\n• Data do parto = data do controle − DEL\n• Partos já lançados não são duplicados"))return;
+  try{var r=await rpPuxarControle(_rpg.farm,_rpg.dados);if(r.erro){toast(r.erro,true);return}await rpgDepois();toast("Controle de "+rpBR(r.data)+": "+r.animais+" vaca(s) nova(s), "+r.eventos+" parto(s) lançado(s)"+(r.ignorados?", "+r.ignorados+" já existiam":""));if(r.conflitos&&r.conflitos.length)rpgModal("Divergências de data de parto ("+r.conflitos.length+")",'<div style="font-size:12.5px;color:var(--muted);margin-bottom:10px">Nestas vacas o DEL do controle não bate com o parto já lançado. Nada foi alterado — corrija na ficha da vaca se o controle estiver certo.</div><div style="font-size:12.5px;line-height:1.8">'+r.conflitos.map(rpEsc).join("<br>")+'</div>',560)}catch(e){toast("Erro: "+e.message,true)}}
+/* ---------- importação ---------- */
+function rpgAbrirImport(){_rpg.imp=null;rpgModal("Importar rebanho (Mais Leite, planilha ou texto)",'<div style="font-size:12.5px;color:var(--muted);line-height:1.5">Exporte o relatório de animais/reprodução do sistema atual em <b>Excel ou CSV</b> e envie aqui. Também dá para colar a tabela copiada da tela. O importador reconhece colunas como <i>Brinco, Lactação, Data do parto, Última IA, Touro, Situação, Data do DG, Previsão de parto, Secagem</i>.</div><label>Arquivo (.xlsx, .xls, .csv)</label><input type="file" id="rpgi-file" accept=".xlsx,.xls,.csv,.txt" onchange="rpgImpArquivo(this)"><label>…ou cole aqui</label><textarea id="rpgi-txt" rows="5" placeholder="Brinco;Lactação;Data parto;Última IA;Touro;Situação"></textarea><div style="text-align:right;margin-top:8px"><button class="rpg-btn" onclick="rpgImpTexto()">Ler texto colado</button></div><div id="rpgi-prev"></div>',900)}
+function rpgImpArquivo(inp){var f=inp.files[0];if(!f)return;var rd=new FileReader();rd.onload=function(ev){try{var wb=XLSX.read(new Uint8Array(ev.target.result),{type:"array",cellDates:true});var melhor=null;wb.SheetNames.forEach(function(n){var l=XLSX.utils.sheet_to_json(wb.Sheets[n],{header:1,raw:true,defval:""});var d=rpDetectarColunas(l);var sc=Object.keys(d.map).length;if(d.map.brinco!=null&&(!melhor||sc>melhor.sc))melhor={l:l,d:d,sc:sc,n:n}});if(!melhor){toast("Não achei uma coluna de brinco/animal na planilha",true);return}rpgImpPreview(melhor.l,melhor.d,f.name+(wb.SheetNames.length>1?" · aba "+melhor.n:""))}catch(e){console.error(e);toast("Erro lendo arquivo: "+e.message,true)}};rd.readAsArrayBuffer(f)}
+function rpgImpTexto(){var t=document.getElementById("rpgi-txt").value;if(!t.trim())return;var sep=t.indexOf("\t")>=0?"\t":(t.split(";").length>t.split(",").length?";":",");var l=t.split(/\r?\n/).filter(function(x){return x.trim()}).map(function(x){return x.split(sep).map(function(c){return c.trim()})});var d=rpDetectarColunas(l);if(d.map.brinco==null){toast("Não achei a coluna do brinco — inclua a linha de cabeçalho",true);return}rpgImpPreview(l,d,"texto colado")}
+function rpgImpPreview(linhas,det,origem){_rpg.imp={linhas:linhas,det:det,origem:origem};rpgImpRender()}
+function rpgImpRender(){var I=_rpg.imp;var conv=rpConverterImport(I.linhas,I.det,_rpg.dados.config);I.conv=conv;var cab=I.det.cab||[];
+  var sel=RP_COLS.map(function(c){return '<div><label>'+c.l+'</label><select onchange="rpgImpMapa(\''+c.k+'\',this.value)"><option value="">— não usar —</option>'+cab.map(function(h,j){return '<option value="'+j+'"'+(I.det.map[c.k]===j?" selected":"")+'>'+rpEsc(h||("Coluna "+(j+1)))+'</option>'}).join("")+'</select></div>'}).join("");
+  var novos=0,exist=0,nEv=0;conv.linhas.forEach(function(r){if(rpAnimalPorBrinco(_rpg.dados.animais,r.brinco))exist++;else novos++;nEv+=r.eventos.length});
+  var sitTxt={};conv.linhas.forEach(function(r){var k=r.eventos.map(function(e){return e.tipo==="dg"?(e.resultado==="+"?"prenhe":"DG−"):e.tipo}).join("+")||"só cadastro";sitTxt[k]=(sitTxt[k]||0)+1});
+  document.getElementById("rpgi-prev").innerHTML='<div style="margin-top:14px;padding-top:12px;border-top:1px solid var(--border)"><div style="font-size:12.5px"><b>'+rpEsc(I.origem)+'</b> · '+conv.linhas.length+' animais ('+novos+' novos, '+exist+' já cadastrados) · '+nEv+' eventos</div><details style="margin:8px 0"><summary style="cursor:pointer;font-size:12px;font-weight:700;color:#1f8149">Conferir colunas reconhecidas</summary><div class="rpg-f2" style="grid-template-columns:repeat(3,1fr)">'+sel+'</div></details>'+
+   '<div style="font-size:11.5px;color:var(--muted);margin-bottom:6px">'+Object.keys(sitTxt).map(function(k){return k+": <b>"+sitTxt[k]+"</b>"}).join(" · ")+'</div>'+
+   (conv.avisos.length?'<div style="font-size:11.5px;color:#b45309;background:#fffbeb;border-radius:8px;padding:8px 10px;margin-bottom:8px;max-height:90px;overflow:auto">'+conv.avisos.map(rpEsc).join("<br>")+'</div>':'')+
+   '<div style="max-height:260px;overflow:auto;border:1px solid var(--border);border-radius:10px"><table class="rpg-tbl"><tr><th>Brinco</th><th>Lact.</th><th>Eventos que serão criados</th></tr>'+conv.linhas.slice(0,60).map(function(r){return '<tr><td><b>'+rpEsc(r.brinco)+'</b>'+(r.categoria==="novilha"?" <span style='color:var(--muted)'>novilha</span>":"")+'</td><td>'+(r.lactacao!=null?r.lactacao:"—")+'</td><td>'+(r.eventos.map(function(e){return (RP_TIPOS[e.tipo]||{}).i+" "+rpBR(e.data)+(e.tipo==="dg"?(e.resultado==="+"?" prenhe":" vazia"):"")+(e.touro?" ("+rpEsc(e.touro)+")":"")}).join(" · ")||'<span style="color:var(--dim)">só cadastro</span>')+'</td></tr>'}).join("")+'</table></div>'+(conv.linhas.length>60?'<div style="font-size:11px;color:var(--dim)">…mostrando 60 de '+conv.linhas.length+'</div>':'')+
+   '<div style="display:flex;justify-content:flex-end;gap:8px;margin-top:14px"><button class="rpg-btn" onclick="rpgFechar()">Cancelar</button><button class="rpg-btn p" onclick="rpgImpConfirmar()">✓ Importar '+conv.linhas.length+' animais</button></div></div>'}
+function rpgImpMapa(k,v){var I=_rpg.imp;Object.keys(I.det.map).forEach(function(x){if(I.det.map[x]===+v&&v!=="")delete I.det.map[x]});if(v==="")delete I.det.map[k];else I.det.map[k]=+v;rpgImpRender()}
+async function rpgImpConfirmar(){var I=_rpg.imp;if(!I||!I.conv)return;try{var r=await rpGravarLote(_rpg.farm,_rpg.dados,I.conv.linhas,{origem:"import",por:"tecnico"});rpgFechar();await rpgDepois();toast("Importado: "+r.animais+" vaca(s) nova(s), "+r.eventos+" evento(s)"+(r.ignorados?" · "+r.ignorados+" repetido(s) ignorado(s)":""))}catch(e){toast("Erro ao importar: "+e.message,true)}}
+/* ---------- integra com o diagnóstico econômico existente ---------- */
+function rpgPreencherEconomico(){var R=_rpg.res;var set=function(id,v){var el=document.getElementById(id);if(el&&v!=null&&!isNaN(v)){el.value=v;el.dispatchEvent(new Event("input",{bubbles:true}));el.dispatchEvent(new Event("change",{bubbles:true}))}return !!el};
+  var ok=set("rp-total-femeas-repro",R.nVacas);if(!ok){toast("Abra o formulário do diagnóstico econômico abaixo e tente de novo",true);return}
+  set("rp-vacas-prenhas-count",R.prenhesVacas);set("rp-del-real",R.delMedio!=null?Math.round(R.delMedio):null);set("rp-pev",_rpg.dados.config.pev);
+  set("rp-vacas-aptas",(R.cont.vazia||0)+(R.cont.inseminada||0));set("rp-inseminacoes",R.serv12);set("rp-confirmacoes",R.conc12);set("rp-abortos",R.perdas);
+  if(typeof atualizarReproducaoPreview==="function")try{atualizarReproducaoPreview()}catch(e){}
+  var w=document.getElementById("rp-dados-entrada-wrap");if(w)w.scrollIntoView({behavior:"smooth",block:"start"});
+  toast("Diagnóstico preenchido com os números do rebanho — confira e clique em Salvar");}
+/* ---------- PDF ---------- */
+async function rpgPDF(){try{var farm=(typeof ALL!=="undefined"&&ALL.find(function(f){return f.id===_rpg.farm}))||{};var R=_rpg.res,ag=_rpg.ag,cfg=_rpg.dados.config;var jsPDF=window.jspdf.jsPDF;var doc=new jsPDF({unit:"mm",format:"a4"});var W=doc.internal.pageSize.getWidth(),m=14,y=0;var VD=(typeof PDF_VERDE!=="undefined")?PDF_VERDE:[31,129,73];
+  doc.setFillColor(0,60,12);doc.rect(0,0,W,26,"F");doc.setTextColor(255,255,255);doc.setFont("helvetica","bold");doc.setFontSize(15);doc.text("Gestão Reprodutiva do Rebanho",m,12);doc.setFont("helvetica","normal");doc.setFontSize(9.5);doc.text((farm.produtor||"")+(farm.cidade?" · "+farm.cidade:"")+"   ·   "+new Date().toLocaleDateString("pt-BR"),m,19);y=34;
+  doc.setTextColor(15,23,42);var kp=[["Taxa de prenhez",rpPct(R.tp),"≥ 20%"],["Taxa de serviço",rpPct(R.ts),"≥ 60%"],["Taxa de concepção",rpPct(R.tc),"≥ 35%"],["Vacas prenhes",rpPct(R.pctPrenhes)+" ("+R.prenhesVacas+"/"+R.nVacas+")","≥ 50%"],["DEL médio",R.delMedio!=null?String(Math.round(R.delMedio)):"—","150–170"],["Serviços/prenhez",R.servPorConc!=null?R.servPorConc.toFixed(1).replace(".",","):"—","≤ 2,5"],["IEP projetado",R.iepProj!=null?(R.iepProj/30.4).toFixed(1).replace(".",",")+" meses":"—","≤ 13 m"],["Perdas de gestação",rpPct(R.pctPerdas),"≤ 10%"]];
+  var cw=(W-2*m-9)/4;kp.forEach(function(k,i){var x=m+(i%4)*(cw+3),yy=y+Math.floor(i/4)*20;doc.setFillColor(243,246,243);doc.roundedRect(x,yy,cw,17,2,2,"F");doc.setFontSize(7);doc.setTextColor(100,116,139);doc.text(k[0].toUpperCase(),x+3,yy+5);doc.setFontSize(12.5);doc.setTextColor(15,23,42);doc.setFont("helvetica","bold");doc.text(k[1],x+3,yy+11.5);doc.setFont("helvetica","normal");doc.setFontSize(6.5);doc.setTextColor(148,163,184);doc.text("meta "+k[2],x+3,yy+15)});y+=44;
+  doc.setFontSize(10.5);doc.setFont("helvetica","bold");doc.setTextColor(15,23,42);doc.text("Ciclos de 21 dias",m,y);y+=2;
+  doc.autoTable({startY:y,margin:{left:m,right:m},theme:"grid",headStyles:{fillColor:VD,fontSize:7.5},styles:{fontSize:7.5,cellPadding:1.4,halign:"center"},head:[["Início","Elegíveis","Inseminadas","Prenhes","Serviço","Concepção","Prenhez"]],body:R.ciclos.map(function(c){return [rpBR(c.ini),c.eleg,c.insem,c.completo?c.prenhas:"aguard. DG",rpPct(c.ts),rpPct(c.tc),c.completo?rpPct(c.tp):"—"]})});y=doc.lastAutoTable.finalY+7;
+  function lista(tit,arr,fn){if(!arr.length)return;if(y>250){doc.addPage();y=16}doc.setFontSize(10.5);doc.setFont("helvetica","bold");doc.setTextColor(15,23,42);doc.text(tit+" ("+arr.length+")",m,y);y+=2;doc.autoTable({startY:y,margin:{left:m,right:m},theme:"striped",headStyles:{fillColor:VD,fontSize:7.5},styles:{fontSize:7.5,cellPadding:1.3},head:[fn.h],body:arr.map(fn.b)});y=doc.lastAutoTable.finalY+6}
+  lista("Diagnóstico de gestação a fazer",ag.dg,{h:["Vaca","Última IA","Dias","Touro"],b:function(x){return [x.r.a.brinco,rpBR(x.r.st.ultimoServico.data),rpDif(rpHoje(),x.r.st.ultimoServico.data),x.r.st.ultimoServico.touro||""]}});
+  lista("Secar",ag.secar,{h:["Vaca","Secar em","Parto previsto","Dias de gestação"],b:function(x){return [x.r.a.brinco,rpBR(x.data)+(x.data<rpHoje()?" (atrasada)":""),rpBR(x.r.st.prev.parto),x.r.st.diasGest]}});
+  lista("Partos previstos (30 dias)",ag.partos,{h:["Vaca","Parto previsto","Entrar no pré-parto","Touro"],b:function(x){return [x.r.a.brinco,rpBR(x.data),rpBR(x.r.st.prev.preparto),x.r.st.touroPrenhez||""]}});
+  lista("Vacas que precisam de atenção",ag.problema,{h:["Vaca","Motivo","DEL","Serviços"],b:function(x){return [x.r.a.brinco,x.motivo,x.r.st.del,x.r.st.nServicos]}});
+  doc.addPage();y=16;doc.setFontSize(10.5);doc.setFont("helvetica","bold");doc.text("Rebanho — situação individual",m,y);y+=2;
+  doc.autoTable({startY:y,margin:{left:m,right:m},theme:"striped",headStyles:{fillColor:VD,fontSize:7},styles:{fontSize:7,cellPadding:1.2},head:[["Vaca","Lact.","DEL","Situação","Último parto","Serv.","Última IA","Concepção","Secar em","Parto previsto"]],body:_rpg.reb.filter(function(r){return r.st.status!=="saiu"}).map(function(r){var s=r.st;return [r.a.brinco,s.novilha?"Nov.":s.lact,s.del!=null?s.del:"",(RP_STATUS[s.status]||{}).l,rpBR(s.ultimoParto),s.nServicos||"",s.ultimoServico?rpBR(s.ultimoServico.data):"",s.prenhe?rpBR(s.concepcao):"",s.prev.secagem&&!s.seca?rpBR(s.prev.secagem):"",s.prev.parto?rpBR(s.prev.parto):""]})});
+  var n=doc.internal.getNumberOfPages();for(var i=1;i<=n;i++){doc.setPage(i);doc.setFontSize(7);doc.setTextColor(148,163,184);doc.text("PEV "+cfg.pev+" d · DG "+cfg.dg_dias+" d após IA · gestação "+cfg.gestacao+" d · secagem "+cfg.secagem_dias+" d antes do parto   ·   pág. "+i+"/"+n,m,290)}
+  doc.save("Reproducao_"+String(farm.produtor||"fazenda").replace(/[^\wÀ-ú]+/g,"_")+"_"+rpHoje()+".pdf")}catch(e){console.error(e);toast("Erro no PDF: "+e.message,true)}}
+/* ---------- visão da carteira ---------- */
+async function rpgCarteira(){var el=document.getElementById("rpg-carteira");if(!el)return;try{var s=await db.ref("repro_resumo").once("value");var v=s.val()||{};var ids=Object.keys(v);if(!ids.length){el.innerHTML="";return}
+  var rows=ids.map(function(id){var f=(typeof ALL!=="undefined"&&ALL.find(function(x){return x.id===id}))||{};return Object.assign({id:id,nome:f.produtor||id},v[id])}).sort(function(a,b){return (a.tp==null?999:a.tp)-(b.tp==null?999:b.tp)});
+  el.innerHTML='<div class="cc" style="margin-bottom:16px"><div class="cc-hdr"><span class="cc-ico">🧬</span><span class="cc-title">Gestão reprodutiva — fazendas acompanhadas</span></div><div style="overflow:auto"><table class="rpg-tbl"><tr><th>Fazenda</th><th>Vacas</th><th>Prenhez</th><th>Serviço</th><th>Concepção</th><th>% prenhes</th><th>DEL</th><th>DG a fazer</th><th>Secar</th><th>A conferir</th><th>Atualizado</th></tr>'+rows.map(function(r){return '<tr class="cl" onclick="var s=document.getElementById(\'rp-farm-sel\');s.value=\''+r.id+'\';onReproducaoFarmChange()"><td><b>'+rpEsc(r.nome)+'</b></td><td>'+(r.nVacas||"—")+'</td><td style="color:'+rpgCor(r.tp,20,15)+';font-weight:800">'+rpPct(r.tp)+'</td><td>'+rpPct(r.ts)+'</td><td>'+rpPct(r.tc)+'</td><td>'+rpPct(r.pctPrenhes)+'</td><td>'+(r.del||"—")+'</td><td>'+(r.dg||"")+'</td><td>'+(r.secar||"")+'</td><td>'+(r.pend?'<span class="rp-chip" style="background:#fef3c7;color:#b45309">'+r.pend+'</span>':'')+'</td><td style="color:var(--muted)">'+rpBR(r.data)+'</td></tr>'}).join("")+'</table></div></div>'}catch(e){el.innerHTML=""}}
+
 </script>
 </body>
 </html>
