@@ -6609,11 +6609,16 @@ function rpCiclos(reb,cfg,hoje,nCiclos){
       });
     });
     /* taxa de concepção: todos os serviços de vacas (por data do serviço) */
-    st.todosServicos.forEach(function(s){if(!s.parto)return;ciclos.forEach(function(cy){if(s.data>=cy.ini&&s.data<=cy.fim){cy.serv++;if(s.res==="concepcao"||s.res==="falha"){cy.servDiag++;if(s.res==="concepcao")cy.servConc++}}})});
+    st.todosServicos.forEach(function(s){if(!s.parto)return;ciclos.forEach(function(cy){if(s.data>=cy.ini&&s.data<=cy.fim){cy.serv++;if(s.res==="pendente")cy.servPend=(cy.servPend||0)+1;if(s.res==="concepcao"||s.res==="falha"){cy.servDiag++;if(s.res==="concepcao")cy.servConc++}}})});
   });
   var limiteDiag=rpAdd(hoje,-(cfg.dg_dias+7));
+  /* início do histórico: ciclos inteiramente anteriores à primeira inseminação registrada não entram nas taxas */
+  var prim=null;reb.forEach(function(r){r.st.todosServicos.forEach(function(s){if(s.parto&&(!prim||s.data<prim))prim=s.data})});
   ciclos.forEach(function(cy){
-    cy.completo=cy.fim<=limiteDiag;
+    cy.semHist=!prim||cy.fim<prim;
+    /* completo: já passou o prazo do DG, ou todos os serviços do ciclo já têm resultado */
+    cy.completo=!cy.semHist&&(cy.fim<=limiteDiag||(cy.serv>0&&!cy.servPend));
+    if(cy.semHist){cy.ts=null;cy.tc=null;cy.tp=null;return}
     cy.ts=cy.eleg?cy.insem/cy.eleg*100:null;
     cy.tc=cy.servDiag?cy.servConc/cy.servDiag*100:null;
     cy.tp=(cy.eleg&&cy.completo)?cy.prenhas/cy.eleg*100:null;
@@ -6626,7 +6631,7 @@ function rpResumo(reb,cfg,hoje,nCiclos){
   var comp=ciclos.filter(function(c){return c.completo});
   function soma(arr,k){return arr.reduce(function(s,c){return s+c[k]},0)}
   var eleg=soma(comp,"eleg"),insemC=soma(comp,"insem"),pren=soma(comp,"prenhas");
-  var elegT=soma(ciclos,"eleg"),insemT=soma(ciclos,"insem");
+  var comHist=ciclos.filter(function(c){return !c.semHist});var elegT=soma(comHist,"eleg"),insemT=soma(comHist,"insem");
   var sd=soma(ciclos,"servDiag"),sc=soma(ciclos,"servConc");
   var ativos=reb.filter(function(r){return r.st.status!=="saiu"});
   var vacas=ativos.filter(function(r){return !r.st.novilha});
@@ -6642,8 +6647,10 @@ function rpResumo(reb,cfg,hoje,nCiclos){
   var mAb=media(abertos);
   return {
     ciclos:ciclos,
-    ts:elegT?insemT/elegT*100:null,
-    tc:sd?sc/sd*100:null,
+    /* as três taxas do resumo usam o MESMO conjunto de ciclos (os já resolvidos), para que prenhez ≈ serviço × concepção */
+    ts:comp.length&&eleg?insemC/eleg*100:(elegT?insemT/elegT*100:null),
+    tc:comp.length&&soma(comp,"servDiag")?soma(comp,"servConc")/soma(comp,"servDiag")*100:(sd?sc/sd*100:null),
+    nCiclosComp:comp.length,elegComp:eleg,insemComp:insemC,prenComp:pren,
     tp:eleg?pren/eleg*100:null,
     elegMedia:comp.length?eleg/comp.length:null,
     nAtivos:ativos.length,nVacas:vacas.length,nLact:lact.length,nSecas:secas.length,nSemParto:vacas.filter(function(r){return !r.st.ultimoParto&&!r.st.seca}).length,
@@ -7024,7 +7031,7 @@ function rpdMontar(elId){_rpd.el=elId;var el=document.getElementById(elId);if(!e
   var fil='<div class="rpd-fil"><div class="rpd-seg">'+[[6,"4 meses"],[12,"8 meses"],[18,"12 meses"]].map(function(x){return '<button class="'+(_rpd.n===x[0]?"on":"")+'" onclick="_rpd.n='+x[0]+';rpdMontar(\''+elId+'\')">'+x[1]+'</button>'}).join("")+'</div><div class="rpd-seg">'+[["todas","Todas"],["prim","Primíparas"],["mult","Multíparas"]].map(function(x){return '<button class="'+(_rpd.lact===x[0]?"on":"")+'" onclick="_rpd.lact=\''+x[0]+'\';rpdMontar(\''+elId+'\')">'+x[1]+'</button>'}).join("")+'</div></div>';
   var nDiag=R.ciclos.reduce(function(a,c){return a+c.servDiag},0);
   var aviso=nDiag<15?'<div class="rpd-aviso"><b>Dados ainda insuficientes para as taxas.</b> No período há só '+nDiag+' inseminação(ões) com resultado conhecido. As taxas de serviço, concepção e prenhez dependem do histórico de IAs e diagnósticos de cada ciclo de 21 dias: importe o histórico dos últimos 12 meses (todas as IAs e DGs, não só a última) ou os números vão se formar conforme os lançamentos entram.</div>':'';
-  var gg='<div class="rpd-gg">'+rpdGauge({l:"Taxa de serviço",v:R.ts,max:100,meta:60,tr:trend("ts"),d:"ts",sub:"meta ≥ 60%"})+rpdGauge({l:"Taxa de concepção",v:R.tc,max:100,meta:35,tr:trend("tc"),d:"tc",sub:"meta ≥ 35%"})+rpdGauge({l:"Taxa de prenhez",v:R.tp,max:50,meta:20,tr:trend("tp"),d:"tp",sub:"meta ≥ 20% · ciclos de 21 d"})+rpdGauge({l:"Vacas prenhes",v:R.pctPrenhes,max:100,meta:50,d:"prenhes",sub:R.prenhesVacas+" de "+R.nVacas+" vacas"})+rpdGauge({l:"Concepção 1º serviço",v:ps[1].tc,max:100,meta:40,d:"serv",sub:ps[1].c+" de "+ps[1].n+" serviços"})+'</div>';
+  var gg='<div class="rpd-gg">'+rpdGauge({l:"Taxa de serviço",v:R.ts,max:100,meta:60,tr:trend("ts"),d:"ts",sub:R.insemComp+" IAs em "+R.elegComp+" vacas-ciclo aptas · meta ≥ 60%"})+rpdGauge({l:"Taxa de concepção",v:R.tc,max:100,meta:35,tr:trend("tc"),d:"tc",sub:"meta ≥ 35%"})+rpdGauge({l:"Taxa de prenhez",v:R.tp,max:50,meta:20,tr:trend("tp"),d:"tp",sub:(R.ts!=null&&R.tc!=null?"serviço × concepção ≈ "+Math.round(R.ts*R.tc/100)+"% · ":"")+"meta ≥ 20%"})+rpdGauge({l:"Vacas prenhes",v:R.pctPrenhes,max:100,meta:50,d:"prenhes",sub:R.prenhesVacas+" de "+R.nVacas+" vacas"})+rpdGauge({l:"Concepção 1º serviço",v:ps[1].tc,max:100,meta:40,d:"serv",sub:ps[1].c+" de "+ps[1].n+" serviços"})+'</div>';
   el.innerHTML='<div class="rpd">'+fil+aviso+gg+'<div class="rpd-k">'+k+'</div>'+
    '<div class="rpd-g"><div class="rpd-c"><h4>Ciclos de 21 dias</h4><div class="sub">Toque em um ciclo para ver as vacas elegíveis, inseminadas e prenhes</div><div id="rpd-ch-ciclos"></div><div class="rpd-leg"><span><i style="background:#93c5fd"></i>Serviço</span><span><i style="background:#16a34a"></i>Prenhez</span><span><i style="background:#8b5cf6;height:3px"></i>Concepção</span><span><i style="background:none;border-top:2px dashed #16a34a;height:0;width:12px"></i>Meta prenhez 20%</span></div><div class="rpd-info" id="rpd-i-ciclos"></div></div>'+
    '<div class="rpd-g dois"><div class="rpd-c"><h4>Mapa do rebanho</h4><div class="sub">Cada ponto é uma vaca · DEL × nº de serviços · toque para abrir a ficha</div><div id="rpd-ch-mapa"></div><div class="rpd-leg" id="rpd-leg-mapa"></div><div class="rpd-info" id="rpd-i-mapa"></div></div>'+
@@ -7047,14 +7054,15 @@ function rpdCiclos(){var cy=_rpd.R.ciclos;var W=rpdW("rpd-ch-ciclos"),H=210,L=30
   cy.forEach(function(c,i){var x=L+i*bw;var w=Math.max(3,bw*0.36);
     if(c.ts!=null)s+='<rect x="'+(x+bw*0.12)+'" y="'+y(c.ts)+'" width="'+w+'" height="'+(T+ih-y(c.ts))+'" rx="2" fill="#93c5fd"/>';
     if(c.tp!=null)s+='<rect x="'+(x+bw*0.12+w+1)+'" y="'+y(c.tp)+'" width="'+w+'" height="'+(T+ih-y(c.tp))+'" rx="2" fill="#16a34a"/>';
+    else if(c.semHist)s+='<text x="'+(x+bw/2)+'" y="'+(T+ih-4)+'" font-size="8" text-anchor="middle" fill="#cbd5e1">sem dados</text>';
     else if(!c.completo)s+='<text x="'+(x+bw*0.12+w*1.5)+'" y="'+(T+ih-4)+'" font-size="8" text-anchor="middle" fill="#94a3b8">DG</text>';
     if((W>=520&&n<=12)||i%2===(n-1)%2)s+='<text x="'+(x+bw/2)+'" y="'+(H-8)+'" font-size="9" text-anchor="middle" fill="#94a3b8">'+rpBR(c.ini).slice(0,5)+'</text>'});
   var pts=cy.map(function(c,i){return (c.tc!=null&&c.completo)?[L+i*bw+bw/2,y(c.tc)]:null});var d="";pts.forEach(function(p){if(p)d+=(d?"L":"M")+p[0].toFixed(1)+" "+p[1].toFixed(1)});
   s+='<line x1="'+L+'" x2="'+(W-Rr)+'" y1="'+y(20)+'" y2="'+y(20)+'" stroke="#16a34a" stroke-dasharray="4 3" opacity=".6"/>';
   if(d)s+='<path d="'+d+'" fill="none" stroke="#8b5cf6" stroke-width="2.2"/>';pts.forEach(function(p){if(p)s+='<circle cx="'+p[0]+'" cy="'+p[1]+'" r="3" fill="#8b5cf6"/>'});
   cy.forEach(function(c,i){s+='<rect class="hit" x="'+(L+i*bw)+'" y="'+T+'" width="'+bw+'" height="'+ih+'" fill="transparent" onmouseenter="rpdInfoCiclo('+i+')" onclick="rpdDrillCiclo('+i+')"/>'});
-  document.getElementById("rpd-ch-ciclos").innerHTML=rpdSvg(W,H,s);var li=cy.length-1;while(li>0&&!cy[li].completo)li--;rpdInfoCiclo(li);}
-function rpdInfoCiclo(i){var c=_rpd.R.ciclos[i];if(!c)return;rpdInfo("rpd-i-ciclos",'<b>'+rpBR(c.ini)+' a '+rpBR(c.fim)+'</b> · '+c.eleg+' elegíveis · '+c.insem+' inseminadas ('+rpPct(c.ts)+') · '+(c.completo?c.prenhas+' prenhes ('+rpPct(c.tp)+')':'aguardando DG')+(c.completo?' · concepção '+rpPct(c.tc):''))}
+  document.getElementById("rpd-ch-ciclos").innerHTML=rpdSvg(W,H,s);var li=cy.length-1;while(li>0&&!cy[li].completo)li--;if(!cy[li].completo)li=cy.length-1;rpdInfoCiclo(li);}
+function rpdInfoCiclo(i){var c=_rpd.R.ciclos[i];if(!c)return;if(c.semHist){rpdInfo("rpd-i-ciclos",'<b>'+rpBR(c.ini)+' a '+rpBR(c.fim)+'</b> · antes da primeira inseminação registrada: fora do cálculo');return}rpdInfo("rpd-i-ciclos",'<b>'+rpBR(c.ini)+' a '+rpBR(c.fim)+'</b> · '+c.eleg+' elegíveis · '+c.insem+' inseminadas ('+rpPct(c.ts)+') · '+(c.completo?c.prenhas+' prenhes ('+rpPct(c.tp)+')':'aguardando DG')+(c.completo?' · concepção '+rpPct(c.tc):''))}
 function rpdDrillCiclo(i){var c=_rpd.R.ciclos[i];var C=window.rpCtx();var by=function(ids){return ids.map(function(id){return C.reb.filter(function(r){return r.id===id})[0]}).filter(Boolean)};
   var naoIns=c.ids.eleg.filter(function(id){return c.ids.insem.indexOf(id)<0});
   rpdLista("Ciclo "+rpBR(c.ini)+" a "+rpBR(c.fim),[["Elegíveis não inseminadas ("+naoIns.length+") — oportunidade perdida",by(naoIns)],["Inseminadas ("+c.ids.insem.length+")",by(c.ids.insem)],["Emprenharam ("+c.ids.pren.length+")"+(c.completo?"":" — ciclo ainda aguardando DG"),by(c.ids.pren)]],'<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:12px;text-align:center">'+[["Elegíveis",c.eleg],["Serviço",rpPct(c.ts)],["Concepção",rpPct(c.tc)],["Prenhez",c.completo?rpPct(c.tp):"DG"]].map(function(x){return '<div style="background:#f8fafc;border-radius:10px;padding:8px"><div style="font-size:10px;color:#64748b;font-weight:700">'+x[0]+'</div><b style="font-size:18px">'+x[1]+'</b></div>'}).join("")+'</div>')}
