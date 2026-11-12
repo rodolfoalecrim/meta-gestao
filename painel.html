@@ -6448,15 +6448,17 @@ function aplicarMetaDescarte(){const valor=window._rbMetaDescVolCalc;if(valor==n
 </script>
 <script id="rp-core">
 /* ===== META Reprodução — núcleo compartilhado (app produtor + painel) ===== */
-var RP_CFG_PADRAO={pev:50,dg_dias:30,gestacao:283,secagem_dias:60,preparto_dias:21};
+var RP_CFG_PADRAO={pev:50,dg_dias:30,gestacao:283,secagem_dias:60,preparto_dias:21,idade_novilha:395};
 var RP_TIPOS={parto:{l:"Parto",a:"PT",c:"#d97706"},cio:{l:"Cio",a:"CI",c:"#e11d48"},ia:{l:"Inseminação",a:"IA",c:"#2563eb"},cobertura:{l:"Cobertura (touro)",a:"CB",c:"#0891b2"},dg:{l:"Diagnóstico",a:"DG",c:"#15803d"},aborto:{l:"Aborto / perda",a:"AB",c:"#9f1239"},secagem:{l:"Secagem",a:"SC",c:"#7c3aed"},descarte:{l:"Saída do rebanho",a:"SD",c:"#475569"}};
+RP_TIPOS.protocolo={l:"Protocolo IATF",a:"PR",c:"#0d9488"};RP_TIPOS.sanidade={l:"Sanidade",a:"SA",c:"#be185d"};RP_TIPOS.naoins={l:"Não inseminar",a:"NI",c:"#334155"};
 Object.keys(RP_TIPOS).forEach(function(k){var t=RP_TIPOS[k];t.i='<span class="rp-ico" style="background:'+t.c+'">'+t.a+'</span>'});
-var RP_ORDEM={descarte:0,parto:1,aborto:2,cio:3,ia:4,cobertura:4,dg:5,secagem:6};
+var RP_ORDEM={descarte:0,parto:1,sanidade:2,aborto:2,naoins:3,protocolo:3,cio:3,ia:4,cobertura:4,dg:5,secagem:6};
 var RP_STATUS={
   prenhe:{l:"Prenhe",c:"#15803d",bg:"#dcfce7"},
   seca:{l:"Seca",c:"#7c3aed",bg:"#ede9fe"},
   inseminada:{l:"Aguardando DG",c:"#2563eb",bg:"#dbeafe"},
   vazia:{l:"Vazia (apta)",c:"#dc2626",bg:"#fee2e2"},
+  naoins:{l:"Não inseminar",c:"#334155",bg:"#e2e8f0"},
   pev:{l:"Período voluntário",c:"#64748b",bg:"#f1f5f9"},
   novilha:{l:"Novilha",c:"#d97706",bg:"#fef3c7"},
   sem_dados:{l:"Sem parto lançado",c:"#94a3b8",bg:"#f8fafc"},
@@ -6468,7 +6470,7 @@ function rpAdd(s,n){var d=rpD(s);d.setDate(d.getDate()+Math.round(n));return d.g
 function rpDif(a,b){return Math.round((rpD(a)-rpD(b))/864e5)}
 function rpBR(s){if(!s)return "—";var p=s.split("-");return p[2]+"/"+p[1]+"/"+p[0].slice(2)}
 function rpEsc(t){return String(t==null?"":t).replace(/[&<>"']/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]})}
-function rpCfg(c){var o={};for(var k in RP_CFG_PADRAO)o[k]=(c&&c[k]!=null&&c[k]!=="")?+c[k]:RP_CFG_PADRAO[k];return o}
+function rpCfg(c){var o={};for(var k in RP_CFG_PADRAO)o[k]=(c&&c[k]!=null&&c[k]!=="")?+c[k]:RP_CFG_PADRAO[k];o.protocolos=(c&&c.protocolos&&c.protocolos.length)?c.protocolos:RP_PROTOCOLOS_PADRAO;return o}
 function rpNormBrinco(b){return String(b==null?"":b).trim().replace(/\.0$/,"").replace(/^0+(?=\d)/,"").toUpperCase()}
 /* data "dd/mm/aaaa", "dd/mm/aa", "aaaa-mm-dd", serial do Excel, Date */
 function rpParseData(v){
@@ -6484,21 +6486,30 @@ function rpParseData(v){
 function rpOrdenarEventos(evs){return evs.slice().sort(function(a,b){return a.data<b.data?-1:a.data>b.data?1:(RP_ORDEM[a.tipo]||9)-(RP_ORDEM[b.tipo]||9)})}
 function rpEstadoAnimal(an,evs,cfg,hoje){
   cfg=rpCfg(cfg);hoje=hoje||rpHoje();
-  var st={lact:+(an.lactacao_base||0),partos:[],ultimoParto:null,servicos:[],todosServicos:[],prenhe:false,concepcao:null,dgData:null,seca:false,dataSecagem:null,saiu:null,ultimoCio:null,perdas:[],concepcoes:[]};
+  var st={lact:+(an.lactacao_base||0),partos:[],ultimoParto:null,servicos:[],todosServicos:[],prenhe:false,concepcao:null,dgData:null,seca:false,dataSecagem:null,saiu:null,ultimoCio:null,perdas:[],concepcoes:[],protocolo:null,sanid:[],naoIns:null,naoInsHist:[]};
   var cur=[];/* serviços da lactação/ciclo atual */
   rpOrdenarEventos(evs).forEach(function(e){
     if(!e.data||e.data>hoje)return;
     var t=e.tipo;
-    if(t==="parto"){st.lact+=1;st.partos.push(e.data);st.ultimoParto=e.data;cur.forEach(function(s){if(s.res==="pendente")s.res="desconhecido"});cur=[];st.servicos=cur;st.prenhe=false;st.concepcao=null;st.dgData=null;st.seca=false;st.dataSecagem=null;st.ultimoCio=null}
+    if(t==="parto"){st.lact+=1;st.partos.push(e.data);st.ultimoParto=e.data;cur.forEach(function(s){if(s.res==="pendente")s.res="desconhecido"});cur=[];st.servicos=cur;st.prenhe=false;st.concepcao=null;st.dgData=null;st.seca=false;st.dataSecagem=null;st.ultimoCio=null;st.protocolo=null;if(st.naoIns){st.naoIns=null}}
     else if(t==="ia"||t==="cobertura"){
       cur.forEach(function(s){if(s.res==="pendente")s.res="falha"});
       if(st.prenhe){st.prenhe=false;st.concepcao=null;}
-      var sv={data:e.data,touro:e.touro||"",tipo:t,res:"pendente",parto:st.ultimoParto,id:e.id};cur.push(sv);st.todosServicos.push(sv);st.servicos=cur;
+      var tsv=t==="cobertura"?"touro":(e.tipo_servico||((st.protocolo&&rpDif(e.data,st.protocolo.data)>=0&&rpDif(e.data,st.protocolo.data)<=14)?"iatf":"cio"));
+      var sv={data:e.data,touro:e.touro||"",tipo:t,tsv:tsv,insem:(e.inseminador||"").trim(),res:"pendente",parto:st.ultimoParto,id:e.id};if(st.protocolo&&e.data>=st.protocolo.data)st.protocolo.usado=true;cur.push(sv);st.todosServicos.push(sv);st.servicos=cur;
     }
     else if(t==="cio"){st.ultimoCio=e.data;cur.forEach(function(s){if(s.res==="pendente"&&rpDif(e.data,s.data)>=15)s.res="falha"})}
     else if(t==="dg"){
       st.dgData=e.data;
-      if(e.resultado==="+"){
+      if(e.resultado==="p"){
+        /* perda de gestação vista no DG (reabsorção / aborto) */
+        var svp=null;for(var ip=cur.length-1;ip>=0;ip--){if(rpDif(e.data,cur[ip].data)>=20){svp=cur[ip];break}}
+        var cOrig=st.prenhe?st.concepcao:(e.concepcao||(svp?svp.data:(e.dias_gestacao?rpAdd(e.data,-(+e.dias_gestacao)):rpAdd(e.data,-cfg.dg_dias))));
+        if(!st.prenhe){cur.forEach(function(s){if(s.res==="pendente"&&rpDif(e.data,s.data)>=20)s.res=(s===svp)?"concepcao":"falha"});st.concepcoes.push({data:cOrig,parto:st.ultimoParto,touro:svp?svp.touro:""})}
+        st.perdas.push({data:e.data,concepcao:cOrig,tipo:rpTipoPerda(e,cOrig)});
+        st.prenhe=false;st.concepcao=null;
+      }
+      else if(e.resultado==="+"){
         var sv=null;for(var i=cur.length-1;i>=0;i--){if(rpDif(e.data,cur[i].data)>=20){sv=cur[i];break}}
         var conc=e.concepcao||(sv?sv.data:null);
         if(!conc&&e.dias_gestacao)conc=rpAdd(e.data,-(+e.dias_gestacao));
@@ -6508,12 +6519,15 @@ function rpEstadoAnimal(an,evs,cfg,hoje){
         st.prenhe=true;st.concepcao=conc;st.touroPrenhez=sv?sv.touro:(e.touro||"");
       }else{
         cur.forEach(function(s){if(s.res==="pendente"&&rpDif(e.data,s.data)>=20)s.res="falha"});
-        if(st.prenhe)st.perdas.push({data:e.data,concepcao:st.concepcao});
+        if(st.prenhe)st.perdas.push({data:e.data,concepcao:st.concepcao,tipo:rpTipoPerda(e,st.concepcao)});
         st.prenhe=false;st.concepcao=null;
       }
     }
-    else if(t==="aborto"){if(st.prenhe||st.concepcao){st.perdas.push({data:e.data,concepcao:st.concepcao})}st.prenhe=false;st.concepcao=null;st.seca=false}
+    else if(t==="aborto"){if(st.prenhe||st.concepcao){st.perdas.push({data:e.data,concepcao:st.concepcao,tipo:rpTipoPerda(e,st.concepcao)})}st.prenhe=false;st.concepcao=null;st.seca=false}
     else if(t==="secagem"){st.seca=true;st.dataSecagem=e.data}
+    else if(t==="protocolo"){st.protocolo={data:e.data,id:e.protocolo||"",nome:e.protocolo_nome||"",ev:e.id}}
+    else if(t==="sanidade"){st.sanid.push({data:e.data,doenca:e.doenca||"outro",parto:st.ultimoParto})}
+    else if(t==="naoins"){st.naoIns={data:e.data,motivo:e.motivo||""};st.naoInsHist.push({data:e.data,parto:st.ultimoParto})}
     else if(t==="descarte"){st.saiu={data:e.data,motivo:e.motivo||e.obs||""}}
   });
   var novilha=(an.categoria==="novilha")&&!st.partos.length&&!(+an.lactacao_base>0);
@@ -6535,12 +6549,17 @@ function rpEstadoAnimal(an,evs,cfg,hoje){
     st.prev.retornoIni=rpAdd(ultSv.data,18);st.prev.retornoFim=rpAdd(ultSv.data,24);
   }
   if(!st.prenhe&&st.ultimoParto&&!st.seca)st.prev.aptaEm=rpAdd(st.ultimoParto,cfg.pev);
+  /* protocolo de IATF em andamento: passos com datas */
+  if(st.protocolo&&!st.prenhe&&!st.saiu){var pr=null;cfg.protocolos.forEach(function(x){if(x.id===st.protocolo.id)pr=x});
+    if(pr){var ult=pr.passos[pr.passos.length-1];var fimP=rpAdd(st.protocolo.data,ult.d);var iaDepois=st.servicos.some(function(s){return s.data>=st.protocolo.data});
+      if(!iaDepois&&rpDif(hoje,fimP)<=3){st.prot={nome:pr.nome,ini:st.protocolo.data,passos:pr.passos.map(function(ps){return {d:ps.d,a:ps.a,data:rpAdd(st.protocolo.data,ps.d)}}),iatf:fimP}}}}
   /* status */
   var s;
   if(st.saiu)s="saiu";
   else if(st.seca)s="seca";
   else if(st.prenhe)s="prenhe";
   else if(ultSv&&ultSv.res==="pendente")s="inseminada";
+  else if(st.naoIns)s="naoins";
   else if(novilha)s="novilha";
   else if(!st.ultimoParto)s="sem_dados";
   else if(st.del<cfg.pev)s="pev";
@@ -6557,8 +6576,9 @@ function rpCmpBrinco(a,b){var na=parseFloat(a),nb=parseFloat(b);if(!isNaN(na)&&!
 /* ---------- agenda de manejo ---------- */
 function rpAgenda(reb,cfg,hoje){
   cfg=rpCfg(cfg);hoje=hoje||rpHoje();
-  var ag={dg:[],retorno:[],secar:[],preparto:[],partos:[],vazias:[],problema:[]};
+  var ag={protocolo:[],dg:[],retorno:[],secar:[],preparto:[],partos:[],vazias:[],problema:[]};
   reb.forEach(function(r){var st=r.st;if(st.status==="saiu")return;
+    if(st.prot)st.prot.passos.forEach(function(ps){if(ps.data>=rpAdd(hoje,-2)&&ps.data<=rpAdd(hoje,3))ag.protocolo.push({r:r,data:ps.data,acao:ps.a,dia:ps.d,nome:st.prot.nome,atraso:rpDif(hoje,ps.data)})});
     if(st.status==="inseminada"){
       if(hoje>=st.prev.dg)ag.dg.push({r:r,data:st.prev.dg,atraso:rpDif(hoje,st.prev.dg)});
       else if(hoje>=rpAdd(st.prev.retornoIni,-1)&&hoje<=rpAdd(st.prev.retornoFim,1))ag.retorno.push({r:r,data:st.prev.retornoIni});
@@ -6578,45 +6598,53 @@ function rpAgenda(reb,cfg,hoje){
   return ag;
 }
 /* ---------- taxas por ciclo de 21 dias ---------- */
-function rpCiclos(reb,cfg,hoje,nCiclos){
-  cfg=rpCfg(cfg);hoje=hoje||rpHoje();nCiclos=nCiclos||12;
-  var fimUlt=rpAdd(hoje,0);var ciclos=[];
-  for(var c=nCiclos-1;c>=0;c--){var fim=rpAdd(fimUlt,-21*c);var ini=rpAdd(fim,-20);ciclos.push({ini:ini,fim:fim,eleg:0,insem:0,prenhas:0,serv:0,servConc:0,servDiag:0,ids:{eleg:[],insem:[],pren:[]}})}
-  reb.forEach(function(r){var st=r.st;
-    /* reconstrói janelas de aptidão: de parto+PEV até concepção/saída/próximo parto */
-    var partos=st.partos.slice();
-    partos.forEach(function(p,ix){
-      var apta=rpAdd(p,cfg.pev);var prox=partos[ix+1]||null;
-      var conc=null;st.concepcoes.forEach(function(cc){if(cc.data>=p&&(!prox||cc.data<prox)&&(!conc||cc.data<conc))conc=cc.data});
-      /* se houve perda, a vaca volta a ser elegível depois da perda */
-      var perdas=st.perdas.filter(function(pe){return pe.data>=p&&(!prox||pe.data<prox)});
-      var fimJan=conc||prox||(st.saiu?st.saiu.data:null);
-      var secaEm=(st.dataSecagem&&st.dataSecagem>=p&&(!prox||st.dataSecagem<prox))?st.dataSecagem:null;
-      if(secaEm&&(!fimJan||secaEm<fimJan))fimJan=secaEm;
-      var janelas=[[apta,fimJan]];
-      perdas.forEach(function(pe){var c2=null;st.concepcoes.forEach(function(cc){if(cc.data>pe.data&&(!prox||cc.data<prox)&&(!c2||cc.data<c2))c2=cc.data});janelas.push([pe.data,c2||prox||(st.saiu?st.saiu.data:null)])});
-      janelas.forEach(function(j){
-        ciclos.forEach(function(cy){
-          if(cy.ini<j[0])return;/* precisa estar apta no início do ciclo */
-          if(j[1]&&j[1]<cy.ini)return;
-          var concAqui=!!(j[1]&&j[1]>=cy.ini&&j[1]<=cy.fim&&st.concepcoes.some(function(cc){return cc.data===j[1]}));
-          if(st.saiu&&st.saiu.data<=cy.fim&&!concAqui)return;/* saiu antes/durante o ciclo sem emprenhar */
-          cy.eleg++;cy.ids.eleg.push(r.id);
-          var svs=st.todosServicos.filter(function(s){return s.data>=cy.ini&&s.data<=cy.fim});
-          if(svs.length){cy.insem++;cy.ids.insem.push(r.id)}
-          if(concAqui){cy.prenhas++;cy.ids.pren.push(r.id)}
-        });
+function rpCiclos(reb,cfg,hoje,nCiclos,opt){
+  cfg=rpCfg(cfg);hoje=hoje||rpHoje();nCiclos=nCiclos||12;opt=opt||{};var nov=opt.grupo==="novilhas";
+  var fimUlt=opt.fim&&opt.fim<hoje?opt.fim:hoje;var ciclos=[];
+  for(var c=nCiclos-1;c>=0;c--){var fim=rpAdd(fimUlt,-21*c);var ini=rpAdd(fim,-20);ciclos.push({ini:ini,fim:fim,eleg:0,insem:0,prenhas:0,serv:0,servConc:0,servDiag:0,servPend:0,ids:{eleg:[],insem:[],pren:[]}})}
+  function svOk(s){return nov?!s.parto:!!s.parto}
+  reb.forEach(function(r){var st=r.st;var janelas=[];var meus=st.todosServicos.filter(svOk);
+    if(nov){
+      /* novilha (nulípara): apta a partir da idade de cobertura (ou do 1º serviço, sem data de nascimento) até a 1ª concepção / 1º parto */
+      var ini=r.a.nasc?rpAdd(r.a.nasc,cfg.idade_novilha):(meus.length?rpAdd(meus[0].data,-20):null);
+      if(!ini)return;if(!st.novilha&&!meus.length&&!(st.partos.length&&r.a.nasc))return;
+      var p1=st.partos[0]||null;
+      var concN=null;st.concepcoes.forEach(function(cc){if(!cc.parto&&(!concN||cc.data<concN))concN=cc.data});
+      var fimN=concN||p1||(st.saiu?st.saiu.data:null);janelas.push([ini,fimN]);
+      st.perdas.forEach(function(pe){if(p1&&pe.data>=p1)return;if(concN&&pe.data>concN){var c2=null;st.concepcoes.forEach(function(cc){if(!cc.parto&&cc.data>pe.data&&(!c2||cc.data<c2))c2=cc.data});janelas.push([pe.data,c2||p1||(st.saiu?st.saiu.data:null)])}});
+    }else{
+      /* vaca: de parto+PEV até concepção/secagem/saída/próximo parto */
+      var partos=st.partos.slice();
+      partos.forEach(function(p,ix){
+        var apta=rpAdd(p,cfg.pev);var prox=partos[ix+1]||null;
+        var conc=null;st.concepcoes.forEach(function(cc){if(cc.data>=p&&(!prox||cc.data<prox)&&(!conc||cc.data<conc))conc=cc.data});
+        var perdas=st.perdas.filter(function(pe){return pe.data>=p&&(!prox||pe.data<prox)});
+        var fimJan=conc||prox||(st.saiu?st.saiu.data:null);
+        var secaEm=(st.dataSecagem&&st.dataSecagem>=p&&(!prox||st.dataSecagem<prox))?st.dataSecagem:null;
+        if(secaEm&&(!fimJan||secaEm<fimJan))fimJan=secaEm;
+        st.naoInsHist.forEach(function(ni){if(ni.data>=p&&(!prox||ni.data<prox)&&(!fimJan||ni.data<fimJan))fimJan=ni.data});
+        janelas.push([apta,fimJan]);
+        perdas.forEach(function(pe){var c2=null;st.concepcoes.forEach(function(cc){if(cc.data>pe.data&&(!prox||cc.data<prox)&&(!c2||cc.data<c2))c2=cc.data});janelas.push([pe.data,c2||prox||(st.saiu?st.saiu.data:null)])});
+      });
+    }
+    janelas.forEach(function(j){
+      ciclos.forEach(function(cy){
+        if(cy.ini<j[0])return;/* precisa estar apta no início do ciclo */
+        if(j[1]&&j[1]<cy.ini)return;
+        var concAqui=!!(j[1]&&j[1]>=cy.ini&&j[1]<=cy.fim&&st.concepcoes.some(function(cc){return cc.data===j[1]}));
+        if(st.saiu&&st.saiu.data<=cy.fim&&!concAqui)return;
+        cy.eleg++;cy.ids.eleg.push(r.id);
+        if(meus.some(function(s){return s.data>=cy.ini&&s.data<=cy.fim})){cy.insem++;cy.ids.insem.push(r.id)}
+        if(concAqui){cy.prenhas++;cy.ids.pren.push(r.id)}
       });
     });
-    /* taxa de concepção: todos os serviços de vacas (por data do serviço) */
-    st.todosServicos.forEach(function(s){if(!s.parto)return;ciclos.forEach(function(cy){if(s.data>=cy.ini&&s.data<=cy.fim){cy.serv++;if(s.res==="pendente")cy.servPend=(cy.servPend||0)+1;if(s.res==="concepcao"||s.res==="falha"){cy.servDiag++;if(s.res==="concepcao")cy.servConc++}}})});
+    meus.forEach(function(s){ciclos.forEach(function(cy){if(s.data>=cy.ini&&s.data<=cy.fim){cy.serv++;if(s.res==="pendente")cy.servPend++;if(s.res==="concepcao"||s.res==="falha"){cy.servDiag++;if(s.res==="concepcao")cy.servConc++}}})});
   });
   var limiteDiag=rpAdd(hoje,-(cfg.dg_dias+7));
-  /* início do histórico: ciclos inteiramente anteriores à primeira inseminação registrada não entram nas taxas */
-  var prim=null;reb.forEach(function(r){r.st.todosServicos.forEach(function(s){if(s.parto&&(!prim||s.data<prim))prim=s.data})});
+  /* início do histórico: ciclos inteiramente anteriores à primeira inseminação registrada do grupo não entram nas taxas */
+  var prim=null;reb.forEach(function(r){r.st.todosServicos.forEach(function(s){if(svOk(s)&&(!prim||s.data<prim))prim=s.data})});
   ciclos.forEach(function(cy){
     cy.semHist=!prim||cy.fim<prim;
-    /* completo: já passou o prazo do DG, ou todos os serviços do ciclo já têm resultado */
     cy.completo=!cy.semHist&&(cy.fim<=limiteDiag||(cy.serv>0&&!cy.servPend));
     if(cy.semHist){cy.ts=null;cy.tc=null;cy.tp=null;return}
     cy.ts=cy.eleg?cy.insem/cy.eleg*100:null;
@@ -6625,47 +6653,53 @@ function rpCiclos(reb,cfg,hoje,nCiclos){
   });
   return ciclos;
 }
-function rpResumo(reb,cfg,hoje,nCiclos){
-  cfg=rpCfg(cfg);hoje=hoje||rpHoje();
-  var ciclos=rpCiclos(reb,cfg,hoje,nCiclos||12);
-  var comp=ciclos.filter(function(c){return c.completo});
-  function soma(arr,k){return arr.reduce(function(s,c){return s+c[k]},0)}
-  var eleg=soma(comp,"eleg"),insemC=soma(comp,"insem"),pren=soma(comp,"prenhas");
-  var comHist=ciclos.filter(function(c){return !c.semHist});var elegT=soma(comHist,"eleg"),insemT=soma(comHist,"insem");
-  var sd=soma(ciclos,"servDiag"),sc=soma(ciclos,"servConc");
+function rpTaxas(ciclos){function soma(arr,k){return arr.reduce(function(s,c){return s+c[k]},0)}
+  var comp=ciclos.filter(function(c){return c.completo});var comHist=ciclos.filter(function(c){return !c.semHist});
+  var eleg=soma(comp,"eleg"),ins=soma(comp,"insem"),pren=soma(comp,"prenhas"),sdC=soma(comp,"servDiag"),scC=soma(comp,"servConc");
+  var elegT=soma(comHist,"eleg"),insT=soma(comHist,"insem"),sd=soma(ciclos,"servDiag"),sc=soma(ciclos,"servConc");
+  /* as três taxas usam o MESMO conjunto de ciclos (os já resolvidos), para que prenhez ≈ serviço × concepção */
+  return {ts:comp.length&&eleg?ins/eleg*100:(elegT?insT/elegT*100:null),tc:comp.length&&sdC?scC/sdC*100:(sd?sc/sd*100:null),tp:eleg?pren/eleg*100:null,
+    nCiclosComp:comp.length,elegComp:eleg,insemComp:ins,prenComp:pren,elegMedia:comp.length?eleg/comp.length:null,servDiag:sd}}
+/* opt: {fim:"aaaa-mm-dd"} — fim do período; o início é o 1º ciclo. Indicadores de "período" (perdas, serviços/prenhez…) usam a mesma janela */
+function rpResumo(reb,cfg,hoje,nCiclos,opt){
+  cfg=rpCfg(cfg);hoje=hoje||rpHoje();opt=opt||{};nCiclos=nCiclos||12;
+  var ciclos=rpCiclos(reb,cfg,hoje,nCiclos,{fim:opt.fim});
+  var cicN=rpCiclos(reb,cfg,hoje,nCiclos,{fim:opt.fim,grupo:"novilhas"});
+  var T=rpTaxas(ciclos),TN=rpTaxas(cicN);
+  var wIni=ciclos[0].ini,wFim=ciclos[ciclos.length-1].fim;var noP=function(d){return d>=wIni&&d<=wFim};
   var ativos=reb.filter(function(r){return r.st.status!=="saiu"});
   var vacas=ativos.filter(function(r){return !r.st.novilha});
   var lact=vacas.filter(function(r){return !r.st.seca&&r.st.ultimoParto});var secas=vacas.filter(function(r){return r.st.seca});
   var cont={};Object.keys(RP_STATUS).forEach(function(k){cont[k]=0});ativos.forEach(function(r){cont[r.st.status]++});
   var prenhesVacas=vacas.filter(function(r){return r.st.prenhe}).length;
   var dels=lact.map(function(r){return r.st.del}).filter(function(x){return x!=null});
-  var abertos=[];reb.forEach(function(r){r.st.concepcoes.forEach(function(cc){if(cc.parto&&cc.data>=rpAdd(hoje,-365))abertos.push(rpDif(cc.data,cc.parto))})});
-  var conc12=0,serv12=0;reb.forEach(function(r){r.st.todosServicos.forEach(function(s){if(s.data>=rpAdd(hoje,-365)&&s.parto){if(s.res==="concepcao")conc12++;if(s.res==="concepcao"||s.res==="falha")serv12++}})});
-  var conc12b=0,perd12=0;reb.forEach(function(r){r.st.concepcoes.forEach(function(cc){if(cc.data>=rpAdd(hoje,-365))conc12b++});r.st.perdas.forEach(function(p){if(p.data>=rpAdd(hoje,-365))perd12++})});
-  var primServ=[];reb.forEach(function(r){var vistos={};r.st.todosServicos.forEach(function(s){if(s.parto&&!vistos[s.parto]&&s.data>=rpAdd(hoje,-365)){vistos[s.parto]=1;primServ.push(rpDif(s.data,s.parto))}})});
+  var abertos=[];reb.forEach(function(r){r.st.concepcoes.forEach(function(cc){if(cc.parto&&noP(cc.data))abertos.push(rpDif(cc.data,cc.parto))})});
+  var concV=0,servV=0,concN=0,servN=0;reb.forEach(function(r){r.st.todosServicos.forEach(function(s){if(!noP(s.data))return;var ok=s.res==="concepcao",dg=ok||s.res==="falha";if(s.parto){if(ok)concV++;if(dg)servV++}else{if(ok)concN++;if(dg)servN++}})});
+  var concP=0,perd=0,perdR=0,perdA=0,concPV=0,concPN=0,perdV=0,perdN=0;reb.forEach(function(r){r.st.concepcoes.forEach(function(cc){if(noP(cc.data)){concP++;if(cc.parto)concPV++;else concPN++}});r.st.perdas.forEach(function(p){if(noP(p.data)){perd++;if(p.tipo==="aborto")perdA++;else perdR++;var cc=null;r.st.concepcoes.forEach(function(c){if(c.data===p.concepcao)cc=c});if(cc&&!cc.parto)perdN++;else perdV++}})});
+  var primServ=[];reb.forEach(function(r){var vistos={};r.st.todosServicos.forEach(function(s){if(s.parto&&!vistos[s.parto]&&noP(s.data)){vistos[s.parto]=1;primServ.push(rpDif(s.data,s.parto))}})});
+  var idadeConc=[],idade1IA=[];reb.forEach(function(r){if(!r.a.nasc)return;var sN=r.st.todosServicos.filter(function(s){return !s.parto});if(sN.length&&noP(sN[0].data))idade1IA.push(rpDif(sN[0].data,r.a.nasc));r.st.concepcoes.forEach(function(cc){if(!cc.parto&&noP(cc.data))idadeConc.push(rpDif(cc.data,r.a.nasc))})});
   function media(a){return a.length?a.reduce(function(x,y){return x+y},0)/a.length:null}
-  var mAb=media(abertos);
+  /* % prenhes até 150 DEL (vacas que completaram 150 DEL no período), IEP real e idade ao 1º parto */
+  var p150n=0,p150s=0,iep=[],idade1p=[];reb.forEach(function(r){var st=r.st;st.partos.forEach(function(p,ix){var d150=rpAdd(p,150);if(noP(d150)&&d150<=hoje){if(st.saiu&&st.saiu.data<d150)return;p150n++;if(st.concepcoes.some(function(cc){return cc.parto===p&&cc.data<=d150}))p150s++}if(ix>0&&noP(p))iep.push(rpDif(p,st.partos[ix-1]))});if(r.a.nasc&&st.partos[0]&&noP(st.partos[0]))idade1p.push(rpDif(st.partos[0],r.a.nasc))});
+  var mAb=media(abertos);var nov=ativos.filter(function(r){return r.st.novilha});
   return {
-    ciclos:ciclos,
-    /* as três taxas do resumo usam o MESMO conjunto de ciclos (os já resolvidos), para que prenhez ≈ serviço × concepção */
-    ts:comp.length&&eleg?insemC/eleg*100:(elegT?insemT/elegT*100:null),
-    tc:comp.length&&soma(comp,"servDiag")?soma(comp,"servConc")/soma(comp,"servDiag")*100:(sd?sc/sd*100:null),
-    nCiclosComp:comp.length,elegComp:eleg,insemComp:insemC,prenComp:pren,
-    tp:eleg?pren/eleg*100:null,
-    elegMedia:comp.length?eleg/comp.length:null,
+    ciclos:ciclos,periodo:{ini:wIni,fim:wFim},
+    ts:T.ts,tc:T.tc,tp:T.tp,nCiclosComp:T.nCiclosComp,elegComp:T.elegComp,insemComp:T.insemComp,prenComp:T.prenComp,elegMedia:T.elegMedia,
+    nov:{ciclos:cicN,ts:TN.ts,tc:TN.tc,tp:TN.tp,elegComp:TN.elegComp,insemComp:TN.insemComp,servDiag:TN.servDiag,servPorConc:concN?servN/concN:null,porServico:rpConcPorServico(reb,wIni,"so",wFim),
+      n:nov.length,prenhes:nov.filter(function(r){return r.st.prenhe}).length,inseminadas:nov.filter(function(r){return r.st.status==="inseminada"}).length,idadeConc:media(idadeConc),idade1IA:media(idade1IA),perdas:perdN,pctPerdas:concPN?perdN/concPN*100:null},
     nAtivos:ativos.length,nVacas:vacas.length,nLact:lact.length,nSecas:secas.length,nSemParto:vacas.filter(function(r){return !r.st.ultimoParto&&!r.st.seca}).length,
-    nPrenhesTotal:ativos.filter(function(r){return r.st.prenhe}).length,novilhasPrenhes:ativos.filter(function(r){return r.st.novilha&&r.st.prenhe}).length,
-    porServico:rpConcPorServico(reb,rpAdd(hoje,-365)),
-    nNovilhas:ativos.filter(function(r){return r.st.novilha}).length,
+    nPrenhesTotal:ativos.filter(function(r){return r.st.prenhe}).length,novilhasPrenhes:nov.filter(function(r){return r.st.prenhe}).length,
+    porServico:rpConcPorServico(reb,wIni,false,wFim),
+    nNovilhas:nov.length,
     pctPrenhes:vacas.length?prenhesVacas/vacas.length*100:null,prenhesVacas:prenhesVacas,
     delMedio:media(dels),
     diasAbertos:mAb,iepProj:mAb!=null?mAb+cfg.gestacao:null,
-    servPorConc:conc12?serv12/conc12:null,
-    pctPerdas:conc12b?perd12/conc12b*100:null,perdas:perd12,
-    primServico:media(primServ),
+    servPorConc:concV?servV/concV:null,
+    pctPerdas:concP?perd/concP*100:null,perdas:perd,perdasReab:perdR,perdasAborto:perdA,concepcoes12:concP,perdasVacas:perdV,perdasNov:perdN,pctPerdasVacas:concPV?perdV/concPV*100:null,
+    primServico:media(primServ),pct150:p150n?p150s/p150n*100:null,n150:p150n,iepReal:media(iep),nIep:iep.length,idade1Parto:media(idade1p),nIdade1p:idade1p.length,
     vazias150:ativos.filter(function(r){return r.st.status==="vazia"&&r.st.del>150}).length,
     cont:cont,
-    serv12:serv12,conc12:conc12,
+    serv12:servV,conc12:concV,
     pendConferir:0
   };
 }
@@ -6792,6 +6826,8 @@ function rpChip(status){var s=RP_STATUS[status]||RP_STATUS.sem_dados;return '<sp
 function rpPct(v){return v==null?"—":Math.round(v)+"%"}
 function rpLinhaPrevisao(st){
   if(st.status==="saiu")return "Saiu em "+rpBR(st.saiu.data);
+  if(st.status==="naoins")return "Não inseminar desde "+rpBR(st.naoIns.data)+(st.naoIns.motivo?" · "+rpEsc(st.naoIns.motivo):"")+(st.del!=null?" · DEL "+st.del:"");
+  if(st.prot)return "Protocolo "+rpEsc(st.prot.nome)+" · IATF em "+rpBR(st.prot.iatf)+(st.del!=null?" · DEL "+st.del:"");
   if(st.prenhe)return st.diasGest+" dias de gestação · parto "+rpBR(st.prev.parto)+(st.prev.secagem&&!st.seca?" · secar "+rpBR(st.prev.secagem):"");
   if(st.status==="inseminada")return "IA "+rpBR(st.ultimoServico.data)+" · DG a partir de "+rpBR(st.prev.dg);
   if(st.status==="vazia")return "DEL "+st.del+" · "+(st.nServicos?st.nServicos+" serviço(s) nesta lactação":"sem serviço ainda");
@@ -6804,7 +6840,7 @@ function rpTimelineHtml(r,opts){opts=opts||{};
   var evs=rpOrdenarEventos(r.evs).reverse();
   if(!evs.length)return '<div style="color:#94a3b8;font-size:12px;padding:8px 0">Nenhum evento lançado ainda.</div>';
   return evs.map(function(e){var t=RP_TIPOS[e.tipo]||{l:e.tipo,i:"•"};
-    var det=[];if(e.touro)det.push("Touro: "+rpEsc(e.touro));if(e.tipo==="dg")det.push(e.resultado==="+"?"<b style='color:#15803d'>Prenhe</b>":"<b style='color:#dc2626'>Vazia</b>");if(e.concepcao)det.push("concepção "+rpBR(e.concepcao));if(e.motivo)det.push(rpEsc(e.motivo));if(e.obs)det.push(rpEsc(e.obs));
+    var det=[];if(e.touro)det.push("Touro: "+rpEsc(e.touro));if(e.tipo==="dg")det.push(rpResDG(e));if(e.inseminador)det.push("Inseminador: "+rpEsc(e.inseminador));if(e.tipo_servico&&RP_TSV[e.tipo_servico])det.push(RP_TSV[e.tipo_servico]);if(e.tipo==="protocolo")det.push(rpEsc(e.protocolo_nome||e.protocolo||""));if(e.tipo==="sanidade")det.push("<b style='color:#be185d'>"+(RP_DOENCAS[e.doenca]||rpEsc(e.doenca||""))+"</b>");if(e.tipo==="aborto")det.push("<b style='color:#c2410c'>"+RP_PERDA[rpTipoPerda(e,null)]+"</b>");if(e.concepcao)det.push("concepção "+rpBR(e.concepcao));if(e.motivo)det.push(rpEsc(e.motivo));if(e.obs)det.push(rpEsc(e.obs));
     var sv=null;if(e.tipo==="ia"||e.tipo==="cobertura"){r.st.todosServicos.forEach(function(s){if(s.id===e.id)sv=s})}
     if(sv&&sv.res==="concepcao")det.push("<span style=\'color:#15803d\'>emprenhou</span>");else if(sv&&sv.res==="falha")det.push("<span style=\'color:#dc2626\'>não emprenhou</span>");
     return '<div class="rp-tl"><div class="rp-tl-i">'+t.i+'</div><div style="flex:1;min-width:0"><div style="font-weight:700;font-size:13px">'+t.l+' <span style="font-weight:500;color:#64748b">· '+rpBR(e.data)+'</span>'+(e.conferido===false?' <span class="rp-chip" style="background:#fef3c7;color:#b45309">a conferir</span>':'')+'</div>'+(det.length?'<div style="font-size:12px;color:#475569">'+det.join(" · ")+'</div>':'')+'</div>'+(opts.acoes?opts.acoes(e):'')+'</div>'}).join("");
@@ -6815,15 +6851,28 @@ var RP_CSS='.rp-chip{display:inline-block;font-size:10.5px;font-weight:700;paddi
 '.rp-prev{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:8px}.rp-prev>div{background:#f8fafc;border:1px solid #e2e8f0;border-radius:12px;padding:10px}.rp-prev small{display:block;font-size:10.5px;color:#64748b;font-weight:600}.rp-prev b{font-size:15px}';
 (function(){try{var st=document.createElement("style");st.id="rp-core-css";st.textContent=RP_CSS;document.head.appendChild(st)}catch(e){}})();
 
-var RP_FILTROS=[["todas","Todas"],["prenhe","Prenhes"],["inseminada","Aguardando DG"],["vazia","Vazias"],["pev","Recém-paridas"],["seca","Secas"],["novilha","Novilhas"],["sem_dados","Sem parto"]];
+var RP_FILTROS=[["todas","Todas"],["prenhe","Prenhes"],["inseminada","Aguardando DG"],["vazia","Vazias"],["pev","Recém-paridas"],["seca","Secas"],["novilha","Novilhas"],["naoins","Não inseminar"],["sem_dados","Sem parto"]];
 function rpResumoCompacto(R,ag,eventos){var r1=function(v){return v!=null?Math.round(v*10)/10:null};var pend=0;for(var k in eventos){if(eventos[k].conferido===false)pend++}
   return {atualizado:Date.now(),data:rpHoje(),nVacas:R.nVacas,pctPrenhes:r1(R.pctPrenhes),tp:r1(R.tp),ts:r1(R.ts),tc:r1(R.tc),del:R.delMedio!=null?Math.round(R.delMedio):null,dg:ag.dg.length,secar:ag.secar.length,pend:pend}}
 function rpPublicarResumo(farm,R,ag,eventos){try{if(!R.nAtivos)return;db.ref("repro_resumo/"+farm).set(rpResumoCompacto(R,ag,eventos)).catch(function(){})}catch(e){}}
 
 /* concepção por ordem do serviço na lactação (1º, 2º, 3º, 4º, 5º+), serviços com resultado conhecido desde "desde" */
-function rpConcPorServico(reb,desde,incluiNovilhas){var o=[null,{n:0,c:0},{n:0,c:0},{n:0,c:0},{n:0,c:0},{n:0,c:0}];
-  reb.forEach(function(r){var cont={};r.st.todosServicos.forEach(function(s){var key=s.parto||"nov";if(!s.parto&&!incluiNovilhas){return}cont[key]=(cont[key]||0)+1;if(desde&&s.data<desde)return;if(s.res!=="concepcao"&&s.res!=="falha")return;var i=Math.min(cont[key],5);o[i].n++;if(s.res==="concepcao")o[i].c++})});
+function rpConcPorServico(reb,desde,modo,ate){var o=[null,{n:0,c:0},{n:0,c:0},{n:0,c:0},{n:0,c:0},{n:0,c:0}];
+  reb.forEach(function(r){var cont={};r.st.todosServicos.forEach(function(s){if(modo==="so"?s.parto:(!s.parto&&!modo))return;var key=s.parto||"nov";cont[key]=(cont[key]||0)+1;if(desde&&s.data<desde)return;if(ate&&s.data>ate)return;if(s.res!=="concepcao"&&s.res!=="falha")return;var i=Math.min(cont[key],5);o[i].n++;if(s.res==="concepcao")o[i].c++})});
   o.forEach(function(x){if(x)x.tc=x.n?x.c/x.n*100:null});return o}
+
+/* reabsorção (perda embrionária, até ~45 dias) ou aborto (perda fetal) — usa o informado, senão os dias de gestação */
+function rpTipoPerda(e,conc){if(e.perda==="reabsorcao"||e.perda==="aborto")return e.perda;var d=conc?rpDif(e.data,conc):(e.dias_gestacao||0);return d&&d<=45?"reabsorcao":"aborto"}
+var RP_PERDA={reabsorcao:"Reabsorção",aborto:"Aborto"};
+function rpResDG(e){return e.resultado==="+"?"<b style='color:#15803d'>Prenhe</b>":e.resultado==="p"?"<b style='color:#c2410c'>Perda · "+RP_PERDA[e.perda||"reabsorcao"]+"</b>":"<b style='color:#dc2626'>Vazia</b>"}
+
+var RP_PROTOCOLOS_PADRAO=[
+  {id:"p4",nome:"IATF P4 + estradiol (D0–D11)",passos:[{d:0,a:"Implante de P4 + benzoato de estradiol"},{d:7,a:"PGF2α"},{d:9,a:"Retirada do implante + cipionato de estradiol (+ eCG)"},{d:11,a:"IATF"}]},
+  {id:"ovs",nome:"Ovsynch",passos:[{d:0,a:"GnRH"},{d:7,a:"PGF2α"},{d:9,a:"GnRH"},{d:10,a:"IATF (16–20 h após GnRH)"}]},
+  {id:"res",nome:"Ressincronização (D22 pós-IA)",passos:[{d:0,a:"Implante de P4 + benzoato (22 dias após a IA)"},{d:8,a:"Retirada + DG; vazias: PGF2α + cipionato"},{d:10,a:"IATF das vazias"}]}
+];
+var RP_DOENCAS={retencao:"Retenção de placenta",metrite:"Metrite",endometrite:"Endometrite / piometra",cisto:"Cisto ovariano",mastite:"Mastite clínica",hipocalcemia:"Hipocalcemia",cetose:"Cetose",deslocamento:"Deslocamento de abomaso",casco:"Problema de casco",outro:"Outro"};
+var RP_TSV={cio:"Cio observado",iatf:"IATF",repasse:"Repasse",touro:"Monta natural"};
 
 /* ===== Reprodução — lançamento em lote e relatórios (compartilhado) ===== */
 /* cada app define window.rpCtx() => {farm, dados, reb, cfg, por, nome, depois:async fn} */
@@ -6835,7 +6884,7 @@ var RPX_CSS='#rpx-ov{position:fixed;inset:0;background:rgba(15,23,42,.55);z-inde
 '.rpx-b{border:1.5px solid #e2e8f0;background:#fff;border-radius:10px;padding:8px 12px;font-size:12.5px;font-weight:700;font-family:Inter,sans-serif;cursor:pointer;color:#0f172a;white-space:nowrap}.rpx-b.p{background:#15803d;border-color:#15803d;color:#fff}.rpx-b.on{background:#003c0c;border-color:#003c0c;color:#fff}.rpx-b:disabled{opacity:.5}'+
 '.rpx-chips{display:flex;gap:6px;flex-wrap:wrap}.rpx-g2{display:grid;grid-template-columns:1fr 1fr;gap:0 12px}.rpx-g2>*{min-width:0}'+
 '.rpx-l{display:flex;align-items:center;gap:10px;padding:8px 6px;border-bottom:1px solid #f1f5f9;font-size:13px}.rpx-l b.br{min-width:56px;font-size:15px}.rpx-l .s{flex:1;min-width:0;color:#64748b;font-size:11.5px}#rpx-ov .rpx-l input[type=checkbox]{width:22px;height:22px;flex:0 0 auto;padding:0;margin:0;accent-color:#15803d}'+
-'.rpx-seg{display:flex;gap:4px}.rpx-seg button{border:1.5px solid #e2e8f0;background:#fff;border-radius:8px;padding:6px 9px;font-size:11.5px;font-weight:800;cursor:pointer;font-family:Inter,sans-serif}.rpx-seg button.on.pos{background:#dcfce7;border-color:#15803d;color:#15803d}.rpx-seg button.on.neg{background:#fee2e2;border-color:#dc2626;color:#dc2626}'+
+'.rpx-seg{display:flex;gap:4px}.rpx-seg button{border:1.5px solid #e2e8f0;background:#fff;border-radius:8px;padding:6px 9px;font-size:11.5px;font-weight:800;cursor:pointer;font-family:Inter,sans-serif}.rpx-seg button.on.pos{background:#dcfce7;border-color:#15803d;color:#15803d}.rpx-seg button.on.neg{background:#fee2e2;border-color:#dc2626;color:#dc2626}.rpx-seg button.on.perda{background:#ffedd5;border-color:#c2410c;color:#c2410c}'+
 '.rpx-t{width:100%;border-collapse:collapse;font-size:12px}.rpx-t th{text-align:left;font-size:10.5px;color:#64748b;text-transform:uppercase;padding:6px;border-bottom:1px solid #e2e8f0;background:#f8fafc}.rpx-t td{padding:6px;border-bottom:1px solid #f1f5f9}'+
 '.rpx-foot{position:sticky;bottom:0;background:#fff;border-top:1px solid #e2e8f0;padding:12px 18px;display:flex;gap:8px;justify-content:flex-end;align-items:center;flex-wrap:wrap}'+
 '@media(max-width:640px){#rpx-ov{padding:0;align-items:flex-end}#rpx-ov .bx{border-radius:18px 18px 0 0;max-height:94dvh}.rpx-g2{grid-template-columns:1fr}}';
@@ -6845,7 +6894,7 @@ function rpxFechar(){var o=document.getElementById("rpx-ov");if(o)o.remove()}
 function rpxMsg(m,err){if(typeof showToast==="function")showToast(m,err);else if(typeof toast==="function")toast(m,err);else alert(m)}
 
 /* ---------------- LANÇAMENTO EM LOTE ---------------- */
-var RPX_LOTE_TIPOS=[["ia","Inseminação"],["dg","Diagnóstico (DG)"],["parto","Partos"],["secagem","Secagem"],["cio","Cio"],["descarte","Saída"]];
+var RPX_LOTE_TIPOS=[["protocolo","Protocolo IATF"],["ia","Inseminação"],["dg","Diagnóstico (DG)"],["parto","Partos"],["secagem","Secagem"],["cio","Cio"],["descarte","Saída"]];
 var _rpx={};
 function rpxCandidatos(tipo,C){var hoje=rpHoje(),cfg=C.cfg;
   var at=C.reb.filter(function(r){return r.st.status!=="saiu"});
@@ -6859,6 +6908,11 @@ function rpxCandidatos(tipo,C){var hoje=rpHoje(),cfg=C.cfg;
   else if(tipo==="dg"){at.forEach(function(r){var s=r.st;if(s.status==="inseminada"){var d=rpDif(hoje,s.ultimoServico.data);if(d>=25)L.push({r:r,ord:0,k:-d,txt:"IA "+rpBR(s.ultimoServico.data)+" · "+d+" dias"+(s.ultimoServico.touro?" · "+rpEsc(s.ultimoServico.touro):"")})}})}
   else if(tipo==="parto"){at.forEach(function(r){var s=r.st;if(s.prenhe&&s.prev.parto&&s.prev.parto<=rpAdd(hoje,30))L.push({r:r,ord:0,k:s.prev.parto,txt:"Previsto "+rpBR(s.prev.parto)+(s.prev.parto<hoje?" (passou)":"")})})}
   else if(tipo==="secagem"){at.forEach(function(r){var s=r.st;if(s.prenhe&&!s.seca&&s.prev.secagem&&s.prev.secagem<=rpAdd(hoje,21))L.push({r:r,ord:0,k:s.prev.secagem,txt:"Secar em "+rpBR(s.prev.secagem)+(s.prev.secagem<hoje?" (atrasada)":"")+" · parto "+rpBR(s.prev.parto)})})}
+  else if(tipo==="protocolo"){at.forEach(function(r){var s=r.st;if(s.prot)return;var ord=9,txt="";
+      if(s.status==="vazia"){ord=0;txt="Vazia · DEL "+s.del+" · "+(s.nServicos?s.nServicos+" serviço(s)":"sem serviço")}
+      else if(s.status==="pev"&&s.del>=cfg.pev-12){ord=1;txt="DEL "+s.del+" · apta em "+rpBR(s.prev.aptaEm)}
+      else if(s.status==="inseminada"){var d=rpDif(hoje,s.ultimoServico.data);if(d>=18&&d<=28){ord=2;txt="Ressincronização · IA há "+d+" dias"}else return}
+      else if(s.status==="novilha"){ord=3;txt="Novilha"}else return;L.push({r:r,ord:ord,k:-(s.del||0),txt:txt})})}
   else if(tipo==="cio"){at.forEach(function(r){var s=r.st;if(["vazia","pev","inseminada","novilha"].indexOf(s.status)>=0)L.push({r:r,ord:s.status==="inseminada"?0:1,k:0,txt:rpLinhaPrevisao(s)})})}
   else{at.forEach(function(r){L.push({r:r,ord:0,k:0,txt:(RP_STATUS[r.st.status]||{}).l})})}
   L.sort(function(a,b){return a.ord-b.ord||(a.k<b.k?-1:a.k>b.k?1:rpCmpBrinco(a.r.a.brinco,b.r.a.brinco))});return L;
@@ -6872,17 +6926,21 @@ function rpxLoteRender(){var C=window.rpCtx();var t=_rpx.tipo;
   document.getElementById("rpx-tipos").innerHTML=RPX_LOTE_TIPOS.map(function(x){return '<button class="rpx-b'+(t===x[0]?" on":"")+'" onclick="_rpx.tipo=\''+x[0]+'\';_rpx.sel={};rpxLoteRender()">'+x[1]+'</button>'}).join("");
   var ex=document.getElementById("rpx-extra");var tv=document.getElementById("rpx-touro");var touroAnt=tv?tv.value:"";
   var touros={};Object.values(C.dados.eventos).forEach(function(e){if(e.touro)touros[e.touro]=1});
+  var insAnt=(document.getElementById("rpx-insem")||{}).value||"";var tsvAnt=(document.getElementById("rpx-tsv")||{}).value||"";var protAnt=(document.getElementById("rpx-prot")||{}).value||"";
+  var insL={};Object.values(C.dados.eventos).forEach(function(e){if(e.inseminador)insL[e.inseminador.trim()]=1});
   ex.innerHTML=t==="ia"?'<label>Touro / sêmen padrão</label><input id="rpx-touro" list="rpx-touros" value="'+rpEsc(touroAnt)+'" placeholder="Opcional"><datalist id="rpx-touros">'+Object.keys(touros).map(function(x){return '<option value="'+rpEsc(x)+'">'}).join("")+'</datalist>':t==="descarte"?'<label>Motivo padrão</label><input id="rpx-motivo" value="Venda">':'';
+  if(t==="ia")ex.innerHTML+='<div class="rpx-g2"><div><label>Tipo de serviço</label><select id="rpx-tsv"><option value="">Automático (IATF se em protocolo)</option><option value="cio"'+(tsvAnt==="cio"?" selected":"")+'>Cio observado</option><option value="iatf"'+(tsvAnt==="iatf"?" selected":"")+'>IATF</option><option value="repasse"'+(tsvAnt==="repasse"?" selected":"")+'>Repasse</option></select></div><div><label>Inseminador</label><input id="rpx-insem" list="rpx-insems" value="'+rpEsc(insAnt)+'"><datalist id="rpx-insems">'+Object.keys(insL).map(function(x){return '<option value="'+rpEsc(x)+'">'}).join("")+'</datalist></div></div>';
+  if(t==="protocolo")ex.innerHTML='<label>Protocolo (a data é o D0)</label><select id="rpx-prot">'+C.cfg.protocolos.map(function(x){return '<option value="'+rpEsc(x.id)+'"'+(protAnt===x.id?" selected":"")+'>'+rpEsc(x.nome)+'</option>'}).join("")+'</select>';
   document.getElementById("rpx-m-lista").classList.toggle("on",_rpx.modo==="lista");document.getElementById("rpx-m-txt").classList.toggle("on",_rpx.modo==="txt");
   var corpo=document.getElementById("rpx-corpo");
-  if(_rpx.modo==="txt"){var ex2={ia:"245 ZEUS\n312 APOLO 10/11\n118",dg:"245 +\n312 -\n118 P 60\n(+ ou P = prenhe · - ou V = vazia · número = dias de gestação)",parto:"245 F\n312 M 08/11\n(F fêmea · M macho · N natimorto · G gêmeos)",secagem:"245\n312 05/11",cio:"245\n312",descarte:"245 Venda\n312 Morte"}[t];
+  if(_rpx.modo==="txt"){var ex2={ia:"245 ZEUS\n312 APOLO 10/11\n118",dg:"245 +\n312 -\n118 P 60\n77 R\n(+ ou P = prenhe · - ou V = vazia · R = reabsorção · AB = aborto · número = dias de gestação)",parto:"245 F\n312 M 08/11\n(F fêmea · M macho · N natimorto · G gêmeos)",secagem:"245\n312 05/11",cio:"245\n312",descarte:"245 Venda\n312 Morte"}[t];
     corpo.innerHTML='<div style="font-size:12px;color:#64748b;margin-bottom:6px">Uma vaca por linha: <b>brinco</b> e, se quiser, os detalhes. Pode colar direto do relatório do veterinário ou da planilha.</div><textarea id="rpx-txt" rows="9" placeholder="'+rpEsc(ex2)+'" oninput="rpxLoteTxtPreview()">'+rpEsc(_rpx.txt||"")+'</textarea><div id="rpx-prev" style="margin-top:10px"></div>';rpxLoteTxtPreview();return}
   var L=rpxCandidatos(t,C);_rpx.cand=L;
   var b=rpNormBrinco(_rpx.busca);var vis=L.filter(function(x){return !b||rpNormBrinco(x.r.a.brinco).indexOf(b)===0});
-  var tit={ia:"Vacas aptas e retornos esperados",dg:"Inseminadas há 25+ dias, sem diagnóstico",parto:"Prenhes com parto previsto em até 30 dias",secagem:"Prenhes para secar nos próximos 21 dias",cio:"Vacas que podem manifestar cio",descarte:"Rebanho ativo"}[t];
+  var tit={protocolo:"Vazias aptas, saindo do PEV, ressincronização e novilhas",ia:"Vacas aptas e retornos esperados",dg:"Inseminadas há 25+ dias, sem diagnóstico",parto:"Prenhes com parto previsto em até 30 dias",secagem:"Prenhes para secar nos próximos 21 dias",cio:"Vacas que podem manifestar cio",descarte:"Rebanho ativo"}[t];
   corpo.innerHTML='<div style="display:flex;gap:8px;align-items:center;margin-bottom:6px;flex-wrap:wrap"><div style="font-size:12px;font-weight:700;flex:1">'+tit+' ('+L.length+')</div>'+(t!=="dg"&&vis.length?'<button class="rpx-b" onclick="rpxTodos()">Marcar todas</button>':'')+'<input placeholder="Buscar brinco" style="width:120px;padding:7px 10px" value="'+rpEsc(_rpx.busca)+'" oninput="_rpx.busca=this.value;rpxLoteRender();var i=document.querySelector(\'#rpx-corpo input[placeholder]\');if(i){i.focus();i.setSelectionRange(99,99)}"></div>'+
     (vis.length?vis.map(function(x){var id=x.r.id,v=_rpx.sel[id];
-      var ctl=t==="dg"?'<div class="rpx-seg"><button class="pos'+(v==="+"?" on":"")+'" onclick="rpxSel(\''+id+'\',\'+\')">Prenhe</button><button class="neg'+(v==="-"?" on":"")+'" onclick="rpxSel(\''+id+'\',\'-\')">Vazia</button></div>'
+      var ctl=t==="dg"?'<div class="rpx-seg"><button class="pos'+(v==="+"?" on":"")+'" onclick="rpxSel(\''+id+'\',\'+\')">Prenhe</button><button class="neg'+(v==="-"?" on":"")+'" onclick="rpxSel(\''+id+'\',\'-\')">Vazia</button><button class="perda'+(v==="p"?" on":"")+'" title="Reabsorção ou aborto" onclick="rpxSel(\''+id+'\',\'p\')">Perda</button></div>'
         :'<input type="checkbox" '+(v?"checked":"")+' onchange="rpxSel(\''+id+'\',this.checked?1:0)">';
       return '<div class="rpx-l">'+(t==="dg"?"":ctl)+'<b class="br">'+rpEsc(x.r.a.brinco)+'</b><div class="s">'+x.txt+'</div>'+(t==="dg"?ctl:"")+'</div>'}).join(""):'<div style="padding:18px;text-align:center;color:#94a3b8;font-size:12.5px">Nenhuma vaca nesta condição. Use "Digitar / colar relatório" para lançar qualquer brinco.</div>');
   rpxCont();
@@ -6898,7 +6956,7 @@ function rpxParseTexto(txt,tipo,dataPadrao,C){var out=[];var hoje=rpHoje();var v
     var l={brinco:rpNormBrinco(tk[0]),data:dataPadrao,raw:raw,av:[]};var resto=[];
     tk.slice(1).forEach(function(t){var d=null;if(/^\d{1,2}[\/.]\d{1,2}([\/.]\d{2,4})?$/.test(t)){var p=t.split(/[\/.]/);if(p.length===2)p.push(hoje.slice(0,4));d=rpParseData(p.join("/"));if(d&&d>hoje&&p[2]===hoje.slice(0,4))d=rpParseData(p[0]+"/"+p[1]+"/"+(+p[2]-1))}else if(/^\d{4}-\d{2}-\d{2}$/.test(t))d=t;
       if(d){l.data=d;return}resto.push(t)});
-    if(tipo==="dg"){resto.forEach(function(t){var u=t.toUpperCase();if(/^(\+|P|PR|PRENHE|PRENHA|POS|POSITIVO|POSITIVA|SIM|S)$/.test(u))l.res="+";else if(/^(-|V|VZ|VAZIA|NEG|NEGATIVO|NEGATIVA|NAO|NÃO|N)$/.test(u))l.res="-";else if(/^\d{2,3}$/.test(t)&&+t>=20&&+t<=285)l.dg=+t;else if(/^\d{2,3}D(IAS)?$/i.test(t))l.dg=parseInt(t,10)});if(!l.res&&l.dg)l.res="+";if(!l.res)l.erro="sem resultado (+ ou -)"}
+    if(tipo==="dg"){resto.forEach(function(t){var u=t.toUpperCase();if(/^(R|RE|REAB|REABS|REABSORVEU|REABSORCAO|REABSORÇÃO|REABSORVIDA|PE|PERDA|MORTE EMBRIONARIA)$/.test(u)){l.res="p";l.perda="reabsorcao"}else if(/^(AB|ABORTO|ABORTOU)$/.test(u)){l.res="p";l.perda="aborto"}else if(/^(\+|P|PR|PRENHE|PRENHA|POS|POSITIVO|POSITIVA|SIM|S)$/.test(u))l.res="+";else if(/^(-|V|VZ|VAZIA|NEG|NEGATIVO|NEGATIVA|NAO|NÃO|N)$/.test(u))l.res="-";else if(/^\d{2,3}$/.test(t)&&+t>=20&&+t<=285)l.dg=+t;else if(/^\d{2,3}D(IAS)?$/i.test(t))l.dg=parseInt(t,10)});if(!l.res&&l.dg)l.res="+";if(!l.res)l.erro="sem resultado (+, -, R ou AB)"}
     else if(tipo==="ia"){if(resto.length)l.touro=resto.join(" ")}
     else if(tipo==="parto"){resto.forEach(function(t){var u=t.toUpperCase();if(/^(F|FEMEA|FÊMEA|BEZERRA)$/.test(u))l.cria="F";else if(/^(M|MACHO|BEZERRO)$/.test(u))l.cria="M";else if(/^(N|NATIMORTO|MORTO)$/.test(u))l.cria="N";else if(/^(G|GEMEOS|GÊMEOS)$/.test(u))l.cria="G"})}
     else if(tipo==="descarte"){if(resto.length)l.motivo=resto.join(" ")}
@@ -6920,15 +6978,16 @@ function rpxAvisos(l,tipo,C){var id=rpAnimalPorBrinco(C.dados.animais,l.brinco);
 }
 function rpxLoteTxtPreview(){var C=window.rpCtx();var ta=document.getElementById("rpx-txt");_rpx.txt=ta?ta.value:"";var L=rpxParseTexto(_rpx.txt,_rpx.tipo,document.getElementById("rpx-data").value,C);_rpx.linhas=L;
   var p=document.getElementById("rpx-prev");if(!p)return;
-  p.innerHTML=L.length?'<table class="rpx-t"><tr><th>Brinco</th><th>Data</th><th>Detalhe</th><th>Situação</th></tr>'+L.map(function(l){var det=[];if(l.res)det.push(l.res==="+"?"<b style='color:#15803d'>Prenhe</b>":"<b style='color:#dc2626'>Vazia</b>");if(l.dg)det.push(l.dg+" d gest.");if(l.touro)det.push(rpEsc(l.touro));if(l.cria)det.push({F:"Fêmea",M:"Macho",N:"Natimorto",G:"Gêmeos"}[l.cria]);if(l.motivo)det.push(rpEsc(l.motivo));
+  p.innerHTML=L.length?'<table class="rpx-t"><tr><th>Brinco</th><th>Data</th><th>Detalhe</th><th>Situação</th></tr>'+L.map(function(l){var det=[];if(l.res)det.push(rpResDG({resultado:l.res,perda:l.perda}));if(l.dg)det.push(l.dg+" d gest.");if(l.touro)det.push(rpEsc(l.touro));if(l.cria)det.push({F:"Fêmea",M:"Macho",N:"Natimorto",G:"Gêmeos"}[l.cria]);if(l.motivo)det.push(rpEsc(l.motivo));
     return '<tr><td><b>'+rpEsc(l.brinco)+'</b></td><td>'+rpBR(l.data)+'</td><td>'+det.join(" · ")+'</td><td>'+(l.erro?'<span style="color:#dc2626">'+l.erro+'</span>':l.av.length?'<span style="color:#b45309">'+rpEsc(l.av.join("; "))+'</span>':'<span style="color:#15803d">✓</span>')+'</td></tr>'}).join("")+'</table><div style="font-size:11px;color:#94a3b8;margin-top:4px">Linhas em vermelho não são salvas. As em laranja são salvas, mas confira.</div>':'';
   rpxCont();
 }
 async function rpxLoteSalvar(){var C=window.rpCtx();var t=_rpx.tipo;var data=document.getElementById("rpx-data").value;if(!data||data>rpHoje()){rpxMsg("Data inválida",true);return}
-  var touro=(document.getElementById("rpx-touro")||{}).value||"";var motivo=(document.getElementById("rpx-motivo")||{}).value||"";
+  var touro=(document.getElementById("rpx-touro")||{}).value||"";var insem=((document.getElementById("rpx-insem")||{}).value||"").trim();var tsv=(document.getElementById("rpx-tsv")||{}).value||"";var protId=(document.getElementById("rpx-prot")||{}).value||"";var protO=C.cfg.protocolos.filter(function(x){return x.id===protId})[0];
+  var extra=function(ev,id){if(t==="ia"){if(insem)ev.inseminador=insem;var r=id?C.reb.filter(function(x){return x.id===id})[0]:null;ev.tipo_servico=tsv||(r&&r.st.prot?"iatf":"cio")}if(t==="protocolo"){ev.protocolo=protId;if(protO)ev.protocolo_nome=protO.nome}return ev};var motivo=(document.getElementById("rpx-motivo")||{}).value||"";
   var lista=[];
-  if(_rpx.modo==="txt"){rpxLoteTxtPreview();(_rpx.linhas||[]).filter(function(l){return !l.erro}).forEach(function(l){var ev={tipo:t,data:l.data};if(t==="ia"&&(l.touro||touro))ev.touro=(l.touro||touro).trim();if(t==="dg"){ev.resultado=l.res;if(l.dg)ev.dias_gestacao=l.dg}if(t==="parto"&&l.cria)ev.cria=l.cria;if(t==="descarte")ev.motivo=l.motivo||motivo;lista.push({brinco:l.brinco,categoria:"vaca",eventos:[ev]})})}
-  else Object.keys(_rpx.sel).forEach(function(id){var a=C.dados.animais[id];var ev={tipo:t,data:data};if(t==="ia"&&touro.trim())ev.touro=touro.trim();if(t==="dg")ev.resultado=_rpx.sel[id];if(t==="descarte"&&motivo)ev.motivo=motivo;lista.push({brinco:a.brinco,eventos:[ev]})});
+  if(_rpx.modo==="txt"){rpxLoteTxtPreview();(_rpx.linhas||[]).filter(function(l){return !l.erro}).forEach(function(l){var ev=extra({tipo:t,data:l.data},l.id);if(t==="ia"&&(l.touro||touro))ev.touro=(l.touro||touro).trim();if(t==="dg"){ev.resultado=l.res;if(l.perda)ev.perda=l.perda;if(l.dg)ev.dias_gestacao=l.dg}if(t==="parto"&&l.cria)ev.cria=l.cria;if(t==="descarte")ev.motivo=l.motivo||motivo;lista.push({brinco:l.brinco,categoria:"vaca",eventos:[ev]})})}
+  else Object.keys(_rpx.sel).forEach(function(id){var a=C.dados.animais[id];var ev=extra({tipo:t,data:data},id);if(t==="ia"&&touro.trim())ev.touro=touro.trim();if(t==="dg"){ev.resultado=_rpx.sel[id];if(ev.resultado==="p"){var rr=C.reb.filter(function(x){return x.id===id})[0];ev.perda=rpTipoPerda({data:data},rr&&rr.st.prenhe?rr.st.concepcao:(rr&&rr.st.ultimoServico?rr.st.ultimoServico.data:null))}}if(t==="descarte"&&motivo)ev.motivo=motivo;lista.push({brinco:a.brinco,eventos:[ev]})});
   if(!lista.length){rpxMsg("Nada selecionado",true);return}
   var b=document.getElementById("rpx-salvar");b.disabled=true;b.textContent="Salvando...";
   try{var r=await rpGravarLote(C.farm,C.dados,lista,{origem:"lote",por:C.por});rpxFechar();await C.depois();rpxMsg("✓ "+r.eventos+" lançamento(s) salvo(s)"+(r.animais?" · "+r.animais+" vaca(s) nova(s)":"")+(r.ignorados?" · "+r.ignorados+" já existia(m)":""))}
@@ -6936,7 +6995,7 @@ async function rpxLoteSalvar(){var C=window.rpCtx();var t=_rpx.tipo;var data=doc
 }
 
 /* ---------------- RELATÓRIOS / LISTAS DE MANEJO ---------------- */
-var RPX_REL=[["rebanho","Rebanho completo"],["dg","Para diagnóstico (DG)"],["ia","Para inseminar / observar cio"],["secagem","Para secar"],["partos","Partos previstos"],["prenhes","Vacas prenhes"],["vazias","Vazias e problemas"]];
+var RPX_REL=[["rebanho","Rebanho completo"],["protocolos","Protocolos IATF"],["dg","Para diagnóstico (DG)"],["ia","Para inseminar / observar cio"],["secagem","Para secar"],["partos","Partos previstos"],["prenhes","Vacas prenhes"],["vazias","Vazias e problemas"]];
 var _rpxR={tipo:"rebanho",dias:28,janela:30};
 function rpxRelDados(tipo,C){var hoje=rpHoje(),cfg=C.cfg;var at=C.reb.filter(function(r){return r.st.status!=="saiu"});var g=[];
   function lac(s){return s.novilha?"Nov.":(s.lact||"")}
@@ -6960,12 +7019,17 @@ function rpxRelDados(tipo,C){var hoje=rpHoje(),cfg=C.cfg;var at=C.reb.filter(fun
   if(tipo==="vazias"){var ag=rpAgenda(C.reb,cfg);var rows=ag.problema.map(function(x){var s=x.r.st;return [x.r.a.brinco,lac(s),s.del!=null?s.del:"",s.nServicos||"0",x.motivo,""]});
     g.push({t:"Vacas que precisam de atenção",h:["Vaca","Lact.","DEL","Serviços","Motivo","Conduta"],rows:rows});
     var sd=at.filter(function(r){return r.st.status==="sem_dados"}).map(function(r){return [r.a.brinco,"Lance o último parto para o sistema calcular"]});
+    var ni=at.filter(function(r){return r.st.status==="naoins"}).map(function(r){return [r.a.brinco,lac(r.st),r.st.del!=null?r.st.del:"",rpBR(r.st.naoIns.data),r.st.naoIns.motivo||""]});if(ni.length)g.push({t:"Marcadas para não inseminar",h:["Vaca","Lact.","DEL","Desde","Motivo"],rows:ni});
     if(sd.length)g.push({t:"Vacas sem parto lançado",h:["Vaca","Pendência"],rows:sd})}
+  if(tipo==="protocolos"){var em=at.filter(function(r){return r.st.prot}).sort(function(a,b){return a.st.prot.iatf<b.st.prot.iatf?-1:1});
+    var dias={};em.forEach(function(r){r.st.prot.passos.forEach(function(p){if(p.data>=rpAdd(hoje,-3)){(dias[p.data]=dias[p.data]||[]).push([r.a.brinco,lac(r.st),r.st.prot.nome,"D"+p.d,p.a,""])}})});
+    Object.keys(dias).sort().forEach(function(d){g.push({t:(d===hoje?"HOJE — ":d<hoje?"Atrasado — ":"")+rpBR(d),h:["Vaca","Lact.","Protocolo","Dia","Manejo","Feito"],rows:dias[d]})});
+    if(!g.length)g.push({t:"Nenhuma vaca em protocolo",h:["Vaca"],rows:[]})}
   if(tipo==="rebanho"){var R=rpResumo(C.reb,cfg);var ps=R.porServico;var f1=function(v){return v==null?"—":v.toFixed(1).replace(".",",")};
     g.push({t:"Resumo do rebanho",h:["Indicador","Valor","Indicador","Valor"],resumo:true,rows:[
       ["Animais ativos",R.nAtivos,"Taxa de prenhez (21 d)",rpPct(R.tp)],["Vacas",R.nVacas+" ("+R.nLact+" em lactação · "+R.nSecas+" secas)","Taxa de serviço",rpPct(R.ts)],
       ["Novilhas",R.nNovilhas,"Taxa de concepção",rpPct(R.tc)],["Prenhes (total)",R.nPrenhesTotal+" · "+rpPct(R.pctPrenhes)+" das vacas","Serviços por prenhez",f1(R.servPorConc)],
-      ["DEL médio",R.delMedio!=null?Math.round(R.delMedio):"—","IEP projetado",R.iepProj!=null?f1(R.iepProj/30.4)+" meses":"—"],["Vazias > 150 DEL",R.vazias150,"Perdas de gestação",rpPct(R.pctPerdas)]]});
+      ["DEL médio",R.delMedio!=null?Math.round(R.delMedio):"—","IEP projetado",R.iepProj!=null?f1(R.iepProj/30.4)+" meses":"—"],["Vazias > 150 DEL",R.vazias150,"Perdas de gestação",rpPct(R.pctPerdas)+(R.perdas?" ("+R.perdasReab+" reabs. · "+R.perdasAborto+" abortos)":"")]]});
     g.push({t:"Concepção por número do serviço (12 meses)",h:["Serviço","Serviços","Prenhezes","Concepção"],rows:[1,2,3,4,5].map(function(i){var o=ps[i];return [i===5?"5º ou mais":i+"º",o.n,o.c,rpPct(o.tc)]})});
     var ordem={prenhe:1,seca:2,inseminada:3,vazia:4,pev:5,novilha:6,sem_dados:7};
     var rows=at.slice().sort(function(a,b){return (ordem[a.st.status]||9)-(ordem[b.st.status]||9)||rpCmpBrinco(a.a.brinco,b.a.brinco)}).map(function(r){var s=r.st;return [r.a.brinco,lac(s),s.del!=null?s.del:"",(RP_STATUS[s.status]||{}).l,rpBR(s.ultimoParto),s.nServicos||0,s.ultimoServico?rpBR(s.ultimoServico.data):"",s.ultimoServico&&s.ultimoServico.touro||"",s.prenhe?rpBR(s.concepcao):"",s.prenhe&&s.dgData?rpBR(s.dgData):"",s.prenhe?s.diasGest:"",s.prev.secagem&&!s.seca?rpBR(s.prev.secagem):"",s.prev.parto?rpBR(s.prev.parto):""]});
@@ -6996,7 +7060,8 @@ function rpxRelWhats(){var C=window.rpCtx();var txt="*Reprodução — "+rpxRelT
   if(navigator.share){navigator.share({text:txt}).catch(function(){})}else window.open("https://wa.me/?text="+encodeURIComponent(txt),"_blank")}
 
 /* ===== Reprodução — painel de indicadores interativo (compartilhado) ===== */
-var RPD_CSS='.rpd-gg{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:10px;margin-bottom:12px}.rpd-gc{background:#fff;border:1px solid #e2e8f0;border-radius:14px;padding:10px 10px 8px;text-align:center;cursor:pointer;transition:box-shadow .15s}.rpd-gc:hover{box-shadow:0 6px 16px rgba(15,23,42,.08)}.rpd-gc h5{margin:0;font-size:12px;font-weight:800;color:#0f172a}.rpd-gc .gv{font-size:24px;font-weight:900;margin-top:-6px;color:#0f172a}.rpd-gc .gs{font-size:10.5px;color:#94a3b8}.rpd-ndl{transition:transform 1.1s cubic-bezier(.34,1.3,.5,1)}.rpd-aviso{background:#fffbeb;border:1px solid #fde68a;color:#92400e;border-radius:12px;padding:10px 14px;font-size:12px;line-height:1.5;margin-bottom:12px}'+
+var RPD_CSS='.rpd-s{margin-bottom:22px;scroll-margin-top:70px}.rpd-sh{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;border-bottom:2px solid #0f172a;padding-bottom:6px;margin-bottom:12px}.rpd-sh h3{margin:0;font-size:15px;font-weight:800;color:#0f172a}.rpd-sh span{font-size:11px;color:#94a3b8;font-weight:600}.rpd-nav{display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;margin-bottom:16px;position:sticky;top:0;z-index:5;background:inherit;padding:6px 0}.rpd-nav::-webkit-scrollbar{display:none}.rpd-nav button{flex:0 0 auto;border:1px solid #e2e8f0;background:#fff;border-radius:999px;padding:6px 13px;font-size:12px;font-weight:700;color:#334155;cursor:pointer;font-family:Inter,sans-serif}.rpd-nav button:hover{border-color:#15803d;color:#15803d}.rpd-g.rpd-perd{grid-template-columns:minmax(200px,260px) 1fr}@media(max-width:640px){.rpd-g.rpd-perd{grid-template-columns:1fr}}.rpd-cust{display:flex;gap:6px;align-items:center;flex-wrap:wrap}.rpd-cust input{border:1px solid #e2e8f0;border-radius:9px;padding:6px 8px;font-size:12.5px;font-family:Inter,sans-serif}.rpd-cust span{font-size:12px;color:#64748b}.rpd-cust button{border:none;background:#15803d;color:#fff;border-radius:9px;padding:7px 12px;font-weight:700;font-size:12px;cursor:pointer;font-family:Inter,sans-serif}.rpd-per{width:100%;font-size:11.5px;color:#64748b}.rpd-per b{color:#0f172a}'+
+'.rpd-gg{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:10px;margin-bottom:12px}.rpd-gc{background:#fff;border:1px solid #e2e8f0;border-radius:14px;padding:10px 10px 8px;text-align:center;cursor:pointer;transition:box-shadow .15s}.rpd-gc:hover{box-shadow:0 6px 16px rgba(15,23,42,.08)}.rpd-gc h5{margin:0;font-size:12px;font-weight:800;color:#0f172a}.rpd-gc .gv{font-size:24px;font-weight:900;margin-top:-6px;color:#0f172a}.rpd-gc .gs{font-size:10.5px;color:#94a3b8}.rpd-ndl{transition:transform 1.1s cubic-bezier(.34,1.3,.5,1)}.rpd-aviso{background:#fffbeb;border:1px solid #fde68a;color:#92400e;border-radius:12px;padding:10px 14px;font-size:12px;line-height:1.5;margin-bottom:12px}'+
 '.rpd{font-family:Inter,sans-serif;color:#0f172a}.rpd-fil{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:12px}.rpd-seg{display:inline-flex;background:#f1f5f9;border-radius:10px;padding:3px}.rpd-seg button{border:none;background:none;padding:6px 11px;border-radius:8px;font-size:11.5px;font-weight:700;color:#64748b;cursor:pointer;font-family:Inter,sans-serif}.rpd-seg button.on{background:#fff;color:#003c0c;box-shadow:0 1px 3px rgba(15,23,42,.12)}'+
 '.rpd-k{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px;margin-bottom:14px}.rpd-t{background:#fff;border:1px solid #e2e8f0;border-radius:14px;padding:12px 13px;cursor:pointer;position:relative;overflow:hidden;transition:transform .15s,box-shadow .15s}.rpd-t:hover{transform:translateY(-2px);box-shadow:0 6px 16px rgba(15,23,42,.08)}.rpd-t:active{transform:scale(.98)}.rpd-t:before{content:"";position:absolute;left:0;top:0;bottom:0;width:4px;background:var(--c)}'+
 '.rpd-t small{display:block;font-size:10.5px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:.3px}.rpd-t b{display:block;font-size:24px;font-weight:900;margin:3px 0 2px;color:var(--c)}.rpd-t i{font-style:normal;font-size:10.5px;color:#94a3b8}.rpd-tr{display:inline-block;vertical-align:middle;margin-left:6px;font-size:10px;font-weight:800;padding:1px 6px;border-radius:999px;position:relative;top:-3px}'+
@@ -7009,40 +7074,82 @@ var RPD_CSS='.rpd-gg{display:grid;grid-template-columns:repeat(auto-fit,minmax(1
 var _rpd={n:12,lact:"todas",el:null};
 var RPD_COR={prenhe:"#16a34a",seca:"#7c3aed",inseminada:"#2563eb",vazia:"#dc2626",pev:"#94a3b8",novilha:"#d97706",sem_dados:"#cbd5e1"};
 function rpdFiltrar(reb){if(_rpd.lact==="prim")return reb.filter(function(r){return !r.st.novilha&&r.st.lact===1});if(_rpd.lact==="mult")return reb.filter(function(r){return !r.st.novilha&&r.st.lact>1});return reb}
+function rpdPeriodoN(){if(_rpd.custom&&_rpd.custom.ini&&_rpd.custom.fim){var d=rpDif(_rpd.custom.fim,_rpd.custom.ini)+1;return {n:Math.max(1,Math.ceil(d/21)),fim:_rpd.custom.fim}}return {n:_rpd.n,fim:null}}
 function rpdMontar(elId){_rpd.el=elId;var el=document.getElementById(elId);if(!el)return;var C=window.rpCtx();if(!C)return;
-  var reb=rpdFiltrar(C.reb);var R=rpResumo(reb,C.cfg,null,_rpd.n);_rpd.R=R;_rpd.reb=reb;
-  var comp=R.ciclos.filter(function(c){return c.completo});var h=Math.floor(comp.length/2);
+  var reb=rpdFiltrar(C.reb);var P=rpdPeriodoN();var R=rpResumo(reb,C.cfg,null,P.n,{fim:P.fim});var RA=_rpd.lact==="todas"?R:rpResumo(C.reb,C.cfg,null,P.n,{fim:P.fim});
+  _rpd.R=R;_rpd.reb=reb;_rpd.RA=RA;
+  var comp=R.ciclos.filter(function(c){return c.completo});
   function tx(arr,a,b){var x=arr.reduce(function(s,c){return s+c[a]},0),y=arr.reduce(function(s,c){return s+c[b]},0);return y?x/y*100:null}
   var rec=comp.slice(-3),ant=comp.slice(-6,-3);
   var tr={tp:[tx(rec,"prenhas","eleg"),tx(ant,"prenhas","eleg")],ts:[tx(rec,"insem","eleg"),tx(ant,"insem","eleg")],tc:[tx(rec,"servConc","servDiag"),tx(ant,"servConc","servDiag")]};
   function trend(k){var a=tr[k][0],b=tr[k][1];if(a==null||b==null)return "";var d=Math.round(a-b);if(!d)return '<span class="rpd-tr" style="background:#f1f5f9;color:#64748b">= 0</span>';return '<span class="rpd-tr" title="Últimos 3 ciclos vs 3 anteriores" style="background:'+(d>0?"#dcfce7;color:#15803d":"#fee2e2;color:#dc2626")+'">'+(d>0?"▲ +":"▼ ")+d+' pp</span>'}
   function cor(v,bom,ok,inv){if(v==null)return "#94a3b8";if(inv)return v<=bom?"#16a34a":v<=ok?"#d97706":"#dc2626";return v>=bom?"#16a34a":v>=ok?"#d97706":"#dc2626"}
-  function T(k,lbl,val,num,meta,c,pct,drill){return '<div class="rpd-t" style="--c:'+c+'" onclick="rpdDrill(\''+drill+'\')"><small>'+lbl+'</small><b><span data-v="'+(num==null?"":num)+'">'+val+'</span>'+(tr[k]?trend(k):"")+'</b><i>'+meta+'</i>'+(pct!=null?'<div class="rpd-bar"><span style="width:0" data-w="'+Math.max(0,Math.min(100,pct))+'"></span></div>':'')+'</div>'}
-  var fmt1=function(v){return v==null?"—":v.toFixed(1).replace(".",",")};
-  var ps=rpConcPorServico(_rpd.reb,R.ciclos[0].ini);_rpd.ps=ps;
-  var k=T("x","Animais no rebanho",R.nAtivos,R.nAtivos,R.nVacas+" vacas · "+R.nNovilhas+" novilhas · "+R.nSecas+" secas","#0f172a",null,"st:todas")+
-    T("x","Prenhes",R.nPrenhesTotal,R.nPrenhesTotal,(R.novilhasPrenhes?R.novilhasPrenhes+" novilha(s) · ":"")+"toque para ver","#16a34a",R.nAtivos?R.nPrenhesTotal/R.nAtivos*100:null,"prenhes")+
-    T("x","DEL médio",R.delMedio!=null?Math.round(R.delMedio):"—",R.delMedio,"meta 150–170 · "+R.nLact+" em lactação",cor(R.delMedio,170,190,true),R.delMedio!=null?R.delMedio/300*100:null,"del")+
-    T("x","Serviços / prenhez",fmt1(R.servPorConc),null,"12 meses · meta ≤ 2,5",cor(R.servPorConc,2.5,3.2,true),null,"touro")+
-    T("x","Intervalo entre partos",R.iepProj!=null?fmt1(R.iepProj/30.4)+" m":"—",null,"projetado · meta ≤ 13 m",cor(R.iepProj&&R.iepProj/30.4,13,14,true),null,"abertos")+
-    T("x","Parto → 1º serviço",R.primServico!=null?Math.round(R.primServico)+" d":"—",R.primServico,"meta ≤ "+(C.cfg.pev+20)+" dias",cor(R.primServico,C.cfg.pev+20,C.cfg.pev+40,true),null,"primserv")+
-    T("x","Vazias > 150 DEL",R.vazias150,R.vazias150,"toque para ver",R.vazias150?"#dc2626":"#16a34a",null,"v150")+
-    T("x","Perdas de gestação",rpPct(R.pctPerdas),R.pctPerdas,"12 meses · meta ≤ 10%",cor(R.pctPerdas,10,15,true),null,"perdas");
-  var fil='<div class="rpd-fil"><div class="rpd-seg">'+[[6,"4 meses"],[12,"8 meses"],[18,"12 meses"]].map(function(x){return '<button class="'+(_rpd.n===x[0]?"on":"")+'" onclick="_rpd.n='+x[0]+';rpdMontar(\''+elId+'\')">'+x[1]+'</button>'}).join("")+'</div><div class="rpd-seg">'+[["todas","Todas"],["prim","Primíparas"],["mult","Multíparas"]].map(function(x){return '<button class="'+(_rpd.lact===x[0]?"on":"")+'" onclick="_rpd.lact=\''+x[0]+'\';rpdMontar(\''+elId+'\')">'+x[1]+'</button>'}).join("")+'</div></div>';
+  function T(lbl,val,num,meta,c,drill){return '<div class="rpd-t" style="--c:'+c+'" onclick="rpdDrill(\''+drill+'\')"><small>'+lbl+'</small><b><span data-v="'+(num==null?"":num)+'">'+val+'</span></b><i>'+meta+'</i></div>'}
+  var f1=function(v){return v==null?"—":v.toFixed(1).replace(".",",")};var mes=function(d){return d==null?"—":f1(d/30.4)+" m"};
+  var ps=R.porServico;_rpd.ps=ps;
+  function sec(id,tit,sub,html){return '<section class="rpd-s" id="rpd-s-'+id+'"><div class="rpd-sh"><h3>'+tit+'</h3>'+(sub?'<span>'+sub+'</span>':'')+'</div>'+html+'</section>'}
+  var per=rpBR(R.periodo.ini)+' a '+rpBR(R.periodo.fim)+' · '+R.ciclos.length+' ciclos de 21 dias';
+  var fil='<div class="rpd-fil"><div class="rpd-seg">'+[[6,"4 meses"],[12,"8 meses"],[18,"12 meses"]].map(function(x){return '<button class="'+(!_rpd.custom&&_rpd.n===x[0]?"on":"")+'" onclick="_rpd.custom=null;_rpd.n='+x[0]+';rpdMontar(\''+elId+'\')">'+x[1]+'</button>'}).join("")+'<button class="'+(_rpd.custom?"on":"")+'" onclick="rpdCustom()">Personalizado</button></div>'+
+    '<div class="rpd-seg">'+[["todas","Todas"],["prim","Primíparas"],["mult","Multíparas"]].map(function(x){return '<button class="'+(_rpd.lact===x[0]?"on":"")+'" onclick="_rpd.lact=\''+x[0]+'\';rpdMontar(\''+elId+'\')">'+x[1]+'</button>'}).join("")+'</div>'+
+    (_rpd.custom?'<div class="rpd-cust"><input type="date" id="rpd-ci" value="'+(_rpd.custom.ini||"")+'" max="'+rpHoje()+'"><span>até</span><input type="date" id="rpd-cf" value="'+(_rpd.custom.fim||rpHoje())+'" max="'+rpHoje()+'"><button onclick="rpdAplicarCustom()">Aplicar</button></div>':'')+
+    '<div class="rpd-per">Período: <b>'+per+'</b></div></div>';
+  var nav='<div class="rpd-nav">'+[["rebanho","Rebanho"],["desempenho","Desempenho"],["servicos","Serviços"],["sanidade","Sanidade"],["perdas","Perdas"],["novilhas","Novilhas"],["previsoes","Previsões"]].map(function(x){return '<button onclick="var s=document.getElementById(\'rpd-s-'+x[0]+'\');if(s)s.scrollIntoView({behavior:\'smooth\',block:\'start\'})">'+x[1]+'</button>'}).join("")+'</div>';
   var nDiag=R.ciclos.reduce(function(a,c){return a+c.servDiag},0);
-  var aviso=nDiag<15?'<div class="rpd-aviso"><b>Dados ainda insuficientes para as taxas.</b> No período há só '+nDiag+' inseminação(ões) com resultado conhecido. As taxas de serviço, concepção e prenhez dependem do histórico de IAs e diagnósticos de cada ciclo de 21 dias: importe o histórico dos últimos 12 meses (todas as IAs e DGs, não só a última) ou os números vão se formar conforme os lançamentos entram.</div>':'';
-  var gg='<div class="rpd-gg">'+rpdGauge({l:"Taxa de serviço",v:R.ts,max:100,meta:60,tr:trend("ts"),d:"ts",sub:R.insemComp+" IAs em "+R.elegComp+" vacas-ciclo aptas · meta ≥ 60%"})+rpdGauge({l:"Taxa de concepção",v:R.tc,max:100,meta:35,tr:trend("tc"),d:"tc",sub:"meta ≥ 35%"})+rpdGauge({l:"Taxa de prenhez",v:R.tp,max:50,meta:20,tr:trend("tp"),d:"tp",sub:(R.ts!=null&&R.tc!=null?"serviço × concepção ≈ "+Math.round(R.ts*R.tc/100)+"% · ":"")+"meta ≥ 20%"})+rpdGauge({l:"Vacas prenhes",v:R.pctPrenhes,max:100,meta:50,d:"prenhes",sub:R.prenhesVacas+" de "+R.nVacas+" vacas"})+rpdGauge({l:"Concepção 1º serviço",v:ps[1].tc,max:100,meta:40,d:"serv",sub:ps[1].c+" de "+ps[1].n+" serviços"})+'</div>';
-  el.innerHTML='<div class="rpd">'+fil+aviso+gg+'<div class="rpd-k">'+k+'</div>'+
-   '<div class="rpd-g"><div class="rpd-c"><h4>Ciclos de 21 dias</h4><div class="sub">Toque em um ciclo para ver as vacas elegíveis, inseminadas e prenhes</div><div id="rpd-ch-ciclos"></div><div class="rpd-leg"><span><i style="background:#93c5fd"></i>Serviço</span><span><i style="background:#16a34a"></i>Prenhez</span><span><i style="background:#8b5cf6;height:3px"></i>Concepção</span><span><i style="background:none;border-top:2px dashed #16a34a;height:0;width:12px"></i>Meta prenhez 20%</span></div><div class="rpd-info" id="rpd-i-ciclos"></div></div>'+
-   '<div class="rpd-g dois"><div class="rpd-c"><h4>Mapa do rebanho</h4><div class="sub">Cada ponto é uma vaca · DEL × nº de serviços · toque para abrir a ficha</div><div id="rpd-ch-mapa"></div><div class="rpd-leg" id="rpd-leg-mapa"></div><div class="rpd-info" id="rpd-i-mapa"></div></div>'+
-   '<div class="rpd-c"><h4>Próximas 8 semanas</h4><div class="sub">Partos, secagens e diagnósticos previstos · toque numa semana</div><div id="rpd-ch-sem"></div><div class="rpd-leg"><span><i style="background:#f59e0b"></i>Partos</span><span><i style="background:#7c3aed"></i>Secagens</span><span><i style="background:#2563eb"></i>DG</span></div><div class="rpd-info" id="rpd-i-sem"></div></div></div>'+
-   '<div class="rpd-g dois"><div class="rpd-c"><h4>Composição do rebanho</h4><div class="sub">Toque numa faixa para ver as vacas</div><div id="rpd-ch-comp"></div></div>'+
-   '<div class="rpd-c"><h4>Concepção por touro</h4><div class="sub">Serviços com resultado conhecido no período · toque no touro</div><div id="rpd-ch-touro"></div></div></div>'+
-   '<div class="rpd-g dois"><div class="rpd-c"><h4>Concepção por número do serviço</h4><div class="sub">1º, 2º, 3º… serviço da lactação · serviços com resultado conhecido no período</div><div id="rpd-ch-serv"></div><div class="rpd-info" id="rpd-i-serv"></div></div>'+
-   '<div class="rpd-c"><h4>Vacas por número de serviços</h4><div class="sub">Lactação atual · toque numa barra para ver as vacas</div><div id="rpd-ch-nserv"></div><div class="rpd-leg"><span><i style="background:#16a34a"></i>Prenhes</span><span><i style="background:#2563eb"></i>Aguardando DG</span><span><i style="background:#dc2626"></i>Vazias</span></div></div></div></div></div>';
-  rpdAnimar(el);rpdAgulhas(el);rpdCiclos();rpdMapa();rpdSemanas();rpdComp();rpdTouros();rpdServ();rpdNServ();
-  if(!_rpd.rz){_rpd.rz=1;var t;window.addEventListener("resize",function(){clearTimeout(t);t=setTimeout(function(){if(document.getElementById(_rpd.el)&&document.getElementById("rpd-ch-ciclos"))rpdMontar(_rpd.el)},250)})}
+  var aviso=nDiag<15?'<div class="rpd-aviso"><b>Poucos dados para as taxas.</b> No período há só '+nDiag+' inseminação(ões) de vacas com resultado conhecido. As taxas dependem do histórico de IAs e diagnósticos de cada ciclo de 21 dias: importe o histórico (todas as IAs e DGs) ou os números vão se formar conforme os lançamentos entram.</div>':'';
+  /* 1. rebanho (situação de hoje) */
+  var A=RA;var s1=sec("rebanho","Situação atual do rebanho","hoje · não depende do período",
+    '<div class="rpd-k">'+T("Animais",A.nAtivos,A.nAtivos,A.nVacas+" vacas · "+A.nNovilhas+" novilhas","#0f172a","st:todas")+T("Em lactação",A.nLact,A.nLact,"DEL médio "+(A.delMedio!=null?Math.round(A.delMedio):"—"),"#0891b2","del")+T("Secas",A.nSecas,A.nSecas,"vacas secas","#7c3aed","st:seca")+T("Prenhes",A.nPrenhesTotal,A.nPrenhesTotal,rpPct(A.pctPrenhes)+" das vacas"+(A.novilhasPrenhes?" · "+A.novilhasPrenhes+" nov.":""),cor(A.pctPrenhes,50,40),"prenhes")+T("Aguardando DG",A.cont.inseminada||0,A.cont.inseminada||0,"inseminadas sem diagnóstico","#2563eb","st:inseminada")+T("Vazias aptas",A.cont.vazia||0,A.cont.vazia||0,A.vazias150+" com mais de 150 DEL",A.vazias150?"#dc2626":"#16a34a","st:vazia")+(A.nSemParto?T("Sem parto lançado",A.nSemParto,A.nSemParto,"fora das taxas — lance o parto","#94a3b8","st:sem_dados"):"")+'</div>'+
+    '<div class="rpd-g dois"><div class="rpd-c"><h4>Composição do rebanho</h4><div class="sub">Toque numa faixa para ver as vacas</div><div id="rpd-ch-comp"></div></div><div class="rpd-c"><h4>Mapa do rebanho</h4><div class="sub">Cada ponto é uma vaca · DEL × nº de serviços · toque para abrir a ficha</div><div id="rpd-ch-mapa"></div><div class="rpd-leg" id="rpd-leg-mapa"></div><div class="rpd-info" id="rpd-i-mapa"></div></div></div>');
+  /* 2. desempenho vacas */
+  var s2=sec("desempenho","Desempenho reprodutivo — vacas",(_rpd.lact==="prim"?"primíparas · ":_rpd.lact==="mult"?"multíparas · ":"")+"no período",aviso+
+    '<div class="rpd-gg">'+rpdGauge({l:"Taxa de serviço",v:R.ts,max:100,meta:60,tr:trend("ts"),d:"ts",sub:R.insemComp+" IAs em "+R.elegComp+" vacas-ciclo aptas · meta ≥ 60%"})+rpdGauge({l:"Taxa de concepção",v:R.tc,max:100,meta:35,tr:trend("tc"),d:"tc",sub:"meta ≥ 35%"})+rpdGauge({l:"Taxa de prenhez",v:R.tp,max:50,meta:20,tr:trend("tp"),d:"tp",sub:(R.ts!=null&&R.tc!=null?"serviço × concepção ≈ "+Math.round(R.ts*R.tc/100)+"% · ":"")+"meta ≥ 20%"})+rpdGauge({l:"Concepção 1º serviço",v:ps[1].tc,max:100,meta:40,d:"serv",sub:ps[1].c+" de "+ps[1].n+" serviços · meta ≥ 40%"})+'</div>'+
+    '<div class="rpd-k">'+T("Serviços por prenhez",f1(R.servPorConc),null,"meta ≤ 2,5",cor(R.servPorConc,2.5,3.2,true),"touro")+T("Parto → 1º serviço",R.primServico!=null?Math.round(R.primServico)+" d":"—",R.primServico,"meta ≤ "+(C.cfg.pev+20)+" dias",cor(R.primServico,C.cfg.pev+20,C.cfg.pev+40,true),"primserv")+T("Dias em aberto",R.diasAbertos!=null?Math.round(R.diasAbertos)+" d":"—",R.diasAbertos,"parto → concepção · meta ≤ 115",cor(R.diasAbertos,115,140,true),"abertos")+T("Intervalo entre partos",mes(R.iepProj),null,"projetado · meta ≤ 13 m",cor(R.iepProj&&R.iepProj/30.4,13,14,true),"abertos")+T("IEP real",mes(R.iepReal),null,R.nIep?R.nIep+" partos no período · meta ≤ 13 m":"sem 2º parto no período",cor(R.iepReal&&R.iepReal/30.4,13,14,true),"abertos")+T("Prenhes até 150 DEL",rpPct(R.pct150),R.pct150,R.n150?"de "+R.n150+" vacas que fizeram 150 DEL · meta ≥ 50%":"nenhuma vaca chegou a 150 DEL no período",cor(R.pct150,50,40),"p150")+'</div>'+
+    '<div class="rpd-c"><h4>Ciclos de 21 dias</h4><div class="sub">Toque em um ciclo para ver as vacas elegíveis, inseminadas e prenhes</div><div id="rpd-ch-ciclos"></div><div class="rpd-leg"><span><i style="background:#93c5fd"></i>Serviço</span><span><i style="background:#16a34a"></i>Prenhez</span><span><i style="background:#8b5cf6;height:3px"></i>Concepção</span><span><i style="background:none;border-top:2px dashed #16a34a;height:0;width:12px"></i>Meta prenhez 20%</span></div><div class="rpd-info" id="rpd-i-ciclos"></div></div>');
+  /* 3. serviços */
+  var s3=sec("servicos","Serviços e concepção","no período",
+    '<div class="rpd-g dois"><div class="rpd-c"><h4>Concepção por número do serviço</h4><div class="sub">1º, 2º, 3º… serviço da lactação</div><div id="rpd-ch-serv"></div><div class="rpd-info" id="rpd-i-serv"></div></div>'+
+    '<div class="rpd-c"><h4>Vacas por número de serviços</h4><div class="sub">Lactação atual · toque numa barra</div><div id="rpd-ch-nserv"></div><div class="rpd-leg"><span><i style="background:#16a34a"></i>Prenhes</span><span><i style="background:#2563eb"></i>Aguardando DG</span><span><i style="background:#dc2626"></i>Vazias</span></div></div></div>'+
+    '<div class="rpd-g dois"><div class="rpd-c"><h4>Intervalo entre serviços</h4><div class="sub">Dias entre uma IA e a seguinte na mesma lactação · mostra a eficiência da detecção de cio</div><div id="rpd-ch-int"></div><div class="rpd-info" id="rpd-i-int"></div></div>'+
+    '<div class="rpd-c"><h4>Concepção por touro</h4><div class="sub">Toque no touro para ver as vacas</div><div id="rpd-ch-touro"></div></div></div>'+
+    '<div class="rpd-g dois"><div class="rpd-c"><h4>Concepção por tipo de serviço</h4><div class="sub">Cio observado × IATF × repasse · vacas e novilhas</div><div id="rpd-ch-tsv"></div></div><div class="rpd-c"><h4>Concepção por inseminador</h4><div class="sub">Serviços com resultado conhecido no período</div><div id="rpd-ch-insem"></div></div></div>'+
+    '<div class="rpd-c"><h4>Concepção por mês do serviço</h4><div class="sub">Mostra o efeito da estação (estresse térmico no verão) · últimos 12 meses</div><div id="rpd-ch-mesconc"></div><div class="rpd-info" id="rpd-i-mesconc"></div></div>');
+  var s3b=sec("sanidade","Sanidade × reprodução","lactações com parto nos últimos 12 meses",'<div class="rpd-c"><div class="sub" style="margin-bottom:6px">Compara a concepção ao 1º serviço e as prenhes até 150 DEL de vacas que tiveram cada ocorrência na lactação com as que não tiveram. Lance as ocorrências pelo evento "Sanidade".</div><div id="rpd-ch-sanid"></div></div>');
+  /* 4. perdas */
+  var s4=sec("perdas","Perdas gestacionais","no período",
+    '<div class="rpd-g rpd-perd" style="align-items:start">'+rpdGauge({l:"Perda gestacional",v:R.pctPerdas,max:30,meta:10,inv:true,d:"perdas",sub:R.perdas+" perda(s) em "+R.concepcoes12+" prenhezes · meta ≤ 10%"})+
+    '<div class="rpd-k" style="margin:0">'+T("Perdas",R.perdas,R.perdas,"toque para ver a lista",R.perdas?"#c2410c":"#16a34a","perdas")+T("Reabsorções",R.perdasReab,R.perdasReab,"perda embrionária (≤ 45 d)","#ea580c","perdas")+T("Abortos",R.perdasAborto,R.perdasAborto,"perda fetal (> 45 d)","#9f1239","perdas")+T("Perda em vacas",rpPct(R.pctPerdasVacas),R.pctPerdasVacas,R.perdasVacas+" perda(s)","#0f172a","perdas")+T("Perda em novilhas",rpPct(R.nov.pctPerdas),R.nov.pctPerdas,R.perdasNov+" perda(s)","#0f172a","perdas")+'</div></div>');
+  /* 5. novilhas */
+  var N=RA.nov;var s5=sec("novilhas","Novilhas (nulíparas)","no período · aptas a partir de "+Math.round(C.cfg.idade_novilha/30.4)+" meses de idade",
+    '<div class="rpd-gg">'+rpdGauge({l:"Serviço — novilhas",v:N.ts,max:100,meta:60,d:"nov",sub:N.elegComp?N.insemComp+" IAs em "+N.elegComp+" novilhas-ciclo aptas":"ciclos ainda aguardando DG"})+rpdGauge({l:"Concepção — novilhas",v:N.tc,max:100,meta:50,d:"nov",sub:"meta ≥ 50%"})+rpdGauge({l:"Prenhez — novilhas",v:N.tp,max:60,meta:30,d:"nov",sub:"meta ≥ 30%"})+rpdGauge({l:"Concepção 1º serviço",v:N.porServico[1].tc,max:100,meta:55,d:"nov",sub:N.porServico[1].c+" de "+N.porServico[1].n+" · meta ≥ 55%"})+'</div>'+
+    '<div class="rpd-k">'+T("Novilhas",N.n,N.n,N.prenhes+" prenhes · "+N.inseminadas+" aguardando DG","#d97706","nov")+T("Idade à 1ª IA",mes(N.idade1IA),null,"meta 13–15 meses",cor(N.idade1IA&&N.idade1IA/30.4,15,17,true),"nov")+T("Idade à concepção",mes(N.idadeConc),null,"meta ≤ 15 meses",cor(N.idadeConc&&N.idadeConc/30.4,15,17,true),"nov")+T("Serviços por prenhez",f1(N.servPorConc),null,"meta ≤ 2,0",cor(N.servPorConc,2,2.5,true),"nov")+T("Idade ao 1º parto",mes(RA.idade1Parto),null,RA.nIdade1p?RA.nIdade1p+" primíparas · meta 22–24 m":"sem dados de nascimento",cor(RA.idade1Parto&&RA.idade1Parto/30.4,24,26,true),"nov")+'</div>'+(N.n&&!C.reb.some(function(r){return r.st.novilha&&r.a.nasc})?'<div class="rpd-aviso" style="background:#f8fafc;border-color:#e2e8f0;color:#64748b">Sem data de nascimento cadastrada, a novilha só entra como apta a partir do 1º serviço — a taxa de serviço fica superestimada. Cadastre o nascimento para o cálculo completo.</div>':''));
+  /* 6. previsões */
+  var s6=sec("previsoes","Previsões","a partir de hoje",
+    '<div class="rpd-c"><h4>Partos previstos por mês</h4><div class="sub">Próximos 12 meses · toque num mês para ver as vacas</div><div id="rpd-ch-meses"></div><div class="rpd-leg"><span><i style="background:#f59e0b"></i>Vacas</span><span><i style="background:#0ea5e9"></i>Novilhas</span><span><i style="background:#7c3aed;height:3px"></i>Secagens</span></div><div class="rpd-info" id="rpd-i-meses"></div></div>'+
+    '<div class="rpd-c" style="margin-top:12px"><h4>Próximas 8 semanas</h4><div class="sub">Partos, secagens e diagnósticos previstos · toque numa semana</div><div id="rpd-ch-sem"></div><div class="rpd-leg"><span><i style="background:#f59e0b"></i>Partos</span><span><i style="background:#7c3aed"></i>Secagens</span><span><i style="background:#2563eb"></i>DG</span></div><div class="rpd-info" id="rpd-i-sem"></div></div>');
+  el.innerHTML='<div class="rpd">'+fil+nav+s1+s2+s3+s3b+s4+s5+s6+'</div>';
+  rpdAnimar(el);rpdAgulhas(el);rpdCiclos();rpdMapa();rpdSemanas();rpdComp();rpdTouros();rpdServ();rpdNServ();rpdIntervalos();rpdPartosMes();rpdAnalises();
+  if(!_rpd.rz){_rpd.rz=1;_rpd.lw=window.innerWidth;var t;window.addEventListener("resize",function(){if(Math.abs(window.innerWidth-_rpd.lw)<40)return;_rpd.lw=window.innerWidth;clearTimeout(t);t=setTimeout(function(){if(document.getElementById(_rpd.el)&&document.getElementById("rpd-ch-ciclos"))rpdMontar(_rpd.el)},250)})}
 }
+function rpdCustom(){if(!_rpd.custom)_rpd.custom={ini:rpAdd(rpHoje(),-180),fim:rpHoje()};rpdMontar(_rpd.el)}
+function rpdAplicarCustom(){var a=document.getElementById("rpd-ci").value,b=document.getElementById("rpd-cf").value;if(!a||!b||a>b){rpxMsg("Período inválido",true);return}if(rpDif(b,a)<20){rpxMsg("Escolha um período de pelo menos 21 dias",true);return}_rpd.custom={ini:a,fim:b};rpdMontar(_rpd.el)}
+function rpdIntervalos(){var ini=_rpd.R.periodo.ini,fim=_rpd.R.periodo.fim;var f=[["2–17","curto",2,17,"#f59e0b"],["18–24","normal",18,24,"#16a34a"],["25–35","irregular",25,35,"#eab308"],["36–48","duplo",36,48,"#ea580c"],["> 48","longo",49,9999,"#dc2626"]];var c=[0,0,0,0,0],tot=0;
+  _rpd.reb.forEach(function(r){var por={};r.st.todosServicos.forEach(function(s){var k=s.parto||"nov";(por[k]=por[k]||[]).push(s)});Object.keys(por).forEach(function(k){var l=por[k];for(var i=1;i<l.length;i++){if(l[i].data<ini||l[i].data>fim)continue;var d=rpDif(l[i].data,l[i-1].data);if(d<2)continue;for(var j=0;j<5;j++){if(d>=f[j][2]&&d<=f[j][3]){c[j]++;tot++;break}}}})});
+  var h=f.map(function(x,j){var p=tot?c[j]/tot*100:0;return '<div class="rpd-hb" style="cursor:default"><div class="n">'+x[0]+' d <span style="font-weight:500;color:#94a3b8">'+x[1]+'</span></div><div class="b"><span style="width:'+p+'%;background:'+x[4]+'"></span></div><div class="v"><b>'+Math.round(p)+'%</b> · '+c[j]+'</div></div>'}).join("");
+  document.getElementById("rpd-ch-int").innerHTML=tot?h:'<div style="color:#94a3b8;font-size:12px">Sem repetições de serviço no período.</div>';
+  rpdInfo("rpd-i-int",tot?"Ideal: mais de 50% entre 18–24 dias. Muitos intervalos duplos (36–48) indicam cio não detectado; curtos (2–17) indicam erro de detecção ou cisto.":"")}
+function rpdPartosMes(){var C=window.rpCtx();var hoje=rpHoje();var m0=hoje.slice(0,7);var meses=[];var y=+m0.slice(0,4),mo=+m0.slice(5,7);for(var i=0;i<12;i++){var mm=mo+i,yy=y+Math.floor((mm-1)/12);mm=((mm-1)%12)+1;meses.push({k:yy+"-"+String(mm).padStart(2,"0"),v:[],n:[],s:[]})}
+  var idx=function(d){if(!d)return -1;var k=d.slice(0,7);if(k<m0)return 0;for(var i=0;i<12;i++)if(meses[i].k===k)return i;return -1};
+  C.reb.forEach(function(r){var st=r.st;if(st.status==="saiu"||!st.prenhe)return;var i=idx(st.prev.parto);if(i>=0)(st.novilha?meses[i].n:meses[i].v).push(r);if(!st.seca&&st.prev.secagem){var j=idx(st.prev.secagem);if(j>=0)meses[j].s.push(r)}});
+  _rpd.meses=meses;var NM=["jan","fev","mar","abr","mai","jun","jul","ago","set","out","nov","dez"];
+  var W=rpdW("rpd-ch-meses"),H=220,L=24,Rr=6,T=16,B=26;var iw=W-L-Rr,ih=H-T-B,bw=iw/12;var mx=Math.max(4,meses.reduce(function(m,x){return Math.max(m,x.v.length+x.n.length,x.s.length)},0));var yv=function(v){return T+ih-v/mx*ih};var s="";
+  [0,Math.round(mx/2),mx].forEach(function(v){s+='<line x1="'+L+'" x2="'+(W-Rr)+'" y1="'+yv(v)+'" y2="'+yv(v)+'" stroke="#f1f5f9"/><text x="'+(L-5)+'" y="'+(yv(v)+3)+'" font-size="9" text-anchor="end" fill="#94a3b8">'+v+'</text>'});
+  var pts=[];meses.forEach(function(m,i){var x=L+i*bw+bw*.18,w=bw*.64,base=T+ih;[["v","#f59e0b"],["n","#0ea5e9"]].forEach(function(k){var n=m[k[0]].length;if(!n)return;var hh=n/mx*ih;base-=hh;s+='<rect x="'+x+'" y="'+base+'" width="'+w+'" height="'+hh+'" fill="'+k[1]+'" rx="2"/>'});var t=m.v.length+m.n.length;if(t)s+='<text x="'+(x+w/2)+'" y="'+(base-4)+'" font-size="10.5" font-weight="800" text-anchor="middle" fill="#0f172a">'+t+'</text>';
+    pts.push([L+i*bw+bw/2,yv(m.s.length)]);s+='<text x="'+(L+i*bw+bw/2)+'" y="'+(H-8)+'" font-size="9.5" text-anchor="middle" fill="#64748b">'+NM[+m.k.slice(5,7)-1]+(m.k.slice(5,7)==="01"||i===0?"/"+m.k.slice(2,4):"")+'</text>'});
+  s+='<path d="'+pts.map(function(p,i){return (i?"L":"M")+p[0].toFixed(1)+" "+p[1].toFixed(1)}).join("")+'" fill="none" stroke="#7c3aed" stroke-width="2" opacity=".8"/>'+pts.map(function(p){return '<circle cx="'+p[0]+'" cy="'+p[1]+'" r="2.5" fill="#7c3aed"/>'}).join("");
+  meses.forEach(function(m,i){s+='<rect class="hit" x="'+(L+i*bw)+'" y="'+T+'" width="'+bw+'" height="'+ih+'" fill="transparent" onmouseenter="rpdInfoMes('+i+')" onclick="rpdDrillMes('+i+')"/>'});
+  document.getElementById("rpd-ch-meses").innerHTML=rpdSvg(W,H,s);var tot=meses.reduce(function(a,m){return a+m.v.length+m.n.length},0);rpdInfo("rpd-i-meses",tot+" parto(s) previstos nos próximos 12 meses · o mês atual inclui partos atrasados")}
+function rpdInfoMes(i){var m=_rpd.meses[i];var NM=["janeiro","fevereiro","março","abril","maio","junho","julho","agosto","setembro","outubro","novembro","dezembro"];rpdInfo("rpd-i-meses","<b>"+NM[+m.k.slice(5,7)-1]+" "+m.k.slice(0,4)+"</b>: "+m.v.length+" parto(s) de vacas · "+m.n.length+" de novilhas · "+m.s.length+" secagem(ns)")}
+function rpdDrillMes(i){var m=_rpd.meses[i];var o=function(a,k){return a.slice().sort(function(x,y){return x.st.prev[k]<y.st.prev[k]?-1:1})};rpdLista("Mês "+m.k.slice(5,7)+"/"+m.k.slice(0,4),[["Partos de vacas ("+m.v.length+")",o(m.v,"parto")],["Partos de novilhas ("+m.n.length+")",o(m.n,"parto")],["Secagens ("+m.s.length+")",o(m.s,"secagem")]])}
 function rpdAnimar(el){el.querySelectorAll("[data-v]").forEach(function(b){var alvo=parseFloat(b.dataset.v);if(isNaN(alvo))return;var fim=b.textContent;var suf=fim.replace(/^[\d.,-]+/,"");var dec=/,\d/.test(fim)?1:0;var t0=null;function f(t){if(!t0)t0=t;var p=Math.min(1,(t-t0)/700);var e=1-Math.pow(1-p,3);b.textContent=(alvo*e).toFixed(dec).replace(".",",")+suf;if(p<1)requestAnimationFrame(f);else b.textContent=fim}requestAnimationFrame(f)});
   setTimeout(function(){el.querySelectorAll("[data-w]").forEach(function(s){s.style.width=s.dataset.w+"%"})},30)}
 function rpdW(id){var e=document.getElementById(id);return Math.max(260,(e&&e.clientWidth)||600)}
@@ -7117,7 +7224,9 @@ function rpdDrill(k){var C=window.rpCtx();var at=_rpd.reb.filter(function(r){ret
     var expl={tp:"<b>Taxa de prenhez</b> = vacas que emprenharam ÷ vacas elegíveis em cada ciclo de 21 dias. É o indicador que resume a reprodução: taxa de serviço × taxa de concepção.",ts:"<b>Taxa de serviço</b> = vacas inseminadas ÷ vacas elegíveis no ciclo (vazias acima do PEV). Mede a detecção de cio e a execução dos protocolos.",tc:"<b>Taxa de concepção</b> = prenhezes ÷ inseminações com diagnóstico. Mede a fertilidade da vaca, do sêmen e a técnica de IA."}[k];
     rpxAbrir("Taxas por ciclo de 21 dias",'<div style="font-size:12.5px;color:#475569;line-height:1.5;margin-bottom:10px">'+expl+'</div><div style="overflow:auto"><table class="rpx-t"><tr><th>Ciclo</th><th>Elegíveis</th><th>Insem.</th><th>Prenhes</th><th>Serviço</th><th>Concepção</th><th>Prenhez</th></tr>'+linhas+'</table></div><div style="font-size:11px;color:#94a3b8;margin-top:6px">Toque num ciclo para ver as vacas.</div>',null);return}
   var g=[],tit="";
-  if(k==="st:todas"){tit="Rebanho";var ord=["prenhe","seca","inseminada","vazia","pev","novilha","sem_dados"];g=ord.map(function(st){var l=at.filter(function(r){return r.st.status===st});return [(RP_STATUS[st]||{}).l+" ("+l.length+")",l]}).filter(function(x){return x[1].length})}
+  if(k==="p150"){tit="Prenhes até 150 DEL";var ok=[],nao=[];_rpd.reb.forEach(function(r){var st=r.st;if(st.status==="saiu"||!st.ultimoParto)return;var d150=rpAdd(st.ultimoParto,150);if(d150>hoje)return;(st.concepcoes.some(function(cc){return cc.parto===st.ultimoParto&&cc.data<=d150})?ok:nao).push(r)});g=[["Emprenharam até 150 DEL ("+ok.length+")",ok],["Não emprenharam até 150 DEL ("+nao.length+")",nao]]}
+  else if(k==="nov"){tit="Novilhas";var nv=at.filter(function(r){return r.st.novilha});g=[["Prenhes ("+nv.filter(function(r){return r.st.prenhe}).length+")",nv.filter(function(r){return r.st.prenhe})],["Aguardando DG ("+nv.filter(function(r){return r.st.status==="inseminada"}).length+")",nv.filter(function(r){return r.st.status==="inseminada"})],["Sem serviço / vazias ("+nv.filter(function(r){return r.st.status==="novilha"}).length+")",nv.filter(function(r){return r.st.status==="novilha"})]]}
+  else if(k==="st:todas"){tit="Rebanho";var ord=["prenhe","seca","inseminada","vazia","pev","novilha","sem_dados"];g=ord.map(function(st){var l=at.filter(function(r){return r.st.status===st});return [(RP_STATUS[st]||{}).l+" ("+l.length+")",l]}).filter(function(x){return x[1].length})}
   else if(k==="serv"){var ps=_rpd.ps;rpxAbrir("Concepção por número do serviço",'<div style="font-size:12.5px;color:#475569;line-height:1.5;margin-bottom:10px">Percentual de inseminações que resultaram em prenhez, separado pela ordem do serviço na lactação. A concepção ao 1º serviço costuma ser a mais alta; queda forte nos serviços seguintes indica vacas repetidoras ou problema de detecção/momento da IA.</div><table class="rpx-t"><tr><th>Serviço</th><th>Serviços</th><th>Prenhezes</th><th>Concepção</th></tr>'+[1,2,3,4,5].map(function(i){var o=ps[i];return '<tr><td><b>'+(i===5?"5º ou mais":i+"º")+'</b></td><td>'+o.n+'</td><td>'+o.c+'</td><td><b>'+rpPct(o.tc)+'</b></td></tr>'}).join("")+'</table>',null);return}
   else if(k.indexOf("st:")===0){var st=k.slice(3);tit=(RP_STATUS[st]||{}).l;g=[[tit+" ("+at.filter(function(r){return r.st.status===st}).length+")",at.filter(function(r){return r.st.status===st})]]}
   else if(k==="prenhes"){tit="Vacas prenhes";g=[["Prenhes",at.filter(function(r){return r.st.prenhe}).sort(function(a,b){return a.st.prev.parto<b.st.prev.parto?-1:1})],["Vazias e aguardando DG",at.filter(function(r){return !r.st.prenhe&&!r.st.novilha&&r.st.ultimoParto})]]}
@@ -7125,7 +7234,8 @@ function rpdDrill(k){var C=window.rpCtx();var at=_rpd.reb.filter(function(r){ret
   else if(k==="v150"){tit="Vazias acima de 150 DEL";g=[["Vazias > 150 DEL",at.filter(function(r){return r.st.status==="vazia"&&r.st.del>150}).sort(function(a,b){return b.st.del-a.st.del})],["Aguardando DG com DEL > 150",at.filter(function(r){return r.st.status==="inseminada"&&r.st.del>150})]]}
   else if(k==="primserv"){tit="Do parto ao 1º serviço";g=[["Aptas ainda sem nenhum serviço nesta lactação",at.filter(function(r){return r.st.status==="vazia"&&!r.st.nServicos}).sort(function(a,b){return b.st.del-a.st.del})]]}
   else if(k==="abertos"){tit="Dias em aberto (parto → concepção)";g=[["Prenhes com mais de 150 dias em aberto",at.filter(function(r){return r.st.prenhe&&r.st.diasAbertos>150})],["Vazias com DEL acima de 120",at.filter(function(r){return r.st.status==="vazia"&&r.st.del>120})]]}
-  else if(k==="perdas"){tit="Perdas de gestação (12 meses)";g=[["Vacas com perda registrada",at.filter(function(r){return r.st.perdas.some(function(p){return p.data>=rpAdd(hoje,-365)})})]]}
+  else if(k==="perdas"){var lp=[];_rpd.reb.forEach(function(r){r.st.perdas.forEach(function(p){if(p.data>=_rpd.R.periodo.ini&&p.data<=_rpd.R.periodo.fim)lp.push({r:r,p:p})})});lp.sort(function(a,b){return a.p.data<b.p.data?1:-1});var R2=_rpd.R;
+    rpxAbrir("Perdas gestacionais no período",'<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:12px;text-align:center">'+[["Perdas",R2.perdas],["% das prenhezes",rpPct(R2.pctPerdas)],["Reabsorções",R2.perdasReab],["Abortos",R2.perdasAborto]].map(function(x){return '<div style="background:#f8fafc;border-radius:10px;padding:8px"><div style="font-size:10px;color:#64748b;font-weight:700">'+x[0]+'</div><b style="font-size:18px">'+x[1]+'</b></div>'}).join("")+'</div><div style="font-size:12px;color:#475569;line-height:1.5;margin-bottom:8px">Perdas ÷ prenhezes do período ('+R2.concepcoes12+'). Reabsorção: perda embrionária até ~45 dias (aceitável até 8–10%). Aborto: perda fetal (acima de 3–5% merece investigar BVD, leptospirose, neosporose, IBR, micotoxinas).</div>'+(lp.length?'<div style="overflow:auto"><table class="rpx-t"><tr><th>Vaca</th><th>Tipo</th><th>Data</th><th>Dias de gestação</th><th>Situação atual</th></tr>'+lp.map(function(x){return '<tr style="cursor:pointer" onclick="rpdAbrirVaca(\''+x.r.id+'\')"><td><b>'+rpEsc(x.r.a.brinco)+'</b></td><td style="color:#c2410c;font-weight:700">'+RP_PERDA[x.p.tipo||"reabsorcao"]+'</td><td>'+rpBR(x.p.data)+'</td><td>'+(x.p.concepcao?rpDif(x.p.data,x.p.concepcao):"—")+'</td><td>'+rpChip(x.r.st.status)+'</td></tr>'}).join("")+'</table></div>':'<div style="color:#94a3b8;font-size:12.5px;padding:10px">Nenhuma perda registrada. Lance no DG (resultado "Perda") ou pelo evento Aborto.</div>'),null);return}
   else if(k==="touro"){tit="Vacas repetidoras";g=[["3 ou mais serviços sem prenhez",at.filter(function(r){return !r.st.prenhe&&r.st.nServicos>=3}).sort(function(a,b){return b.st.nServicos-a.st.nServicos})],["Prenhes que precisaram de 3+ serviços",at.filter(function(r){return r.st.prenhe&&r.st.nServicos>=3})]]}
   rpdLista(tit,g)}
 function rpdLista(tit,grupos,topo){var C=window.rpCtx();
@@ -7163,6 +7273,35 @@ function rpdGaugeSvg(v,max,meta,o){o=o||{};var esc=o.escuro;var cx=100,cy=96,r=7
   return '<svg viewBox="'+vb+'" width="100%" style="display:block;max-width:'+(o.fino?150:230)+'px;margin:0 auto">'+s+'</svg>'}
 function rpdGauge(g){return '<div class="rpd-gc" onclick="rpdDrill(\''+g.d+'\')"><h5>'+g.l+'</h5>'+rpdGaugeSvg(g.v,g.max,g.meta,{inv:g.inv})+'<div class="gv">'+(g.v==null?"—":(Math.round(g.v*10)/10).toString().replace(".",",")+"%")+(g.tr||"")+'</div><div class="gs">'+g.sub+'</div></div>'}
 function rpdAgulhas(el){setTimeout(function(){(el||document).querySelectorAll(".rpd-ndl").forEach(function(n){n.style.transform="rotate("+n.dataset.ang+"deg)"})},60)}
+
+function rpdHB(lista,click){return lista.length?lista.map(function(o){var p=o.n?o.c/o.n*100:0;var c=p>=35?"#16a34a":p>=28?"#d97706":"#dc2626";return '<div class="rpd-hb"'+(click?' onclick="'+click(o)+'"':' style="cursor:default"')+'><div class="n" title="'+rpEsc(o.nome)+'">'+rpEsc(o.nome)+'</div><div class="b"><span style="width:'+p+'%;background:'+c+'"></span></div><div class="v"><b style="color:'+c+'">'+Math.round(p)+'%</b> · '+o.c+'/'+o.n+(o.n<10?' <span style="color:#d97706">(poucos)</span>':'')+'</div></div>'}).join(""):'<div style="color:#94a3b8;font-size:12px">Sem serviços com resultado no período.</div>'}
+function rpdAnalises(){var ini=_rpd.R.periodo.ini,fim=_rpd.R.periodo.fim,hoje=rpHoje();var tsv={},ins={},mes={};var m12=rpAdd(hoje,-365);
+  _rpd.reb.forEach(function(r){r.st.todosServicos.forEach(function(s){if(s.res!=="concepcao"&&s.res!=="falha")return;var ok=s.res==="concepcao"?1:0;
+    if(s.data>=ini&&s.data<=fim){var k=s.tsv||"cio";tsv[k]=tsv[k]||{nome:RP_TSV[k]||k,n:0,c:0};tsv[k].n++;tsv[k].c+=ok;var i=s.insem||"(não informado)";ins[i]=ins[i]||{nome:i,n:0,c:0};ins[i].n++;ins[i].c+=ok}
+    if(s.data>=m12){var mk=s.data.slice(0,7);mes[mk]=mes[mk]||{n:0,c:0};mes[mk].n++;mes[mk].c+=ok}})});
+  var o=function(obj){return Object.keys(obj).map(function(k){return obj[k]}).sort(function(a,b){return b.n-a.n})};
+  document.getElementById("rpd-ch-tsv").innerHTML=rpdHB(o(tsv));document.getElementById("rpd-ch-insem").innerHTML=rpdHB(o(ins).slice(0,10));
+  /* mês */
+  var NM=["jan","fev","mar","abr","mai","jun","jul","ago","set","out","nov","dez"];var ks=[];var y=+hoje.slice(0,4),m=+hoje.slice(5,7);for(var i=11;i>=0;i--){var mm=m-i,yy=y;while(mm<1){mm+=12;yy--}ks.push(yy+"-"+String(mm).padStart(2,"0"))}
+  var W=rpdW("rpd-ch-mesconc"),H=190,L=28,Rr=6,T=16,B=30;var iw=W-L-Rr,ih=H-T-B,bw=iw/12;var yv=function(v){return T+ih-Math.min(v,70)/70*ih};var sv="";
+  [0,35,70].forEach(function(v){sv+='<line x1="'+L+'" x2="'+(W-Rr)+'" y1="'+yv(v)+'" y2="'+yv(v)+'" stroke="'+(v===35?"#bbf7d0":"#f1f5f9")+'"'+(v===35?' stroke-dasharray="4 3"':'')+'/><text x="'+(L-5)+'" y="'+(yv(v)+3)+'" font-size="9" text-anchor="end" fill="#94a3b8">'+v+'%</text>'});
+  _rpd.mesconc=ks.map(function(k){return {k:k,o:mes[k]||{n:0,c:0}}});
+  _rpd.mesconc.forEach(function(x,i){var bx=L+i*bw+bw*.2,w=bw*.6;var v=x.o.n?x.o.c/x.o.n*100:null;var c=v==null?"#e2e8f0":v>=35?"#16a34a":v>=28?"#d97706":"#dc2626";
+    if(v!=null){sv+='<rect x="'+bx+'" y="'+yv(v)+'" width="'+w+'" height="'+(T+ih-yv(v))+'" rx="2" fill="'+c+'"/><text x="'+(bx+w/2)+'" y="'+(yv(v)-4)+'" font-size="9.5" font-weight="800" text-anchor="middle" fill="#0f172a">'+Math.round(v)+'</text>'}
+    sv+='<text x="'+(bx+w/2)+'" y="'+(H-17)+'" font-size="9.5" text-anchor="middle" fill="#64748b">'+NM[+x.k.slice(5,7)-1]+'</text><text x="'+(bx+w/2)+'" y="'+(H-5)+'" font-size="8.5" text-anchor="middle" fill="#94a3b8">'+(x.o.n||"")+'</text><rect class="hit" x="'+(L+i*bw)+'" y="'+T+'" width="'+bw+'" height="'+(ih+B)+'" fill="transparent" onmouseenter="rpdInfoMesC('+i+')" onclick="rpdInfoMesC('+i+')"/>'});
+  document.getElementById("rpd-ch-mesconc").innerHTML=rpdSvg(W,H,sv);rpdInfo("rpd-i-mesconc","Número abaixo do mês = serviços com resultado. Linha tracejada = meta de 35%.");
+  /* sanidade */
+  var grupos={},sem={nome:"Sem ocorrência",n:0,c1:0,n1:0,p150:0,n150:0};
+  _rpd.reb.forEach(function(r){var st=r.st;st.partos.forEach(function(p){if(p<m12)return;var ds={};st.sanid.forEach(function(x){if(x.parto===p)ds[x.doenca]=1});
+    var sv1=null;st.todosServicos.forEach(function(s){if(s.parto===p&&!sv1)sv1=s});var r1=sv1&&(sv1.res==="concepcao"||sv1.res==="falha")?(sv1.res==="concepcao"?1:0):null;
+    var d150=rpAdd(p,150);var a150=d150<=hoje?(st.concepcoes.some(function(cc){return cc.parto===p&&cc.data<=d150})?1:0):null;
+    var alvo=Object.keys(ds).length?Object.keys(ds).map(function(k){return grupos[k]=grupos[k]||{nome:RP_DOENCAS[k]||k,n:0,c1:0,n1:0,p150:0,n150:0}}):[sem];
+    alvo.forEach(function(g){g.n++;if(r1!=null){g.n1++;g.c1+=r1}if(a150!=null){g.n150++;g.p150+=a150}})})});
+  var lst=Object.keys(grupos).map(function(k){return grupos[k]}).sort(function(a,b){return b.n-a.n});
+  var pc=function(a,b){return b?Math.round(a/b*100)+"%":"—"};var ref1=sem.n1?sem.c1/sem.n1*100:null,ref150=sem.n150?sem.p150/sem.n150*100:null;
+  var dif=function(a,b,ref){if(!b||ref==null)return "";var d=Math.round(a/b*100-ref);return ' <span style="font-size:10.5px;font-weight:800;color:'+(d<0?"#dc2626":"#16a34a")+'">'+(d>0?"+":"")+d+' pp</span>'};
+  document.getElementById("rpd-ch-sanid").innerHTML=lst.length?'<div style="overflow:auto"><table class="rpx-t"><tr><th>Ocorrência na lactação</th><th>Lactações</th><th>Concepção 1º serviço</th><th>Prenhes até 150 DEL</th></tr>'+lst.concat([sem]).map(function(g){var base=g===sem;return '<tr'+(base?' style="background:#f8fafc"':'')+'><td><b>'+g.nome+'</b></td><td>'+g.n+'</td><td>'+pc(g.c1,g.n1)+(base?"":dif(g.c1,g.n1,ref1))+' <span style="color:#94a3b8;font-size:10.5px">('+g.n1+')</span></td><td>'+pc(g.p150,g.n150)+(base?"":dif(g.p150,g.n150,ref150))+' <span style="color:#94a3b8;font-size:10.5px">('+g.n150+')</span></td></tr>'}).join("")+'</table></div>':'<div style="color:#94a3b8;font-size:12.5px">Nenhuma ocorrência sanitária lançada nas lactações do último ano.</div>'}
+function rpdInfoMesC(i){var x=_rpd.mesconc[i];rpdInfo("rpd-i-mesconc","<b>"+x.k.slice(5,7)+"/"+x.k.slice(0,4)+"</b>: "+x.o.c+" prenhez(es) em "+x.o.n+" serviço(s)"+(x.o.n?" = <b>"+Math.round(x.o.c/x.o.n*100)+"%</b>":""))}
 
 </script>
 <script id="rp-painel">
@@ -7208,12 +7347,12 @@ function rpgRender(){
   function K(l,v,meta,cor){return '<div class="rpg-k"><span class="dot" style="background:'+cor+'"></span><small>'+l+'</small><b>'+v+'</b><i>'+meta+'</i></div>'}
   h+='<div id="rpd-painel" style="margin-bottom:16px"></div>';
   h+='<div class="rpg-grid2" style="grid-template-columns:1fr">'+
-   '<div class="rpg-box"><h4>Agenda de manejo <span style="font-weight:500;color:var(--muted);font-size:11px">· clique num item para ver as vacas</span></h4><div class="rpg-agw">'+(_rpg.agArr=[["","DG a fazer",ag.dg],["","Secar (14 dias)",ag.secar],["","Entrar no pré-parto",ag.preparto],["","Partos (30 dias)",ag.partos],["","Observar retorno de cio",ag.retorno],["","Atenção (vazias > 150 DEL, 3+ serviços, parto atrasado)",ag.problema]]).map(function(a,ai){return '<div class="rpg-ag" style="cursor:pointer" onclick="rpgAgLista('+ai+')"><div>'+a[0]+' '+a[1]+(a[2].length?'<div class="l" style="color:var(--muted);font-size:11px">'+a[2].slice(0,14).map(function(x){return rpEsc(x.r.a.brinco)}).join(", ")+(a[2].length>14?"…":"")+'</div>':'')+'</div><b>'+a[2].length+'</b></div>'}).join("")+'</div>'+
+   '<div class="rpg-box"><h4>Agenda de manejo <span style="font-weight:500;color:var(--muted);font-size:11px">· clique num item para ver as vacas</span></h4><div class="rpg-agw">'+(_rpg.agArr=[["","Protocolos IATF (passos até 3 dias)",ag.protocolo],["","DG a fazer",ag.dg],["","Secar (14 dias)",ag.secar],["","Entrar no pré-parto",ag.preparto],["","Partos (30 dias)",ag.partos],["","Observar retorno de cio",ag.retorno],["","Atenção (vazias > 150 DEL, 3+ serviços, parto atrasado)",ag.problema]]).map(function(a,ai){return '<div class="rpg-ag" style="cursor:pointer" onclick="rpgAgLista('+ai+')"><div>'+a[0]+' '+a[1]+(a[2].length?'<div class="l" style="color:var(--muted);font-size:11px">'+a[2].slice(0,14).map(function(x){return rpEsc(x.r.a.brinco)}).join(", ")+(a[2].length>14?"…":"")+'</div>':'')+'</div><b>'+a[2].length+'</b></div>'}).join("")+'</div>'+
    '<div style="display:flex;gap:6px;margin-top:10px;flex-wrap:wrap">'+Object.keys(R.cont).filter(function(k){return R.cont[k]&&k!=="saiu"}).map(function(k){return '<span class="rp-chip" style="color:'+RP_STATUS[k].c+';background:'+RP_STATUS[k].bg+'">'+RP_STATUS[k].l+': '+R.cont[k]+'</span>'}).join("")+'</div></div></div>';
   h+='<div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:10px"><div class="rpg-chips">'+RP_FILTROS.filter(function(f){return f[0]==="todas"||R.cont[f[0]]}).concat(R.cont.saiu?[["saiu","Fora do rebanho"]]:[]).map(function(f){return '<button class="'+(_rpg.filtro===f[0]?"on":"")+'" onclick="_rpg.filtro=\''+f[0]+'\';rpgTabela()">'+f[1]+' '+(f[0]==="todas"?R.nAtivos:R.cont[f[0]])+'</button>'}).join("")+'</div><input id="rpg-busca" placeholder="Buscar brinco" value="'+rpEsc(_rpg.busca)+'" oninput="_rpg.busca=this.value;rpgTabela()" style="margin-left:auto;border:1px solid var(--border);border-radius:9px;padding:7px 10px;font-size:12px;width:140px"></div><div style="max-height:520px;overflow:auto;border:1px solid var(--border);border-radius:12px" id="rpg-tab"></div></div>';
   el.innerHTML=h;rpgTabela();rpdMontar("rpd-painel");
 }
-function rpgDetalhe(e){var d=[];if(e.touro)d.push("Touro "+rpEsc(e.touro));if(e.tipo==="dg")d.push(e.resultado==="+"?"<b style='color:#15803d'>Prenhe</b>":"<b style='color:#dc2626'>Vazia</b>");if(e.dias_gestacao)d.push(e.dias_gestacao+" d gest.");if(e.cria)d.push({F:"Fêmea",M:"Macho",N:"Natimorto",G:"Gêmeos"}[e.cria]||e.cria);if(e.motivo)d.push(rpEsc(e.motivo));if(e.obs)d.push(rpEsc(e.obs));return d.join(" · ")}
+function rpgDetalhe(e){var d=[];if(e.touro)d.push("Touro "+rpEsc(e.touro));if(e.tipo==="dg")d.push(rpResDG(e));if(e.tipo==="aborto")d.push(RP_PERDA[rpTipoPerda(e,null)]);if(e.dias_gestacao)d.push(e.dias_gestacao+" d gest.");if(e.cria)d.push({F:"Fêmea",M:"Macho",N:"Natimorto",G:"Gêmeos"}[e.cria]||e.cria);if(e.motivo)d.push(rpEsc(e.motivo));if(e.obs)d.push(rpEsc(e.obs));return d.join(" · ")}
 function rpgTabela(){var el=document.getElementById("rpg-tab");if(!el)return;var b=rpNormBrinco(_rpg.busca);
   document.querySelectorAll(".rpg-chips button").forEach(function(x){x.classList.toggle("on",x.getAttribute("onclick").indexOf("'"+_rpg.filtro+"'")>0)});
   var L=_rpg.reb.filter(function(r){if(_rpg.filtro==="todas"?r.st.status==="saiu":r.st.status!==_rpg.filtro)return false;return !b||rpNormBrinco(r.a.brinco).indexOf(b)===0});
@@ -7257,10 +7396,15 @@ function rpgAbrirEvento(animalId,evId){
   rpgETipo(e);
 }
 function rpgETipo(e){document.querySelectorAll(".rpg-tipos button").forEach(function(b){b.classList.toggle("on",b.dataset.t===_rpgE.tipo)});var t=_rpgE.tipo,h="";e=e||{};
-  var prev={};["rpge-touro","rpge-dgest","rpge-conc","rpge-motivo","rpge-cria"].forEach(function(k){var x=document.getElementById(k);if(x)prev[k]=x.value});
+  var prev={};["rpge-touro","rpge-dgest","rpge-conc","rpge-motivo","rpge-cria","rpge-insem","rpge-tsv"].forEach(function(k){var x=document.getElementById(k);if(x)prev[k]=x.value});
   if(t==="ia"||t==="cobertura"){var m={};Object.values(_rpg.dados.eventos).forEach(function(x){if(x.touro){var k=x.touro.trim();if(!m[k]||x.data>m[k])m[k]=x.data}});var rec=Object.keys(m).sort(function(a,b){return m[a]<m[b]?1:-1}).slice(0,6);h='<label>Touro / sêmen</label><input id="rpge-touro" value="'+rpEsc(e.touro||"")+'">'+(rec.length?'<div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:6px">'+rec.map(function(x){return '<button type="button" class="rpg-btn s" data-v="'+rpEsc(x)+'" onclick="document.getElementById(\'rpge-touro\').value=this.dataset.v">'+rpEsc(x)+'</button>'}).join("")+'</div>':'')}
-  if(t==="dg")h='<label>Resultado</label><select id="rpge-res" onchange="_rpgE.res=this.value"><option value="+"'+(_rpgE.res==="+"?" selected":"")+'>Prenhe</option><option value="-"'+(_rpgE.res==="-"?" selected":"")+'>Vazia</option></select><div class="rpg-f2"><div><label>Dias de gestação (opcional)</label><input id="rpge-dgest" type="number" value="'+(e.dias_gestacao||"")+'"></div><div><label>Data de concepção (opcional)</label><input id="rpge-conc" type="date" value="'+(e.concepcao||"")+'"></div></div><div style="font-size:11px;color:var(--dim);margin-top:4px">Em branco: a concepção é a IA mais recente com 20+ dias antes do DG.</div>';
+  if(t==="dg")h='<label>Resultado</label><select id="rpge-res" onchange="_rpgE.res=this.value"><option value="+"'+(_rpgE.res==="+"?" selected":"")+'>Prenhe</option><option value="-"'+(_rpgE.res==="-"?" selected":"")+'>Vazia</option><option value="p:reabsorcao"'+(_rpgE.res==="p"&&e.perda!=="aborto"?" selected":"")+'>Perda — reabsorção embrionária</option><option value="p:aborto"'+(_rpgE.res==="p"&&e.perda==="aborto"?" selected":"")+'>Perda — aborto</option></select><div class="rpg-f2"><div><label>Dias de gestação (opcional)</label><input id="rpge-dgest" type="number" value="'+(e.dias_gestacao||"")+'"></div><div><label>Data de concepção (opcional)</label><input id="rpge-conc" type="date" value="'+(e.concepcao||"")+'"></div></div><div style="font-size:11px;color:var(--dim);margin-top:4px">Em branco: a concepção é a IA mais recente com 20+ dias antes do DG.</div>';
+  if(t==="aborto")h='<label>Tipo de perda</label><select id="rpge-perda"><option value="">Automático (até 45 dias = reabsorção)</option><option value="reabsorcao"'+(e.perda==="reabsorcao"?" selected":"")+'>Reabsorção embrionária</option><option value="aborto"'+(e.perda==="aborto"?" selected":"")+'>Aborto</option></select>';
   if(t==="parto")h='<label>Cria</label><select id="rpge-cria"><option value="">—</option><option value="F">Fêmea</option><option value="M">Macho</option><option value="N">Natimorto</option><option value="G">Gêmeos</option></select>';
+  if(t==="ia"){var ins={};Object.values(_rpg.dados.eventos).forEach(function(x){if(x.inseminador)ins[x.inseminador.trim()]=1});h+='<div class="rpg-f2"><div><label>Tipo de serviço</label><select id="rpge-tsv"><option value="cio"'+(e.tipo_servico==="cio"?" selected":"")+'>Cio observado</option><option value="iatf"'+(e.tipo_servico==="iatf"?" selected":"")+'>IATF</option><option value="repasse"'+(e.tipo_servico==="repasse"?" selected":"")+'>Repasse</option></select></div><div><label>Inseminador</label><input id="rpge-insem" list="rpge-insems" value="'+rpEsc(e.inseminador||_rpgE.insem||"")+'"><datalist id="rpge-insems">'+Object.keys(ins).map(function(x){return '<option value="'+rpEsc(x)+'">'}).join("")+'</datalist></div></div>'}
+  if(t==="protocolo")h='<label>Protocolo (a data é o D0)</label><select id="rpge-prot">'+_rpg.dados.config.protocolos.map(function(x){return '<option value="'+rpEsc(x.id)+'"'+(e.protocolo===x.id?" selected":"")+'>'+rpEsc(x.nome)+' ('+x.passos.map(function(p){return "D"+p.d}).join(", ")+')</option>'}).join("")+'</select>';
+  if(t==="sanidade")h='<label>Ocorrência</label><select id="rpge-doenca">'+Object.keys(RP_DOENCAS).map(function(k){return '<option value="'+k+'"'+(e.doenca===k?" selected":"")+'>'+RP_DOENCAS[k]+'</option>'}).join("")+'</select>';
+  if(t==="naoins")h='<label>Motivo</label><input id="rpge-motivo" list="rpge-motni" value="'+rpEsc(e.motivo||"Descarte programado")+'"><datalist id="rpge-motni"><option value="Descarte programado"><option value="Problema reprodutivo crônico"><option value="Idade avançada"><option value="Baixa produção"></datalist>';
   if(t==="descarte")h='<label>Motivo</label><input id="rpge-motivo" list="rpge-mots" value="'+rpEsc(e.motivo||"")+'"><datalist id="rpge-mots"><option value="Venda"><option value="Descarte reprodutivo"><option value="Mastite"><option value="Casco"><option value="Baixa produção"><option value="Morte"></datalist>';
   document.getElementById("rpge-extra").innerHTML=h;Object.keys(prev).forEach(function(k){var x=document.getElementById(k);if(x&&prev[k])x.value=prev[k]});var c=document.getElementById("rpge-cria");if(c&&e.cria)c.value=e.cria}
 async function rpgSalvarEvento(outro){
@@ -7269,9 +7413,12 @@ async function rpgSalvarEvento(outro){
   var ev={tipo:t,data:data};var g=function(id){var x=document.getElementById(id);return x?String(x.value||"").trim():""};
   if(g("rpge-obs"))ev.obs=g("rpge-obs");
   if((t==="ia"||t==="cobertura")&&g("rpge-touro"))ev.touro=g("rpge-touro");
-  if(t==="dg"){ev.resultado=g("rpge-res")||"+";if(g("rpge-dgest"))ev.dias_gestacao=+g("rpge-dgest");if(g("rpge-conc"))ev.concepcao=g("rpge-conc")}
-  if(t==="parto"&&g("rpge-cria"))ev.cria=g("rpge-cria");
-  if(t==="descarte"&&g("rpge-motivo"))ev.motivo=g("rpge-motivo");
+  if(t==="dg"){var rv=g("rpge-res")||"+";ev.resultado=rv.charAt(0);if(rv.indexOf("p:")===0)ev.perda=rv.slice(2);if(g("rpge-dgest"))ev.dias_gestacao=+g("rpge-dgest");if(g("rpge-conc"))ev.concepcao=g("rpge-conc")}
+  if(t==="parto"&&g("rpge-cria"))ev.cria=g("rpge-cria");if(t==="aborto"&&g("rpge-perda"))ev.perda=g("rpge-perda");
+  if((t==="descarte"||t==="naoins")&&g("rpge-motivo"))ev.motivo=g("rpge-motivo");
+  if(t==="ia"){ev.tipo_servico=g("rpge-tsv")||"cio";if(g("rpge-insem")){ev.inseminador=g("rpge-insem");_rpgE.insem=ev.inseminador}}
+  if(t==="sanidade")ev.doenca=g("rpge-doenca");
+  if(t==="protocolo"){ev.protocolo=g("rpge-prot");var pp=_rpg.dados.config.protocolos.filter(function(x){return x.id===ev.protocolo})[0];if(pp)ev.protocolo_nome=pp.nome}
   try{
     if(_rpgE.ev){var old=_rpg.dados.eventos[_rpgE.ev];var novo=Object.assign({animal:old.animal,brinco:old.brinco,por:old.por||"tecnico",origem:old.origem||"painel",criado_em:old.criado_em||Date.now()},ev,{conferido:true,editado_em:Date.now()});await rpRef(_rpg.farm,"eventos/"+_rpgE.ev).set(novo);rpgFechar();await rpgDepois("Evento atualizado",old.animal)}
     else{var r=await rpGravarLote(_rpg.farm,_rpg.dados,[{brinco:br,categoria:"vaca",eventos:[ev]}],{origem:"painel",por:"tecnico"});
@@ -7291,8 +7438,8 @@ async function rpgSalvarAnimal(id){var g=function(k){var x=document.getElementBy
     else{var p=g("rpga-parto"),lac=parseInt(g("rpga-lac"),10);var r={brinco:br,nome:g("rpga-nome"),categoria:g("rpga-cat"),nasc:g("rpga-nasc")||undefined,eventos:p?[{tipo:"parto",data:p}]:[]};if(!isNaN(lac))r.lactacao_base=Math.max(0,lac-(p?1:0));await rpGravarLote(_rpg.farm,_rpg.dados,[r],{origem:"painel",por:"tecnico"});rpgFechar();await rpgDepois("Vaca "+br+" cadastrada",rpAnimalPorBrinco(_rpg.dados.animais,br))}
   }catch(e){toast("Erro: "+e.message,true)}}
 async function rpgExcluirAnimal(id){var a=_rpg.dados.animais[id];var evs=Object.keys(_rpg.dados.eventos).filter(function(k){return _rpg.dados.eventos[k].animal===id});if(!confirm("Excluir a vaca "+a.brinco+" e seus "+evs.length+" eventos? Para venda/descarte, prefira lançar o evento \"Saída do rebanho\" (mantém o histórico nas taxas)."))return;var u={};u["animais/"+id]=null;evs.forEach(function(k){u["eventos/"+k]=null});try{await rpRef(_rpg.farm).update(u);rpgFechar();await rpgDepois("Vaca excluída")}catch(e){toast("Erro: "+e.message,true)}}
-function rpgAbrirConfig(){var c=_rpg.dados.config;rpgModal("Parâmetros reprodutivos da fazenda",'<div class="rpg-f2"><div><label>Período voluntário de espera (dias)</label><input type="number" id="rpgc-pev" value="'+c.pev+'"></div><div><label>DG após a IA (dias)</label><input type="number" id="rpgc-dg" value="'+c.dg_dias+'"></div><div><label>Gestação (dias)</label><input type="number" id="rpgc-gest" value="'+c.gestacao+'"></div><div><label>Secar antes do parto (dias)</label><input type="number" id="rpgc-sec" value="'+c.secagem_dias+'"></div><div><label>Pré-parto antes do parto (dias)</label><input type="number" id="rpgc-pp" value="'+c.preparto_dias+'"></div></div><div style="font-size:11px;color:var(--muted);margin-top:8px">Gestação: Holandês ~280 · Girolando ~283 · Jersey ~279 · Gir ~290 dias.</div><div style="display:flex;justify-content:flex-end;gap:8px;margin-top:16px"><button class="rpg-btn" onclick="rpgFechar()">Cancelar</button><button class="rpg-btn p" onclick="rpgSalvarConfig()">Salvar</button></div>',520)}
-async function rpgSalvarConfig(){var v=function(k){return +document.getElementById(k).value};var c={pev:v("rpgc-pev"),dg_dias:v("rpgc-dg"),gestacao:v("rpgc-gest"),secagem_dias:v("rpgc-sec"),preparto_dias:v("rpgc-pp")};if(c.pev<20||c.pev>120||c.gestacao<260||c.gestacao>300||c.dg_dias<25||c.dg_dias>60){toast("Confira os valores (PEV 20–120, DG 25–60, gestação 260–300)",true);return}try{await rpRef(_rpg.farm,"config").set(c);rpgFechar();await rpgDepois("Parâmetros salvos")}catch(e){toast("Erro: "+e.message,true)}}
+function rpgAbrirConfig(){var c=_rpg.dados.config;rpgModal("Parâmetros reprodutivos da fazenda",'<div class="rpg-f2"><div><label>Período voluntário de espera (dias)</label><input type="number" id="rpgc-pev" value="'+c.pev+'"></div><div><label>DG após a IA (dias)</label><input type="number" id="rpgc-dg" value="'+c.dg_dias+'"></div><div><label>Gestação (dias)</label><input type="number" id="rpgc-gest" value="'+c.gestacao+'"></div><div><label>Secar antes do parto (dias)</label><input type="number" id="rpgc-sec" value="'+c.secagem_dias+'"></div><div><label>Pré-parto antes do parto (dias)</label><input type="number" id="rpgc-pp" value="'+c.preparto_dias+'"></div><div><label>Idade de cobertura das novilhas (meses)</label><input type="number" step="0.5" id="rpgc-nov" value="'+(Math.round(c.idade_novilha/30.4*2)/2)+'"></div></div><div style="font-weight:800;font-size:13px;margin:18px 0 4px">Protocolos de IATF</div><div style="font-size:11.5px;color:var(--muted)">Um passo por linha: <b>D0 Implante + BE</b>, <b>D7 PGF</b>… O último passo deve ser a IATF.</div><div id="rpgc-prots">'+c.protocolos.map(function(p,i){return rpgProtLinha(p,i)}).join("")+'</div><button class="rpg-btn s" style="margin-top:8px" onclick="var w=document.getElementById(\'rpgc-prots\');w.insertAdjacentHTML(\'beforeend\',rpgProtLinha({id:\'p\'+Date.now().toString(36),nome:\'\',passos:[]},w.children.length))">+ Protocolo</button><div style="font-size:11px;color:var(--muted);margin-top:8px">Gestação: Holandês ~280 · Girolando ~283 · Jersey ~279 · Gir ~290 dias.</div><div style="display:flex;justify-content:flex-end;gap:8px;margin-top:16px"><button class="rpg-btn" onclick="rpgFechar()">Cancelar</button><button class="rpg-btn p" onclick="rpgSalvarConfig()">Salvar</button></div>',660)}
+async function rpgSalvarConfig(){var v=function(k){return +document.getElementById(k).value};var c={pev:v("rpgc-pev"),dg_dias:v("rpgc-dg"),gestacao:v("rpgc-gest"),secagem_dias:v("rpgc-sec"),preparto_dias:v("rpgc-pp"),idade_novilha:Math.round(v("rpgc-nov")*30.4)};var prots=[];var erroP="";document.querySelectorAll(".rpgc-prot").forEach(function(b){var nome=b.querySelector("input").value.trim();var linhas=b.querySelector("textarea").value.split(/\n/).map(function(l){return l.trim()}).filter(Boolean);if(!nome&&!linhas.length)return;var passos=[];linhas.forEach(function(l){var m=l.match(/^D?\s*(\d+)\s*[-:·.]?\s*(.+)$/i);if(m)passos.push({d:+m[1],a:m[2].trim()});else erroP="Linha inválida: "+l});passos.sort(function(x,y){return x.d-y.d});if(!nome||!passos.length)erroP="Protocolo sem nome ou sem passos";prots.push({id:b.dataset.id,nome:nome,passos:passos})});if(erroP){toast(erroP,true);return}if(prots.length)c.protocolos=prots;if(c.pev<20||c.pev>120||c.gestacao<260||c.gestacao>300||c.dg_dias<25||c.dg_dias>60){toast("Confira os valores (PEV 20–120, DG 25–60, gestação 260–300)",true);return}try{await rpRef(_rpg.farm,"config").set(c);rpgFechar();await rpgDepois("Parâmetros salvos")}catch(e){toast("Erro: "+e.message,true)}}
 async function rpgPuxarControle(){if(!confirm("Puxar as vacas do controle leiteiro mais recente?\n\n• Vacas que ainda não existem são cadastradas\n• Data do parto = data do controle − DEL\n• Partos já lançados não são duplicados"))return;
   try{var r=await rpPuxarControle(_rpg.farm,_rpg.dados);if(r.erro){toast(r.erro,true);return}await rpgDepois();toast("Controle de "+rpBR(r.data)+": "+r.animais+" vaca(s) nova(s), "+r.eventos+" parto(s) lançado(s)"+(r.ignorados?", "+r.ignorados+" já existiam":""));if(r.conflitos&&r.conflitos.length)rpgModal("Divergências de data de parto ("+r.conflitos.length+")",'<div style="font-size:12.5px;color:var(--muted);margin-bottom:10px">Nestas vacas o DEL do controle não bate com o parto já lançado. Nada foi alterado — corrija na ficha da vaca se o controle estiver certo.</div><div style="font-size:12.5px;line-height:1.8">'+r.conflitos.map(rpEsc).join("<br>")+'</div>',560)}catch(e){toast("Erro: "+e.message,true)}}
 /* ---------- importação ---------- */
@@ -7307,7 +7454,7 @@ function rpgImpRender(){var I=_rpg.imp;var conv=rpConverterImport(I.linhas,I.det
   document.getElementById("rpgi-prev").innerHTML='<div style="margin-top:14px;padding-top:12px;border-top:1px solid var(--border)"><div style="font-size:12.5px"><b>'+rpEsc(I.origem)+'</b> · '+conv.linhas.length+' animais ('+novos+' novos, '+exist+' já cadastrados) · '+nEv+' eventos</div><details style="margin:8px 0"><summary style="cursor:pointer;font-size:12px;font-weight:700;color:#1f8149">Conferir colunas reconhecidas</summary><div class="rpg-f2" style="grid-template-columns:repeat(3,1fr)">'+sel+'</div></details>'+
    '<div style="font-size:11.5px;color:var(--muted);margin-bottom:6px">'+Object.keys(sitTxt).map(function(k){return k+": <b>"+sitTxt[k]+"</b>"}).join(" · ")+'</div>'+
    (conv.avisos.length?'<div style="font-size:11.5px;color:#b45309;background:#fffbeb;border-radius:8px;padding:8px 10px;margin-bottom:8px;max-height:90px;overflow:auto">'+conv.avisos.map(rpEsc).join("<br>")+'</div>':'')+
-   '<div style="max-height:260px;overflow:auto;border:1px solid var(--border);border-radius:10px"><table class="rpg-tbl"><tr><th>Brinco</th><th>Lact.</th><th>Eventos que serão criados</th></tr>'+conv.linhas.slice(0,60).map(function(r){return '<tr><td><b>'+rpEsc(r.brinco)+'</b>'+(r.categoria==="novilha"?" <span style='color:var(--muted)'>novilha</span>":"")+'</td><td>'+(r.lactacao!=null?r.lactacao:"—")+'</td><td>'+(r.eventos.map(function(e){return (RP_TIPOS[e.tipo]||{}).i+" "+rpBR(e.data)+(e.tipo==="dg"?(e.resultado==="+"?" prenhe":" vazia"):"")+(e.touro?" ("+rpEsc(e.touro)+")":"")}).join(" · ")||'<span style="color:var(--dim)">só cadastro</span>')+'</td></tr>'}).join("")+'</table></div>'+(conv.linhas.length>60?'<div style="font-size:11px;color:var(--dim)">…mostrando 60 de '+conv.linhas.length+'</div>':'')+
+   '<div style="max-height:260px;overflow:auto;border:1px solid var(--border);border-radius:10px"><table class="rpg-tbl"><tr><th>Brinco</th><th>Lact.</th><th>Eventos que serão criados</th></tr>'+conv.linhas.slice(0,60).map(function(r){return '<tr><td><b>'+rpEsc(r.brinco)+'</b>'+(r.categoria==="novilha"?" <span style='color:var(--muted)'>novilha</span>":"")+'</td><td>'+(r.lactacao!=null?r.lactacao:"—")+'</td><td>'+(r.eventos.map(function(e){return (RP_TIPOS[e.tipo]||{}).i+" "+rpBR(e.data)+(e.tipo==="dg"?(e.resultado==="+"?" prenhe":e.resultado==="p"?" perda":" vazia"):"")+(e.touro?" ("+rpEsc(e.touro)+")":"")}).join(" · ")||'<span style="color:var(--dim)">só cadastro</span>')+'</td></tr>'}).join("")+'</table></div>'+(conv.linhas.length>60?'<div style="font-size:11px;color:var(--dim)">…mostrando 60 de '+conv.linhas.length+'</div>':'')+
    '<div style="display:flex;justify-content:flex-end;gap:8px;margin-top:14px"><button class="rpg-btn" onclick="rpgFechar()">Cancelar</button><button class="rpg-btn p" onclick="rpgImpConfirmar()">✓ Importar '+conv.linhas.length+' animais</button></div></div>'}
 function rpgImpMapa(k,v){var I=_rpg.imp;Object.keys(I.det.map).forEach(function(x){if(I.det.map[x]===+v&&v!=="")delete I.det.map[x]});if(v==="")delete I.det.map[k];else I.det.map[k]=+v;rpgImpRender()}
 async function rpgImpConfirmar(){var I=_rpg.imp;if(!I||!I.conv)return;try{var r=await rpGravarLote(_rpg.farm,_rpg.dados,I.conv.linhas,{origem:"import",por:"tecnico"});rpgFechar();await rpgDepois();toast("Importado: "+r.animais+" vaca(s) nova(s), "+r.eventos+" evento(s)"+(r.ignorados?" · "+r.ignorados+" repetido(s) ignorado(s)":""))}catch(e){toast("Erro ao importar: "+e.message,true)}}
@@ -7346,7 +7493,9 @@ function rpgInit(){rpgCarteira();var sel=document.getElementById("rpg-farm-sel")
 function rpgSelecionar(id){var sel=document.getElementById("rpg-farm-sel");if(sel)sel.value=id;rpgCarregar(id);var g=document.getElementById("rp-gestao");if(g)g.scrollIntoView({behavior:"smooth",block:"start"})}
 window.rpCtx=function(){if(!_rpg.dados)return null;var f=(typeof ALL!=="undefined"&&ALL.find(function(x){return x.id===_rpg.farm}))||{};return {farm:_rpg.farm,dados:_rpg.dados,reb:_rpg.reb,cfg:_rpg.dados.config,por:"tecnico",nome:(f.produtor||"")+(f.cidade?" · "+f.cidade:""),depois:async function(){await rpgRecarregar();rpgRender()},abrirFicha:function(id){rpxFechar();rpgAbrirFicha(id)}}};
 
-function rpgAgLista(i){var a=_rpg.agArr[i];if(!a)return;rpdLista(a[0]+" "+a[1],[[a[1]+" ("+a[2].length+")",a[2].map(function(x){return x.r})]])}
+function rpgAgLista(i){var a=_rpg.agArr[i];if(!a)return;if(a[2]===_rpg.ag.protocolo){rpxRelatorios("protocolos");return}rpdLista(a[0]+" "+a[1],[[a[1]+" ("+a[2].length+")",a[2].map(function(x){return x.r})]])}
+
+function rpgProtLinha(p,i){return '<div class="rpgc-prot" data-id="'+rpEsc(p.id)+'" style="border:1px solid var(--border);border-radius:10px;padding:8px 10px;margin-top:8px"><div style="display:flex;gap:8px;align-items:center"><input placeholder="Nome do protocolo" value="'+rpEsc(p.nome)+'" style="flex:1"><button class="rpg-btn s" onclick="this.closest(\'.rpgc-prot\').remove()">Remover</button></div><textarea rows="4" style="margin-top:6px;font-family:monospace;font-size:12px">'+rpEsc(p.passos.map(function(x){return "D"+x.d+" "+x.a}).join("\n"))+'</textarea></div>'}
 
 </script>
 </body>
