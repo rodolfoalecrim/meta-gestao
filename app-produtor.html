@@ -4,14 +4,15 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>Meta Gestão — Minha Fazenda</title>
-<meta name="theme-color" content="#15803d">
+<meta name="theme-color" content="#0b3d24">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Minha Fazenda">
 <link rel="manifest" href="manifest-produtor.json">
-<link rel="apple-touch-icon" href="meta_icon_512.png">
-<link rel="icon" href="meta_icon_192.png">
+<script>(function(){try{var ios=/iphone|ipad|ipod/i.test(navigator.userAgent)||(navigator.platform==="MacIntel"&&navigator.maxTouchPoints>1);if(ios){var l=document.querySelector('link[rel="manifest"]');if(l)l.remove()}}catch(e){}})();</script>
+<link rel="apple-touch-icon" href="produtor-apple-touch-180.png">
+<link rel="icon" type="image/png" href="produtor-favicon-64.png">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
@@ -4671,6 +4672,95 @@ var MGX_CSS=
 '.mgt-tile[onclick*="financeiro"] .ic{color:#7c3aed;background:#f3effe}.mgt-tile[onclick*="recria"] .ic{color:#db2777;background:#fdf2f8}.mgt-tile[onclick*="evolucao"] .ic{color:#4f46e5;background:#eef2ff}.mgt-tile[onclick*="consumo"] .ic{color:#d97706;background:#fffbeb}.mgt-tile[onclick*="forragem"] .ic{color:#65a30d;background:#f7fee7}.mgt-tile[onclick*="insumos"] .ic{color:#0f766e;background:#f0fdfa}.mgt-tile[onclick*="bromatologia"] .ic{color:#2563eb;background:#eff6ff}.mgt-tile[onclick*="conforto"] .ic{color:#0284c7;background:#f0f9ff}.mgt-tile[onclick*="avisos"] .ic{color:#dc2626;background:#fef2f2}.mgt-tile[onclick*="timeline"] .ic,.mgt-tile[onclick*="meuhistorico"] .ic{color:#475569;background:#f1f5f9}'+
 '.mgt-tile{border-radius:20px!important;transition:transform .15s}.mgt-tile:active{transform:scale(.97)}.mgt-tile .ic{width:42px!important;height:42px!important;border-radius:13px!important}';
 (function(){try{var s=document.createElement("style");s.id="mgx-css";s.textContent=MGX_CSS;document.head.appendChild(s)}catch(e){}})();
+
+/* ================= INSTALAR APP + LAYOUT DE COMPUTADOR ================= */
+var _mgiEv=null;
+function mgiStandalone(){return (window.matchMedia&&matchMedia("(display-mode: standalone)").matches)||navigator.standalone===true}
+function mgiIOS(){return /iphone|ipad|ipod/i.test(navigator.userAgent)||(navigator.platform==="MacIntel"&&navigator.maxTouchPoints>1)}
+function mgiPode(){return !mgiStandalone()&&(!!_mgiEv||mgiIOS())}
+window.addEventListener("beforeinstallprompt",function(e){e.preventDefault();_mgiEv=e;mgiAtualizar()});
+window.addEventListener("appinstalled",function(){_mgiEv=null;try{localStorage.setItem("mgi_instalado","1")}catch(e){}mgiAtualizar();if(typeof showToast==="function")showToast("App instalado! Procure o ícone Minha Fazenda")});
+function mgiInstalar(){if(_mgiEv){_mgiEv.prompt();_mgiEv.userChoice.then(function(){_mgiEv=null;mgiAtualizar()});return}if(mgiIOS())mgiAjudaIOS()}
+function mgiAjudaIOS(){var o=document.createElement("div");o.className="mgi-ov";o.onclick=function(e){if(e.target===o)o.remove()};
+  o.innerHTML='<div class="mgi-box"><div class="mgi-ic"><img src="produtor-apple-touch-180.png" alt=""></div><b>Instalar no iPhone</b><ol><li>Toque no botão <span class="mgi-sh"><svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 15V3M8 7l4-4 4 4"/><path d="M5 12v7a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-7"/></svg></span> <b>Compartilhar</b>, na barra do Safari</li><li>Role e escolha <b>Adicionar à Tela de Início</b></li><li>Toque em <b>Adicionar</b></li></ol><small>O ícone Minha Fazenda aparece junto com os outros apps e já abre na sua fazenda.</small><button onclick="this.closest(\'.mgi-ov\').remove()">Entendi</button></div>';document.body.appendChild(o)}
+function mgiAtualizar(){var pode=mgiPode();var tb=document.querySelector(".topbar");if(tb){var b=document.getElementById("mgi-top");if(pode&&!b){b=document.createElement("button");b.id="mgi-top";b.className="mgi-top";b.onclick=mgiInstalar;b.innerHTML='<svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12M7 10l5 5 5-5"/><path d="M5 21h14"/></svg><span>Instalar app</span>';var ref=tb.querySelector(".mgt-av,.topbar-av,[class*=avatar]");if(ref)tb.insertBefore(b,ref);else tb.appendChild(b)}if(!pode&&b)b.remove()}
+  var bn=document.getElementById("mgi-banner");if(!pode&&bn)bn.remove()}
+function mgiBanner(){if(!mgiPode())return;try{if(localStorage.getItem("mgi_banner_x")==="1")return}catch(e){}var home=document.querySelector("#dash-body .mgx-atalhos");if(!home||document.getElementById("mgi-banner"))return;
+  var d=document.createElement("div");d.id="mgi-banner";d.className="mgi-banner";var pc=!/android|iphone|ipad|ipod|mobile/i.test(navigator.userAgent)&&!mgiIOS();
+  d.innerHTML='<img src="produtor-icon-192.png" alt=""><div class="t"><b>Instale o Minha Fazenda '+(pc?"no computador":"no celular")+'</b><span>Abre direto pelo ícone, em tela cheia, sem procurar o link.</span></div><button class="ok" onclick="mgiInstalar()">Instalar</button><button class="x" title="Agora não" onclick="try{localStorage.setItem(\'mgi_banner_x\',\'1\')}catch(e){};this.parentNode.remove()">✕</button>';
+  home.parentNode.insertBefore(d,home.nextSibling)}
+(function(){var f=function(){mgiAtualizar();mgiBanner()};setInterval(f,1500);window.addEventListener("load",f)})();
+var MGI_CSS=
+'.mgi-top{display:flex;align-items:center;gap:6px;border:none;background:#dcfce7;color:#15803d;border-radius:999px;padding:7px 12px;font-size:12.5px;font-weight:800;font-family:inherit;cursor:pointer;flex-shrink:0;margin-left:auto}.mgi-top+*{margin-left:8px!important}@media(max-width:420px){.mgi-top span{display:none}.mgi-top{padding:8px}}'+
+'.mgi-banner{display:flex;align-items:center;gap:12px;background:#fff;border:1px solid #bbf7d0;border-radius:18px;padding:12px;margin-bottom:14px;box-shadow:0 8px 24px -18px rgba(21,128,61,.6)}.mgi-banner img{width:44px;height:44px;border-radius:12px;flex-shrink:0}.mgi-banner .t{flex:1;min-width:0}.mgi-banner .t b{display:block;font-size:13.5px;color:#0f172a}.mgi-banner .t span{font-size:11.5px;color:var(--muted);line-height:1.35;display:block;margin-top:1px}.mgi-banner .ok{border:none;background:linear-gradient(135deg,#16a34a,#15803d);color:#fff;border-radius:11px;padding:9px 13px;font-weight:800;font-size:12.5px;font-family:inherit;cursor:pointer}.mgi-banner .x{border:none;background:none;color:#94a3b8;font-size:14px;cursor:pointer;padding:4px}'+
+'.mgi-ov{position:fixed;inset:0;z-index:9000;background:rgba(15,23,42,.5);display:flex;align-items:flex-end;justify-content:center;padding:16px}.mgi-box{background:#fff;border-radius:24px;padding:22px 20px 18px;max-width:380px;width:100%;text-align:center;animation:screenIn .3s}.mgi-ic img{width:64px;height:64px;border-radius:16px;box-shadow:0 10px 24px -10px rgba(6,41,26,.6)}.mgi-box>b{display:block;font-size:17px;margin:10px 0 6px;color:#0f172a}.mgi-box ol{text-align:left;font-size:13.5px;line-height:1.55;color:#334155;padding-left:20px;margin:8px 0}.mgi-box li{margin:6px 0}.mgi-sh{display:inline-flex;vertical-align:-3px;color:#2563eb}.mgi-box small{display:block;font-size:11.5px;color:var(--muted);margin:6px 0 14px}.mgi-box button{width:100%;border:none;background:#0b3d24;color:#fff;border-radius:14px;padding:12px;font-weight:800;font-size:14px;font-family:inherit;cursor:pointer}'+
+'';
+(function(){try{var s=document.createElement("style");s.id="mgi-css";s.textContent=MGI_CSS;document.head.appendChild(s)}catch(e){}})();
+
+/* ================= VERSÃO COMPUTADOR — estilo painel ================= */
+var MGD_MENU=[["Principal",[["dash","Início","inicio"],["leiteiro","Controle Leiteiro","leite"],["reproducao","Reprodução","repro"],["dieta","Dieta & Custos","dieta"]]],
+ ["Alimentação",[["lancarconsumo","Lançar trato","consumo"],["consumo","Consumo no cocho","consumo"],["forragem","Forragem","forragem"],["insumos","Estoque de insumos","insumos"],["bromatologia","Qualidade da forragem","broma"]]],
+ ["Rebanho",[["recria","Recria","recria"],["conforto","Conforto térmico","conforto"],["evolucao","Evolução","evolucao"]]],
+ ["Gestão",[["financeiro","Financeiro","fin"]]],
+ ["Meus dados",[["avisos","Avisos","avisos"],["timeline","Linha do tempo","timeline"],["meuhistorico","Histórico","historico"],["edit","Atualizar dados","editar"]]]];
+var MGD_COR={dash:"#15803d",leiteiro:"#0891b2",reproducao:"#15803d",dieta:"#15803d",lancarconsumo:"#d97706",consumo:"#d97706",forragem:"#65a30d",insumos:"#0f766e",bromatologia:"#2563eb",recria:"#db2777",conforto:"#0284c7",evolucao:"#4f46e5",financeiro:"#7c3aed",avisos:"#dc2626",timeline:"#475569",meuhistorico:"#475569",edit:"#15803d"};
+function mgdDesk(){return window.matchMedia&&matchMedia("(min-width:1024px)").matches}
+function mgdSide(){var app=document.getElementById("app");if(!app||getComputedStyle(app).display==="none")return;var sd=document.getElementById("mgd-side");
+  if(!sd){sd=document.createElement("aside");sd.id="mgd-side";sd.innerHTML=MGD_MENU.map(function(g,gi){return '<div class="g" data-g="'+gi+'"><button class="gl" onclick="this.parentNode.classList.toggle(\'fc\')">'+g[0]+'<i>'+mgtIco("mais",10)+'</i></button>'+g[1].map(function(it){return '<button class="it" data-t="'+it[0]+'" style="--c:'+(MGD_COR[it[0]]||"#15803d")+'" onclick="navScreen(\''+it[0]+'\')"><span class="ic">'+mgtIco(it[2],16)+'</span>'+it[1]+'</button>'}).join("")+'</div>'}).join("")+'<div class="sfoot">Precisa de ajuda? Fale com o seu técnico da Meta.</div>';app.appendChild(sd)}
+  var at=document.querySelector(".screen.active");var t=at?at.id.replace("screen-",""):"";sd.querySelectorAll(".it").forEach(function(b){b.classList.toggle("on",b.dataset.t===t)})}
+function mgdStatus(){var app=document.getElementById("app");if(!app||getComputedStyle(app).display==="none")return;var d=mgtFD()||{};var st=document.getElementById("mgd-status");
+  var ref=d.atualizado_em||d.data_visita||null;var dt=ref?new Date(ref):null;if(dt&&isNaN(dt))dt=null;
+  var DS=["Dom","Seg","Ter","Qua","Qui","Sex","Sáb"],MS=["jan","fev","mar","abr","mai","jun","jul","ago","set","out","nov","dez"];
+  var txt=dt?DS[dt.getDay()]+", "+dt.getDate()+" "+MS[dt.getMonth()]+" "+dt.getFullYear():"—";var dias=dt?Math.floor((Date.now()-dt.getTime())/864e5):null;
+  var tec=d.nome_vendedor||"";if(/@/.test(tec))tec="";
+  var h='<span class="mk">'+mgtIco("inicio",14)+'</span><b>Minha Fazenda</b><span class="sep"></span><span>Última atualização dos dados:</span><span class="pill">'+txt+'</span>'+(dias!=null?'<span class="op">('+(dias===0?"hoje":dias===1?"ontem":"há "+dias+" dias")+')</span>':'')+'<span class="r">'+(tec?'Seu técnico: <b>'+mgxCap(tec)+'</b> · ':'')+'Meta Nutrição e Saúde Animal</span>';
+  if(!st){st=document.createElement("div");st.id="mgd-status";app.appendChild(st)}if(st.dataset.h!==h){st.innerHTML=h;st.dataset.h=h}}
+function mgdInicio(){var b=document.getElementById("dash-body");if(!b||b.querySelector(".mgd-kpis"))return;var home=b.querySelector(".mgx-home");if(!home)return;var d=mgtFD()||{};
+  var n=function(k){var v=parseFloat(d[k]);return isNaN(v)||v<=0?null:v};var prod=n("media_prod"),vac=n("vacas"),sec=n("secas"),del=n("del");var tot=prod&&vac?prod*vac:null;
+  var K=function(ic,cor,v,l,chips){return '<div class="k" style="--c:'+cor+'"><span class="ki">'+mgtIco(ic,22)+'</span><div class="kv">'+v+'</div><div class="kl">'+l+'</div><div class="kc">'+chips.filter(Boolean).map(function(c){return '<span>'+c+'</span>'}).join("")+'</div></div>'};
+  var Q=[["Gordura",n("gordura"),2,"%"],["Proteína",n("proteina"),2,"%"],["CCS",n("ccs"),0," mil"],["NUL",n("nul"),1,""]].filter(function(x){return x[1]!=null});
+  var k=document.createElement("div");k.className="mgd-kpis";
+  k.innerHTML=K("leite","#22c55e",prod==null?"—":mgxNum(prod,1)+' <small>L</small>',"Produção por vaca/dia",[Q.length?Q[0][0]+" "+mgxNum(Q[0][1],Q[0][2])+Q[0][3]:"",Q.length>1?Q[1][0]+" "+mgxNum(Q[1][1],Q[1][2])+Q[1][3]:""])+
+   K("evolucao","#38bdf8",tot?mgxNum(tot)+' <small>L/dia</small>':"—","Produção total estimada",[Q.length>2?Q[2][0]+" "+mgxNum(Q[2][1],Q[2][2])+Q[2][3]:"",Q.length>3?Q[3][0]+" "+mgxNum(Q[3][1],Q[3][2])+Q[3][3]:""])+
+   K("recria","#a78bfa",vac==null?"—":mgxNum(vac),"Vacas em lactação",[sec!=null?mgxNum(sec)+" secas":"",vac&&sec?Math.round(vac/(vac+sec)*100)+"% em lactação":""])+
+   K("repro","#fb923c",del==null?"—":mgxNum(del)+' <small>dias</small>',"DEL médio do rebanho",[del!=null?(del<=150?"rebanho jovem":del<=200?"dentro do ideal":"acima do ideal"):""]);
+  var q=document.createElement("div");q.className="chart-card mgd-quick";
+  q.innerHTML='<div class="mgd-ct">Acesso rápido</div><div class="g">'+[["leiteiro","leite","Controle Leiteiro"],["reproducao","repro","Reprodução"],["dieta","dieta","Dieta & Custos"],["lancarconsumo","consumo","Lançar trato"],["recria","recria","Recria"],["financeiro","fin","Financeiro"]].map(function(x){return '<button onclick="navScreen(\''+x[0]+'\')" style="--c:'+MGD_COR[x[0]]+'"><span>'+mgtIco(x[1],20)+'</span>'+x[2]+'</button>'}).join("")+'</div>';
+  var hd=document.createElement("div");hd.className="mgd-ph";var hj=new Date();var MSx=["janeiro","fevereiro","março","abril","maio","junho","julho","agosto","setembro","outubro","novembro","dezembro"];
+  hd.innerHTML='<div><h1>'+mgxSaud()+(d.produtor?', '+mgxCap(String(d.produtor).split(" ")[0]):'')+'</h1><small>Visão geral da fazenda · '+hj.getDate()+' de '+MSx[hj.getMonth()]+' de '+hj.getFullYear()+'</small></div><span class="live"><i></i>Dados da fazenda</span>';
+  home.parentNode.insertBefore(hd,home);home.parentNode.insertBefore(k,home);var at=b.querySelector(".mgx-atalhos");(at||home).parentNode.insertBefore(q,(at||home).nextSibling)}
+(function(){var f=function(){try{mgdSide();mgdStatus();var at=document.querySelector(".screen.active");if(at&&at.id==="screen-dash")mgdInicio()}catch(e){console.error("mgd",e)}};setInterval(f,700);window.addEventListener("load",f)})();
+var MGD_CSS='.mgd-ph,.mgd-kpis,.mgd-quick,#mgd-side,#mgd-status{display:none}@media(min-width:1024px){#mgd-side,#mgd-status{display:block}#mgd-status{display:flex}.mgd-ph{display:flex}.mgd-kpis{display:grid}.mgd-quick{display:block}'+
+ 'body{background:#f4f6f5}#app{padding-left:232px}'+
+ '.topbar{position:fixed!important;top:0;left:0;right:0;z-index:60;height:56px!important;padding:0 24px!important;box-shadow:none!important;border-bottom:1px solid #e7ece9!important;background:#fff!important}'+
+ '.bottom-nav{display:none!important}'+
+ '#mgd-side{position:fixed;left:0;top:56px;bottom:34px;width:232px;background:#fff;border-right:1px solid #e7ece9;overflow-y:auto;padding:14px 10px 18px;z-index:55;scrollbar-width:thin}'+
+ '#mgd-side .g{margin-bottom:8px}#mgd-side .gl{display:flex;align-items:center;justify-content:space-between;width:100%;border:none;background:none;font-family:inherit;font-size:10px;font-weight:800;letter-spacing:1.2px;text-transform:uppercase;color:#94a3b8;padding:12px 10px 6px;cursor:pointer}#mgd-side .gl i{display:none}'+
+ '#mgd-side .it{position:relative;display:flex;align-items:center;gap:11px;width:100%;border:none;background:none;font-family:inherit;font-size:13px;font-weight:600;color:#334155;padding:7px 10px;border-radius:10px;cursor:pointer;text-align:left;margin:1px 0}#mgd-side .it:hover{background:#f6f8f7}'+
+ '#mgd-side .it .ic{width:28px;height:28px;border-radius:8px;display:flex;align-items:center;justify-content:center;background:#f1f5f9;color:#64748b;flex-shrink:0;transition:all .15s}'+
+ '#mgd-side .it.on{background:#ecfdf3;color:#15803d;font-weight:800}#mgd-side .it.on .ic{background:var(--c);color:#fff}#mgd-side .it.on:before{content:"";position:absolute;left:-10px;top:8px;bottom:8px;width:3px;border-radius:0 3px 3px 0;background:#15803d}'+
+ '#mgd-side .sfoot{font-size:11px;color:#94a3b8;padding:14px 10px 0;line-height:1.45;border-top:1px solid #f1f5f9;margin-top:8px}'+
+ '#mgd-status{position:fixed;left:0;right:0;bottom:0;height:34px;z-index:61;background:linear-gradient(90deg,#14532d,#166534);color:#dcfce7;display:flex;align-items:center;gap:10px;padding:0 20px;font-size:12px}#mgd-status .mk{display:flex;color:#86efac}#mgd-status b{color:#fff;font-weight:800}#mgd-status .sep{width:1px;height:14px;background:rgba(255,255,255,.25)}#mgd-status .pill{background:rgba(0,0,0,.28);color:#fff;font-weight:800;border-radius:7px;padding:3px 10px}#mgd-status .op{opacity:.7}#mgd-status .r{margin-left:auto;opacity:.85}'+
+ '.content{max-width:1180px!important;padding:80px 32px 64px!important}'+
+ '.mgx-head{margin:0 0 20px}.mgx-head h2{font-size:24px}.mgx-head .ic{width:46px;height:46px}'+
+ '.rotate-hint,.mgx-home,.mgx-atalhos{display:none!important}'+
+ '.mgd-ph{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:18px}.mgd-ph h1{font-size:24px;font-weight:800;letter-spacing:-.02em;margin:0;color:#0f172a}.mgd-ph small{font-size:13px;color:#64748b}.mgd-ph .live{display:flex;align-items:center;gap:7px;border:1px solid #bbf7d0;background:#fff;color:#15803d;border-radius:999px;padding:6px 14px;font-size:12px;font-weight:800}.mgd-ph .live i{width:7px;height:7px;border-radius:50%;background:#22c55e;box-shadow:0 0 0 3px #dcfce7}'+
+ '.mgd-kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:16px;margin-bottom:18px}.mgd-kpis .k{position:relative;overflow:hidden;background:radial-gradient(120% 120% at 100% 0%,#14532d 0%,#0b3d24 50%,#072b1a 100%);border-radius:20px;padding:20px 20px 16px;color:#fff;border-left:4px solid var(--c);box-shadow:0 14px 30px -18px rgba(6,41,26,.7)}.mgd-kpis .k:after{content:"";position:absolute;right:-30px;top:-30px;width:120px;height:120px;border-radius:50%;background:rgba(255,255,255,.05)}'+
+ '.mgd-kpis .ki{width:44px;height:44px;border-radius:13px;background:rgba(255,255,255,.08);display:flex;align-items:center;justify-content:center;color:var(--c);margin-bottom:12px}.mgd-kpis .kv{font-size:30px;font-weight:800;letter-spacing:-.03em;line-height:1}.mgd-kpis .kv small{font-size:14px;font-weight:700;opacity:.7}.mgd-kpis .kl{font-size:13px;font-weight:700;margin-top:6px;opacity:.9}.mgd-kpis .kc{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px;min-height:22px}.mgd-kpis .kc span{font-size:11px;font-weight:700;background:rgba(255,255,255,.1);border-radius:7px;padding:3px 8px}'+
+ '.mgd-quick{margin-bottom:16px!important}.mgd-ct{font-size:11px;font-weight:800;letter-spacing:1px;text-transform:uppercase;color:#334155;margin-bottom:12px}.mgd-quick .g{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:10px}.mgd-quick button{display:flex;flex-direction:column;align-items:center;gap:8px;border:1px solid #e7ece9;background:#fff;border-radius:14px;padding:16px 8px 14px;font-family:inherit;font-size:13px;font-weight:700;color:#0f172a;cursor:pointer;transition:all .15s}.mgd-quick button span{width:40px;height:40px;border-radius:12px;display:flex;align-items:center;justify-content:center;color:var(--c);background:color-mix(in srgb,var(--c) 10%,#fff)}.mgd-quick button:hover{border-color:var(--c);transform:translateY(-1px);box-shadow:0 8px 20px -14px rgba(15,23,42,.35)}'+
+ '#dash-body{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px;align-items:start}#dash-body>*{margin:0!important;min-width:0}#dash-body>.mgd-ph,#dash-body>.mgd-kpis,#dash-body>.mgd-quick,#dash-body>.mgi-banner,#dash-body>.mgx-aviso,#dash-body>.hero-card,#dash-body>.btn-action,#dash-body>[style*="text-align:center"]{grid-column:1/-1}'+
+ '.kpi-grid{grid-template-columns:repeat(4,minmax(0,1fr))!important}'+
+ '#reproducao-body{position:relative}.rpv-fab{position:absolute!important;top:0;right:100px;bottom:auto!important;height:40px!important;padding:0 16px 0 12px!important;border-radius:12px!important;font-size:13.5px!important;animation:none!important;box-shadow:0 8px 18px -10px rgba(21,128,61,.8)!important}'+
+ '#rp-prod-cont{display:grid;grid-template-columns:360px minmax(0,1fr);gap:24px;align-items:start}#rp-prod-cont>.rpv-hero{grid-column:1;grid-row:1/span 2;position:sticky;top:80px;margin:0}#rp-prod-cont>.rpv-tabs{grid-column:2;margin:0}#rp-prod-cont>#rp-tab-cont{grid-column:2}.rpv-head h2{font-size:24px}'+
+ '.mgx-hero2 .big b{font-size:40px}.mgx-hero2 .mini{flex:0 1 560px}'+
+ '#dieta-content{display:grid;grid-template-columns:repeat(auto-fit,minmax(460px,1fr));gap:16px;align-items:start}#dieta-content>.mgx-hero2{grid-column:1/-1;margin:0}#dieta-content>.chart-card{margin:0!important}'+
+ '.mgi-top{margin-left:auto}'+
+ '#dash-body>:empty,#dash-body>[style*="display:none"]{display:none!important}'+
+ '#dieta-content:not(:has(.mgx-lote ~ .mgx-lote)){grid-template-columns:1fr}'+
+ '.content .btn-action{display:inline-flex!important;align-items:center;justify-content:center;width:auto!important;min-width:200px;padding:12px 24px!important;margin:0 8px 16px 0!important;vertical-align:top}'+
+'}'+
+'@media(min-width:1500px){.content{max-width:1320px!important}}';
+(function(){try{var s=document.createElement("style");s.id="mgd-css";s.textContent=MGD_CSS;document.head.appendChild(s)}catch(e){}})();
 
 </script>
 </body>

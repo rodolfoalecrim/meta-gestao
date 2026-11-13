@@ -1,15 +1,20 @@
 {
-  "name": "Meta Gestão - Minha Fazenda",
+  "id": "./app-produtor.html",
+  "name": "Minha Fazenda · Meta",
   "short_name": "Minha Fazenda",
-  "description": "Acompanhe os números da sua fazenda — Meta Nutrição e Saúde Animal",
+  "description": "Gestão da fazenda leiteira com o seu técnico da Meta: leite, reprodução, nutrição e custos.",
+  "lang": "pt-BR",
   "start_url": "./app-produtor.html",
   "scope": "./",
   "display": "standalone",
-  "background_color": "#f3f6f3",
-  "theme_color": "#15803d",
-  "orientation": "portrait-primary",
+  "display_override": ["standalone", "minimal-ui"],
+  "orientation": "any",
+  "background_color": "#0b3d24",
+  "theme_color": "#0b3d24",
+  "categories": ["business", "productivity"],
   "icons": [
-    { "src": "meta_logo.jpg", "sizes": "192x192", "type": "image/jpeg", "purpose": "any" },
-    { "src": "meta_logo.jpg", "sizes": "512x512", "type": "image/jpeg", "purpose": "any" }
+    { "src": "produtor-icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "produtor-icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "produtor-icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
   ]
 }

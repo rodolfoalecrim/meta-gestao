@@ -1,56 +1,30 @@
-// Service Worker do App do Produtor — Meta Gestão
-// Cuida só de deixar o app instalável e cachear o "esqueleto" da página.
-// Os dados (Firebase) continuam sempre buscados online, normalmente.
-//
-// IMPORTANTE: usa estratégia "rede primeiro" pro HTML — sempre tenta buscar
-// a versão mais nova primeiro. Só usa a cópia salva se estiver genuinamente
-// offline. Isso evita o app ficar preso numa versão antiga depois de uma
-// atualização (o problema da versão anterior deste arquivo).
-
-const CACHE_NAME = "meta-produtor-v2";
-const ARQUIVOS_ESSENCIAIS = [
-  "./app-produtor.html",
-  "./manifest-produtor.json",
-  "./meta_logo.jpg",
-  "./meta_icon_192.png",
-  "./meta_icon_512.png"
-];
-
-self.addEventListener("install", (event) => {
-  event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => cache.addAll(ARQUIVOS_ESSENCIAIS))
-  );
-  self.skipWaiting();
+/* Meta · app do produtor — service worker
+   Rede primeiro (sempre a versão mais nova quando há internet); cache só como reserva offline.
+   Firebase e demais serviços externos passam direto, sem cache. */
+var CACHE = "meta-produtor-v3";
+var BASE = ["./app-produtor.html", "./manifest-produtor.json", "./produtor-icon-192.png", "./produtor-icon-512.png", "./produtor-apple-touch-180.png", "./produtor-favicon-64.png"];
+self.addEventListener("install", function (e) {
+  e.waitUntil(caches.open(CACHE).then(function (c) { return c.addAll(BASE).catch(function () {}); }).then(function () { return self.skipWaiting(); }));
 });
-
-self.addEventListener("activate", (event) => {
-  event.waitUntil(
-    caches.keys().then((nomes) =>
-      Promise.all(
-        nomes
-          .filter((nome) => nome !== CACHE_NAME)
-          .map((nome) => caches.delete(nome))
-      )
-    )
-  );
-  self.clients.claim();
+self.addEventListener("activate", function (e) {
+  e.waitUntil(caches.keys().then(function (ks) {
+    return Promise.all(ks.filter(function (k) { return k !== CACHE && k.indexOf("meta-produtor") === 0; }).map(function (k) { return caches.delete(k); }));
+  }).then(function () { return self.clients.claim(); }));
 });
-
-self.addEventListener("fetch", (event) => {
-  // Só intercepta o "esqueleto" do app (HTML/manifest/ícones).
-  // Tudo que é chamada de API/Firebase passa direto pela rede, sem interferência.
-  const url = event.request.url;
-  const ehArquivoDoApp = ARQUIVOS_ESSENCIAIS.some((f) => url.includes(f.replace("./", "")));
-  if (!ehArquivoDoApp) return;
-
-  // Rede primeiro: busca a versão mais nova. Só cai pro cache se a rede falhar
-  // (offline de verdade) ou demorar demais.
-  event.respondWith(
-    fetch(event.request)
-      .then((respostaRede) => {
-        caches.open(CACHE_NAME).then((cache) => cache.put(event.request, respostaRede.clone()));
-        return respostaRede;
-      })
-      .catch(() => caches.match(event.request))
-  );
+self.addEventListener("fetch", function (e) {
+  var req = e.request;
+  if (req.method !== "GET") return;
+  var url = new URL(req.url);
+  var fonte = url.hostname === "fonts.googleapis.com" || url.hostname === "fonts.gstatic.com";
+  if (url.origin !== self.location.origin && !fonte) return;
+  if (req.mode === "navigate") {
+    e.respondWith(fetch(req).then(function (r) {
+      var cp = r.clone(); caches.open(CACHE).then(function (c) { c.put("./app-produtor.html", cp); }); return r;
+    }).catch(function () { return caches.match("./app-produtor.html"); }));
+    return;
+  }
+  e.respondWith(fetch(req).then(function (r) {
+    if (r && (r.ok || r.type === "opaque")) { var cp = r.clone(); caches.open(CACHE).then(function (c) { c.put(req, cp); }); }
+    return r;
+  }).catch(function () { return caches.match(req); }));
 });
