@@ -6047,7 +6047,7 @@ async function mgoPrecarregar(){var f=mgoFarm();if(!f||mgoOff())return;try{var u
    O app publica em repro_resumo/{fazenda}/rotina/prox as tarefas dos próximos 7 dias.
    A função agendada "avisosProdutor" lê isso todo dia, na hora escolhida, e manda a notificação para os aparelhos
    cadastrados em repro_resumo/{fazenda}/avisos. */
-var MG_VAPID="COLE_AQUI_A_CHAVE_VAPID";/* Firebase Console → Configurações do projeto → Cloud Messaging → Certificados push da Web */
+var MG_VAPID="BDqPYBLMCiWFMyhc-yynAIiSGdMDa7pY88GsQOni0TyvHOWvwFocCTCSF5QIIbNLisofJxZhu2WwpHbnKRzZhm0";/* Firebase Console → Configurações do projeto → Cloud Messaging → Certificados push da Web */
 var MGN={};
 function mgnSuporta(){return "serviceWorker" in navigator&&"PushManager" in window&&"Notification" in window}
 function mgnIOS(){return /iphone|ipad|ipod/i.test(navigator.userAgent)||(navigator.platform==="MacIntel"&&navigator.maxTouchPoints>1)}
