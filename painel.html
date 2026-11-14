@@ -1175,6 +1175,7 @@ Maria Souza;;Realeza;PR;PROSPECTO;VAGNER;80;28"></textarea>
         <button onclick="abrirLeiteiroDaFazenda()" class="tool-pill-btn" style="background:linear-gradient(135deg,#0891b2,#0c6179)" title="Controle Leiteiro desta propriedade"><span class="tpb-ico">🥛</span><span class="tpb-lbl">Leiteiro</span></button>
         <button onclick="abrirConsumoDaFazenda()" class="tool-pill-btn" style="background:linear-gradient(135deg,#b45309,#92400e)" title="Monitoramento de Consumo desta propriedade"><span class="tpb-ico">📊</span><span class="tpb-lbl">Consumo</span></button>
         <button onclick="abrirRecriaDaFazenda()" class="tool-pill-btn" style="background:linear-gradient(135deg,#d97706,#b45309)" title="Monitoramento da Recria desta propriedade"><span class="tpb-ico">🐮</span><span class="tpb-lbl">Recria</span></button>
+        <button onclick="mgAbrirVisitaApp()" class="tool-pill-btn" style="background:linear-gradient(135deg,#15803d,#166534)" title="Lista da visita, Nota META e qualidade do leite no app da fazenda"><span class="tpb-ico">📋</span><span class="tpb-lbl">Lista da visita</span></button>
         <button onclick="abrirForragemDaFazenda()" class="tool-pill-btn" style="background:linear-gradient(135deg,#65a30d,#4d7c0f)" title="Forragem: Estoque & Custo desta propriedade"><span class="tpb-ico">🌾</span><span class="tpb-lbl">Forragem</span></button>
         <button onclick="abrirReproducaoDaFazenda()" class="tool-pill-btn" style="background:linear-gradient(135deg,#be185d,#9d174d)" title="Eficiência Reprodutiva desta propriedade"><span class="tpb-ico">🐄</span><span class="tpb-lbl">Reprodução</span></button>
         <button onclick="abrirFinanceiroDaFazenda()" class="tool-pill-btn" style="background:linear-gradient(135deg,#7c3aed,#6d28d9)" title="Painel Financeiro desta propriedade"><span class="tpb-ico">💵</span><span class="tpb-lbl">Financeiro</span></button>
@@ -7994,5 +7995,9 @@ function ptAplicar(){
 (function(){var q=new URLSearchParams(location.search).get("fazenda");if(!q)return;var n=0,t=setInterval(function(){n++;if(n>90){clearInterval(t);return}
 try{if(typeof ALL==="undefined"||!ALL||!ALL.length)return;var f=ALL.find(function(d){return String(d.id)===q});clearInterval(t);
 if(f){openFarmModal(f.id,f.produtor||f.nome||"");try{history.replaceState(null,"",location.pathname)}catch(e){}}}catch(e){}},400)})();</script>
+<script id="mg-painel-visita">/* abre o app da fazenda direto na Lista da visita (usa o mesmo link do produtor) */
+async function mgAbrirVisitaApp(){try{if(!currentFarmId)return;var w=window.open("about:blank","_blank");var s=await db.ref("propriedades/"+currentFarmId).once("value");var d=s.val()||{};var t=d.produtor_token;
+if(!t){t=(typeof gerarTokenAcesso==="function"?gerarTokenAcesso():Math.random().toString(36).slice(2,12)+Math.random().toString(36).slice(2,12));var up={produtor_token:t};if(!d.produtor_pin)up.produtor_pin=String(Math.floor(1e3+Math.random()*9e3));await db.ref("propriedades/"+currentFarmId).update(up)}
+var base=location.href.replace(/[?#].*$/,"").replace(/painel(\.html)?$/,"");var url=base+"app-produtor.html?f="+encodeURIComponent(t)+"#visita";if(w)w.location=url;else location.href=url}catch(e){alert("Não foi possível abrir o app da fazenda: "+(e.message||e))}}</script>
 </body>
 </html>
