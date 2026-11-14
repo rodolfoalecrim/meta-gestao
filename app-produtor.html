@@ -6415,6 +6415,176 @@ var MGQ_CSS='.mgq-sec{font-size:13px;font-weight:800;letter-spacing:.4px;text-tr
  '@media(max-width:700px){.mgq-nh{flex-direction:column;text-align:center}.mgq-nh .gr{justify-content:center}.mgq-inc>div{grid-template-columns:1fr 54px}.mgq-inc .b{grid-column:1/-1;grid-row:2}.mgq-bars .r{grid-template-columns:96px 1fr 52px}.mgq-vh>div:last-child{text-align:left}}'+
  '@media print{body.mgq-print *{visibility:hidden!important}body.mgq-print #mgq-vp,body.mgq-print #mgq-vp *{visibility:visible!important}body.mgq-print #mgq-vp{position:absolute;left:0;top:0;width:100%;border:0;padding:0}body.mgq-print .mgs-fab{display:none!important}@page{margin:12mm}}';
 (function(){try{var s=document.createElement("style");s.id="mgq-css";s.textContent=MGQ_CSS;document.head.appendChild(s)}catch(e){}})();
+
+/* ================= MGU — organização do app por áreas da fazenda + diagnóstico de gestação em lista + fichas de campo =================
+   Menu: as telas de todos os módulos são agrupadas por área (Início, Rebanho, Reprodução, Produção, Sanitário, Nutrição,
+   Estoque e financeiro, Relatórios), no computador (menu lateral) e no celular (tela "Mais"). Nenhuma ferramenta muda de lugar no código. */
+var MGU={dgSel:{},dgDias:0,dgData:null,dgFut:false,abertas:null};
+Object.assign(MGT_ICO,{
+ dglista:'<path d="M9 4.5h6M9.5 3h5a1 1 0 0 1 1 1v1.5h-7V4a1 1 0 0 1 1-1Z"/><path d="M8.5 5.5H6.5a1.5 1.5 0 0 0-1.5 1.5v12.5A1.5 1.5 0 0 0 6.5 21h11a1.5 1.5 0 0 0 1.5-1.5V7a1.5 1.5 0 0 0-1.5-1.5h-2"/><path d="m8.5 13 2 2 4-4.5"/>',
+ ficha:'<path d="M6 2.5h8l4.5 4.5v13a1.5 1.5 0 0 1-1.5 1.5H6A1.5 1.5 0 0 1 4.5 20V4A1.5 1.5 0 0 1 6 2.5Z"/><path d="M14 2.5V7h4.5"/><path d="M8 11.5h8M8 15h8M8 18.5h5"/>',
+ impressora:'<path d="M6.5 9V3.5h11V9"/><rect x="3" y="9" width="18" height="8" rx="2"/><path d="M6.5 14h11v6.5h-11Z"/>',
+ polegarup:'<path d="M7 10.5v10H4a1 1 0 0 1-1-1v-8a1 1 0 0 1 1-1Z"/><path d="M7 10.5 11 3a2.5 2.5 0 0 1 2.6 2.9l-.6 3.6h5.6a2 2 0 0 1 2 2.4l-1.4 7a2 2 0 0 1-2 1.6H7"/>',
+ pessoa:'<circle cx="12" cy="8" r="4"/><path d="M4 20.5a8 8 0 0 1 16 0"/>',
+ polegardown:'<path d="M17 13.5v-10h3a1 1 0 0 1 1 1v8a1 1 0 0 1-1 1Z"/><path d="M17 13.5 13 21a2.5 2.5 0 0 1-2.6-2.9l.6-3.6H5.4a2 2 0 0 1-2-2.4l1.4-7a2 2 0 0 1 2-1.6H17"/>'
+});
+/* áreas: [nome, ícone, cor, telas na ordem] — tela que não estiver em nenhuma área vai para "Mais" */
+var MGU_AREAS=[
+ ["Início","inicio","#15803d",["dash","nota","agenda","avisos"]],
+ ["Rebanho","rebanho","#0f766e",["rebanho","curral","recria","projecao","descarte"]],
+ ["Reprodução","repro","#db2777",["reproducao","diagnostico","transicao"]],
+ ["Produção","leite","#0891b2",["leiteiro","qualidade","conforto","evolucao"]],
+ ["Sanitário","sanidade","#e11d48",["sanidade"]],
+ ["Nutrição","dieta","#d97706",["dieta","lancarconsumo","consumo","forragem","bromatologia"]],
+ ["Estoque e financeiro","fin","#7c3aed",["insumos","financeiro"]],
+ ["Relatórios","ficha","#475569",["fichas","visita","timeline","meuhistorico"]],
+ ["Meus dados","pessoa","#64748b",["edit"]]
+];
+function mguAreaDe(id){for(var i=0;i<MGU_AREAS.length;i++)if(MGU_AREAS[i][3].indexOf(id)>=0)return i;return -1}
+function mguAbertas(){if(MGU.abertas)return MGU.abertas;try{MGU.abertas=JSON.parse(localStorage.getItem("mgu_abertas")||"null")}catch(e){}if(!MGU.abertas)MGU.abertas={0:1};return MGU.abertas}
+function mguToggle(i){var a=mguAbertas();if(a[i])delete a[i];else a[i]=1;try{localStorage.setItem("mgu_abertas",JSON.stringify(a))}catch(e){}var g=document.querySelector('#mgd-side .ar[data-a="'+i+'"]');if(g)g.classList.toggle("ab",!!a[i])}
+/* menu lateral (computador) */
+function mguItens(){var M={};(typeof MGD_MENU!=="undefined"?MGD_MENU:[]).forEach(function(g){g[1].forEach(function(it){if(!M[it[0]])M[it[0]]=it})});return M}
+window.mgdSide=function(){var app=document.getElementById("app");if(!app||getComputedStyle(app).display==="none")return;var sd=document.getElementById("mgd-side");
+  var M=mguItens(),ids=Object.keys(M),sig=ids.join(",");
+  if(!sd||sd.dataset.sig!==sig){if(!sd){sd=document.createElement("aside");sd.id="mgd-side";app.appendChild(sd)}sd.dataset.sig=sig;
+    var usados={},grupos=MGU_AREAS.map(function(a){var it=a[3].filter(function(t){return M[t]}).map(function(t){usados[t]=1;return M[t]});return [a,it]});
+    var resto=ids.filter(function(t){return !usados[t]}).map(function(t){return M[t]});if(resto.length)grupos.push([["Mais","mais","#64748b",[]],resto]);
+    var ab=mguAbertas();
+    sd.innerHTML=grupos.map(function(g,gi){if(!g[1].length)return "";var a=g[0];var um=g[1].length===1;
+      if(um){var it=g[1][0];return '<div class="ar um" data-a="'+gi+'"><button class="it ah1" data-t="'+it[0]+'" style="--c:'+a[2]+'" onclick="navScreen(\''+it[0]+'\')"><span class="ic">'+mgtIco(a[1],16)+'</span>'+a[0]+'</button></div>'}
+      return '<div class="ar'+(ab[gi]?" ab":"")+'" data-a="'+gi+'" style="--ca:'+a[2]+'"><button class="ah" onclick="mguToggle('+gi+')"><span class="ic">'+mgtIco(a[1],16)+'</span><b>'+a[0]+'</b><i>'+mgtIco("chev",13)+'</i></button><div class="ai">'+
+        g[1].map(function(it){return '<button class="it" data-t="'+it[0]+'" style="--c:'+((typeof MGD_COR!=="undefined"&&MGD_COR[it[0]])||a[2])+'" onclick="navScreen(\''+it[0]+'\')">'+it[1]+'</button>'}).join("")+'</div></div>'}).join("")+
+      '<div class="sfoot">Precisa de ajuda? Fale com o seu técnico.</div>'}
+  var at=document.querySelector(".screen.active");var t=at?at.id.replace("screen-",""):"";
+  sd.querySelectorAll(".it").forEach(function(b){b.classList.toggle("on",b.dataset.t===t)});
+  var on=sd.querySelector(".it.on");if(on){var ar=on.closest(".ar");sd.querySelectorAll(".ar").forEach(function(x){x.classList.toggle("tem",x===ar)});if(ar&&!ar.classList.contains("ab")&&!ar.classList.contains("um")){ar.classList.add("ab");var a=mguAbertas();a[ar.dataset.a]=1}}};
+/* tela "Mais" (celular): mesmos agrupamentos */
+function mguMais(){var b=document.getElementById("mais-body");if(!b||b.dataset.mgu==="1")return;var T={},ordem=[];
+  b.querySelectorAll('[onclick*="navScreen("]').forEach(function(el){var m=(el.getAttribute("onclick")||"").match(/navScreen\(['"]([a-z0-9_]+)['"]\)/i);if(!m||T[m[1]])return;var id=m[1];
+    var tit=(el.querySelector("b,strong,h3")||{}).textContent||(el.innerText||"").split("\n")[0];var sub=(el.querySelector("small")||{}).textContent||"";
+    var ic=el.querySelector(".ic svg,svg");T[id]={id:id,tit:(tit||"").replace(/^[^\wÀ-ú]+/,"").trim(),sub:(sub||"").trim(),ic:ic?ic.outerHTML:"",cor:(el.style.getPropertyValue("--c")||"").trim()};ordem.push(id)});
+  var M=mguItens();if(!ordem.length&&!Object.keys(M).length)return;var usados={};
+  var acoes=[].slice.call(b.querySelectorAll("button")).filter(function(x){return !/navScreen\(/.test(x.getAttribute("onclick")||"")&&!x.closest('[onclick*="navScreen("]')&&!x.closest(".mgr-tile")&&!x.classList.contains("mgr-tile")});
+  var badge=document.getElementById("avisos-badge-wrap");
+  var h=mgsHead("mais","#15803d","Mais","Todas as ferramentas da sua fazenda, por área","");
+  var secs=MGU_AREAS.map(function(a){var it=a[3].filter(function(t){return T[t]||M[t]}).map(function(t){usados[t]=1;return T[t]||{id:t,tit:M[t][1],sub:"",ic:mgtIco(M[t][2],22),cor:""}});return [a,it]});
+  var resto=ordem.filter(function(t){return !usados[t]}).map(function(t){return T[t]});if(resto.length)secs.push([["Mais","mais","#64748b",[]],resto]);
+  h+=secs.filter(function(s){return s[1].length}).map(function(s){var a=s[0];return '<div class="mgs-rot mgu-rot"><div class="mgs-rsec">'+a[0]+'</div><div class="mgs-rg">'+s[1].map(function(t){return '<button style="--c:'+(t.cor||a[2])+'" onclick="navScreen(\''+t.id+'\')"><span class="ic">'+(t.ic||mgtIco(a[1],22))+'</span><b>'+mgpEsc(t.tit)+'</b>'+(t.sub?'<small>'+mgpEsc(t.sub)+'</small>':'')+'</button>'}).join("")+'</div></div>'}).join("");
+  b.innerHTML=h;if(badge)b.insertBefore(badge,b.children[1]||null);if(acoes.length){var w=document.createElement("div");w.className="mgu-acoes";acoes.forEach(function(x){w.appendChild(x)});b.appendChild(w)}b.dataset.mgu="1"}
+
+/* ---------- diagnóstico de gestação em lista ---------- */
+function mguDgLista(){var hoje=mgpHoje(),reb=mgsReb();if(!reb.length)return [];var ag=rpAgenda(reb,_rp.dados&&_rp.dados.config,hoje);var L=[];
+  ag.dg.forEach(function(x){var s=x.r.st.ultimoServico||{};L.push({r:x.r,br:x.r.a.brinco,tipo:"dg",ia:s.data||null,touro:s.touro||"",dias:s.data?rpDif(hoje,s.data):null,data:x.data,atraso:x.atraso})});
+  ag.reconf.forEach(function(x){L.push({r:x.r,br:x.r.a.brinco,tipo:"reconf",ia:x.r.st.concepcao,touro:x.r.st.touroPrenhez||"",dias:x.gest,data:x.data,atraso:x.atraso})});
+  if(MGU.dgFut)reb.forEach(function(r){var st=r.st;if(st.status!=="inseminada"||!st.ultimoServico||L.some(function(o){return o.r===r}))return;var d=rpDif(hoje,st.ultimoServico.data);if(d>=21)L.push({r:r,br:r.a.brinco,tipo:"cedo",ia:st.ultimoServico.data,touro:st.ultimoServico.touro||"",dias:d,data:st.prev.dg,atraso:rpDif(hoje,st.prev.dg)})});
+  return L.sort(function(a,b){return (b.dias||0)-(a.dias||0)})}
+async function mguDiagnostico(){var body=document.getElementById("diagnostico-body");if(!body)return;body.innerHTML=mgsHead("dglista","#2563eb","Diagnóstico de gestação","Lance o resultado do toque ou do ultrassom de várias vacas de uma vez","")+'<div style="text-align:center;padding:40px"><div class="mg-spinner"></div></div>';
+  await mgsGarantir();mguDgRender()}
+function mguDgRender(){var body=document.getElementById("diagnostico-body");if(!body)return;var L=mguDgLista(),hoje=mgpHoje();MGU.dgData=MGU.dgData||hoje;
+  Object.keys(MGU.dgSel).forEach(function(k){if(!L.some(function(o){return o.r.id===k}))delete MGU.dgSel[k]});var nSel=Object.keys(MGU.dgSel).length;
+  var h=mgsHead("dglista","#2563eb","Diagnóstico de gestação","Lance o resultado do toque ou do ultrassom de várias vacas de uma vez",'<button onclick="mguFicha(\'dg\')">'+mgpIco("impressora",15)+' Imprimir ficha</button>');
+  h+='<div class="mgu-bar"><label>Data do diagnóstico <input type="date" id="mgu-dgd" value="'+MGU.dgData+'" max="'+hoje+'" onchange="MGU.dgData=this.value||mgpHoje()"></label>'+
+    '<label class="mgu-ck"><input type="checkbox" '+(MGU.dgFut?"checked":"")+' onchange="MGU.dgFut=this.checked;mguDgRender()"> Mostrar também as inseminadas há 21 dias ou mais (antes da data do DG)</label></div>';
+  if(!L.length){h+='<div class="mgs-ok">'+mgpIco("dglista",20)+'<span><b>Nenhuma vaca aguardando diagnóstico.</b> As vacas aparecem aqui quando chega a data do DG depois da inseminação.</span></div>';body.innerHTML=h;return}
+  h+='<div class="mgu-lote'+(nSel?" on":"")+'"><label class="mgu-ck"><input type="checkbox" '+(nSel&&nSel===L.length?"checked":"")+' onchange="mguDgTodas(this.checked)"> <b>'+(nSel?nSel+" selecionada"+(nSel>1?"s":""):"Selecionar todas")+'</b></label>'+
+    (nSel?'<button class="pos" onclick="mguDgLote(\'+\')">'+mgpIco("polegarup",16)+' Prenhes</button><button class="neg" onclick="mguDgLote(\'-\')">'+mgpIco("polegardown",16)+' Vazias</button>':'<span>'+L.length+' vaca'+(L.length>1?'s':'')+' para diagnosticar</span>')+'</div>';
+  h+='<div class="mgu-dg">'+L.map(function(o){var id=o.r.id;var et=o.tipo==="reconf"?'<em class="rc">reconfirmar</em>':o.tipo==="cedo"?'<em class="cd">antes da data</em>':o.atraso>14?'<em class="at">'+o.atraso+' dias de atraso</em>':'';
+    return '<div class="ln'+(MGU.dgSel[id]?" sel":"")+'"><label class="mgu-ck"><input type="checkbox" '+(MGU.dgSel[id]?"checked":"")+' onchange="mguDgSel(\''+id+'\',this.checked)"></label>'+
+      '<button class="vc" onclick="mgsAbrirFicha(\''+mgpEsc(o.br)+'\')"><b>'+mgpEsc(o.br)+'</b>'+et+'</button>'+
+      '<div class="inf"><span>'+(o.tipo==="reconf"?"concepção ":"IA ")+(o.ia?rpBR(o.ia):"—")+(o.touro?" · "+mgpEsc(o.touro):"")+'</span><small>'+(o.dias!=null?o.dias+" dias":"")+'</small></div>'+
+      '<div class="bt"><button class="pos" title="Prenhe" onclick="mguDgUm(\''+id+'\',\'+\')">'+mgpIco("polegarup",19)+'<span>Prenhe</span></button><button class="neg" title="Vazia" onclick="mguDgUm(\''+id+'\',\'-\')">'+mgpIco("polegardown",19)+'<span>Vazia</span></button></div></div>'}).join("")+'</div>';
+  h+='<p class="mgu-nota">Os dias de gestação são calculados pela data da inseminação. Para corrigir, use o Lançamento rápido ou a ficha da vaca.</p>';
+  body.innerHTML=h}
+function mguDgSel(id,v){if(v)MGU.dgSel[id]=1;else delete MGU.dgSel[id];mguDgRender()}
+function mguDgTodas(v){MGU.dgSel={};if(v)mguDgLista().forEach(function(o){MGU.dgSel[o.r.id]=1});mguDgRender()}
+function mguDgEv(o,res){var d=MGU.dgData||mgpHoje();var ev={tipo:"dg",data:d,resultado:res};if(res==="+"&&o.tipo!=="reconf"&&o.ia){var g=rpDif(d,o.ia);if(g>0)ev.dias_gestacao=g}return ev}
+async function mguDgUm(id,res){var o=mguDgLista().filter(function(x){return x.r.id===id})[0];if(!o)return;
+  try{var s=await mgsSalvarEvento(o.br,mguDgEv(o,res));delete MGU.dgSel[id];if(s&&s.key)mgsDesfazerToast("Vaca "+o.br+": "+(res==="+"?"prenhe":"vazia"),s.key);else mgzToast("Esse diagnóstico já existia nessa data",true);mguDgRender()}
+  catch(e){console.error(e);mgzToast(mgzErroPerm(e)?"Sem permissão para gravar — avise o seu técnico":"Erro ao salvar: "+e.message,true)}}
+async function mguDgLote(res){var L=mguDgLista().filter(function(o){return MGU.dgSel[o.r.id]});if(!L.length)return;
+  if(!confirm("Lançar "+L.length+" vaca"+(L.length>1?"s":"")+" como "+(res==="+"?"PRENHE":"VAZIA")+" em "+rpBR(MGU.dgData||mgpHoje())+"?"))return;var ok=0,err=0;
+  for(var i=0;i<L.length;i++){try{var s=await mgsSalvarEvento(L[i].br,mguDgEv(L[i],res));if(s&&s.key)ok++;delete MGU.dgSel[L[i].r.id]}catch(e){console.error(e);err++}}
+  mgzToast(ok+" diagnóstico"+(ok!==1?"s":"")+" lançado"+(ok!==1?"s":"")+(err?" · "+err+" com erro":""),!!err);mguDgRender()}
+
+/* ---------- fichas de campo para imprimir ---------- */
+function mguFichasTela(){var body=document.getElementById("fichas-body");if(!body)return;
+  var F=[["leite","leite","#0891b2","Controle leiteiro","Vacas em lactação com espaço para cada ordenha. Anote no curral e lance depois."],
+    ["recria","recria","#db2777","Pesagem e altura da recria","Bezerras e novilhas com o peso-alvo de hoje, para comparar na hora."],
+    ["dg","dglista","#2563eb","Diagnóstico de gestação","Vacas para o toque ou ultrassom, com a data da IA e o touro."],
+    ["trato","consumo","#d97706","Trato e sobra no cocho","Lotes com espaço para o ofertado e a sobra de cada dia da semana."]];
+  body.innerHTML=mgsHead("ficha","#475569","Fichas de campo","Folhas prontas para imprimir e anotar no curral","")+
+    '<div class="mgu-fichas">'+F.map(function(f){return '<button style="--c:'+f[2]+'" onclick="mguFicha(\''+f[0]+'\')"><span class="ic">'+mgpIco(f[1],24)+'</span><b>'+f[3]+'</b><small>'+f[4]+'</small><em>'+mgpIco("impressora",14)+' Imprimir</em></button>'}).join("")+'</div>'+
+    '<p class="mgu-nota">Dica: depois de preencher a ficha do controle leiteiro, tire uma foto e use “Lançar controle → Ler com IA” para não precisar digitar.</p>'}
+function mguLogo(){var i=document.querySelector(".topbar-logo-img")||document.querySelector('img[src*="logo"]');return i&&i.src?i.src:""}
+function mguImprimir(tit,sub,cab,linhas,larg,extra){var fd=mgtFD()||{};var nome=fd.nome||fd.nome_propriedade||"Fazenda";var logo=mguLogo();
+  var cor=getComputedStyle(document.documentElement).getPropertyValue("--mA").trim()||"#15803d";
+  var css='@page{size:A4 '+(cab.length>7?"landscape":"portrait")+';margin:10mm}*{box-sizing:border-box}body{font:11px Inter,Arial,sans-serif;color:#111;margin:0}'+
+    '.hd{display:flex;align-items:center;gap:12px;border-bottom:2.5px solid '+cor+';padding-bottom:6px;margin-bottom:8px}.hd img{height:34px;max-width:150px;object-fit:contain}.hd h1{font-size:16px;margin:0;color:'+cor+'}.hd small{color:#555}.hd .r{margin-left:auto;text-align:right;font-size:11px}'+
+    'table{width:100%;border-collapse:collapse}th{background:'+cor+';color:#fff;font-size:10px;text-transform:uppercase;letter-spacing:.3px;padding:5px 4px;border:1px solid '+cor+';-webkit-print-color-adjust:exact;print-color-adjust:exact}'+
+    'td{border:1px solid #999;padding:0 4px;height:'+(larg||22)+'px;font-size:11px}td.v{font-weight:700}td.e{background:#fff}tr:nth-child(even) td.i{background:#f4f6f5;-webkit-print-color-adjust:exact;print-color-adjust:exact}.ft{margin-top:8px;font-size:10px;color:#555;display:flex;justify-content:space-between}';
+  var html='<!doctype html><html><head><meta charset="utf-8"><title>'+mgpEsc(tit)+'</title><style>'+css+'</style></head><body><div class="hd">'+(logo?'<img src="'+logo+'">':'')+'<div><h1>'+mgpEsc(tit)+'</h1><small>'+mgpEsc(nome)+(sub?' · '+mgpEsc(sub):'')+'</small></div><div class="r">Data: ____/____/______<br>Responsável: ______________</div></div>'+
+    (extra||"")+'<table><thead><tr>'+cab.map(function(c){return '<th style="width:'+(c[1]||"auto")+'">'+c[0]+'</th>'}).join("")+'</tr></thead><tbody>'+linhas.map(function(l){return '<tr>'+l.map(function(c,i){return '<td class="'+(c===""?"e":(i===0?"v":"i"))+'">'+mgpEsc(c==null?"":String(c))+'</td>'}).join("")+'</tr>'}).join("")+'</tbody></table>'+
+    '<div class="ft"><span>Impresso em '+rpBR(mgpHoje())+'</span><span>'+linhas.length+' linha(s)</span></div></body></html>';
+  var f=document.getElementById("mgu-print");if(f)f.remove();f=document.createElement("iframe");f.id="mgu-print";f.style.cssText="position:fixed;right:0;bottom:0;width:0;height:0;border:0";document.body.appendChild(f);
+  var d=f.contentWindow.document;d.open();d.write(html);d.close();setTimeout(function(){try{f.contentWindow.focus();f.contentWindow.print()}catch(e){console.error(e)}},450)}
+async function mguFicha(tipo){try{await mgsGarantir()}catch(e){}var br=function(x){return String(x==null?"":x)};var N=function(v,d){return v==null||isNaN(v)?"":mgpN(v,d||0)};
+  if(tipo==="leite"){var V=(typeof mgrMontar==="function"?mgrMontar():[]).filter(function(o){var st=o.r?o.r.st:null;if(st&&(st.status==="saiu"||st.seca||st.novilha))return false;return o.del!=null||(o.litros!=null)}).sort(function(a,b){return (a.lote||99)-(b.lote||99)||String(a.brinco).localeCompare(String(b.brinco),"pt",{numeric:true})});
+    if(!V.length){mgzToast("Nenhuma vaca em lactação cadastrada. Lance um controle leiteiro primeiro.",true);return}
+    mguImprimir("Controle leiteiro","vacas em lactação",[["Vaca","9%"],["Lote","6%"],["DEL","6%"],["Último (L)","9%"],["1ª ordenha","11%"],["2ª ordenha","11%"],["3ª ordenha","11%"],["Total (L)","10%"],["Observação",""]],
+      V.map(function(o){return [br(o.brinco),o.lote!=null?o.lote:"",o.del!=null?o.del:"",N(o.litros,1),"","","","",""]}),22)}
+  else if(tipo==="recria"){var R=(typeof mgpRecLinhas==="function"?mgpRecLinhas():[]).sort(function(a,b){return a.idade-b.idade});
+    if(!R.length){mgzToast("Nenhum animal na recria.",true);return}
+    mguImprimir("Pesagem e altura da recria","peso-alvo calculado para hoje",[["Animal","9%"],["Idade (meses)","9%"],["Último peso (kg)","11%"],["Pesado em","10%"],["Peso-alvo hoje (kg)","12%"],["Peso (kg)","11%"],["Altura (cm)","10%"],["Observação",""]],
+      R.map(function(o){return [br(o.num),N(o.meses,1),N(o.peso),o.ult?rpBR(o.ult):"",N(o.alvoH),"","",""]}),22)}
+  else if(tipo==="dg"){var L=mguDgLista();var hoje=mgpHoje();if(!L.length&&!MGU.dgFut){MGU.dgFut=true;L=mguDgLista();MGU.dgFut=false}
+    if(!L.length){mgzToast("Nenhuma vaca aguardando diagnóstico.",true);return}
+    mguImprimir("Diagnóstico de gestação","marque P (prenhe) ou V (vazia)",[["Vaca","10%"],["IA / concepção","12%"],["Touro","18%"],["Dias","7%"],["P / V","9%"],["Dias de gestação","12%"],["Observação",""]],
+      L.map(function(o){return [br(o.br),o.ia?rpBR(o.ia):"",o.touro||"",o.dias!=null?o.dias:"","","",o.tipo==="reconf"?"reconfirmar":""]}),24)}
+  else if(tipo==="trato"){var lotes=[];try{var s=await db.ref("dietas/"+farmId).once("value");var d=s.val()||{};Object.keys(d.lotes||{}).forEach(function(k){var l=d.lotes[k];if(l&&l.nome)lotes.push(l.nome)})}catch(e){}
+    if(!lotes.length)lotes=["Lote 1","Lote 2","Lote 3"];var dias=["Seg","Ter","Qua","Qui","Sex","Sáb","Dom"];var cab=[["Lote","16%"]];dias.forEach(function(x){cab.push([x+" ofertado",""]);cab.push([x+" sobra",""])});
+    mguImprimir("Trato e sobra no cocho","kg de matéria natural",cab,lotes.map(function(n){var l=[n];dias.forEach(function(){l.push("","")});return l}),34)}}
+
+/* ---------- registro das telas novas ---------- */
+var MGU_TELAS=[["diagnostico","Diagnóstico em lista","dglista","#2563eb",0,"reproducao",function(){mguDiagnostico()},"Prenhe ou vazia de várias vacas de uma vez"],
+ ["fichas","Fichas de campo","ficha","#475569",0,"visita",function(){mguFichasTela()},"Folhas para imprimir e anotar no curral"]];
+(function(){try{var ref=document.getElementById("screen-recria");MGU_TELAS.forEach(function(t){if(ref&&!document.getElementById("screen-"+t[0])){var d=document.createElement("div");d.className="screen";d.id="screen-"+t[0];d.innerHTML='<div id="'+t[0]+'-body"></div>';ref.parentNode.insertBefore(d,ref)}
+    if(typeof MGD_MENU!=="undefined"){var g=MGD_MENU[t[4]][1];if(!g.some(function(x){return x[0]===t[0]})){var pos=g.findIndex(function(x){return x[0]===t[5]});g.splice(pos>=0?pos+1:g.length,0,[t[0],t[1],t[2]])}}
+    if(typeof MGD_COR!=="undefined")MGD_COR[t[0]]=t[3];if(typeof MGX_TELAS!=="undefined")MGX_TELAS[t[0]]=[t[2],t[3]]});
+  var nv=window.navScreen;window.navScreen=function(n){var r=nv.apply(this,arguments);var t=MGU_TELAS.filter(function(x){return x[0]===n})[0];if(t){try{t[6]()}catch(e){console.error(e)}var mb=document.getElementById("nav-mais");if(mb&&!mgpDesk()){document.querySelectorAll(".nav-btn").forEach(function(b){b.classList.remove("active")});mb.classList.add("active")}}
+    if(n==="mais")setTimeout(mguMais,0);try{mgdSide()}catch(e){}return r};
+  var rm=window.renderMaisMenu;if(rm)window.renderMaisMenu=function(){var r=rm.apply(this,arguments);try{var b=document.getElementById("mais-body");if(b){b.dataset.mgu="";
+    if(!b.querySelector('[onclick*="navScreen(\'diagnostico\')"]')){var c=document.createElement("div");c.className="mgs-rot";c.innerHTML='<div class="mgs-rg">'+MGU_TELAS.map(function(t){return '<button style="--c:'+t[3]+'" onclick="navScreen(\''+t[0]+'\')"><span class="ic">'+mgpIco(t[2],22)+'</span><b>'+t[1]+'</b><small>'+t[7]+'</small></button>'}).join("")+'</div>';b.appendChild(c)}mguMais()}}catch(e){console.error(e)}return r};
+  var orf=window.mgsRefazerTela;if(orf)window.mgsRefazerTela=function(){var r=orf.apply(this,arguments);var at=document.querySelector(".screen.active");var id=at?at.id.replace("screen-",""):"";if(id==="diagnostico")try{mguDgRender()}catch(e){}return r};
+  var h=(location.hash||"").replace("#","");if(MGU_TELAS.some(function(t){return t[0]===h})){var tent=0,iv=setInterval(function(){tent++;if(typeof farmId!=="undefined"&&farmId&&document.getElementById("app")&&getComputedStyle(document.getElementById("app")).display!=="none"){clearInterval(iv);navScreen(h)}else if(tent>60)clearInterval(iv)},250)}
+}catch(e){console.error("mgu",e)}})();
+var MGU_CSS=
+/* menu lateral por áreas */
+'#mgd-side .ar{margin-bottom:2px}#mgd-side .ah{display:flex;align-items:center;gap:11px;width:100%;border:none;background:none;font-family:inherit;font-size:13px;font-weight:700;color:#1f2937;padding:7px 10px;border-radius:10px;cursor:pointer;text-align:left}'+
+'#mgd-side .ah:hover{background:#f6f8f7}#mgd-side .ah .ic{width:28px;height:28px;border-radius:8px;display:flex;align-items:center;justify-content:center;background:#f1f5f9;color:#475569;flex-shrink:0}'+
+'#mgd-side .ah b{flex:1;font-weight:700}#mgd-side .ah i{color:#94a3b8;transition:transform .15s;display:flex!important;transform:rotate(-90deg)}#mgd-side .ah i svg{width:13px;height:13px}#mgd-side .ar.ab .ah i{transform:none}'+
+'#mgd-side .ar.tem .ah .ic,#mgd-side .ar.um .it.on .ic{background:var(--ca,var(--c));color:#fff}#mgd-side .ar.tem .ah{color:#0f172a}'+
+'#mgd-side .ai{display:none;padding:2px 0 6px 24px;margin-left:13px;border-left:1.5px solid #eef2f0}#mgd-side .ar.ab .ai{display:block}'+
+'#mgd-side .ai .it{padding:6px 10px;font-size:12.8px;font-weight:600;min-height:32px}#mgd-side .ai .it.on:before{left:-26px}'+
+'#mgd-side .ar.um .it{font-weight:700;color:#1f2937}'+
+/* diagnóstico em lista */
+'.mgu-bar{display:flex;flex-wrap:wrap;gap:10px 18px;align-items:center;margin:4px 0 12px;font-size:13px;color:#334155}.mgu-bar input[type=date]{border:1.5px solid #dfe5e2;border-radius:10px;padding:7px 9px;font:inherit;margin-left:6px}'+
+'.mgu-ck{display:inline-flex;align-items:center;gap:8px;cursor:pointer;font-size:13px}.mgu-ck input{width:19px;height:19px;accent-color:#2563eb;flex-shrink:0}'+
+'.mgu-lote{display:flex;align-items:center;gap:10px;flex-wrap:wrap;background:#fff;border:1px solid #e3e8e5;border-radius:14px;padding:10px 14px;margin-bottom:10px;position:sticky;top:60px;z-index:5}.mgu-lote.on{border-color:#93c5fd;background:#eff6ff}.mgu-lote>span{color:#64748b;font-size:13px;margin-left:auto}'+
+'.mgu-lote button,.mgu-dg .bt button{display:inline-flex;align-items:center;gap:6px;border-radius:11px;padding:9px 13px;font:800 13px inherit;font-family:inherit;cursor:pointer;border:1.5px solid}'+
+'.mgu-lote button.pos,.mgu-dg .bt .pos{background:#f0fdf4;border-color:#86efac;color:#15803d}.mgu-lote button.neg,.mgu-dg .bt .neg{background:#fef2f2;border-color:#fca5a5;color:#b91c1c}'+
+'.mgu-lote button.pos:hover,.mgu-dg .bt .pos:hover{background:#16a34a;color:#fff;border-color:#16a34a}.mgu-lote button.neg:hover,.mgu-dg .bt .neg:hover{background:#dc2626;color:#fff;border-color:#dc2626}'+
+'.mgu-dg{background:#fff;border:1px solid #e3e8e5;border-radius:16px;overflow:hidden}.mgu-dg .ln{display:flex;align-items:center;gap:12px;padding:9px 14px;border-bottom:1px solid #f1f5f3}.mgu-dg .ln:last-child{border-bottom:none}.mgu-dg .ln.sel{background:#eff6ff}'+
+'.mgu-dg .vc{border:none;background:none;font:inherit;cursor:pointer;text-align:left;min-width:92px;display:flex;flex-direction:column;align-items:flex-start;gap:2px;padding:0}.mgu-dg .vc b{font-size:16px;font-weight:800;color:#0f172a}'+
+'.mgu-dg .vc em{font-style:normal;font-size:10.5px;font-weight:800;border-radius:6px;padding:1px 6px}.mgu-dg em.rc{background:#ccfbf1;color:#0f766e}.mgu-dg em.cd{background:#f1f5f9;color:#475569}.mgu-dg em.at{background:#fef3c7;color:#b45309}'+
+'.mgu-dg .inf{flex:1;display:flex;flex-direction:column;font-size:13px;color:#334155;min-width:0}.mgu-dg .inf small{color:#64748b;font-size:12px}.mgu-dg .bt{display:flex;gap:8px}'+
+'@media(max-width:640px){.mgu-dg .ln{flex-wrap:wrap;gap:8px 10px}.mgu-dg .inf{flex-basis:calc(100% - 140px)}.mgu-dg .bt{width:100%}.mgu-dg .bt button{flex:1;justify-content:center;padding:11px}.mgu-lote{top:56px}}'+
+'.mgu-nota{font-size:12px;color:#64748b;margin:10px 2px}'+
+/* fichas */
+'.mgu-fichas{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:12px}.mgu-fichas button{display:flex;flex-direction:column;align-items:flex-start;gap:6px;text-align:left;background:#fff;border:1px solid #e3e8e5;border-radius:16px;padding:16px;cursor:pointer;font-family:inherit}'+
+'.mgu-fichas button:hover{border-color:var(--c);box-shadow:0 8px 24px -14px rgba(0,0,0,.25)}.mgu-fichas .ic{width:44px;height:44px;border-radius:12px;display:flex;align-items:center;justify-content:center;background:var(--c);color:#fff}'+
+'.mgu-fichas b{font-size:14.5px;color:#0f172a}.mgu-fichas small{font-size:12.5px;color:#64748b;line-height:1.4}.mgu-fichas em{font-style:normal;margin-top:4px;display:inline-flex;align-items:center;gap:6px;font-size:12.5px;font-weight:800;color:var(--c)}';
+(function(){try{var st=document.createElement("style");st.id="mgu-css";st.textContent=MGU_CSS;document.head.appendChild(st);if(document.getElementById("mgd-side"))mgdSide()}catch(e){}})();
 </script>
 </body>
 </html>
