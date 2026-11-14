@@ -309,6 +309,8 @@ div.idc-foto{cursor:default}
 #login::before{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(5,40,24,.82),rgba(4,30,17,.93))}
 #login .lbox{position:relative;z-index:1;box-shadow:0 30px 70px -20px rgba(0,0,0,.6)!important}
 </style>
+<link rel="manifest" href="/manifest-painel.json"><meta name="theme-color" content="#0b3d24"><link rel="apple-touch-icon" href="/icon-painel-192.png"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="Painel META">
+<script>if("serviceWorker" in navigator&&location.protocol==="https:")navigator.serviceWorker.register("/sw-app.js",{scope:"/painel"}).catch(function(){});</script>
 </head>
 <body>
 <div id="mga-splash" aria-hidden="true">
@@ -358,6 +360,7 @@ div.idc-foto{cursor:default}
     <input class="li" id="ls" type="password" placeholder="Senha" autocomplete="current-password">
     <button class="lb" onclick="doLogin()">Entrar no Painel Admin</button>
     <div class="le" id="lerr"></div>
+    <button type="button" onclick="metaEsqueciSenha((document.getElementById('le')||{}).value)" style="display:block;margin:12px auto 0;border:0;background:none;color:#15803d;font:700 13.5px Inter,system-ui,sans-serif;cursor:pointer">Esqueci a minha senha</button>
   </div>
 </div>
 <!-- APP -->
@@ -377,7 +380,7 @@ div.idc-foto{cursor:default}
          <span id="atualizacoes-produtor-badge" style="background:#f59e0b;color:#1e293b;border-radius:8px;padding:1px 6px;font-size:10px;display:none">0</span>
       </button>
       <span class="tb-avatar" id="tbavatar" style="width:26px;height:26px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;color:#fff;background:#94a3b8;flex-shrink:0"></span>
-      <span class="tb-user" id="tbuser"></span>
+      <span class="tb-user" id="tbuser"></span><button type="button" onclick="metaAlterarSenha()" title="Alterar a minha senha" style="border:1px solid rgba(127,127,127,.35);background:transparent;color:inherit;border-radius:9px;padding:5px 10px;font:700 12px Inter,system-ui,sans-serif;cursor:pointer;margin-left:6px">Alterar senha</button>
       <button style="background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);color:white;border-radius:8px;padding:4px 10px;font-size:11px;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:4px" onclick="exportarBackupCompleto()" title="Baixa uma cópia completa do banco de dados (JSON)">
          Backup
       </button>
@@ -7986,5 +7989,6 @@ function ptAplicar(){
 })();
 
 </script>
+<script src="/meta-acesso.js?v=202611140840"></script><script>try{metaGuard("painel")}catch(e){}</script>
 </body>
 </html>
