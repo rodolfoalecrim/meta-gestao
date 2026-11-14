@@ -7990,5 +7990,9 @@ function ptAplicar(){
 
 </script>
 <script src="/meta-acesso.js?v=202611140840"></script><script>try{metaGuard("painel")}catch(e){}</script>
+<script id="mg-painel-link">/* /painel?fazenda=ID abre a ficha da fazenda (links do resumo do dia em /equipe) */
+(function(){var q=new URLSearchParams(location.search).get("fazenda");if(!q)return;var n=0,t=setInterval(function(){n++;if(n>90){clearInterval(t);return}
+try{if(typeof ALL==="undefined"||!ALL||!ALL.length)return;var f=ALL.find(function(d){return String(d.id)===q});clearInterval(t);
+if(f){openFarmModal(f.id,f.produtor||f.nome||"");try{history.replaceState(null,"",location.pathname)}catch(e){}}}catch(e){}},400)})();</script>
 </body>
 </html>
