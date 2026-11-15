@@ -1,9 +1,9 @@
-/* Meta Gestão — Minha Fazenda · service worker
+/* Meta MilkFlow Campo · service worker
    - guarda o app e as bibliotecas no celular: o app abre mesmo sem internet
    - HTML: busca na rede primeiro (pega as atualizações) e usa a cópia guardada se não houver sinal
    - bibliotecas (Firebase, gráficos, PDF, fontes): usa a cópia guardada e atualiza em segundo plano
    - recebe os avisos diários (push) e abre o app ao tocar no aviso */
-const VERSAO = "mg-produtor-v4";
+const VERSAO = "mg-produtor-v5";
 const APP = "./app-produtor.html";
 const SHELL = [APP, "./manifest-produtor.json", "./produtor-apple-touch-180.png", "./produtor-favicon-64.png"];
 const CDN = [
@@ -44,7 +44,7 @@ self.addEventListener("fetch", (e) => {
   const req = e.request;
   if (req.method !== "GET") return;
   const url = req.url;
-  if (DIRETO.test(url)) return;
+  if (DIRETO.test(url) || /[?&]vchk=/.test(url)) return; /* checagem de versão nova vai sempre à rede */
   if (req.mode === "navigate") {
     e.respondWith((async () => {
       const c = await caches.open(VERSAO);
@@ -75,7 +75,7 @@ self.addEventListener("push", (e) => {
   try { d = e.data ? e.data.json() : {}; } catch (x) { d = { data: { body: e.data && e.data.text() } }; }
   const dados = d.data || {};
   const n = d.notification || {};
-  const titulo = dados.title || n.title || "Minha Fazenda";
+  const titulo = dados.title || n.title || "Meta MilkFlow Campo";
   const corpo = dados.body || n.body || "";
   e.waitUntil(self.registration.showNotification(titulo, {
     body: corpo, icon: "produtor-apple-touch-180.png", badge: "produtor-favicon-64.png",
